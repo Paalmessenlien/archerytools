@@ -39,18 +39,21 @@ log "Starting Arrow Tuning Platform server setup..."
 log "Updating system packages..."
 apt update && apt upgrade -y
 
-# Install required packages
+# Check Ubuntu version
+UBUNTU_VERSION=$(lsb_release -rs)
+log "Detected Ubuntu version: $UBUNTU_VERSION"
+
+# Install required packages with error handling
 log "Installing required packages..."
+
+# Core packages first
 apt install -y \
     python3 \
-    python3-pip \
     python3-venv \
     python3-dev \
     nginx \
     supervisor \
     ufw \
-    certbot \
-    python3-certbot-nginx \
     git \
     curl \
     wget \
@@ -59,6 +62,22 @@ apt install -y \
     logrotate \
     htop \
     fail2ban
+
+# Install python3-pip with fallback
+log "Installing Python pip..."
+if ! apt install -y python3-pip; then
+    log "Standard python3-pip failed, trying alternative installation..."
+    curl -sSL https://bootstrap.pypa.io/get-pip.py | python3
+fi
+
+# Install certbot packages
+log "Installing certbot..."
+if ! apt install -y certbot python3-certbot-nginx; then
+    warn "Certbot installation failed, will try snap installation..."
+    apt install -y snapd
+    snap install --classic certbot
+    ln -sf /snap/bin/certbot /usr/bin/certbot
+fi
 
 # Create application user
 log "Creating application user..."
@@ -74,7 +93,16 @@ chown -R arrowtuner:arrowtuner /opt/arrowtuner
 
 # Install Python dependencies system-wide
 log "Installing Python packages..."
-pip3 install --upgrade pip setuptools wheel
+# Ensure pip is working
+if command -v pip3 >/dev/null 2>&1; then
+    pip3 install --upgrade pip setuptools wheel
+elif command -v pip >/dev/null 2>&1; then
+    pip install --upgrade pip setuptools wheel
+else
+    warn "pip not found, installing via get-pip.py..."
+    curl -sSL https://bootstrap.pypa.io/get-pip.py | python3
+    pip3 install --upgrade pip setuptools wheel
+fi
 
 # Configure firewall
 log "Configuring firewall..."
