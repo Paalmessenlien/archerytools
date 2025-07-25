@@ -1,0 +1,85 @@
+# Docker Compose with SSL/HTTPS support
+# Use after setting up SSL certificates
+# Run with: docker-compose -f docker-compose.ssl.yml up
+
+version: '3.8'
+
+services:
+  # Flask API Backend
+  api:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: Dockerfile
+    container_name: arrowtuner-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    volumes:
+      - ./arrow_scraper:/app
+      - arrowtuner-data:/app/data
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nuxt 3 Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: arrowtuner-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=http://api:5000/api
+    depends_on:
+      - api
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: arrowtuner-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.ssl.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  arrowtuner-data:
+    driver: local
+
+networks:
+  arrowtuner-network:
+    driver: bridge
