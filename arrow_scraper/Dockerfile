@@ -24,11 +24,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directory
+# Build database during image creation
+RUN python build-database.py
+
+# Create data directory for runtime files
 RUN mkdir -p /app/data/processed /app/data/raw
 
 # Set proper permissions
-RUN chmod +x /app/api.py /app/init-database.py /app/start-api.sh
+RUN chmod +x /app/api.py /app/build-database.py /app/start-api.sh
 
 # Create non-root user with specific UID/GID for consistency
 RUN addgroup --gid 1000 appgroup && \

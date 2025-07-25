@@ -59,53 +59,38 @@ def get_tuning_system():
     return tuning_system
 
 def get_database():
-    """Get database with lazy initialization"""
+    """Get database with simplified initialization"""
     global database
     if database is None:
         try:
-            # Try multiple database locations in order of preference
-            db_paths = [
-                os.getenv('DATABASE_PATH', '/app/data/arrow_database.db'),  # Environment variable or default
-                '/app/data/arrow_database.db',     # Docker data volume
-                '/app/arrow_database.db',          # Docker app directory
-                'arrow_database.db',               # Current directory (fallback)
-                '../arrow_database.db'             # Parent directory (development)
-            ]
+            # Use the built-in database from Docker image
+            db_path = '/app/arrow_database.db'
             
-            database_path = None
-            for db_path in db_paths:
-                if os.path.exists(db_path):
-                    # Quick check if database has data
-                    try:
-                        import sqlite3
-                        conn = sqlite3.connect(db_path)
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT COUNT(*) FROM arrows")
-                        count = cursor.fetchone()[0]
-                        conn.close()
-                        
-                        if count > 0:
-                            database_path = db_path
-                            print(f"🗄️  Using database: {db_path} ({count} arrows)")
-                            break
-                        else:
-                            print(f"⚠️  Database exists but empty: {db_path}")
-                    except Exception as e:
-                        print(f"⚠️  Database check failed for {db_path}: {e}")
-                        continue
+            # Fallback for development
+            if not os.path.exists(db_path):
+                db_path = 'arrow_database.db'
             
-            if not database_path:
-                print("❌ No valid database found. Available paths checked:")
-                for db_path in db_paths:
-                    exists = "✓" if os.path.exists(db_path) else "✗"
-                    print(f"  {exists} {db_path}")
-                database = None
+            if not os.path.exists(db_path):
+                print(f"❌ Database not found at {db_path}")
                 return None
             
-            database = ArrowDatabase(database_path)
+            # Quick check if database has data
+            import sqlite3
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM arrows")
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            if count == 0:
+                print(f"⚠️  Database exists but is empty: {db_path}")
+                return None
+            
+            print(f"🗄️  Using database: {db_path} ({count} arrows)")
+            database = ArrowDatabase(db_path)
             
         except Exception as e:
-            print(f"Error initializing database: {e}")
+            print(f"❌ Error initializing database: {e}")
             import traceback
             traceback.print_exc()
             database = None
