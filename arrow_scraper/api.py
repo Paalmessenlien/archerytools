@@ -25,7 +25,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'arrow-tuning-secret-key
 # Enable CORS for the Nuxt frontend
 CORS(app, origins=[
     "http://localhost:3000",  # Nuxt dev server
-    "https://yourdomain.com", # Production domain
+    "https://archerytool.online", # Production domain
+    "https://www.archerytool.online", # Production domain with www
 ])
 
 # Global variables for lazy initialization
