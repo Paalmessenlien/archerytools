@@ -1,0 +1,247 @@
+{
+  "extraction_timestamp": "2025-07-20T21:22:19.961615",
+  "manufacturer": "Carbon Express",
+  "extraction_mode": "full",
+  "extraction_range": {
+    "start_index": 0,
+    "end_index": 9,
+    "total_urls_available": 9,
+    "urls_processed": 9,
+    "new_urls_only": false
+  },
+  "statistics": {
+    "processed": 9,
+    "successful": 4,
+    "arrows": 4
+  },
+  "success_rate": 44.44444444444444,
+  "total_arrows": 4,
+  "total_spine_specs": 11,
+  "arrows": [
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Carbon Express SABLE RZ SELECT STRALGHTNESS",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.285,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://cdn-ilchokf.nitrocdn.com/nqkqluPOLqauqjblimVNksnJtfbWDRlW/assets/images/optimized/rev-c783676/www.feradyne.com/wp-content/uploads/2022/01/Maxima-Sable-RZ.png",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.002\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.feradyne.com/product/maxima-sable-rz/",
+      "scraped_at": "2025-07-20T21:17:56.834428",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Carbon Express Triad in out #1",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 10.9,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.355,
+          "gpi_weight": 10.1,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.24,
+          "gpi_weight": 9.2,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://cdn-ilchokf.nitrocdn.com/nqkqluPOLqauqjblimVNksnJtfbWDRlW/assets/images/optimized/rev-c783676/www.feradyne.com/wp-content/uploads/2019/12/Maxima-Triad.png",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.002\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.feradyne.com/product/maxima-triad/",
+      "scraped_at": "2025-07-20T21:20:01.326441",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Carbon Express",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.293,
+          "gpi_weight": 8.9,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.244,
+          "gpi_weight": 7.9,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.244,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://cdn-ilchokf.nitrocdn.com/nqkqluPOLqauqjblimVNksnJtfbWDRlW/assets/images/optimized/rev-c783676/www.feradyne.com/wp-content/uploads/2019/12/D-Stroyer.png",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.003\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.feradyne.com/product/d-stroyer/",
+      "scraped_at": "2025-07-20T21:20:39.309444",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Carbon Express",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.244,
+          "gpi_weight": 9.7,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.9,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.244,
+          "gpi_weight": 8.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            32.0,
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://cdn-ilchokf.nitrocdn.com/nqkqluPOLqauqjblimVNksnJtfbWDRlW/assets/images/optimized/rev-c783676/www.feradyne.com/wp-content/uploads/2019/12/D-Stroyer-MX-Hunter.png",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.002\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.feradyne.com/product/d-stroyer-mx-hunter/",
+      "scraped_at": "2025-07-20T21:21:08.172426",
+      "scraper_version": "1.0"
+    }
+  ],
+  "failed_urls": [
+    {
+      "url": "https://www.feradyne.com/product/maxima-sable-rz-select/",
+      "manufacturer": "Carbon Express",
+      "reason": "No data extracted"
+    },
+    {
+      "url": "https://www.feradyne.com/product/maxima-photon-sd/",
+      "manufacturer": "Carbon Express",
+      "reason": "invalid literal for int() with base 10: '350\"'"
+    },
+    {
+      "url": "https://www.feradyne.com/product/cx-adrenaline/",
+      "manufacturer": "Carbon Express",
+      "reason": "invalid literal for int() with base 10: '300\"'"
+    },
+    {
+      "url": "https://www.feradyne.com/product/thunder-express/",
+      "manufacturer": "Carbon Express",
+      "reason": "No data extracted"
+    },
+    {
+      "url": "https://www.feradyne.com/product/flu-flu-arrows/",
+      "manufacturer": "Carbon Express",
+      "reason": "No data extracted"
+    }
+  ]
+}

@@ -150,13 +150,52 @@ EOF
 chmod +x "$APP_DIR/app/wsgi.py"
 
 # Initialize database
-log "Initializing database..."
-sudo -u $APP_USER "$APP_DIR/venv/bin/python" "$APP_DIR/app/arrow_database.py" || warn "Database initialization failed"
+log "Building database from processed data..."
+cd "$APP_DIR/app"
 
-# Copy database if it exists
+# First try to copy existing database if available
 if [[ -f "$PROJECT_DIR/arrow_scraper/arrow_database.db" ]]; then
+    log "Copying existing database..."
     cp "$PROJECT_DIR/arrow_scraper/arrow_database.db" "$APP_DIR/data/"
     chown $APP_USER:$APP_USER "$APP_DIR/data/arrow_database.db"
+else
+    log "Building database from processed arrow data..."
+    # Build database from the processed data files
+    sudo -u $APP_USER "$APP_DIR/venv/bin/python" "$APP_DIR/app/arrow_database.py" || warn "Database creation failed"
+    
+    # Verify database was created successfully
+    if [[ -f "$APP_DIR/app/arrow_database.db" ]]; then
+        log "Moving database to data directory..."
+        mv "$APP_DIR/app/arrow_database.db" "$APP_DIR/data/"
+        chown $APP_USER:$APP_USER "$APP_DIR/data/arrow_database.db"
+    else
+        warn "Database file not found after creation"
+    fi
+fi
+
+# Verify database exists and has data
+if [[ -f "$APP_DIR/data/arrow_database.db" ]]; then
+    # Test database by checking arrow count
+    arrow_count=$(sudo -u $APP_USER "$APP_DIR/venv/bin/python" -c "
+import sqlite3
+try:
+    conn = sqlite3.connect('$APP_DIR/data/arrow_database.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM arrows')
+    count = cursor.fetchone()[0]
+    print(count)
+    conn.close()
+except Exception as e:
+    print('0')
+" 2>/dev/null || echo "0")
+    
+    if [[ "$arrow_count" -gt 0 ]]; then
+        log "✓ Database ready with $arrow_count arrows"
+    else
+        warn "Database exists but appears to be empty"
+    fi
+else
+    error "Database file not found at $APP_DIR/data/arrow_database.db"
 fi
 
 # Create environment file for application
