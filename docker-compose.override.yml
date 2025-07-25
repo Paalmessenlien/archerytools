@@ -1,0 +1,37 @@
+# Docker Compose override for development
+# This file is automatically loaded by docker-compose
+# and provides development-specific configuration
+
+version: '3.8'
+
+services:
+  # API service overrides
+  api:
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=True
+    volumes:
+      - ./arrow_scraper:/app
+      - arrowtuner-data:/app/data
+    
+  # Frontend service overrides  
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - API_BASE_URL=http://api:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    command: npm run dev
+    
+  # Nginx overrides for development
+  nginx:
+    # Remove SSL port and volume for development
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/sites/:/etc/nginx/conf.d/:ro
+      - nginx-logs:/var/log/nginx
+    # Remove SSL volume mount for development
