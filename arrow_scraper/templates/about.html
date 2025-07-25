@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}
+    <div class="text-center">
+        <h1 class="text-3xl font-bold text-archery-900">About Arrow Tuning System</h1>
+        <p class="mt-2 text-archery-600">Professional arrow selection and tuning for archery enthusiasts</p>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="px-4 sm:px-0">
+        <!-- Hero section -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8 text-center">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold text-archery-800 mb-4">
+                    Professional-Grade Arrow Tuning Technology
+                </h2>
+                <p class="text-archery-600 text-lg leading-relaxed">
+                    Our Arrow Tuning System combines advanced spine calculation algorithms with a comprehensive 
+                    database of arrow specifications to provide accurate, personalized recommendations for 
+                    compound, recurve, and traditional bow setups.
+                </p>
+            </div>
+        </div>
+
+        <!-- System capabilities -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold text-archery-800 mb-4">System Capabilities</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-archery-700">Professional Spine Calculations</h4>
+                            <p class="text-sm text-archery-600">AMO/ATA standard formulas with bow-specific adjustments for compound, recurve, and traditional bows.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-archery-700">Advanced FOC Optimization</h4>
+                            <p class="text-sm text-archery-600">Front-of-Center calculations with application-specific recommendations for target, hunting, and traditional archery.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-archery-700">Multi-Goal Optimization</h4>
+                            <p class="text-sm text-archery-600">Optimize for speed, accuracy, penetration, or balanced performance with intelligent weighting algorithms.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-archery-700">Comprehensive Reporting</h4>
+                            <p class="text-sm text-archery-600">Detailed tuning analysis with ballistic calculations, recommendations, and next steps for optimal setup.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold text-archery-800 mb-4">Database Statistics</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary-600 mb-1">{{ system_info.database_arrows }}</div>
+                        <div class="text-sm text-archery-600">Arrow Models</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600 mb-1">{{ system_info.database_specs }}</div>
+                        <div class="text-sm text-archery-600">Spine Specifications</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-purple-600 mb-1">{{ system_info.manufacturers }}</div>
+                        <div class="text-sm text-archery-600">Manufacturers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-orange-600 mb-1">{{ system_info.version }}</div>
+                        <div class="text-sm text-archery-600">System Version</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="font-medium text-archery-700 mb-3">Key Features</h4>
+                    <div class="space-y-2">
+                        {% for feature in system_info.features %}
+                            <div class="flex items-center text-sm text-archery-600">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                {{ feature }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical details -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h3 class="text-xl font-semibold text-archery-800 mb-6">Technical Implementation</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="font-medium text-archery-700 mb-3">Phase 1: Data Collection</h4>
+                    <ul class="space-y-2 text-sm text-archery-600">
+                        <li>• Multi-manufacturer web scraping</li>
+                        <li>• Vision-based specification extraction</li>
+                        <li>• AI-powered data validation</li>
+                        <li>• Real-time data normalization</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-archery-700 mb-3">Phase 2: Tuning Engine</h4>
+                    <ul class="space-y-2 text-sm text-archery-600">
+                        <li>• Professional spine calculations</li>
+                        <li>• Intelligent arrow matching</li>
+                        <li>• Multi-criteria optimization</li>
+                        <li>• Comprehensive ballistics analysis</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-archery-700 mb-3">Phase 3: Web Interface</h4>
+                    <ul class="space-y-2 text-sm text-archery-600">
+                        <li>• Responsive design (TailwindCSS)</li>
+                        <li>• Interactive tuning wizard</li>
+                        <li>• Advanced search & filtering</li>
+                        <li>• Real-time recommendations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supported manufacturers -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h3 class="text-xl font-semibold text-archery-800 mb-6">Supported Manufacturers</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {% for manufacturer in stats.manufacturers %}
+                    <div class="bg-gray-50 rounded-lg p-4 text-center hover:bg-primary-50 transition-colors duration-200">
+                        <div class="font-semibold text-archery-800 mb-1">{{ manufacturer.manufacturer }}</div>
+                        <div class="text-sm text-archery-600">{{ manufacturer.arrow_count }} arrows</div>
+                        <div class="text-xs text-archery-500">{{ manufacturer.spec_count }} specifications</div>
+                        <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-primary-500 h-1.5 rounded-full" 
+                                 style="width: {{ (manufacturer.arrow_count / stats.manufacturers[0].arrow_count * 100) }}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Usage instructions -->
+        <div class="bg-gradient-to-r from-primary-50 to-primary-100 rounded-lg p-8 mt-8">
+            <h3 class="text-xl font-semibold text-archery-800 mb-6 text-center">How to Use the System</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white font-bold">1</span>
+                    </div>
+                    <h4 class="font-medium text-archery-800 mb-2">Enter Your Setup</h4>
+                    <p class="text-sm text-archery-600">Provide your bow configuration, draw weight, draw length, and shooting preferences using our step-by-step wizard.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white font-bold">2</span>
+                    </div>
+                    <h4 class="font-medium text-archery-800 mb-2">Get Recommendations</h4>
+                    <p class="text-sm text-archery-600">Our algorithms analyze your setup against our database to find the best arrow matches with detailed scoring.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white font-bold">3</span>
+                    </div>
+                    <h4 class="font-medium text-archery-800 mb-2">Fine-Tune & Test</h4>
+                    <p class="text-sm text-archery-600">Follow our detailed tuning recommendations and perform paper tuning or field testing to optimize your setup.</p>
+                </div>
+            </div>
+            <div class="text-center mt-8">
+                <a href="{{ url_for('tuning_wizard') }}" 
+                   class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200">
+                    Start Tuning Wizard
+                    <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add some interactive elements to the about page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate counters
+        const counters = document.querySelectorAll('.text-3xl.font-bold');
+        counters.forEach(counter => {
+            const target = parseInt(counter.textContent);
+            if (isNaN(target)) return;
+            
+            let current = 0;
+            const increment = Math.ceil(target / 50);
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                counter.textContent = current;
+            }, 50);
+        });
+    });
+</script>
+{% endblock %}

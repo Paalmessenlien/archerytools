@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(chmod:*)",
+      "Bash(python test:*)",
+      "Bash(python:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(playwright install)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(timeout 600 python run_comprehensive_extraction.py)",
+      "Bash(timeout:*)",
+      "Bash(rm:*)",
+      "WebFetch(domain:victoryarchery.com)",
+      "WebFetch(domain:www.victoryarchery.com)",
+      "WebFetch(domain:issuu.com)",
+      "Bash(export FLASK_APP=webapp.py)",
+      "Bash(export FLASK_ENV=development)",
+      "Bash(pkill:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run preview:*)",
+      "Bash(./scripts/start-dual-architecture.sh:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh start)",
+      "Bash(cat:*)",
+      "Bash(sqlite3:*)",
+      "Bash(true)",
+      "Bash(cp:*)",
+      "Bash(kill:*)",
+      "Bash(wget:*)",
+      "Bash(git add:*)",
+      "Bash(git rebase:*)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": []
+  }
+}

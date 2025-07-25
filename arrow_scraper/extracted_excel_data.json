@@ -1,0 +1,161 @@
+{
+  "wood_arrows": [
+    {
+      "row_index": 2,
+      "data": {
+        "Unnamed: 2": "Arrow Shaft\nSize",
+        "Unnamed: 3": "BOP Length (inches)",
+        "Unnamed: 4": "Point Weight (grains)",
+        "Unnamed: 5": "Insert Weight",
+        "Unnamed: 6": "Footing (Y/N)",
+        "Unnamed: 7": "Nock End Weight (grains)",
+        "Unnamed: 9": "Dynamic Spine (pounds)",
+        "Unnamed: 11": "Total Weight (grains)",
+        "Unnamed: 12": "Specific Weight (GPP)",
+        "Unnamed: 13": "F.O.C.\n(%)",
+        "Unnamed: 14": "Speed (FPS)",
+        "Unnamed: 15": "Energy\n(ft-lbs)"
+      },
+      "raw_text": "arrow shaft\nsize bop length (inches) point weight (grains) insert weight footing (y/n) nock end weight (grains) dynamic spine (pounds) total weight (grains) specific weight (gpp) f.o.c.\n(%) speed (fps) energy\n(ft-lbs)"
+    },
+    {
+      "row_index": 4,
+      "data": {
+        "Unnamed: 3": "\u2190 AMO Static Spine ( 2# @ 26\" )",
+        "Unnamed: 7": "- Length (in.)",
+        "Unnamed: 8": 11
+      },
+      "raw_text": "0 \u2190 amo static spine ( 2# @ 26\" ) 0 - length (in.) 11"
+    },
+    {
+      "row_index": 8,
+      "data": {
+        "Unnamed: 2": " Bow Inputs",
+        "Unnamed: 6": "Center Cut\nStrike Plate Position\n(inches)",
+        "Unnamed: 8": "Arrow Dynamic Spine Req. (pounds)"
+      },
+      "raw_text": " bow inputs center cut\nstrike plate position\n(inches) arrow dynamic spine req. (pounds)"
+    },
+    {
+      "row_index": 15,
+      "data": {
+        "Unnamed: 1": "Static Spine Converter",
+        "Unnamed: 3": "Deflection (inches)",
+        "Unnamed: 5": "AMO Static Spine (#)"
+      },
+      "raw_text": "static spine converter deflection (inches) amo static spine (#)"
+    },
+    {
+      "row_index": 19,
+      "data": {
+        "Unnamed: 2": "Arrow Data",
+        "Unnamed: 10": "Distance from \nBOP to balance \npoint (A)",
+        "Unnamed: 12": 10.711685508961045,
+        "Unnamed: 13": "Dynamic Spine w/o \nmass & diameter \ncompensation ",
+        "Unnamed: 15": 54.441937115494945,
+        "Unnamed: 18": "Weight in Grams",
+        "Unnamed: 19": 30.59607443556604
+      },
+      "raw_text": "arrow data distance from \nbop to balance \npoint (a) 10.711685508961045 dynamic spine w/o \nmass & diameter \ncompensation  54.441937115494945 weight in grams 30.59607443556604"
+    },
+    {
+      "row_index": 20,
+      "data": {
+        "Unnamed: 2": "Size \n(XX75 or \nXX78)",
+        "Unnamed: 3": "Deflection @ 28\" w/1.94#",
+        "Unnamed: 4": "Deflection @ 26\" w/2.0#",
+        "Unnamed: 5": "Static Spine",
+        "Unnamed: 6": "Weight @ 29\"",
+        "Unnamed: 7": "GPI",
+        "Unnamed: 8": "Shaft Diameter",
+        "Unnamed: 11": "Strike plate position",
+        "Unnamed: 12": 0.1225,
+        "Unnamed: 13": "Spine \ncompensation\nfor diameter",
+        "Unnamed: 15": -0.9375
+      },
+      "raw_text": "size \n(xx75 or \nxx78) deflection @ 28\" w/1.94# deflection @ 26\" w/2.0# static spine weight @ 29\" gpi shaft diameter strike plate position 0.1225 spine \ncompensation\nfor diameter -0.9375"
+    },
+    {
+      "row_index": 134,
+      "data": {
+        "Unnamed: 2": "Easton Axis Jr (Estimated Spine)",
+        "Unnamed: 3": 0.7,
+        "Unnamed: 4": 0.5774999999999999,
+        "Unnamed: 5": 45.02164502164503,
+        "Unnamed: 6": 185.60000000000002,
+        "Unnamed: 7": 6.4,
+        "Unnamed: 8": 0.265625,
+        "Unnamed: 9": "HIT",
+        "Unnamed: 10": 16,
+        "Unnamed: 11": "X"
+      },
+      "raw_text": "easton axis jr (estimated spine) 0.7 0.5774999999999999 45.02164502164503 185.60000000000002 6.4 0.265625 hit 16 x"
+    },
+    {
+      "row_index": 165,
+      "data": {
+        "Unnamed: 2": "Easton ST Epic Jr (Estimated Spine)",
+        "Unnamed: 3": 0.65,
+        "Unnamed: 4": 0.53625,
+        "Unnamed: 5": 48.484848484848484,
+        "Unnamed: 6": 179.8,
+        "Unnamed: 7": 6.2,
+        "Unnamed: 8": 0.275,
+        "Unnamed: 9": "HP-3",
+        "Unnamed: 10": 23,
+        "Unnamed: 11": "H"
+      },
+      "raw_text": "easton st epic jr (estimated spine) 0.65 0.53625 48.484848484848484 179.8 6.2 0.275 hp-3 23 h"
+    },
+    {
+      "row_index": 197,
+      "data": {
+        "Unnamed: 2": "Wood Shaft"
+      },
+      "raw_text": "wood shaft 0 0 0 0"
+    },
+    {
+      "row_index": 209,
+      "data": {
+        "Unnamed: 2": "Acadian Woods Cajun Hunter",
+        "Unnamed: 3": 1,
+        "Unnamed: 4": -0.1875,
+        "Unnamed: 5": -0.1275
+      },
+      "raw_text": "acadian woods cajun hunter 1 -0.1875 -0.1275"
+    },
+    {
+      "row_index": 210,
+      "data": {
+        "Unnamed: 2": "Acadian Woods Carbon Reflex Recurve",
+        "Unnamed: 3": 1.04,
+        "Unnamed: 4": -0.1875,
+        "Unnamed: 5": -0.1275
+      },
+      "raw_text": "acadian woods carbon reflex recurve 1.04 -0.1875 -0.1275"
+    },
+    {
+      "row_index": 211,
+      "data": {
+        "Unnamed: 2": "Acadian Woods Tree Stick",
+        "Unnamed: 3": 1,
+        "Unnamed: 4": -0.1875,
+        "Unnamed: 5": -0.1275
+      },
+      "raw_text": "acadian woods tree stick 1 -0.1875 -0.1275"
+    },
+    {
+      "row_index": 241,
+      "data": {
+        "Unnamed: 2": "Border Black Douglas",
+        "Unnamed: 3": 1.04,
+        "Unnamed: 4": -0.1875,
+        "Unnamed: 5": -0.1275
+      },
+      "raw_text": "border black douglas 1.04 -0.1875 -0.1275"
+    }
+  ],
+  "spine_data": {},
+  "extraction_timestamp": "2025-07-22T13:13:59.297934",
+  "source_file": "V2 Dynamic Spine Calculator Rev 12-25-10 v2.xls"
+}

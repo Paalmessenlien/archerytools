@@ -1,0 +1,52 @@
+# Arrow Tuning Platform - Systemd Service File
+# Alternative to supervisor - use either this OR supervisor, not both
+# Install: sudo cp arrowtuner.service /etc/systemd/system/
+# Enable: sudo systemctl enable arrowtuner
+# Start: sudo systemctl start arrowtuner
+
+[Unit]
+Description=Arrow Tuning Platform - Flask Application
+After=network.target
+Wants=network.target
+
+[Service]
+Type=exec
+User=arrowtuner
+Group=arrowtuner
+WorkingDirectory=/opt/arrowtuner/app
+Environment=PATH=/opt/arrowtuner/venv/bin
+EnvironmentFile=/opt/arrowtuner/.env
+ExecStart=/opt/arrowtuner/venv/bin/gunicorn \
+    --bind 127.0.0.1:5000 \
+    --workers 4 \
+    --worker-class sync \
+    --worker-connections 1000 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --timeout 30 \
+    --keep-alive 5 \
+    --preload \
+    wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=30
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/arrowtuner/data /opt/arrowtuner/logs /opt/arrowtuner/backups
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=arrowtuner
+
+[Install]
+WantedBy=multi-user.target

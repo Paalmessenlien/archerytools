@@ -1,0 +1,267 @@
+# Arrow Manufacturer Configuration
+# This file contains all manufacturer URLs and settings for the arrow scraper
+
+manufacturers:
+  "Easton Archery":
+    base_url: "https://eastonarchery.com/"
+    extraction_method: "text"
+    product_urls:
+      # X10 Series
+      - "https://eastonarchery.com/arrows_/x10-parallel-pro/"
+      - "https://eastonarchery.com/arrows_/x10/"
+      - "https://eastonarchery.com/arrows_/x10-protour/"
+      
+      # Superdrive Series
+      - "https://eastonarchery.com/arrows_/superdrive-micro/"
+      - "https://eastonarchery.com/arrows_/superdrive-23/"
+      - "https://eastonarchery.com/arrows_/superdrive-25/"
+      - "https://eastonarchery.com/arrows_/superdrive-27/"
+      
+      # 4MM Series
+      - "https://eastonarchery.com/arrows_/4mm-axis-pro/"
+      - "https://eastonarchery.com/arrows_/4mm-axis/"
+      - "https://eastonarchery.com/arrows_/4mm-axis-match-grade/"
+      - "https://eastonarchery.com/arrows_/4mm-fmj/"
+      - "https://eastonarchery.com/arrows_/4mm-fmj-match-grade/"
+      
+      # 5MM Series
+      - "https://eastonarchery.com/arrows_/5mm-fmj/"
+      - "https://eastonarchery.com/arrows_/5mm-fmj-match-grade/"
+      - "https://eastonarchery.com/arrows_/5mm-axis/"
+      - "https://eastonarchery.com/arrows_/5mm-axis-match-grade/"
+      - "https://eastonarchery.com/arrows_/5mm-fmj-5mm-axis/"
+      
+      # 6.5MM Series
+      - "https://eastonarchery.com/arrows_/6-5mm-axis/"
+      - "https://eastonarchery.com/arrows_/6-5mm-axis-match-grade/"
+      - "https://eastonarchery.com/arrows_/6-5mm-fmj/"
+      - "https://eastonarchery.com/arrows_/6-5mm-fmj-match-grade/"
+      
+      # Other Series
+      - "https://eastonarchery.com/arrows_/bloodline/"
+      - "https://eastonarchery.com/arrows_/deep-six/"
+
+      - "https://eastonarchery.com/arrows_/x7-eclipse/"
+      - "https://eastonarchery.com/arrows_/xx75-platinum-plus/"
+      - "https://eastonarchery.com/arrows_/legendary-x23/"
+      - "https://eastonarchery.com/arrows_/x27/"
+      - "https://eastonarchery.com/arrows_/rx7-the-ultimate-indoor-recurve-arrow-shaft/"
+      - "https://eastonarchery.com/arrows_/a-c-e/"
+      - "https://eastonarchery.com/arrows_/avance-avance-sport/"
+      - "https://eastonarchery.com/arrows_/xx75-jazz/"
+      - "https://eastonarchery.com/arrows_/x7-eclipse/"
+      - "https://eastonarchery.com/arrows_/venture/"
+      - "https://eastonarchery.com/arrows_/vector-arrow/"
+
+
+  "Skylon Archery":
+    base_url: "https://skylonarchery.com/"
+    extraction_method: "text"
+    product_urls:
+      - "https://skylonarchery.com/arrows/benthos"
+      - "https://skylonarchery.com/arrows/diameter-6-2mm-id"
+      - "https://skylonarchery.com/arrows/diameter-5-2mm-id"
+      - "https://skylonarchery.com/arrows/diameter-4-2mm-id"
+      - "https://skylonarchery.com/arrows/diameter-3-2mm-id"
+      - "https://skylonarchery.com/arrows/paragon"
+      - "https://skylonarchery.com/arrows/novice"
+      - "https://skylonarchery.com/arrows/stratos"
+      - "https://skylonarchery.com/arrows/radius"
+      - "https://skylonarchery.com/arrows/frontier"
+      - "https://skylonarchery.com/arrows/crest"
+
+
+  "Gold Tip":
+    base_url: "https://www.goldtip.com/"
+    extraction_method: "text"
+    product_urls:
+      # Target Arrows - From website HTML
+      - "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-pro-target-arrows/GT-XCPROSN.html"
+      - "https://www.goldtip.com/target-arrows/pierce-series/kinetic-pierce-tour-target-arrows/PG3399578.html"
+      - "https://www.goldtip.com/target-arrows/22-series/22-series-pro-target-arrows/GT-22PROSN.html"
+      - "https://www.goldtip.com/target-arrows/triple-x-series/triple-x-pro-target-arrows/GT-TXPROSN.html"
+      - "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-pro-target-arrows/GT-93MAXPROSN.html"
+      - "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-plus-target-arrows/GT-XCSPLUS.html"
+      - "https://www.goldtip.com/target-arrows/triple-x-series/triple-x--plus-target-arrows/GT-TXSPLUS.html"
+      - "https://www.goldtip.com/target-arrows/30x-series/30x-plus-target-arrows/GT-30XSPLUS.html"
+      - "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-plus-target-arrows/GT-93MAXSPLUS.html"
+      - "https://www.goldtip.com/target-arrows/22-series/22-series-plus-target-arrows/GT-22SPLUS.html"
+      - "https://www.goldtip.com/target-arrows/30x-series/30x-pro-target-arrows/GT-30XPROSN.html"
+      
+      # Hunting Arrows - From website HTML
+      - "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-xt-hunting-arrows/P01272.html"
+      - "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-hunting-arrows/P01268.html"
+      - "https://www.goldtip.com/hunting-arrows/specialty-series/ted-nugent-hunting-arrows/P01279.html"
+      - "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-pro-hunting-arrows/P01271.html"
+      - "https://www.goldtip.com/hunting-arrows/airstrike-series/airstrike-hunting-arrows/PG3398796.html"
+      - "https://www.goldtip.com/hunting-arrows/specialty-series/twister-flu-flu-hunting-arrow/P01283.html"
+      - "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-kaos-hunting-arrows/P01276.html"
+      - "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-hunting-arrows/P01275.html"
+      - "https://www.goldtip.com/hunting-arrows/pierce-platinum-hunting-arrows/PG4342808.html"
+      - "https://www.goldtip.com/hunting-arrows/force-foc-high-front-of-center/force-f.o.c.-hunting-arrows/PG3398798.html"
+      - "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-xt-hunting-arrows/P01286.html"
+      - "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-hunting-arrows/P01284.html"
+      - "https://www.goldtip.com/hunting-arrows/pierce-hunting-arrows/PG4392856.html"
+      - "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-pro-hunting-arrows/P01285.html"
+      - "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-hunting-arrows/P01281.html"
+      - "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-hunting-arrows/P01368.html"
+      - "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-xt-hunting-arrows/P01282.html"
+      - "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-xt-hunting-arrows/P01369.html"
+      - "https://www.goldtip.com/hunting-arrows/pierce-lrt-hunting-arrows/PG3997784.html"
+      - "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-quantum-hunting-arrows/PG3398799.html"
+      - "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-hunting-arrows/PG3398797.html"
+    
+  "Victory Archery":
+    base_url: "https://victoryarchery.com/"
+    extraction_method: "vision"  # Uses EasyOCR for spine chart images
+    product_urls:
+      # Hunting Arrows - Extracted from website HTML
+      - "https://victoryarchery.com/arrows-hunting/vap-ss/"
+      - "https://www.victoryarchery.com/arrows-hunting/rip-ss/"
+      - "https://victoryarchery.com/arrows-hunting/vap-tko/"
+      - "https://victoryarchery.com/rip-tko/"
+      - "https://www.victoryarchery.com/arrows-hunting/vf-tko/"
+      - "https://www.victoryarchery.com/arrows-hunting/vap/"
+      - "https://www.victoryarchery.com/arrows-hunting/hlr/"
+      - "https://www.victoryarchery.com/arrows-hunting/rip-xv/"
+      - "https://www.victoryarchery.com/arrows-hunting/rip/"
+      - "https://www.victoryarchery.com/arrows-hunting/vforce/"
+      - "https://www.victoryarchery.com/arrows-hunting/bamboo-trad/"
+      
+      # Target Arrows - Extracted from website HTML
+      - "https://victoryarchery.com/v-tac23/"
+      - "https://victoryarchery.com/arrows-target/v-tac25/"
+      - "https://victoryarchery.com/arrows-target/v-tac27/"
+      - "https://victoryarchery.com/arrows-target/vxt/"
+      - "https://victoryarchery.com/arrows-target/vap/"
+      - "https://victoryarchery.com/arrows-target/3dhv/"
+      - "https://www.victoryarchery.com/arrows-target/vft/"
+      
+  "Nijora Archery":
+    base_url: "https://nijora.com/"
+    extraction_method: "text"
+    language: "german"
+    product_urls:
+      - "https://nijora.com/product/songan/"
+      - "https://nijora.com/product/payat-premium/"
+      - "https://nijora.com/product/payat/"
+      - "https://nijora.com/product/nigan-pro/"
+      - "https://nijora.com/product/nijora-carbon-schaft-mambo/"
+      - "https://nijora.com/product/nijora-carbon-schaft-rumba/"
+      - "https://nijora.com/product/nijora-carbon-schaft-salsa/"
+      - "https://nijora.com/product/nijora-carbon-schaft-samba/"
+      - "https://nijora.com/product/nijora-carbon-schaft-tango/"
+      - "https://nijora.com/product/nijora-carbon-schaft-walzer/"
+      - "https://nijora.com/product/nijora-carbon-schaft-fox-trot/"
+      - "https://nijora.com/product/nijora-wood-carbon-schaft-charleston/"
+      - "https://nijora.com/product/nijora-wood-carbon-schaft-swing/"
+      - "https://nijora.com/product/nijora-grey-panther-300-500/"
+      - "https://nijora.com/product/nijora-grey-panther-600-900/"
+      - "https://nijora.com/product/tokala-long-white-rose/"
+      - "https://nijora.com/product/nijora-grey-panther-500-800/"
+
+  "DK Bow":
+    base_url: "https://dkbow.de/"
+    extraction_method: "text"
+    language: "german"
+    product_urls:
+      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Panther-ID6.2/SW10007"
+      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Cougar-ID4.2/36721"
+      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Tyrfing-ID5.2/418"
+      - "https://dkbow.de/DK-Gungnir-Carbon-Arrow-ID-4.2/SW10006"
+
+  "Fivics":
+    base_url: "https://fivics-usa.com/"
+    extraction_method: "vision"
+    product_urls:
+      - "https://fivics-usa.com/products/five-x-carbon-arrow-shaft"
+      - "https://fivics-usa.com/products/tenpro-carbon-arrow-shaft"
+      - "https://fivics-usa.com/products/goldro-carbon-arrow"
+      - "https://fivics-usa.com/products/zeilo-carbon-arrow"
+
+  "BigArchery":
+    base_url: "https://www.bigarchery.com/gb/"
+    extraction_method: "text"
+    language: "italian"
+    product_urls:
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/282-706-cross-x-shaft-ambitionpoint.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/283-716-cross-x-shaft-helios.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/284-722-cross-x-shaft-ares-hu.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/285-797-cross-x-shaft-gladiator.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/286-724-cross-x-shaft-maior-cube.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/287-731-cross-x-shaft-plurima.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/288-742-cross-x-shaft-ambition-se-point.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/289-752-cross-x-shaft-madera.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/290-755-cross-x-shaft-plurima-cube.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/291-765-cross-x-shaft-exentia.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/292-cross-x-shaft-xxiii-350.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/293-775-cross-x-shaft-hurricane-cube.html"
+      - "https://www.bigarchery.com/gb/shafts_304_274_BC9/295-782-cross-x-shaft-hurricane-octagon.html"
+
+  "Carbon Express":
+    base_url: "https://www.feradyne.com/"
+    extraction_method: "vision"  # Uses EasyOCR for image-based specs
+    product_urls:
+      - "https://www.feradyne.com/product/maxima-sable-rz/"
+      - "https://www.feradyne.com/product/maxima-sable-rz-select/"
+      - "https://www.feradyne.com/product/maxima-photon-sd/"
+      - "https://www.feradyne.com/product/maxima-triad/"
+      - "https://www.feradyne.com/product/d-stroyer/"
+      - "https://www.feradyne.com/product/d-stroyer-mx-hunter/"
+      - "https://www.feradyne.com/product/cx-adrenaline/"
+      - "https://www.feradyne.com/product/thunder-express/"
+      - "https://www.feradyne.com/product/nano-ssp/"
+
+  "Pandarus Archery":
+    base_url: "https://www.pandarusarchery.com/"
+    extraction_method: "text"
+    product_urls:
+      - "https://www.pandarusarchery.com/versus"
+      - "https://www.pandarusarchery.com/alpha-x"
+      - "https://www.pandarusarchery.com/elite_ca320"
+      - "https://www.pandarusarchery.com/elite-xt"
+      - "https://www.pandarusarchery.com/elite-ca320-pro"
+      - "https://www.pandarusarchery.com/elite-ca390"
+      - "https://www.pandarusarchery.com/ice-pointee77bb06"
+      - "https://www.pandarusarchery.com/precision"
+      - "https://www.pandarusarchery.com/alpha-xt"
+      - "https://www.pandarusarchery.com/versus"
+
+  "Aurel Archery": 
+      base_url: "http://aurel-archery.de/"
+      extraction_method: "text"
+      language: "german"
+      product_urls:
+        # Aluminum Series
+        - "http://aurel-archery.de/pfeilschaefte/aurel-agnis-pfeilschaft/"
+
+        # Composite Series
+        - "http://aurel-archery.de/pfeilschaefte/aurel-mantis-pfeilschaft/"
+            
+        # Composite-Carbon-Hybrid Series
+        - "http://aurel-archery.de/pfeilschaefte/aurel-trios-x-pfeilschaft/"
+
+        # Wrapped Full Carbon Series
+        - "http://aurel-archery.de/pfeilschaefte/aurel-agil-pfeilschaft/"
+        - "http://aurel-archery.de/pfeilschaefte/aurel-mako-pfeil/"
+        - "http://aurel-archery.de/pfeilschaefte/aurel-oryx-pfeilschaft/"
+        - "http://aurel-archery.de/pfeilschaefte/aurel-uhyre-pfeilschaft/"
+
+# Global settings
+settings:
+  rate_limit_delay: 2.0  # seconds between requests
+  timeout: 60  # seconds
+  max_retries: 5
+  batch_size: 10  # default batch size for processing
+  
+  # EasyOCR settings for vision extraction
+  easyocr:
+    enabled: true
+    languages: ["en"]
+    confidence_threshold: 0.5
+  
+  # Output settings
+  output:
+    directory: "data/processed"
+    save_images: true
+    image_directory: "data/images"

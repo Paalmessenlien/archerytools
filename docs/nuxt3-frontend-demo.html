@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrowTune - Professional Arrow Selection</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; color: #111827; line-height: 1.6;">
+    <div id="app">
+        <!-- Header -->
+        <header style="background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom: 1px solid #e5e7eb;">
+            <div style="max-width: 80rem; margin: 0 auto; padding: 0 1rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; height: 4rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <svg style="width: 2rem; height: 2rem; color: #2563eb;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="6"/>
+                            <circle cx="12" cy="12" r="2"/>
+                        </svg>
+                        <div>
+                            <h1 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin: 0;">ArrowTune</h1>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0; display: none;" id="subtitle">Professional Arrow Selection</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-btn" style="display: none; padding: 0.5rem; border-radius: 0.5rem; color: #6b7280; background: none; border: none; cursor: pointer;">
+                        <svg id="menu-icon" style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        <svg id="close-icon" style="width: 1.5rem; height: 1.5rem; display: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div style="max-width: 80rem; margin: 0 auto; padding: 1.5rem 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- Navigation Sidebar -->
+                <div id="sidebar" style="width: 100%;">
+                    <div style="background-color: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;">
+                        <nav style="display: flex; gap: 0.5rem; overflow-x: auto;">
+                            <button class="nav-btn active" data-tab="setup" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer; background-color: #dbeafe; color: #1d4ed8; font-weight: 500;">
+                                <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1v6m0 6v6"/>
+                                    <path d="m15.14 8.86 4.24-4.24"/>
+                                    <path d="m4.86 19.14 4.24-4.24"/>
+                                    <path d="m8.86 8.86-4.24-4.24"/>
+                                    <path d="m19.14 19.14-4.24-4.24"/>
+                                </svg>
+                                <span>Bow Setup</span>
+                            </button>
+                            <button class="nav-btn" data-tab="recommendations" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer; background: none; color: #6b7280;">
+                                <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7l7 7-7 7"/>
+                                </svg>
+                                <span>Recommendations</span>
+                            </button>
+                            <button class="nav-btn" data-tab="database" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer; background: none; color: #6b7280;">
+                                <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="m21 21-4.35-4.35"/>
+                                </svg>
+                                <span>Database</span>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div style="flex: 1;">
+                    <!-- Bow Setup Tab -->
+                    <div id="setup-tab" class="tab-content" style="background-color: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;">
+                        <h2 style="font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Bow Configuration</h2>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                            <!-- Bow Type -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Bow Type</label>
+                                <select id="bowType" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="compound">Compound</option>
+                                    <option value="recurve">Recurve</option>
+                                    <option value="longbow">Longbow</option>
+                                    <option value="traditional">Traditional</option>
+                                </select>
+                            </div>
+
+                            <!-- Draw Weight -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                    Draw Weight: <span id="drawWeightValue" style="font-weight: 600; color: #2563eb;">45 lbs</span>
+                                </label>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input id="drawWeight" type="range" min="20" max="80" step="1" value="45" style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; outline: none; cursor: pointer;" />
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                        <span>20 lbs</span>
+                                        <span>80 lbs</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Draw Length -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                    Draw Length: <span id="drawLengthValue" style="font-weight: 600; color: #2563eb;">28"</span>
+                                </label>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input id="drawLength" type="range" min="24" max="32" step="0.5" value="28" style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; outline: none; cursor: pointer;" />
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                        <span>24"</span>
+                                        <span>32"</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Arrow Length -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                    Arrow Length: <span id="arrowLengthValue" style="font-weight: 600; color: #2563eb;">29"</span>
+                                </label>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input id="arrowLength" type="range" min="24" max="34" step="0.25" value="29" style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; outline: none; cursor: pointer;" />
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                        <span>24"</span>
+                                        <span>34"</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Arrow Material -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Arrow Material</label>
+                                <select id="arrowMaterial" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="carbon">Carbon</option>
+                                    <option value="aluminum">Aluminum</option>
+                                    <option value="wood">Wood</option>
+                                    <option value="fiberglass">Fiberglass</option>
+                                    <option value="carbon-aluminum">Carbon/Aluminum</option>
+                                </select>
+                            </div>
+
+                            <!-- Arrow Rest Type (only for compound) -->
+                            <div id="arrowRestDiv">
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Arrow Rest Type</label>
+                                <select id="arrowRestType" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="drop-away">Drop Away</option>
+                                    <option value="whisker-biscuit">Whisker Biscuit</option>
+                                    <option value="blade">Blade Rest</option>
+                                </select>
+                            </div>
+
+                            <!-- Nock Type -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Nock Type</label>
+                                <select id="nockType" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="pin" selected>Pin Nock</option>
+                                    <option value="press-fit">Press-Fit</option>
+                                    <option value="over-nock">Over Nock</option>
+                                    <option value="lighted">Lighted Nock</option>
+                                    <option value="half-moon">Half-Moon</option>
+                                </select>
+                            </div>
+
+                            <!-- Vane Type -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Vane Type</label>
+                                <select id="vaneType" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="plastic" selected>Plastic Vanes</option>
+                                    <option value="feather">Natural Feathers</option>
+                                    <option value="hybrid">Hybrid Vanes</option>
+                                    <option value="blazer">Blazer Vanes</option>
+                                    <option value="helical">Helical Vanes</option>
+                                </select>
+                            </div>
+
+                            <!-- Vane Length -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                    Vane Length: <span id="vaneLengthValue" style="font-weight: 600; color: #2563eb;">4"</span>
+                                </label>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input id="vaneLength" type="range" min="2" max="5" step="0.25" value="4" style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; outline: none; cursor: pointer;" />
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                        <span>2"</span>
+                                        <span>5"</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Number of Vanes -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Number of Vanes</label>
+                                <select id="numberOfVanes" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="3" selected>3 Vanes</option>
+                                    <option value="4">4 Vanes</option>
+                                </select>
+                            </div>
+
+                            <!-- Point Weight -->
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Point Weight (grains)</label>
+                                <select id="pointWeight" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 1rem; background-color: white;">
+                                    <option value="75">75</option>
+                                    <option value="100" selected>100</option>
+                                    <option value="125">125</option>
+                                    <option value="150">150</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Calculated Specifications -->
+                        <div style="margin-top: 2rem; padding: 1rem; background-color: #eff6ff; border-radius: 0.75rem;">
+                            <h3 style="font-weight: 500; color: #1e3a8a; margin-bottom: 0.5rem;">Calculated Specifications</h3>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; color: #1d4ed8;">
+                                <div>
+                                    <p style="margin: 0;">Recommended Spine: <span id="recommendedSpine" style="font-weight: 600;">340</span></p>
+                                </div>
+                                <div>
+                                    <p style="margin: 0;">Arrow Setup: <span id="arrowSetup" style="font-weight: 600;">Pin Nock / 3x 4" Plastic Vanes</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Available Arrows for Configuration -->
+                        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.75rem;">
+                            <h3 style="font-weight: 500; color: #111827; margin-bottom: 0.75rem;">Available Arrows for Your Configuration</h3>
+                            <div id="compatibleArrowsContainer">
+                                <!-- Compatible arrows will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations Tab -->
+                    <div id="recommendations-tab" class="tab-content" style="background-color: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; display: none;">
+                        <h2 style="font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1rem;">Recommended Arrows</h2>
+                        <p id="recommendationsSubtitle" style="color: #6b7280; margin-bottom: 1.5rem;">
+                            Based on your bow configuration: 45lbs @ 28"
+                        </p>
+                        <div id="recommendationsContainer">
+                            <!-- Recommendations will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Database Tab -->
+                    <div id="database-tab" class="tab-content" style="background-color: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; display: none;">
+                        <h2 style="font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Arrow Database</h2>
+                        
+                        <!-- Filters -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <input id="filterManufacturer" type="text" placeholder="Manufacturer" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                            <input id="filterMinDiameter" type="number" placeholder="Min Diameter" step="0.001" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                            <input id="filterMaxDiameter" type="number" placeholder="Max Diameter" step="0.001" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                            <input id="filterMinWeight" type="number" placeholder="Min Weight" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                            <input id="filterMaxWeight" type="number" placeholder="Max Weight" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                            <input id="filterSpine" type="text" placeholder="Spine" style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;" />
+                        </div>
+
+                        <!-- Results -->
+                        <div>
+                            <p id="resultsCount" style="color: #6b7280; margin-bottom: 1rem;">Showing 12 of 12 arrows</p>
+                            <div id="arrowsContainer">
+                                <!-- Arrow results will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Basic styles */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .nav-btn:hover:not(.active) { background-color: #f3f4f6 !important; }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        @media (min-width: 640px) {
+            #subtitle { display: block !important; }
+        }
+
+        @media (max-width: 768px) {
+            #mobile-menu-btn { display: block !important; }
+        }
+
+        @media (min-width: 768px) {
+            #setup-tab > div:first-child { grid-template-columns: repeat(2, 1fr) !important; }
+            .specifications-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+
+        @media (min-width: 1024px) {
+            .main-container { flex-direction: row !important; }
+            #sidebar { width: 16rem !important; }
+        }
+    </style>
+
+    <script>
+        // Arrow database with compatibility data
+        const arrowDatabase = [
+            {
+                id: 1, manufacturer: 'Easton', model: 'Bloodline', diameter: 0.246, weight: 8.2, spine: 340, material: 'Carbon', price: 12.99, recommended: true,
+                nockCompatibility: ['pin', 'press-fit', 'lighted'], vaneCompatibility: ['plastic', 'feather', 'hybrid', 'blazer']
+            },
+            {
+                id: 2, manufacturer: 'Gold Tip', model: 'Hunter XT', diameter: 0.244, weight: 8.5, spine: 340, material: 'Carbon', price: 9.99, recommended: true,
+                nockCompatibility: ['pin', 'press-fit', 'lighted'], vaneCompatibility: ['plastic', 'feather', 'hybrid', 'blazer']
+            },
+            {
+                id: 3, manufacturer: 'Carbon Express', model: 'Maxima Red', diameter: 0.203, weight: 9.1, spine: 350, material: 'Carbon', price: 11.49, recommended: false,
+                nockCompatibility: ['pin', 'press-fit'], vaneCompatibility: ['plastic', 'hybrid', 'blazer']
+            },
+            {
+                id: 4, manufacturer: 'Easton', model: 'Axis', diameter: 0.204, weight: 8.8, spine: 340, material: 'Carbon', price: 14.99, recommended: true,
+                nockCompatibility: ['pin', 'press-fit', 'lighted'], vaneCompatibility: ['plastic', 'feather', 'hybrid', 'blazer']
+            },
+            {
+                id: 5, manufacturer: 'Victory', model: 'VAP Elite', diameter: 0.166, weight: 6.2, spine: 350, material: 'Carbon', price: 16.99, recommended: false,
+                nockCompatibility: ['pin', 'press-fit'], vaneCompatibility: ['plastic', 'hybrid', 'blazer']
+            },
+            {
+                id: 6, manufacturer: 'Black Eagle', model: 'Rampage', diameter: 0.245, weight: 8.7, spine: 300, material: 'Carbon', price: 13.99, recommended: true,
+                nockCompatibility: ['pin', 'press-fit', 'lighted'], vaneCompatibility: ['plastic', 'feather', 'hybrid', 'blazer']
+            },
+            {
+                id: 7, manufacturer: 'Easton', model: 'Gamegetter', diameter: 0.244, weight: 9.5, spine: 340, material: 'Aluminum', price: 7.99, recommended: false,
+                nockCompatibility: ['pin', 'press-fit'], vaneCompatibility: ['plastic', 'feather']
+            },
+            {
+                id: 8, manufacturer: 'Goldtip', model: 'Traditional', diameter: 0.246, weight: 8.8, spine: '45-50', material: 'Wood', price: 4.99, recommended: false,
+                nockCompatibility: ['over-nock', 'half-moon'], vaneCompatibility: ['feather']
+            },
+            {
+                id: 9, manufacturer: 'Easton', model: 'XX75', diameter: 0.244, weight: 8.2, spine: 1916, material: 'Aluminum', price: 6.99, recommended: false,
+                nockCompatibility: ['pin', 'press-fit'], vaneCompatibility: ['plastic', 'feather']
+            },
+            {
+                id: 10, manufacturer: 'Rose City', model: 'Port Orford Cedar', diameter: 0.246, weight: 8.5, spine: '50-55', material: 'Wood', price: 3.99, recommended: false,
+                nockCompatibility: ['over-nock', 'half-moon'], vaneCompatibility: ['feather']
+            },
+            {
+                id: 11, manufacturer: 'Surewood', model: 'Douglas Fir', diameter: 0.250, weight: 9.2, spine: '55-60', material: 'Wood', price: 3.49, recommended: false,
+                nockCompatibility: ['over-nock', 'half-moon'], vaneCompatibility: ['feather']
+            },
+            {
+                id: 12, manufacturer: 'Traditional Only', model: 'Cedar', diameter: 0.244, weight: 8.0, spine: '35-40', material: 'Wood', price: 4.49, recommended: false,
+                nockCompatibility: ['over-nock', 'half-moon'], vaneCompatibility: ['feather']
+            }
+        ];
+
+        // Bow configuration
+        let bowConfig = {
+            drawWeight: 45, drawLength: 28, arrowLength: 29, bowType: 'compound', arrowMaterial: 'carbon',
+            arrowRestType: 'drop-away', pointWeight: 100, nockType: 'pin', vaneType: 'plastic', vaneLength: 4, numberOfVanes: 3
+        };
+
+        // Filters
+        let filters = { manufacturer: '', minDiameter: '', maxDiameter: '', minWeight: '', maxWeight: '', spine: '' };
+
+        // Calculate recommended spine
+        function calculateRecommendedSpine() {
+            const { drawWeight, drawLength, bowType, arrowMaterial } = bowConfig;
+            
+            if (bowType === 'longbow' && arrowMaterial === 'wood') {
+                if (drawWeight <= 30) return '25-30';
+                if (drawWeight <= 35) return '30-35';
+                if (drawWeight <= 40) return '35-40';
+                if (drawWeight <= 45) return '40-45';
+                if (drawWeight <= 50) return '45-50';
+                if (drawWeight <= 55) return '50-55';
+                if (drawWeight <= 60) return '55-60';
+                if (drawWeight <= 65) return '60-65';
+                if (drawWeight <= 70) return '65-70';
+                return '70-75';
+            }
+            
+            const baseSpine = Math.round((drawWeight * 5) + (drawLength * 10));
+            return Math.round(baseSpine / 10) * 10;
+        }
+
+        // Calculate compatibility
+        function calculateCompatibility(arrowSpine, recommendedSpine) {
+            if (typeof recommendedSpine === 'string' && typeof arrowSpine === 'string') {
+                try {
+                    const recSpineRange = recommendedSpine.split('-').map(s => parseInt(s));
+                    const arrowSpineRange = arrowSpine.split('-').map(s => parseInt(s));
+                    const recMin = recSpineRange[0], recMax = recSpineRange[1];
+                    const arrMin = arrowSpineRange[0], arrMax = arrowSpineRange[1];
+                    
+                    if (arrMin <= recMax && arrMax >= recMin) return 'Excellent';
+                    if (Math.abs(recMin - arrMax) <= 5 || Math.abs(arrMin - recMax) <= 5) return 'Good';
+                    return 'Poor';
+                } catch { return 'Poor'; }
+            }
+            
+            if (typeof recommendedSpine === 'number' && typeof arrowSpine === 'number') {
+                const diff = Math.abs(arrowSpine - recommendedSpine);
+                if (diff <= 20) return 'Excellent';
+                if (diff <= 50) return 'Good';
+                return 'Poor';
+            }
+            return 'Poor';
+        }
+
+        // Filter arrows
+        function getFilteredArrows() {
+            return arrowDatabase.filter(arrow => {
+                if (filters.manufacturer && !arrow.manufacturer.toLowerCase().includes(filters.manufacturer.toLowerCase())) return false;
+                if (filters.minDiameter && arrow.diameter < parseFloat(filters.minDiameter)) return false;
+                if (filters.maxDiameter && arrow.diameter > parseFloat(filters.maxDiameter)) return false;
+                if (filters.minWeight && arrow.weight < parseFloat(filters.minWeight)) return false;
+                if (filters.maxWeight && arrow.weight > parseFloat(filters.maxWeight)) return false;
+                if (filters.spine && arrow.spine.toString() !== filters.spine) return false;
+                
+                if (bowConfig.arrowMaterial !== 'carbon' && arrow.material.toLowerCase() !== bowConfig.arrowMaterial.toLowerCase()) {
+                    if (bowConfig.arrowMaterial === 'carbon-aluminum' && arrow.material.toLowerCase() !== 'carbon/aluminum') return false;
+                    else if (bowConfig.arrowMaterial !== 'carbon-aluminum' && arrow.material.toLowerCase() !== bowConfig.arrowMaterial.toLowerCase()) return false;
+                }
+
+                if (!arrow.nockCompatibility.includes(bowConfig.nockType)) return false;
+                if (!arrow.vaneCompatibility.includes(bowConfig.vaneType)) return false;
+                
+                return true;
+            });
+        }
+
+        // Get recommended arrows
+        function getRecommendedArrows() {
+            return arrowDatabase.filter(arrow => {
+                if (!arrow.recommended) return false;
+                if (bowConfig.arrowMaterial !== 'carbon' && arrow.material.toLowerCase() !== bowConfig.arrowMaterial.toLowerCase()) return false;
+                if (!arrow.nockCompatibility.includes(bowConfig.nockType)) return false;
+                if (!arrow.vaneCompatibility.includes(bowConfig.vaneType)) return false;
+                return true;
+            });
+        }
+
+        // Create compact arrow display
+        function createCompactArrowDisplay(arrow, compatibility) {
+            const badgeColors = {
+                'Excellent': 'background-color: #dcfce7; color: #166534;',
+                'Good': 'background-color: #fef3c7; color: #92400e;',
+                'Poor': 'background-color: #fee2e2; color: #991b1b;'
+            };
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background-color: white; border-radius: 0.5rem; border: 1px solid #e5e7eb; margin-bottom: 0.5rem;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div>
+                                <h4 style="font-weight: 500; color: #111827; margin: 0;">${arrow.manufacturer} ${arrow.model}</h4>
+                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0;">${arrow.material} • Spine: ${arrow.spine} • ${arrow.price}</p>
+                            </div>
+                            ${arrow.recommended ? '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">Recommended</span>' : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <span style="display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; ${badgeColors[compatibility] || badgeColors['Poor']}">
+                            ${compatibility}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create arrow card
+        function createArrowCard(arrow, showRecommendationBadge = false, showMatchPercentage = false) {
+            const recommendedSpine = calculateRecommendedSpine();
+            const compatibility = calculateCompatibility(arrow.spine, recommendedSpine);
+            const matchPercentage = compatibility === 'Excellent' ? 95 : compatibility === 'Good' ? 75 : 50;
+            
+            const compatibilityColors = {
+                'Excellent': 'color: #16a34a;',
+                'Good': 'color: #ca8a04;',
+                'Poor': 'color: #dc2626;'
+            };
+
+            return `
+                <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0;">${arrow.manufacturer} ${arrow.model}</h3>
+                            <p style="color: #6b7280; margin: 0;">Spine: ${arrow.spine}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-weight: 600; color: #2563eb; margin: 0;">${arrow.price}</p>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
+                                ${showRecommendationBadge ? '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">Recommended</span>' : ''}
+                                ${showMatchPercentage ? `<p style="font-size: 0.875rem; color: #6b7280; margin: 0;">${matchPercentage}% match</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 0.75rem; font-size: 0.875rem;">
+                        <div>
+                            <span style="color: #6b7280;">Diameter:</span>
+                            <p style="font-weight: 500; margin: 0;">${arrow.diameter}"</p>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">Weight:</span>
+                            <p style="font-weight: 500; margin: 0;">${arrow.weight} GPI</p>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">Material:</span>
+                            <p style="font-weight: 500; margin: 0;">${arrow.material}</p>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">Compatibility:</span>
+                            <p style="font-weight: 500; margin: 0; ${compatibilityColors[compatibility] || compatibilityColors['Poor']}">${compatibility}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update functions
+        function updateRecommendedSpine() {
+            document.getElementById('recommendedSpine').textContent = calculateRecommendedSpine();
+        }
+
+        function updateArrowSetup() {
+            const nockTypes = { 'pin': 'Pin Nock', 'press-fit': 'Press-Fit', 'over-nock': 'Over Nock', 'lighted': 'Lighted Nock', 'half-moon': 'Half-Moon' };
+            const vaneTypes = { 'plastic': 'Plastic Vanes', 'feather': 'Natural Feathers', 'hybrid': 'Hybrid Vanes', 'blazer': 'Blazer Vanes', 'helical': 'Helical Vanes' };
+            
+            const nockType = nockTypes[bowConfig.nockType] || 'Pin Nock';
+            const vaneType = vaneTypes[bowConfig.vaneType] || 'Plastic Vanes';
+            const setupText = `${nockType} / ${bowConfig.numberOfVanes}x ${bowConfig.vaneLength}" ${vaneType}`;
+            
+            document.getElementById('arrowSetup').textContent = setupText;
+            updateCompatibleArrows();
+        }
+
+        function updateCompatibleArrows() {
+            const compatibleArrows = getFilteredArrows();
+            const recommendedSpine = calculateRecommendedSpine();
+            const container = document.getElementById('compatibleArrowsContainer');
+            
+            if (compatibleArrows.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 1rem;">
+                        <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">No arrows compatible with your current configuration.</p>
+                        <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">Try adjusting your nock type, vane type, or arrow material.</p>
+                    </div>
+                `;
+            } else {
+                const sortedArrows = compatibleArrows
+                    .map(arrow => ({ ...arrow, compatibility: calculateCompatibility(arrow.spine, recommendedSpine) }))
+                    .sort((a, b) => {
+                        if (a.recommended && !b.recommended) return -1;
+                        if (!a.recommended && b.recommended) return 1;
+                        const compatibilityOrder = { 'Excellent': 3, 'Good': 2, 'Poor': 1 };
+                        return compatibilityOrder[b.compatibility] - compatibilityOrder[a.compatibility];
+                    });
+
+                container.innerHTML = `
+                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
+                        Showing ${compatibleArrows.length} compatible arrow${compatibleArrows.length !== 1 ? 's' : ''} (sorted by recommendation and compatibility)
+                    </div>
+                    ${sortedArrows.slice(0, 6).map(arrow => createCompactArrowDisplay(arrow, arrow.compatibility)).join('')}
+                    ${compatibleArrows.length > 6 ? `
+                        <div style="text-align: center; padding-top: 0.5rem;">
+                            <p style="font-size: 0.75rem; color: #6b7280; margin: 0;">+ ${compatibleArrows.length - 6} more arrows available</p>
+                        </div>
+                    ` : ''}
+                `;
+            }
+        }
+
+        function updateArrowRestVisibility() {
+            const arrowRestDiv = document.getElementById('arrowRestDiv');
+            arrowRestDiv.style.display = bowConfig.bowType === 'compound' ? 'block' : 'none';
+        }
+
+        function updateRecommendations() {
+            const recommendations = getRecommendedArrows();
+            const container = document.getElementById('recommendationsContainer');
+            const subtitle = document.getElementById('recommendationsSubtitle');
+            
+            subtitle.textContent = `Based on your bow configuration: ${bowConfig.drawWeight}lbs @ ${bowConfig.drawLength}"`;
+            
+            if (recommendations.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: #6b7280; margin: 0;">No recommended arrows found for your current configuration.</p>
+                        <p style="font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem;">Try adjusting your bow settings or arrow material.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = recommendations.map(arrow => createArrowCard(arrow, true, true)).join('');
+            }
+        }
+
+        function updateDatabase() {
+            const filteredArrows = getFilteredArrows();
+            const container = document.getElementById('arrowsContainer');
+            const count = document.getElementById('resultsCount');
+            
+            count.textContent = `Showing ${filteredArrows.length} of ${arrowDatabase.length} arrows`;
+            
+            if (filteredArrows.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: #6b7280; margin: 0;">No arrows found matching your criteria.</p>
+                        <p style="font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem;">Try adjusting your filters.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = filteredArrows.map(arrow => createArrowCard(arrow, arrow.recommended, false)).join('');
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.style.backgroundColor = '';
+                btn.style.color = '#6b7280';
+                btn.style.fontWeight = '';
+            });
+            
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.style.backgroundColor = '#dbeafe';
+            activeBtn.style.color = '#1d4ed8';
+            activeBtn.style.fontWeight = '500';
+            
+            if (tabName === 'recommendations') updateRecommendations();
+            else if (tabName === 'database') updateDatabase();
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.getAttribute('data-tab'));
+                });
+            });
+
+            // Sliders
+            document.getElementById('drawWeight').addEventListener('input', function() {
+                bowConfig.drawWeight = parseInt(this.value);
+                document.getElementById('drawWeightValue').textContent = `${this.value} lbs`;
+                updateRecommendedSpine();
+            });
+
+            document.getElementById('drawLength').addEventListener('input', function() {
+                bowConfig.drawLength = parseFloat(this.value);
+                document.getElementById('drawLengthValue').textContent = `${this.value}"`;
+                updateRecommendedSpine();
+            });
+
+            document.getElementById('arrowLength').addEventListener('input', function() {
+                bowConfig.arrowLength = parseFloat(this.value);
+                document.getElementById('arrowLengthValue').textContent = `${this.value}"`;
+            });
+
+            document.getElementById('vaneLength').addEventListener('input', function() {
+                bowConfig.vaneLength = parseFloat(this.value);
+                document.getElementById('vaneLengthValue').textContent = `${this.value}"`;
+                updateArrowSetup();
+            });
+
+            // Selects
+            document.getElementById('bowType').addEventListener('change', function() {
+                bowConfig.bowType = this.value;
+                updateArrowRestVisibility();
+                updateRecommendedSpine();
+            });
+
+            document.getElementById('arrowMaterial').addEventListener('change', function() {
+                bowConfig.arrowMaterial = this.value;
+                updateRecommendedSpine();
+                updateCompatibleArrows();
+            });
+
+            document.getElementById('arrowRestType').addEventListener('change', function() {
+                bowConfig.arrowRestType = this.value;
+            });
+
+            document.getElementById('pointWeight').addEventListener('change', function() {
+                bowConfig.pointWeight = parseInt(this.value);
+            });
+
+            document.getElementById('nockType').addEventListener('change', function() {
+                bowConfig.nockType = this.value;
+                updateArrowSetup();
+            });
+
+            document.getElementById('vaneType').addEventListener('change', function() {
+                bowConfig.vaneType = this.value;
+                updateArrowSetup();
+            });
+
+            document.getElementById('numberOfVanes').addEventListener('change', function() {
+                bowConfig.numberOfVanes = parseInt(this.value);
+                updateArrowSetup();
+            });
+
+            // Filters
+            ['filterManufacturer', 'filterMinDiameter', 'filterMaxDiameter', 'filterMinWeight', 'filterMaxWeight', 'filterSpine'].forEach(id => {
+                const element = document.getElementById(id);
+                const filterKey = id.replace('filter', '').toLowerCase();
+                const actualKey = filterKey === 'mindiameter' ? 'minDiameter' :
+                                filterKey === 'maxdiameter' ? 'maxDiameter' :
+                                filterKey === 'minweight' ? 'minWeight' :
+                                filterKey === 'maxweight' ? 'maxWeight' : filterKey;
+                
+                element.addEventListener('input', function() {
+                    filters[actualKey] = this.value;
+                    updateDatabase();
+                });
+            });
+
+            // Initial setup
+            updateArrowRestVisibility();
+            updateRecommendedSpine();
+            updateArrowSetup();
+            updateDatabase();
+        });
+    </script>
+</body>
+</html>

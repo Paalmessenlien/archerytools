@@ -1,0 +1,684 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900 leading-relaxed transition-colors duration-300;
+  }
+  
+  /* Dark mode body */
+  .dark body {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100;
+  }
+  
+  /* Material Design 3 Light Theme Colors */
+  :root {
+    --md-sys-color-primary: #4f46e5;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #e0e7ff;
+    --md-sys-color-on-primary-container: #1e1b4b;
+    --md-sys-color-secondary: #7c3aed;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #ede9fe;
+    --md-sys-color-on-secondary-container: #581c87;
+    --md-sys-color-surface: #fefefe;
+    --md-sys-color-on-surface: #1a1a1a;
+    --md-sys-color-surface-variant: #f8fafc;
+    --md-sys-color-on-surface-variant: #64748b;
+    --md-sys-color-outline: #cbd5e1;
+    --md-sys-color-outline-variant: #e2e8f0;
+  }
+  
+  /* Material Design 3 Dark Theme Colors */
+  .dark:root {
+    --md-sys-color-primary: #a78bfa;
+    --md-sys-color-on-primary: #1e1b4b;
+    --md-sys-color-primary-container: #312e81;
+    --md-sys-color-on-primary-container: #e0e7ff;
+    --md-sys-color-secondary: #c4b5fd;
+    --md-sys-color-on-secondary: #581c87;
+    --md-sys-color-secondary-container: #7c3aed;
+    --md-sys-color-on-secondary-container: #ede9fe;
+    --md-sys-color-surface: #1f1f1f;
+    --md-sys-color-on-surface: #e5e5e5;
+    --md-sys-color-surface-variant: #2d2d2d;
+    --md-sys-color-on-surface-variant: #9ca3af;
+    --md-sys-color-outline: #4b5563;
+    --md-sys-color-outline-variant: #374151;
+  }
+}
+
+@layer components {
+  /* Primary text color utility */
+  .text-primary {
+    @apply text-indigo-600;
+  }
+  
+  /* Glassmorphism card effect */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
+  }
+  
+  .btn-primary {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 shadow-md hover:shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200;
+  }
+  
+  .dark .btn-secondary {
+    @apply border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 focus:ring-blue-400;
+  }
+  
+  .card {
+    @apply bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/30;
+  }
+  
+  /* Dark mode card styling */
+  .dark .card {
+    @apply bg-gray-800/90 border-gray-700/30 shadow-gray-900/20;
+  }
+  
+  .card-hover {
+    @apply card hover:shadow-medium transition-shadow duration-200;
+  }
+  
+  .dark .card-hover {
+    @apply hover:shadow-gray-900/40;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+  }
+  
+  /* Dark mode input field styling */
+  .dark .input-field {
+    @apply bg-gray-800 border-gray-600 text-gray-100 focus:ring-blue-400 focus:border-blue-400;
+  }
+  
+  .select-field {
+    @apply input-field bg-white cursor-pointer;
+  }
+  
+  .dark .select-field {
+    @apply bg-gray-800 text-gray-100;
+  }
+  
+  .slider-range {
+    @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .dark .slider-range {
+    @apply bg-gray-700 focus:ring-blue-400;
+  }
+  
+  .nav-tab {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 whitespace-nowrap border-none cursor-pointer bg-transparent text-gray-600 hover:bg-gray-100;
+  }
+  
+  /* Dark mode nav-tab styling */
+  .dark .nav-tab {
+    @apply text-gray-300 hover:bg-gray-700 hover:text-gray-100;
+  }
+  
+  .nav-tab.active {
+    @apply bg-blue-100 text-blue-700 font-medium;
+  }
+  
+  .dark .nav-tab.active {
+    @apply bg-blue-900/50 text-blue-300 font-medium;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+  
+  .dark .badge-success {
+    @apply bg-green-900/30 text-green-300;
+  }
+  
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800;
+  }
+  
+  .dark .badge-warning {
+    @apply bg-yellow-900/30 text-yellow-300;
+  }
+  
+  .badge-error {
+    @apply badge bg-red-100 text-red-800;
+  }
+  
+  .dark .badge-error {
+    @apply bg-red-900/30 text-red-300;
+  }
+  
+  .compatibility-excellent {
+    @apply text-green-600 font-medium;
+  }
+  
+  .dark .compatibility-excellent {
+    @apply text-green-400;
+  }
+  
+  .compatibility-good {
+    @apply text-yellow-600 font-medium;
+  }
+  
+  .dark .compatibility-good {
+    @apply text-yellow-400;
+  }
+  
+  .compatibility-poor {
+    @apply text-red-600 font-medium;
+  }
+  
+  .dark .compatibility-poor {
+    @apply text-red-400;
+  }
+}
+
+/* Custom slider styles */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+/* Animation classes */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Material Web Component Styles */
+md-filled-select {
+  --md-filled-select-text-field-container-height: 56px;
+  --md-filled-select-text-field-label-text-font: 'Roboto';
+  --md-filled-select-text-field-input-text-font: 'Roboto';
+  --md-filled-select-text-field-supporting-text-font: 'Roboto';
+  width: 100%;
+}
+
+md-slider {
+  --md-slider-handle-height: 20px;
+  --md-slider-handle-width: 20px;
+  --md-slider-active-track-height: 6px;
+  --md-slider-inactive-track-height: 4px;
+  width: 100%;
+}
+
+md-elevated-card {
+  --md-elevated-card-container-color: #ffffff;
+  --md-elevated-card-container-elevation: 1;
+  border-radius: 12px;
+  width: 100%;
+}
+
+/* Dark mode Material Web components */
+.dark md-elevated-card {
+  --md-elevated-card-container-color: #1f2937;
+}
+
+.dark md-filled-select {
+  --md-filled-select-text-field-container-color: #374151;
+  --md-filled-select-text-field-input-text-color: #f9fafb;
+  --md-filled-select-text-field-label-text-color: #d1d5db;
+  --md-filled-select-text-field-supporting-text-color: #9ca3af;
+  --md-filled-select-text-field-outline-color: #4b5563;
+  --md-filled-select-text-field-focus-outline-color: #60a5fa;
+  --md-filled-select-text-field-hover-outline-color: #6b7280;
+  --md-filled-select-text-field-disabled-container-color: #374151;
+  --md-filled-select-text-field-disabled-input-text-color: #6b7280;
+  
+  /* Menu/dropdown specific colors */
+  --md-menu-container-color: #1f2937;
+  --md-menu-container-elevation: 3;
+  --md-menu-item-container-color: transparent;
+  --md-menu-item-label-text-color: #f9fafb;
+  --md-menu-item-hover-state-layer-color: #374151;
+  --md-menu-item-focus-state-layer-color: #374151;
+  --md-menu-item-pressed-state-layer-color: #4b5563;
+  
+  /* Select option colors */
+  --md-select-option-container-color: transparent;
+  --md-select-option-label-text-color: #f9fafb;
+  --md-select-option-hover-state-layer-color: #374151;
+  --md-select-option-focus-state-layer-color: #374151;
+  --md-select-option-pressed-state-layer-color: #4b5563;
+  --md-select-option-selected-container-color: #374151;
+  --md-select-option-selected-label-text-color: #60a5fa;
+}
+
+.dark md-outlined-text-field {
+  --md-outlined-text-field-container-color: transparent;
+  --md-outlined-text-field-input-text-color: #f9fafb;
+  --md-outlined-text-field-label-text-color: #d1d5db;
+  --md-outlined-text-field-outline-color: #4b5563;
+}
+
+.dark md-slider {
+  --md-slider-active-track-color: #a78bfa;
+  --md-slider-handle-color: #a78bfa;
+  --md-slider-inactive-track-color: #4b5563;
+}
+
+/* Ensure Material components work with Tailwind */
+md-filled-select,
+md-outlined-text-field,
+md-slider,
+md-elevated-card,
+md-filled-button,
+md-outlined-button,
+md-text-button,
+md-chip-set,
+md-assist-chip,
+md-filter-chip,
+md-linear-progress,
+md-divider,
+md-icon {
+  display: block;
+}
+
+/* Material Web button styling */
+md-filled-button,
+md-outlined-button,
+md-text-button {
+  --md-filled-button-container-height: 40px;
+  --md-outlined-button-container-height: 40px;
+  --md-text-button-container-height: 40px;
+}
+
+/* Material Web chip styling */
+md-chip-set {
+  --md-chip-set-container-space: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+md-assist-chip {
+  --md-assist-chip-container-height: 32px;
+}
+
+/* Material Web progress styling */
+md-linear-progress {
+  --md-linear-progress-track-height: 4px;
+  width: 100%;
+}
+
+/* Material Web icon styling */
+md-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Additional dark mode Material Web components */
+.dark md-menu {
+  --md-menu-container-color: #1f2937;
+  --md-menu-container-surface-tint-layer-color: #60a5fa;
+}
+
+.dark md-menu-item {
+  --md-menu-item-label-text-color: #f9fafb;
+  --md-menu-item-hover-state-layer-color: #374151;
+  --md-menu-item-focus-state-layer-color: #374151;
+  --md-menu-item-pressed-state-layer-color: #4b5563;
+}
+
+.dark md-select-option {
+  --md-select-option-label-text-color: #f9fafb;
+  --md-select-option-hover-state-layer-color: #374151;
+  --md-select-option-focus-state-layer-color: #374151;
+  --md-select-option-pressed-state-layer-color: #4b5563;
+  --md-select-option-selected-container-color: #374151;
+  --md-select-option-selected-label-text-color: #60a5fa;
+}
+
+/* Force dark mode styles for Material Web component internals */
+.dark md-filled-select::part(menu) {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark md-select-option::part(button) {
+  background-color: transparent !important;
+  color: #f9fafb !important;
+}
+
+.dark md-select-option:hover::part(button) {
+  background-color: #374151 !important;
+}
+
+.dark md-select-option[selected]::part(button) {
+  background-color: #374151 !important;
+  color: #60a5fa !important;
+}
+
+/* Fallback using global dark mode styles for Material Web elements */
+.dark md-filled-select,
+.dark md-filled-select *,
+.dark md-menu,
+.dark md-menu *,
+.dark md-select-option,
+.dark md-select-option * {
+  color: #f9fafb !important;
+}
+
+.dark md-select-option[slot="headline"] {
+  color: #f9fafb !important;
+}
+
+/* Material Web text field styling */
+md-outlined-text-field {
+  --md-outlined-text-field-container-height: 56px;
+  --md-outlined-text-field-label-text-font: 'Roboto';
+  --md-outlined-text-field-input-text-font: 'Roboto';
+  --md-outlined-text-field-supporting-text-font: 'Roboto';
+  width: 100%;
+}
+
+/* Font Awesome icon styling */
+.fa-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Custom light theme overrides */
+.light-surface {
+  @apply bg-white/95 backdrop-blur-sm;
+}
+
+.light-elevation {
+  @apply shadow-lg shadow-indigo-100/50;
+}
+
+/* Dark mode overrides */
+.dark .light-surface {
+  @apply bg-gray-800/95 backdrop-blur-sm;
+}
+
+.dark .light-elevation {
+  @apply shadow-lg shadow-gray-900/50;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+/* Enhanced button styles */
+.btn-gradient {
+  @apply bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+/* Fix Material Web button with light gray background and black text */
+md-filled-button {
+  --md-filled-button-container-color: #f3f4f6 !important;
+  --md-filled-button-label-text-color: #000000 !important;
+  --md-filled-button-hover-label-text-color: #000000 !important;
+  --md-filled-button-focus-label-text-color: #000000 !important;
+  --md-filled-button-pressed-label-text-color: #000000 !important;
+  --md-filled-button-icon-color: #000000 !important;
+  --md-filled-button-hover-icon-color: #000000 !important;
+  --md-filled-button-focus-icon-color: #000000 !important;
+  --md-filled-button-pressed-icon-color: #000000 !important;
+  --md-filled-button-hover-container-color: #e5e7eb !important;
+  --md-filled-button-focus-container-color: #e5e7eb !important;
+  --md-filled-button-pressed-container-color: #d1d5db !important;
+  color: #000000 !important;
+  background-color: #f3f4f6 !important;
+}
+
+/* Stronger button text overrides with black color */
+md-filled-button,
+md-filled-button *,
+md-filled-button .md3-button__label,
+md-filled-button .md3-button__content,
+md-filled-button span,
+md-filled-button i {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
+/* Ensure icon colors are black */
+md-filled-button i.fas,
+md-filled-button i.far,
+md-filled-button i.fab {
+  color: #000000 !important;
+}
+
+/* Ultimate button text fix with black color */
+md-filled-button::part(button),
+md-filled-button::part(label),
+md-filled-button::part(icon) {
+  color: #000000 !important;
+  background-color: #f3f4f6 !important;
+}
+
+/* Force all Material Web button text to be black */
+md-filled-button[slot] *,
+md-filled-button[role] *,
+md-filled-button[type] * {
+  color: #000000 !important;
+}
+
+/* CSS injection for Material Web shadow DOM with light gray */
+md-filled-button {
+  --_label-text-color: #000000 !important;
+  --_with-icon-icon-color: #000000 !important;
+  --_container-color: #f3f4f6 !important;
+}
+
+/* Final fallback using CSS custom properties */
+md-filled-button:not([disabled]) {
+  color: #000000 !important;
+  background-color: #f3f4f6 !important;
+  --md-sys-color-on-primary: #000000 !important;
+  --md-sys-color-primary: #f3f4f6 !important;
+}
+
+/* Dark mode button styles */
+.dark md-filled-button {
+  --md-filled-button-container-color: #4b5563 !important;
+  --md-filled-button-label-text-color: #f9fafb !important;
+  --md-filled-button-hover-label-text-color: #f9fafb !important;
+  --md-filled-button-focus-label-text-color: #f9fafb !important;
+  --md-filled-button-pressed-label-text-color: #f9fafb !important;
+  --md-filled-button-icon-color: #f9fafb !important;
+  --md-filled-button-hover-icon-color: #f9fafb !important;
+  --md-filled-button-focus-icon-color: #f9fafb !important;
+  --md-filled-button-pressed-icon-color: #f9fafb !important;
+  --md-filled-button-hover-container-color: #374151 !important;
+  --md-filled-button-focus-container-color: #374151 !important;
+  --md-filled-button-pressed-container-color: #6b7280 !important;
+  color: #f9fafb !important;
+  background-color: #4b5563 !important;
+}
+
+.dark md-filled-button,
+.dark md-filled-button *,
+.dark md-filled-button .md3-button__label,
+.dark md-filled-button .md3-button__content,
+.dark md-filled-button span,
+.dark md-filled-button i {
+  color: #f9fafb !important;
+  fill: #f9fafb !important;
+}
+
+.dark md-filled-button i.fas,
+.dark md-filled-button i.far,
+.dark md-filled-button i.fab {
+  color: #f9fafb !important;
+}
+
+md-outlined-button {
+  --md-outlined-button-outline-color: #4f46e5;
+  --md-outlined-button-label-text-color: #4f46e5;
+  --md-outlined-button-hover-label-text-color: #3730a3;
+  --md-outlined-button-focus-label-text-color: #3730a3;
+  --md-outlined-button-pressed-label-text-color: #3730a3;
+}
+
+md-text-button {
+  --md-text-button-label-text-color: #4f46e5;
+  --md-text-button-hover-label-text-color: #3730a3;
+  --md-text-button-focus-label-text-color: #3730a3;
+  --md-text-button-pressed-label-text-color: #3730a3;
+}
+
+/* Simplified Material Web button fixes to avoid hydration issues */
+md-filled-button {
+  --md-filled-button-container-color: #f3f4f6;
+  --md-filled-button-label-text-color: #000000;
+  --md-filled-button-icon-color: #000000;
+  font-size: 14px;
+  min-height: 40px;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Basic styling without hydration conflicts */
+md-filled-button {
+  background-color: #f3f4f6;
+  color: #000000;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Ensure text and icons are visible */
+md-filled-button * {
+  color: #000000;
+  font-size: 14px;
+}
+
+/* Icon spacing */
+md-filled-button i {
+  margin-right: 6px;
+}
+
+/* Dark mode simple overrides */
+.dark md-filled-button {
+  --md-filled-button-container-color: #4b5563;
+  --md-filled-button-label-text-color: #f9fafb;
+  --md-filled-button-icon-color: #f9fafb;
+  background-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark md-filled-button * {
+  color: #f9fafb;
+}
+
+/* Fallback for completely broken Material Web buttons - replace with regular buttons */
+md-filled-button:empty::before {
+  content: "Click" !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  display: inline-block !important;
+}
+
+/* Force display for text content that might be hidden */
+md-filled-button:not(:empty) {
+  text-indent: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* Make sure content is not clipped */
+md-filled-button,
+md-filled-button * {
+  max-width: none !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  clip: none !important;
+  text-indent: 0 !important;
+}
+
+/* Alternative approach - use pseudo-elements if content is not showing */
+md-filled-button[aria-label]::after {
+  content: attr(aria-label) !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+  display: inline-block !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Enhanced card hover effects */
+.card-interactive {
+  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-100/30 hover:-translate-y-1;
+}

@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Arrow Tuning System{% endblock %}
+
+{% block header %}
+    <div class="flex items-start justify-between">
+        <div class="flex-1">
+            <nav class="flex mb-3" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-4">
+                    <li>
+                        <a href="{{ url_for('arrow_listing') }}" class="text-archery-500 hover:text-archery-700">
+                            <svg class="flex-shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            <span class="ml-2 text-sm">Back to arrows</span>
+                        </a>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-archery-900">{{ arrow.manufacturer }}</h1>
+            <h2 class="text-xl text-archery-700 mt-1">{{ arrow.model_name }}</h2>
+            <div class="flex items-center mt-3 space-x-4">
+                {% if arrow.arrow_type %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+                        {{ arrow.arrow_type|title }}
+                    </span>
+                {% endif %}
+                {% if arrow.material %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        {{ arrow.material }}
+                    </span>
+                {% endif %}
+                <span class="text-sm text-archery-600">
+                    {{ arrow.spine_specifications|length }} spine option{% if arrow.spine_specifications|length != 1 %}s{% endif %} available
+                </span>
+            </div>
+        </div>
+        <div class="ml-6 flex items-center space-x-3">
+            <button onclick="addToComparison({{ arrow.id }})"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Add to Comparison
+            </button>
+            <a href="{{ url_for('tuning_wizard') }}?recommended_arrow={{ arrow.id }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                Use in Tuning
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="px-4 sm:px-0">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Arrow specifications table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-archery-800">Spine Specifications</h3>
+                        <p class="mt-1 text-sm text-archery-600">Complete technical specifications for all available spines</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Spine</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GPI Weight</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Outer Diameter</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inner Diameter</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lengths</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for spec in arrow.spine_specifications %}
+                                    <tr class="{% if loop.index % 2 == 0 %}bg-gray-50{% else %}bg-white{% endif %} hover:bg-primary-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="font-medium {{ get_spine_color(spec.spine) }}">{{ spec.spine }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-archery-700">
+                                            {% if spec.gpi_weight %}
+                                                {{ "%.1f"|format(spec.gpi_weight) }} gr
+                                            {% else %}
+                                                <span class="text-gray-400">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-archery-700">
+                                            {% if spec.outer_diameter %}
+                                                {{ "%.3f"|format(spec.outer_diameter) }}"
+                                            {% else %}
+                                                <span class="text-gray-400">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-archery-700">
+                                            {% if spec.inner_diameter %}
+                                                {{ "%.3f"|format(spec.inner_diameter) }}"
+                                            {% else %}
+                                                <span class="text-gray-400">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-archery-700">
+                                            {% if spec.length_options and spec.length_options|length > 0 %}
+                                                {% for length in spec.length_options %}
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mr-1 mb-1">
+                                                        {{ length|int }}"
+                                                    </span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-gray-400">Standard</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Description and details -->
+                {% if arrow.description %}
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold text-archery-800 mb-3">Description</h3>
+                        <p class="text-archery-600 leading-relaxed">{{ arrow.description }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- Technical specifications -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-archery-800 mb-4">Technical Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Construction</h4>
+                            <dl class="space-y-3">
+                                {% if arrow.material %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Material:</dt>
+                                        <dd class="text-sm font-medium text-archery-800">{{ arrow.material }}</dd>
+                                    </div>
+                                {% endif %}
+                                {% if arrow.carbon_content %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Carbon Content:</dt>
+                                        <dd class="text-sm font-medium text-archery-800">{{ arrow.carbon_content }}</dd>
+                                    </div>
+                                {% endif %}
+                                {% if arrow.straightness_tolerance %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Straightness:</dt>
+                                        <dd class="text-sm font-medium text-archery-800">{{ arrow.straightness_tolerance }}</dd>
+                                    </div>
+                                {% endif %}
+                                {% if arrow.weight_tolerance %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Weight Tolerance:</dt>
+                                        <dd class="text-sm font-medium text-archery-800">{{ arrow.weight_tolerance }}</dd>
+                                    </div>
+                                {% endif %}
+                            </dl>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Specifications Range</h4>
+                            <dl class="space-y-3">
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Spine Range:</dt>
+                                    <dd class="text-sm font-medium text-archery-800">
+                                        {% set spine_values = arrow.spine_specifications|map(attribute='spine')|list %}
+                                        {% set min_spine = spine_values|min %}
+                                        {% set max_spine = spine_values|max %}
+                                        <span class="{{ get_spine_color(min_spine) }}">{{ min_spine }}</span>
+                                        {% if max_spine != min_spine %} - <span class="{{ get_spine_color(max_spine) }}">{{ max_spine }}</span>{% endif %}
+                                    </dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">GPI Range:</dt>
+                                    <dd class="text-sm font-medium text-archery-800">
+                                        {% set gpi_values = arrow.spine_specifications|selectattr('gpi_weight')|map(attribute='gpi_weight')|list %}
+                                        {% if gpi_values %}
+                                            {{ "%.1f"|format(gpi_values|min) }} - {{ "%.1f"|format(gpi_values|max) }} gr
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Diameter Range:</dt>
+                                    <dd class="text-sm font-medium text-archery-800">
+                                        {% set diameter_values = arrow.spine_specifications|selectattr('outer_diameter')|map(attribute='outer_diameter')|list %}
+                                        {% if diameter_values %}
+                                            {{ "%.3f"|format(diameter_values|min) }}" - {{ "%.3f"|format(diameter_values|max) }}"
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Available Options:</dt>
+                                    <dd class="text-sm font-medium text-green-600">{{ arrow.spine_specifications|length }} spine{% if arrow.spine_specifications|length != 1 %}s{% endif %}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Quick actions -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-archery-800 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <a href="{{ url_for('tuning_wizard') }}?recommended_arrow={{ arrow.id }}"
+                           class="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Use in Tuning Wizard
+                        </a>
+                        <button onclick="addToComparison({{ arrow.id }})"
+                                class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            Add to Comparison
+                        </button>
+                        {% if arrow.source_url %}
+                            <a href="{{ arrow.source_url }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M5 12l3 3m0 0l3-3m-3 3V8" />
+                                </svg>
+                                View on Manufacturer Site
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Arrow statistics -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-archery-800 mb-4">Statistics</h3>
+                    <div class="space-y-4">
+                        <!-- Spine distribution chart -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Spine Distribution</h4>
+                            <div class="space-y-2">
+                                {% set spine_values = arrow.spine_specifications|map(attribute='spine')|list %}
+                                {% set min_spine = spine_values|min %}
+                                {% set max_spine = spine_values|max %}
+                                {% for spec in arrow.spine_specifications %}
+                                    <div class="flex items-center">
+                                        <span class="text-xs font-medium w-12 {{ get_spine_color(spec.spine) }}">{{ spec.spine }}</span>
+                                        <div class="flex-1 mx-3">
+                                            <div class="bg-gray-200 rounded-full h-2">
+                                                {% set width = ((spec.spine - min_spine) / (max_spine - min_spine) * 100) if max_spine != min_spine else 100 %}
+                                                <div class="h-2 rounded-full bg-primary-500" style="width: {{ width }}%"></div>
+                                            </div>
+                                        </div>
+                                        {% if spec.gpi_weight %}
+                                            <span class="text-xs text-gray-600 w-16">{{ "%.1f"|format(spec.gpi_weight) }}gr</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Key metrics -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-bold text-primary-600">{{ arrow.spine_specifications|length }}</div>
+                                    <div class="text-xs text-gray-600">Spine Options</div>
+                                </div>
+                                <div>
+                                    {% set unique_diameters = arrow.spine_specifications|selectattr('outer_diameter')|map(attribute='outer_diameter')|list|unique|list %}
+                                    <div class="text-lg font-bold text-green-600">{{ unique_diameters|length if unique_diameters else 'N/A' }}</div>
+                                    <div class="text-xs text-gray-600">Diameter Options</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data source -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Data Source</h4>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        {% if arrow.scraped_at %}
+                            <p><strong>Extracted:</strong> {{ arrow.scraped_at[:10] }}</p>
+                        {% endif %}
+                        {% if arrow.scraper_version %}
+                            <p><strong>Version:</strong> {{ arrow.scraper_version }}</p>
+                        {% endif %}
+                        <p><strong>Database ID:</strong> {{ arrow.id }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addToComparison(arrowId) {
+        // Get existing comparison items from localStorage
+        let comparisonItems = JSON.parse(localStorage.getItem('comparison_items') || '[]');
+        
+        if (comparisonItems.includes(arrowId)) {
+            alert('This arrow is already in your comparison list.');
+            return;
+        }
+        
+        if (comparisonItems.length >= 5) {
+            alert('You can compare up to 5 arrows at once. Please remove some items first.');
+            return;
+        }
+        
+        comparisonItems.push(arrowId);
+        localStorage.setItem('comparison_items', JSON.stringify(comparisonItems));
+        
+        // Show success message
+        showNotification('Arrow added to comparison list!', 'success');
+        
+        // Update button state
+        const button = event.target.closest('button');
+        button.innerHTML = `
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Added to Comparison
+        `;
+        button.disabled = true;
+        button.classList.add('opacity-50');
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-md shadow-lg text-white transform transition-all duration-300 translate-x-full ${
+            type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Slide in
+        setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+        
+        // Slide out and remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+    
+    // Check if arrow is already in comparison on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const arrowId = {{ arrow.id }};
+        const comparisonItems = JSON.parse(localStorage.getItem('comparison_items') || '[]');
+        
+        if (comparisonItems.includes(arrowId)) {
+            const buttons = document.querySelectorAll('button[onclick*="addToComparison"]');
+            buttons.forEach(button => {
+                button.innerHTML = `
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Added to Comparison
+                `;
+                button.disabled = true;
+                button.classList.add('opacity-50');
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,408 @@
+{
+  "manufacturer": "Traditional Wood",
+  "total_arrows": 4,
+  "arrows": [
+    {
+      "manufacturer": "Traditional Wood",
+      "model_name": "Cedar Shaft",
+      "material": "Cedar Wood",
+      "arrow_type": "traditional",
+      "description": "Traditional cedar wood arrow shaft, hand-selected for straightness and spine consistency. Ideal for traditional archery and historical recreation.",
+      "spine_specifications": [
+        {
+          "spine": 35,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 8.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 40,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 8.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 65,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 5.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 70,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 5.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        }
+      ]
+    },
+    {
+      "manufacturer": "Traditional Wood",
+      "model_name": "Pine Shaft",
+      "material": "Pine Wood",
+      "arrow_type": "traditional",
+      "description": "Traditional pine wood arrow shaft, hand-selected for straightness and spine consistency. Ideal for traditional archery and historical recreation.",
+      "spine_specifications": [
+        {
+          "spine": 40,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 9.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 8.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 8.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 65,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 70,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        }
+      ]
+    },
+    {
+      "manufacturer": "Traditional Wood",
+      "model_name": "Sitka Spruce Shaft",
+      "material": "Sitka Spruce Wood",
+      "arrow_type": "traditional",
+      "description": "Traditional sitka spruce wood arrow shaft, hand-selected for straightness and spine consistency. Ideal for traditional archery and historical recreation.",
+      "spine_specifications": [
+        {
+          "spine": 35,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 40,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 5.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 5.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 65,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 4.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        }
+      ]
+    },
+    {
+      "manufacturer": "Traditional Wood",
+      "model_name": "Douglas Fir Shaft",
+      "material": "Douglas Fir Wood",
+      "arrow_type": "traditional",
+      "description": "Traditional douglas fir wood arrow shaft, hand-selected for straightness and spine consistency. Ideal for traditional archery and historical recreation.",
+      "spine_specifications": [
+        {
+          "spine": 40,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 8.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 6.0,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        },
+        {
+          "spine": 65,
+          "outer_diameter": 0.3125,
+          "gpi_weight": 5.5,
+          "inner_diameter": null,
+          "length_options": [
+            32.0,
+            33.0,
+            34.0
+          ],
+          "straightness_tolerance": "+/- 0.006\"",
+          "weight_tolerance": "+/- 2 grains"
+        }
+      ]
+    }
+  ],
+  "scraped_at": "2025-07-22T13:13:59.298599",
+  "source": "V2 Dynamic Spine Calculator + Traditional Archery Standards"
+}

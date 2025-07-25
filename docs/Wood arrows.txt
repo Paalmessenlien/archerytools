@@ -1,0 +1,63 @@
+Here’s a **detailed chart** for **wooden arrows**, including spine ranges, diameters, lengths, and common uses for different bow types (longbow, recurve, traditional).
+
+---
+
+### **Wood Arrow Spine & Dimension Chart**
+*(Based on common standards from brands like **3Rivers Archery, Rose City Archery, and The Footed Shaft**)*
+
+| **Spine (lbs)** | **Diameter (inches)** | **Length (inches)** | **Wood Type**       | **Best For**                     | **Point Weight (grains)** |
+|-----------------|----------------------|---------------------|---------------------|----------------------------------|--------------------------|
+| **25-30**      | 5/16" (≈8mm)         | 28"-30"             | Cedar, Pine         | Youth bows (20-30#)              | 75-100gr                 |
+| **30-35**      | 5/16" or 11/32"      | 28"-31"             | Cedar, Port Orford  | Light longbows (25-35#)          | 100-125gr                |
+| **35-40**      | 11/32" (≈8.7mm)      | 29"-31"             | Cedar, Douglas Fir  | Recurve (30-40#)                 | 125-150gr                |
+| **40-45**      | 11/32" or 23/64"     | 30"-32"             | Port Orford, Cedar  | Hunting longbows (35-45#)        | 150-175gr                |
+| **45-50**      | 23/64" (≈9.1mm)      | 30"-32"             | Ash, Hickory        | Heavy recurves (40-50#)          | 175-200gr                |
+| **50-55**      | 23/64" or 3/8"       | 31"-33"             | Ash, Birch          | Warbows (50-60#)                 | 200-250gr                |
+| **55-60**      | 3/8" (≈9.5mm)        | 32"-34"             | Hickory, Oak        | Medieval/war bows (55-70#)       | 250-300gr                |
+| **60+**        | 3/8" or thicker      | 32"-34"             | Hickory, Bamboo     | Extreme heavy bows (70#+)        | 300gr+                   |
+
+---
+
+### **Key Notes:**
+1. **Spine vs. Draw Weight**:
+   - A **30-35# spine arrow** bends correctly for a **30-35# bow at 28"**.
+   - Add **±5# spine per inch** over/under 28" draw length.
+     *(Example: For a 32" draw with a 40# bow, use a **35-40# spine**.)*
+
+2. **Wood Types**:
+   - **Cedar**: Lightweight, classic choice (best for target shooting).
+   - **Port Orford Cedar**: Denser, more durable (good for hunting).
+   - **Ash/Hickory**: Heavy, stiff (ideal for war bows).
+
+3. **Point Weight Impact**:
+   - **Heavier points (150gr+)** weaken spine (use a stiffer spine arrow).
+   - **Lighter points (100gr)** stiffen spine (use a weaker spine arrow).
+
+4. **Length Adjustment**:
+   - Longer arrows act **weaker** (require stiffer spine).
+   - Shorter arrows act **stiffer** (require weaker spine).
+
+---
+
+### **Example Calculation:**
+**Bow**: 45# recurve, 29" draw length.
+**Arrow Choice**:
+- **Spine**: 40-45# (since draw is slightly over 28").
+- **Diameter**: 11/32" or 23/64".
+- **Wood**: Port Orford Cedar (balanced flex).
+- **Point**: 150gr (field point or broadhead).
+
+---
+
+### **Where to Buy Quality Wood Arrows?**
+1. **3Rivers Archery**: [www.3riversarchery.com](https://www.3riversarchery.com)
+2. **Rose City Archery**: [www.rosecityarchery.com](https://www.rosecityarchery.com)
+3. **The Footed Shaft**: [www.footedshaft.com](https://www.footedshaft.com)
+
+---
+
+### **Tuning Wood Arrows**
+- **Bare Shaft Test**: Adjust length/point weight until bare shaft flies straight.
+- **Spine Tester**: Use a **spine tester tool** (measures deflection under 2 lbs).
+
+Need help matching arrows to a specific bow? Let me know your setup!

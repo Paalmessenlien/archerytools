@@ -1,0 +1,131 @@
+{
+  "session_id": "tuning_20250721_183234",
+  "timestamp": "2025-07-21T18:32:34.909690",
+  "archer_profile": {
+    "name": "Test Archer",
+    "bow_config": {
+      "draw_weight": 65,
+      "draw_length": 28.5,
+      "bow_type": "compound",
+      "cam_type": "medium",
+      "arrow_rest_type": "drop_away"
+    },
+    "shooting_style": "hunting big game",
+    "experience_level": "intermediate",
+    "arrow_length": 29.0,
+    "point_weight_preference": 100.0
+  },
+  "recommended_arrows": [
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 9.9,
+      "outer_diameter": 0.272,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic KAOS Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 9.9,
+      "outer_diameter": 0.272,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.3,
+      "outer_diameter": 0.234,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce LRT Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.3,
+      "outer_diameter": 0.234,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce Platinum Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.3,
+      "outer_diameter": 0.234,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.2,
+      "outer_diameter": 0.296,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity PRO Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.2,
+      "outer_diameter": 0.296,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity XT Hunting Arrows",
+      "match_score": 82.9,
+      "matched_spine": 340,
+      "gpi_weight": 8.2,
+      "outer_diameter": 0.296,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Force F.O.C.\u2122 Hunting Arrows",
+      "match_score": 80.4,
+      "matched_spine": 340,
+      "gpi_weight": 8.2,
+      "outer_diameter": 0.296,
+      "confidence_level": "high"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter Hunting Arrows",
+      "match_score": 80.4,
+      "matched_spine": 340,
+      "gpi_weight": 8.9,
+      "outer_diameter": 0.3,
+      "confidence_level": "high"
+    }
+  ],
+  "recommendations": [
+    "Primary recommendation: Gold Tip Kinetic Hunting Arrows with 340 spine (match score: 82.9)",
+    "Ensure broadhead compatibility testing before hunting season",
+    "Consider fixed-blade broadheads for consistency",
+    "For hunting effectiveness: optimal point weight is 75 grains",
+    "For balanced performance: optimal point weight is 75 grains",
+    "Start with manufacturer's recommended spine, then fine-tune",
+    "Keep detailed records of your testing and results"
+  ],
+  "next_steps": [
+    "Purchase test arrows in 340 spine",
+    "Start with 6 arrows for initial testing",
+    "Perform paper tuning at 6 feet",
+    "Conduct group testing at your primary shooting distance",
+    "Test with your intended broadheads",
+    "Verify point of impact consistency",
+    "Adjust rest position if needed based on paper tuning",
+    "Consider micro-spine adjustments if groups are inconsistent",
+    "Document all testing results for future reference",
+    "Schedule follow-up tuning session after testing"
+  ]
+}

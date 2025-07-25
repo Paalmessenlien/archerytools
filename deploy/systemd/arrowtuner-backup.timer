@@ -1,0 +1,17 @@
+# Arrow Tuning Platform - Backup Timer
+# Runs database backup daily at 2:00 AM
+# Install: sudo cp arrowtuner-backup.timer /etc/systemd/system/
+# Enable: sudo systemctl enable arrowtuner-backup.timer
+# Start: sudo systemctl start arrowtuner-backup.timer
+
+[Unit]
+Description=Arrow Tuning Platform Daily Backup Timer
+Requires=arrowtuner-backup.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

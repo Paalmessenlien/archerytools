@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-archery-900">Arrow Tuning System</h1>
+            <p class="mt-2 text-archery-600">Professional arrow selection and spine calculation for archery enthusiasts</p>
+        </div>
+        <div class="hidden md:flex items-center space-x-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">{{ stats.total_arrows }}</div>
+                <div class="text-sm text-archery-600">Arrows</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">{{ stats.total_specifications }}</div>
+                <div class="text-sm text-archery-600">Specifications</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-primary-600">{{ stats.manufacturers|length }}</div>
+                <div class="text-sm text-archery-600">Manufacturers</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="px-4 sm:px-0">
+        <!-- Hero section -->
+        <div class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg shadow-xl overflow-hidden mb-8">
+            <div class="px-6 py-12 sm:px-12 sm:py-16">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-4">
+                            Find Your Perfect Arrow
+                        </h2>
+                        <p class="text-primary-100 text-lg mb-6">
+                            Our advanced tuning system analyzes your bow setup and shooting style to recommend 
+                            the optimal arrows from our comprehensive database of {{ stats.total_arrows }} arrows 
+                            and {{ stats.total_specifications }} specifications.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="{{ url_for('tuning_wizard') }}" 
+                               class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-600 bg-white hover:bg-gray-50 transition-colors duration-200">
+                                <span>Start Tuning Wizard</span>
+                                <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                            <a href="{{ url_for('arrow_listing') }}" 
+                               class="inline-flex items-center justify-center px-6 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-primary-600 transition-colors duration-200">
+                                Browse Arrows
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-white bg-opacity-10 rounded-lg transform rotate-3"></div>
+                            <div class="relative bg-white rounded-lg p-6 shadow-lg">
+                                <h3 class="text-lg font-semibold text-archery-800 mb-4">System Capabilities</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span class="text-archery-700">Professional spine calculations</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span class="text-archery-700">FOC optimization</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span class="text-archery-700">Multi-manufacturer database</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span class="text-archery-700">Comprehensive tuning reports</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+                <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-archery-800 mb-2">Spine Calculator</h3>
+                <p class="text-archery-600 text-sm">Professional spine calculations for compound, recurve, and traditional bows.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-archery-800 mb-2">Arrow Search</h3>
+                <p class="text-archery-600 text-sm">Advanced filtering by manufacturer, spine, weight, and diameter.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-archery-800 mb-2">FOC Analysis</h3>
+                <p class="text-archery-600 text-sm">Optimize front-of-center for better accuracy and penetration.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-archery-800 mb-2">Tuning Reports</h3>
+                <p class="text-archery-600 text-sm">Detailed analysis and recommendations for optimal arrow setup.</p>
+            </div>
+        </div>
+
+        <!-- Manufacturers showcase -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-archery-800 mb-6">Supported Manufacturers</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {% for manufacturer in stats.manufacturers %}
+                    <div class="text-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-all duration-200">
+                        <div class="font-semibold text-archery-800 text-sm mb-1">{{ manufacturer.manufacturer }}</div>
+                        <div class="text-xs text-archery-600">{{ manufacturer.arrow_count }} arrows</div>
+                        <div class="text-xs text-archery-500">{{ manufacturer.spec_count }} specs</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="bg-gradient-to-r from-archery-100 to-archery-50 rounded-lg p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                    <div class="text-2xl font-bold text-archery-800">{{ stats.spine_range.min_spine if stats.spine_range else '200' }}</div>
+                    <div class="text-sm text-archery-600">Minimum Spine</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-archery-800">{{ stats.spine_range.max_spine if stats.spine_range else '2000' }}</div>
+                    <div class="text-sm text-archery-600">Maximum Spine</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-archery-800">{{ "%.1f"|format(stats.gpi_range.min_gpi) if stats.gpi_range else '3.2' }}</div>
+                    <div class="text-sm text-archery-600">Min GPI Weight</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-archery-800">{{ "%.1f"|format(stats.gpi_range.max_gpi) if stats.gpi_range else '12.2' }}</div>
+                    <div class="text-sm text-archery-600">Max GPI Weight</div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add any homepage-specific JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate counters on page load
+        const counters = document.querySelectorAll('[data-counter]');
+        counters.forEach(counter => {
+            const target = parseInt(counter.textContent);
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                counter.textContent = Math.floor(current);
+                if (current >= target) {
+                    counter.textContent = target;
+                    clearInterval(timer);
+                }
+            }, 20);
+        });
+    });
+</script>
+{% endblock %}

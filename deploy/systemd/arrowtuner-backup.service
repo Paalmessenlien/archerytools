@@ -1,0 +1,31 @@
+# Arrow Tuning Platform - Backup Service
+# Install: sudo cp arrowtuner-backup.service /etc/systemd/system/
+# Enable timer: sudo systemctl enable arrowtuner-backup.timer
+
+[Unit]
+Description=Arrow Tuning Platform Database Backup
+After=network.target
+
+[Service]
+Type=oneshot
+User=arrowtuner
+Group=arrowtuner
+WorkingDirectory=/opt/arrowtuner
+Environment=PATH=/opt/arrowtuner/venv/bin
+EnvironmentFile=/opt/arrowtuner/.env
+ExecStart=/opt/arrowtuner/backup-database.sh
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/arrowtuner/data /opt/arrowtuner/backups
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=arrowtuner-backup

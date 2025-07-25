@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Arrow Tuning System{% endblock %}
+
+{% block header %}
+    <div class="text-center">
+        <h1 class="text-3xl font-bold text-archery-900">Arrow Tuning Wizard</h1>
+        <p class="mt-2 text-archery-600">Get personalized arrow recommendations based on your bow setup and shooting style</p>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Progress indicator -->
+        <div class="mb-8" x-data="{ currentStep: 1, totalSteps: 4 }">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="flex items-center text-sm">
+                        <span class="text-archery-600">Step</span>
+                        <span class="mx-2 font-medium text-primary-600" x-text="currentStep"></span>
+                        <span class="text-archery-600">of</span>
+                        <span class="ml-2 text-archery-600" x-text="totalSteps"></span>
+                    </div>
+                </div>
+                <div class="text-sm text-archery-600">
+                    <span x-text="Math.round((currentStep / totalSteps) * 100)"></span>% Complete
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-primary-600 h-2 rounded-full transition-all duration-300" 
+                     :style="`width: ${(currentStep / totalSteps) * 100}%`"></div>
+            </div>
+        </div>
+
+        <!-- Main form -->
+        <form id="tuning-form" method="POST" action="{{ url_for('calculate_tuning') }}" 
+              x-data="tuningWizard()" @submit="handleSubmit">
+            
+            <!-- Step 1: Archer Information -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6" x-show="currentStep === 1" x-transition>
+                <h2 class="text-xl font-semibold text-archery-800 mb-4">Archer Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="archer_name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Your Name <span class="text-gray-400">(optional)</span>
+                        </label>
+                        <input type="text" 
+                               name="archer_name" 
+                               id="archer_name" 
+                               x-model="formData.archer_name"
+                               placeholder="Enter your name"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div>
+                        <label for="experience_level" class="block text-sm font-medium text-gray-700 mb-1">
+                            Experience Level <span class="text-red-500">*</span>
+                        </label>
+                        <select name="experience_level" 
+                                id="experience_level" 
+                                x-model="formData.experience_level"
+                                required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Select your experience level</option>
+                            <option value="beginner">Beginner (0-2 years)</option>
+                            <option value="intermediate">Intermediate (2-5 years)</option>
+                            <option value="advanced">Advanced (5+ years)</option>
+                            <option value="expert">Expert/Professional</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="shooting_style" class="block text-sm font-medium text-gray-700 mb-1">
+                            Primary Shooting Style <span class="text-red-500">*</span>
+                        </label>
+                        <select name="shooting_style" 
+                                id="shooting_style" 
+                                x-model="formData.shooting_style"
+                                required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Select shooting style</option>
+                            <option value="hunting big game">Hunting (Big Game)</option>
+                            <option value="hunting small game">Hunting (Small Game)</option>
+                            <option value="target indoor">Target (Indoor)</option>
+                            <option value="target outdoor">Target (Outdoor)</option>
+                            <option value="field archery">Field Archery</option>
+                            <option value="3d archery">3D Archery</option>
+                            <option value="traditional archery">Traditional Archery</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="preferred_manufacturers" class="block text-sm font-medium text-gray-700 mb-1">
+                            Preferred Manufacturers <span class="text-gray-400">(optional)</span>
+                        </label>
+                        <input type="text" 
+                               name="preferred_manufacturers" 
+                               id="preferred_manufacturers" 
+                               x-model="formData.preferred_manufacturers"
+                               placeholder="e.g. Gold Tip, Easton, Victory"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <p class="mt-1 text-xs text-gray-500">Separate multiple manufacturers with commas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Bow Configuration -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6" x-show="currentStep === 2" x-transition>
+                <h2 class="text-xl font-semibold text-archery-800 mb-4">Bow Configuration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="bow_type" class="block text-sm font-medium text-gray-700 mb-1">
+                            Bow Type <span class="text-red-500">*</span>
+                        </label>
+                        <select name="bow_type" 
+                                id="bow_type" 
+                                x-model="formData.bow_type"
+                                @change="updateBowTypeFields"
+                                required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Select bow type</option>
+                            <option value="compound">Compound Bow</option>
+                            <option value="recurve">Recurve Bow</option>
+                            <option value="traditional">Traditional Bow</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="draw_weight" class="block text-sm font-medium text-gray-700 mb-1">
+                            Draw Weight (lbs) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" 
+                               name="draw_weight" 
+                               id="draw_weight" 
+                               x-model.number="formData.draw_weight"
+                               min="20" 
+                               max="100" 
+                               step="0.5"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div>
+                        <label for="draw_length" class="block text-sm font-medium text-gray-700 mb-1">
+                            Draw Length (inches) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" 
+                               name="draw_length" 
+                               id="draw_length" 
+                               x-model.number="formData.draw_length"
+                               min="24" 
+                               max="34" 
+                               step="0.25"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div>
+                        <label for="arrow_length" class="block text-sm font-medium text-gray-700 mb-1">
+                            Arrow Length (inches) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" 
+                               name="arrow_length" 
+                               id="arrow_length" 
+                               x-model.number="formData.arrow_length"
+                               min="24" 
+                               max="36" 
+                               step="0.25"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <p class="mt-1 text-xs text-gray-500">Typically 1-2 inches longer than draw length</p>
+                    </div>
+                    
+                    <!-- Compound bow specific fields -->
+                    <div x-show="formData.bow_type === 'compound'">
+                        <label for="cam_type" class="block text-sm font-medium text-gray-700 mb-1">
+                            Cam Type
+                        </label>
+                        <select name="cam_type" 
+                                id="cam_type" 
+                                x-model="formData.cam_type"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <option value="soft">Soft Cam</option>
+                            <option value="medium">Medium Cam</option>
+                            <option value="hard">Hard Cam</option>
+                        </select>
+                    </div>
+                    <div x-show="formData.bow_type === 'compound'">
+                        <label for="arrow_rest_type" class="block text-sm font-medium text-gray-700 mb-1">
+                            Arrow Rest Type
+                        </label>
+                        <select name="arrow_rest_type" 
+                                id="arrow_rest_type" 
+                                x-model="formData.arrow_rest_type"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <option value="drop_away">Drop Away Rest</option>
+                            <option value="blade">Blade Rest</option>
+                            <option value="whisker_biscuit">Whisker Biscuit</option>
+                            <option value="full_containment">Full Containment</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Arrow Preferences -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6" x-show="currentStep === 3" x-transition>
+                <h2 class="text-xl font-semibold text-archery-800 mb-4">Arrow Preferences</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="point_weight" class="block text-sm font-medium text-gray-700 mb-1">
+                            Preferred Point Weight (grains)
+                        </label>
+                        <input type="number" 
+                               name="point_weight" 
+                               id="point_weight" 
+                               x-model.number="formData.point_weight"
+                               min="75" 
+                               max="200" 
+                               step="5"
+                               value="100"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Target FOC Range (%) <span class="text-gray-400">(optional)</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <input type="number" 
+                                       name="foc_min" 
+                                       x-model.number="formData.foc_min"
+                                       min="5" 
+                                       max="20" 
+                                       step="0.5"
+                                       placeholder="Min FOC %"
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            <div>
+                                <input type="number" 
+                                       name="foc_max" 
+                                       x-model.number="formData.foc_max"
+                                       min="5" 
+                                       max="20" 
+                                       step="0.5"
+                                       placeholder="Max FOC %"
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Front of Center: Target 8-10%, Hunting 10-15%, Traditional 12-18%
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Tuning Goals -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6" x-show="currentStep === 4" x-transition>
+                <h2 class="text-xl font-semibold text-archery-800 mb-4">Tuning Goals</h2>
+                <p class="text-archery-600 mb-4">Select your primary objectives (you can choose multiple):</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="relative flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 cursor-pointer">
+                        <input type="checkbox" 
+                               name="goal_speed" 
+                               x-model="formData.goal_speed"
+                               class="sr-only">
+                        <div class="flex-shrink-0 w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center mr-3"
+                             :class="formData.goal_speed ? 'bg-primary-600 border-primary-600' : 'border-gray-300'">
+                            <svg x-show="formData.goal_speed" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-archery-800">Maximum Speed</div>
+                            <div class="text-sm text-archery-600">Optimize for flat trajectory and speed</div>
+                        </div>
+                    </label>
+                    
+                    <label class="relative flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 cursor-pointer">
+                        <input type="checkbox" 
+                               name="goal_accuracy" 
+                               x-model="formData.goal_accuracy"
+                               class="sr-only">
+                        <div class="flex-shrink-0 w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center mr-3"
+                             :class="formData.goal_accuracy ? 'bg-primary-600 border-primary-600' : 'border-gray-300'">
+                            <svg x-show="formData.goal_accuracy" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-archery-800">Maximum Accuracy</div>
+                            <div class="text-sm text-archery-600">Optimize for consistency and precision</div>
+                        </div>
+                    </label>
+                    
+                    <label class="relative flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 cursor-pointer">
+                        <input type="checkbox" 
+                               name="goal_penetration" 
+                               x-model="formData.goal_penetration"
+                               class="sr-only">
+                        <div class="flex-shrink-0 w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center mr-3"
+                             :class="formData.goal_penetration ? 'bg-primary-600 border-primary-600' : 'border-gray-300'">
+                            <svg x-show="formData.goal_penetration" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-archery-800">Optimal Penetration</div>
+                            <div class="text-sm text-archery-600">Maximize kinetic energy and momentum</div>
+                        </div>
+                    </label>
+                    
+                    <label class="relative flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 cursor-pointer">
+                        <input type="checkbox" 
+                               name="goal_hunting" 
+                               x-model="formData.goal_hunting"
+                               class="sr-only">
+                        <div class="flex-shrink-0 w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center mr-3"
+                             :class="formData.goal_hunting ? 'bg-primary-600 border-primary-600' : 'border-gray-300'">
+                            <svg x-show="formData.goal_hunting" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-archery-800">Hunting Effectiveness</div>
+                            <div class="text-sm text-archery-600">Balance of all factors for hunting</div>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+                    <div class="flex">
+                        <svg class="flex-shrink-0 w-5 h-5 text-primary-600 mt-0.5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-sm text-primary-700">
+                            <p class="font-medium mb-1">Tip:</p>
+                            <p>If no goals are selected, we'll optimize for balanced performance. Multiple goals will be weighted equally in our calculations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation buttons -->
+            <div class="flex justify-between items-center bg-white rounded-lg shadow-md p-6">
+                <button type="button" 
+                        @click="previousStep()"
+                        x-show="currentStep > 1"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                </button>
+                
+                <div class="text-sm text-archery-600">
+                    <span x-show="currentStep < 4">Step <span x-text="currentStep"></span> of 4</span>
+                    <span x-show="currentStep === 4">Ready to calculate</span>
+                </div>
+                
+                <button type="button" 
+                        @click="nextStep()"
+                        x-show="currentStep < 4"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Next
+                    <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+                
+                <button type="submit" 
+                        x-show="currentStep === 4"
+                        :disabled="isSubmitting"
+                        class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!isSubmitting">Calculate Recommendations</span>
+                    <span x-show="isSubmitting" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Calculating...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function tuningWizard() {
+        return {
+            currentStep: 1,
+            isSubmitting: false,
+            formData: {
+                archer_name: '',
+                experience_level: '',
+                shooting_style: '',
+                preferred_manufacturers: '',
+                bow_type: '',
+                draw_weight: '',
+                draw_length: '',
+                arrow_length: '',
+                cam_type: 'medium',
+                arrow_rest_type: 'drop_away',
+                point_weight: 100,
+                foc_min: '',
+                foc_max: '',
+                goal_speed: false,
+                goal_accuracy: false,
+                goal_penetration: false,
+                goal_hunting: false
+            },
+            
+            nextStep() {
+                if (this.validateCurrentStep()) {
+                    if (this.currentStep < 4) {
+                        this.currentStep++;
+                    }
+                }
+            },
+            
+            previousStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                }
+            },
+            
+            validateCurrentStep() {
+                const step = this.currentStep;
+                
+                if (step === 1) {
+                    return this.formData.experience_level && this.formData.shooting_style;
+                } else if (step === 2) {
+                    return this.formData.bow_type && 
+                           this.formData.draw_weight && 
+                           this.formData.draw_length && 
+                           this.formData.arrow_length;
+                } else if (step === 3) {
+                    return true; // All optional
+                } else if (step === 4) {
+                    return true; // At least one goal or defaults will be used
+                }
+                
+                return true;
+            },
+            
+            updateBowTypeFields() {
+                // Auto-suggest arrow length based on draw length
+                if (this.formData.draw_length && !this.formData.arrow_length) {
+                    this.formData.arrow_length = this.formData.draw_length + 1.5;
+                }
+            },
+            
+            async handleSubmit(event) {
+                event.preventDefault();
+                
+                if (!this.validateCurrentStep()) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+                
+                this.isSubmitting = true;
+                
+                try {
+                    const response = await fetch('{{ url_for("calculate_tuning") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        window.location.href = result.redirect_url;
+                    } else {
+                        alert('Error: ' + result.error);
+                        this.isSubmitting = false;
+                    }
+                } catch (error) {
+                    alert('Network error. Please try again.');
+                    this.isSubmitting = false;
+                }
+            }
+        }
+    }
+    
+    // Auto-save form data to localStorage
+    document.addEventListener('alpine:init', () => {
+        const savedData = localStorage.getItem('tuning_wizard_data');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                // Merge with default data
+                Object.assign(tuningWizard().formData, data);
+            } catch (e) {
+                console.warn('Could not restore form data:', e);
+            }
+        }
+    });
+    
+    // Save form data on change
+    document.addEventListener('input', () => {
+        const formData = new FormData(document.getElementById('tuning-form'));
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        localStorage.setItem('tuning_wizard_data', JSON.stringify(data));
+    });
+</script>
+{% endblock %}
