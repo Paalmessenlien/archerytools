@@ -30,9 +30,10 @@ RUN mkdir -p /app/data/processed /app/data/raw
 # Set proper permissions
 RUN chmod +x /app/api.py /app/init-database.py /app/start-api.sh
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser
-RUN chown -R appuser:appuser /app
+# Create non-root user with specific UID/GID for consistency
+RUN addgroup --gid 1000 appgroup && \
+    adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
+RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Health check
