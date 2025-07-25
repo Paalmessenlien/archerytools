@@ -41,10 +41,20 @@ def get_tuning_system():
     global tuning_system
     if tuning_system is None:
         try:
-            # Use the correct database path (arrow_scraper directory has the full database)
-            tuning_system = ArrowTuningSystem(database_path="arrow_database.db")
+            # Get the database path from the database function to ensure consistency
+            db = get_database()
+            if db is None:
+                print("❌ Cannot initialize tuning system: no database available")
+                return None
+            
+            # Use the same path the database is using
+            db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+            print(f"🧮 Initializing tuning system with database: {db_path}")
+            tuning_system = ArrowTuningSystem(database_path=db_path)
         except Exception as e:
             print(f"Error initializing tuning system: {e}")
+            import traceback
+            traceback.print_exc()
             tuning_system = None
     return tuning_system
 
@@ -53,16 +63,46 @@ def get_database():
     global database
     if database is None:
         try:
-            import os
-            # Ensure we're in the right directory for database initialization
-            original_cwd = os.getcwd()
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            os.chdir(script_dir)
+            # Try multiple database locations in order of preference
+            db_paths = [
+                os.getenv('DATABASE_PATH', '/app/data/arrow_database.db'),  # Environment variable or default
+                '/app/data/arrow_database.db',     # Docker data volume
+                '/app/arrow_database.db',          # Docker app directory
+                'arrow_database.db',               # Current directory (fallback)
+                '../arrow_database.db'             # Parent directory (development)
+            ]
             
-            database = ArrowDatabase("arrow_database.db")
+            database_path = None
+            for db_path in db_paths:
+                if os.path.exists(db_path):
+                    # Quick check if database has data
+                    try:
+                        import sqlite3
+                        conn = sqlite3.connect(db_path)
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT COUNT(*) FROM arrows")
+                        count = cursor.fetchone()[0]
+                        conn.close()
+                        
+                        if count > 0:
+                            database_path = db_path
+                            print(f"🗄️  Using database: {db_path} ({count} arrows)")
+                            break
+                        else:
+                            print(f"⚠️  Database exists but empty: {db_path}")
+                    except Exception as e:
+                        print(f"⚠️  Database check failed for {db_path}: {e}")
+                        continue
             
-            # Restore original working directory
-            os.chdir(original_cwd)
+            if not database_path:
+                print("❌ No valid database found. Available paths checked:")
+                for db_path in db_paths:
+                    exists = "✓" if os.path.exists(db_path) else "✗"
+                    print(f"  {exists} {db_path}")
+                database = None
+                return None
+            
+            database = ArrowDatabase(database_path)
             
         except Exception as e:
             print(f"Error initializing database: {e}")

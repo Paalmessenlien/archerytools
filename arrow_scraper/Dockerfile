@@ -28,7 +28,7 @@ COPY . .
 RUN mkdir -p /app/data/processed /app/data/raw
 
 # Set proper permissions
-RUN chmod +x /app/api.py
+RUN chmod +x /app/api.py /app/init-database.py /app/start-api.sh
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser
@@ -42,5 +42,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 5000
 
-# Run the application
-CMD ["python", "api.py"]
+# Run the application with database initialization
+CMD ["./start-api.sh"]
