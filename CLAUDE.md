@@ -42,7 +42,22 @@ python test_setup.py
 
 ### Running the Dual Architecture Application
 
-**Option 1: Dual Architecture Startup (Recommended)**
+**Option 1: Docker Deployment (Recommended)**
+```bash
+# Simple deployment with embedded database
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Test deployment
+./test-simple-deployment.sh
+
+# Frontend: http://localhost:3000
+# API Backend: http://localhost:5000
+```
+
+**Option 2: Dual Architecture Startup**
 ```bash
 # Start both Nuxt 3 frontend and Flask API backend
 ./scripts/start-dual-architecture.sh start
@@ -54,7 +69,7 @@ NODE_ENV=development ./scripts/start-dual-architecture.sh start
 # API Backend: http://localhost:5000
 ```
 
-**Option 2: Manual Startup**
+**Option 3: Manual Development**
 ```bash
 # Start Flask API Backend
 cd arrow_scraper
@@ -63,15 +78,6 @@ python api.py
 # Start Nuxt 3 Frontend (separate terminal)
 cd frontend
 npm run dev
-```
-
-**Option 3: Docker Deployment**
-```bash
-# Start with Docker Compose
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
 ```
 
 **Legacy Flask Web Application (deprecated)**

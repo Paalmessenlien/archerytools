@@ -14,9 +14,9 @@ services:
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-    volumes:
-      - ./arrow_scraper:/app
-      - ./docker-data:/app/data
+    # Database is built into the image, no volume mounting needed
+    # volumes:
+    #   - ./arrow_scraper:/app  # Uncomment for development
     networks:
       - arrowtuner-network
     healthcheck:
