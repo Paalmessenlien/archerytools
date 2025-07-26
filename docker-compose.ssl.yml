@@ -39,7 +39,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NUXT_PUBLIC_API_BASE=http://api:5000/api
+      - NUXT_PUBLIC_API_BASE=https://archerytool.online/api
     depends_on:
       - api
     networks:
