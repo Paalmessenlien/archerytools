@@ -24,9 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Build database during image creation
-RUN python build-database.py
-
 # Create data directory for runtime files
 RUN mkdir -p /app/data/processed /app/data/raw
 
@@ -36,7 +33,16 @@ RUN chmod +x /app/api.py /app/build-database.py /app/start-api.sh
 # Create non-root user with specific UID/GID for consistency
 RUN addgroup --gid 1000 appgroup && \
     adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
-RUN chown -R appuser:appgroup /app
+
+# Build database as root, then change ownership
+RUN python build-database-robust.py && \
+    echo "Database build completed, checking result:" && \
+    ls -la arrow_database.db && \
+    sqlite3 arrow_database.db "SELECT COUNT(*) FROM arrows;" && \
+    echo "Copying database to backup location:" && \
+    cp arrow_database.db /app/arrow_database_backup.db && \
+    chown -R appuser:appgroup /app
+
 USER appuser
 
 # Health check

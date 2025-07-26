@@ -13,6 +13,8 @@ import json
 def build_database_for_docker():
     """Build database for Docker image"""
     print("🏗️  Building database for Docker image...")
+    print(f"📍 Current working directory: {os.getcwd()}")
+    print(f"📂 Directory contents: {os.listdir('.')}")
     
     # Target database path (will be in Docker image)
     db_path = "arrow_database.db"
@@ -23,6 +25,7 @@ def build_database_for_docker():
         print(f"🗑️  Removed existing database: {db_path}")
     
     # Create database
+    print(f"📀 Creating database at: {db_path}")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -89,18 +92,28 @@ def build_database_for_docker():
     
     # Load data from processed JSON files
     data_dir = Path("data/processed")
+    print(f"🔍 Looking for data directory: {data_dir}")
+    print(f"📂 Data directory exists: {data_dir.exists()}")
+    
+    if data_dir.exists():
+        print(f"📂 Data directory contents: {list(data_dir.iterdir())}")
+    
     if not data_dir.exists():
         print(f"❌ Data directory not found: {data_dir}")
+        print(f"📂 Available directories: {[d for d in Path('.').iterdir() if d.is_dir()]}")
         conn.close()
         return False
     
     json_files = list(data_dir.glob("*.json"))
     if not json_files:
         print(f"❌ No JSON files found in: {data_dir}")
+        print(f"📂 Files in data directory: {list(data_dir.iterdir())}")
         conn.close()
         return False
     
     print(f"📦 Loading data from {len(json_files)} JSON files...")
+    for json_file in json_files:
+        print(f"  📄 Found: {json_file.name}")
     
     total_arrows = 0
     total_spine_specs = 0
