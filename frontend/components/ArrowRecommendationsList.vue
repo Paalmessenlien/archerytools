@@ -215,22 +215,22 @@
           @click="openArrowDetails(recommendation.arrow)"
           class="cursor-pointer group hover:shadow-lg transition-all duration-200"
         >
-          <div class="p-6">
-            <div class="flex items-start justify-between">
+          <div class="p-4 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
               <div class="flex-1 min-w-0">
                 <!-- Header -->
-                <div class="flex items-center space-x-3 mb-4">
-                  <h3 class="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-4">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">
                     {{ recommendation.arrow.manufacturer }}
                   </h3>
-                  <span class="text-gray-400">•</span>
-                  <span class="text-base font-medium text-gray-700">
+                  <span class="hidden sm:inline text-gray-400">•</span>
+                  <span class="text-base font-medium text-gray-700 dark:text-gray-300">
                     {{ recommendation.arrow.model_name }}
                   </span>
                 </div>
                 
                 <!-- Arrow Specifications as Chips -->
-                <md-chip-set class="mb-4">
+                <md-chip-set class="mb-4 flex-wrap">
                   <md-assist-chip :label="`Spine: ${getSpineDisplay(recommendation.arrow)}`">
                     <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
                   </md-assist-chip>
@@ -246,12 +246,15 @@
                 </md-chip-set>
                 
                 <!-- Match Details -->
-                <p class="text-sm text-gray-600 mb-3">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   {{ recommendation.reasons?.join(', ') || 'Compatible with your setup' }}
                 </p>
-                
+              </div>
+              
+              <!-- Compatibility & Price -->
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between mt-4 sm:mt-0 sm:ml-6">
                 <!-- Actions -->
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2 order-2 sm:order-1 mt-3 sm:mt-0">
                   <md-filled-button size="small">
                     <i class="fas fa-eye" style="margin-right: 6px;"></i>
                     View Details
@@ -261,28 +264,28 @@
                     Add to Session
                   </md-text-button>
                 </div>
-              </div>
-              
-              <!-- Compatibility & Price -->
-              <div class="ml-6 text-right flex-shrink-0">
-                <!-- Match Score with Progress -->
-                <div class="mb-4">
-                  <div class="text-xs text-gray-500 mb-1">Match Score</div>
-                  <div class="text-2xl font-bold text-primary mb-1">
-                    {{ recommendation.match_percentage || 0 }}%
-                  </div>
-                  <md-linear-progress 
-                    :value="(recommendation.match_percentage || 0) / 100"
-                    class="w-20"
-                  ></md-linear-progress>
-                </div>
                 
-                <!-- Price -->
-                <div class="text-right">
-                  <div class="text-xs text-gray-500 mb-1">Price Range</div>
-                  <p class="font-semibold text-gray-900">
-                    {{ recommendation.arrow.price_range || 'Varies' }}
-                  </p>
+                <!-- Match Score -->
+                <div class="text-center sm:text-right flex-shrink-0 order-1 sm:order-2">
+                  <!-- Match Score with Progress -->
+                  <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Match Score</div>
+                    <div class="text-2xl font-bold text-primary mb-1">
+                      {{ recommendation.match_percentage || 0 }}%
+                    </div>
+                    <md-linear-progress 
+                      :value="(recommendation.match_percentage || 0) / 100"
+                      class="w-20 mx-auto sm:mx-0"
+                    ></md-linear-progress>
+                  </div>
+                  
+                  <!-- Price -->
+                  <div class="text-center sm:text-right">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price Range</div>
+                    <p class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ recommendation.arrow.price_range || 'Varies' }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
