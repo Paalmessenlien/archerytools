@@ -46,6 +46,14 @@ export default defineNuxtPlugin(() => {
         .dark md-filled-button {
           background: #4b5563 !important;
           color: #f9fafb !important;
+          --md-filled-button-container-color: #4b5563 !important;
+          --md-filled-button-label-text-color: #f9fafb !important;
+          --md-filled-button-icon-color: #f9fafb !important;
+          --_label-text-color: #f9fafb !important;
+          --_with-icon-icon-color: #f9fafb !important;
+          --_container-color: #4b5563 !important;
+          --md-sys-color-on-primary: #f9fafb !important;
+          --md-sys-color-primary: #4b5563 !important;
         }
         
         .dark md-filled-button *,

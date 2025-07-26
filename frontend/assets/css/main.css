@@ -482,8 +482,8 @@ md-outlined-text-field {
   @apply bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
-/* Fix Material Web button with light gray background and black text */
-md-filled-button {
+/* Fix Material Web button with light gray background and black text - LIGHT MODE ONLY */
+:not(.dark) md-filled-button {
   --md-filled-button-container-color: #f3f4f6 !important;
   --md-filled-button-label-text-color: #000000 !important;
   --md-filled-button-hover-label-text-color: #000000 !important;
@@ -500,48 +500,48 @@ md-filled-button {
   background-color: #f3f4f6 !important;
 }
 
-/* Stronger button text overrides with black color */
-md-filled-button,
-md-filled-button *,
-md-filled-button .md3-button__label,
-md-filled-button .md3-button__content,
-md-filled-button span,
-md-filled-button i {
+/* Stronger button text overrides with black color - LIGHT MODE ONLY */
+:not(.dark) md-filled-button,
+:not(.dark) md-filled-button *,
+:not(.dark) md-filled-button .md3-button__label,
+:not(.dark) md-filled-button .md3-button__content,
+:not(.dark) md-filled-button span,
+:not(.dark) md-filled-button i {
   color: #000000 !important;
   fill: #000000 !important;
 }
 
-/* Ensure icon colors are black */
-md-filled-button i.fas,
-md-filled-button i.far,
-md-filled-button i.fab {
+/* Ensure icon colors are black - LIGHT MODE ONLY */
+:not(.dark) md-filled-button i.fas,
+:not(.dark) md-filled-button i.far,
+:not(.dark) md-filled-button i.fab {
   color: #000000 !important;
 }
 
-/* Ultimate button text fix with black color */
-md-filled-button::part(button),
-md-filled-button::part(label),
-md-filled-button::part(icon) {
+/* Ultimate button text fix with black color - LIGHT MODE ONLY */
+:not(.dark) md-filled-button::part(button),
+:not(.dark) md-filled-button::part(label),
+:not(.dark) md-filled-button::part(icon) {
   color: #000000 !important;
   background-color: #f3f4f6 !important;
 }
 
-/* Force all Material Web button text to be black */
-md-filled-button[slot] *,
-md-filled-button[role] *,
-md-filled-button[type] * {
+/* Force all Material Web button text to be black - LIGHT MODE ONLY */
+:not(.dark) md-filled-button[slot] *,
+:not(.dark) md-filled-button[role] *,
+:not(.dark) md-filled-button[type] * {
   color: #000000 !important;
 }
 
-/* CSS injection for Material Web shadow DOM with light gray */
-md-filled-button {
+/* CSS injection for Material Web shadow DOM with light gray - LIGHT MODE ONLY */
+:not(.dark) md-filled-button {
   --_label-text-color: #000000 !important;
   --_with-icon-icon-color: #000000 !important;
   --_container-color: #f3f4f6 !important;
 }
 
-/* Final fallback using CSS custom properties */
-md-filled-button:not([disabled]) {
+/* Final fallback using CSS custom properties - LIGHT MODE ONLY */
+:not(.dark) md-filled-button:not([disabled]) {
   color: #000000 !important;
   background-color: #f3f4f6 !important;
   --md-sys-color-on-primary: #000000 !important;
