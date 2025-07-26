@@ -44,8 +44,9 @@ RUN python build-database-robust.py && \
     cp arrow_database.db /app/arrow_database_backup.db && \
     echo "Final database verification:" && \
     ls -la /app/arrow*.db && \
-    echo "Setting ownership..." && \
+    echo "Setting ownership and permissions..." && \
     chown -R appuser:appgroup /app && \
+    chmod 664 /app/arrow*.db && \
     echo "Final file check after ownership change:" && \
     ls -la /app/arrow*.db
 

@@ -150,6 +150,19 @@ class ArrowDatabase:
         conn = self.get_connection()
         cursor = conn.cursor()
         
+        # Check if database already has data (from Docker build)
+        try:
+            cursor.execute("SELECT COUNT(*) FROM arrows")
+            arrow_count = cursor.fetchone()[0]
+            if arrow_count > 0:
+                print(f"🗄️  Database already initialized with {arrow_count} arrows")
+                return
+        except sqlite3.OperationalError:
+            # Table doesn't exist, create it
+            pass
+        
+        print("🏗️  Creating database tables...")
+        
         # Arrows table - main arrow information
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS arrows (
@@ -187,15 +200,19 @@ class ArrowDatabase:
         )
         ''')
         
-        # Create indexes for performance
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_arrows_manufacturer ON arrows (manufacturer)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_arrows_type ON arrows (arrow_type)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_spine ON spine_specifications (spine)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_gpi ON spine_specifications (gpi_weight)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter ON spine_specifications (outer_diameter)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter_category ON spine_specifications (diameter_category)')
-        
-        conn.commit()
+        # Create indexes for performance (only if we're creating the schema)
+        try:
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_arrows_manufacturer ON arrows (manufacturer)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_arrows_type ON arrows (arrow_type)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_spine ON spine_specifications (spine)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_gpi ON spine_specifications (gpi_weight)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter ON spine_specifications (outer_diameter)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter_category ON spine_specifications (diameter_category)')
+            conn.commit()
+            print("✅ Database schema created successfully")
+        except sqlite3.OperationalError as e:
+            print(f"⚠️  Could not create indexes (database may be read-only): {e}")
+            # Don't fail if we can't create indexes on an existing database
         print(f"✅ Database initialized: {self.db_path}")
     
     def load_from_json_files(self, data_dir: str = "data/processed"):
