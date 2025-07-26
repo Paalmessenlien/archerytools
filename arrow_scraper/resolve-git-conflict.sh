@@ -1,0 +1,50 @@
+#\!/bin/bash
+
+echo "🔧 Git Pull Conflict Resolver"
+echo "============================="
+echo ""
+
+echo "The issue: Untracked files in docker-data/ would be overwritten"
+echo "These are likely leftover files from previous Docker runs."
+echo ""
+
+echo "💡 Solution Options:"
+echo ""
+
+echo "Option 1: Backup and remove conflicting files (Recommended)"
+echo "----------------------------------------------------------"
+echo "# Backup the docker-data directory"
+echo "mv docker-data docker-data.backup.$(date +%Y%m%d_%H%M%S)"
+echo ""
+echo "# Pull the latest changes"
+echo "git pull"
+echo ""
+echo "# If needed, you can restore specific files from backup later"
+echo ""
+
+echo "Option 2: Force overwrite untracked files"
+echo "----------------------------------------"
+echo "# This will permanently delete the conflicting files"
+echo "git clean -fd docker-data/"
+echo "git pull"
+echo ""
+
+echo "Option 3: Stash and pull"
+echo "-----------------------"
+echo "# Add untracked files to git temporarily"
+echo "git add docker-data/"
+echo "git stash"
+echo "git pull"
+echo "git stash drop  # Remove the stashed changes"
+echo ""
+
+echo "Option 4: Reset and pull (Nuclear option)"
+echo "----------------------------------------"
+echo "# WARNING: This will lose any local changes"
+echo "git reset --hard HEAD"
+echo "git clean -fd"
+echo "git pull"
+echo ""
+
+echo "🎯 Recommended approach for production server:"
+echo "mv docker-data docker-data.backup.$(date +%Y%m%d_%H%M%S) && git pull"

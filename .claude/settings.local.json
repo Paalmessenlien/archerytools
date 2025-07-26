@@ -45,7 +45,10 @@
       "Bash(docker:*)",
       "Bash(sudo systemctl status:*)",
       "Bash(./debug-database.sh:*)",
-      "Bash(./test-simple-deployment.sh:*)"
+      "Bash(./test-simple-deployment.sh:*)",
+      "Bash(mv:*)",
+      "Bash(./diagnose-domain-access.sh:*)",
+      "Bash(./fix-domain-access.sh:*)"
     ],
     "deny": []
   }

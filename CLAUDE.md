@@ -43,23 +43,36 @@ python test_setup.py
 ### Running the Dual Architecture Application
 
 **Option 1: Docker Deployment (Recommended)**
+
+**For Development/Testing:**
 ```bash
-# Production deployment (avoids development overrides)
-docker-compose -f docker-compose.prod.yml up -d --build
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Test deployment
-curl http://localhost:5000/api/health
-curl http://localhost:3000
-
-# Frontend: http://localhost:3000
-# API Backend: http://localhost:5000
-
-# Alternative: Simple API-only deployment for testing
+# API-only testing
 docker-compose -f docker-compose.simple.yml up -d --build
+
+# Full development with hot reload (uses override file)
+docker-compose up -d --build
+
+# Production testing without domain
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
+
+**For Production with Domain & HTTPS:**
+```bash
+# HTTP deployment (initial setup)
+./deploy-production.sh
+
+# HTTPS deployment (with SSL certificates)
+sudo docker-compose -f docker-compose.ssl.yml up -d --build
+
+# Fix mixed content if upgrading from HTTP to HTTPS
+./fix-mixed-content.sh
+```
+
+**Access URLs:**
+- **Development**: http://localhost:3000
+- **Production HTTP**: http://yourdomain.com  
+- **Production HTTPS**: https://yourdomain.com
+- **API**: /api/health endpoint for health checks
 
 **Option 2: Dual Architecture Startup**
 ```bash
@@ -176,37 +189,46 @@ cd crawl4ai
 python -m pytest tests/
 ```
 
-### Production Deployment (READY FOR BETA)
+### Production Deployment (PRODUCTION READY)
 
-**Docker Deployment (Recommended)**
+**Quick Start Production Deployment**
 ```bash
-# Quick production deployment
-docker-compose up -d
+# Step 1: Clone and configure
+git clone https://github.com/Paalmessenlien/archerytools.git
+cd archerytools
 
-# Check status
-docker-compose ps
-docker-compose logs
-```
+# Step 2: Configure environment
+cp .env.example .env
+# Edit .env with your settings
 
-**Manual Ubuntu Server Deployment**
-```bash
-# Step 1: Server setup (Ubuntu 20.04+)
-sudo ./deploy/server-setup.sh
+# Step 3: Deploy with HTTP
+./deploy-production.sh
 
-# Step 2: Deploy application
-sudo ./deploy/deploy.sh yourdomain.com admin@yourdomain.com
+# Step 4: Configure DNS
+# Add A record: yourdomain.com -> your-server-ip
 
-# Step 3: Check status
-/opt/arrowtuner/status.sh
+# Step 5: Set up SSL certificates
+sudo certbot certonly --standalone -d yourdomain.com
+./enable-https.sh
+
+# Step 6: Deploy with HTTPS
+sudo docker-compose -f docker-compose.ssl.yml up -d --build
 ```
 
 **Production Features:**
-- ✅ Nginx reverse proxy with SSL
-- ✅ PM2 process management
-- ✅ Automated backups and monitoring
-- ✅ Security hardening (UFW, fail2ban)
-- ✅ Health checks and alerting
-- ✅ Log rotation and cleanup
+- ✅ Nginx reverse proxy with SSL termination
+- ✅ Automatic HTTP to HTTPS redirects
+- ✅ Docker containerization with health checks
+- ✅ Embedded database (no external dependencies)
+- ✅ Material Design 3 UI with dark mode
+- ✅ Professional arrow tuning calculations
+- ✅ Modern security headers and TLS configuration
+
+**Deployment Scripts:**
+- `deploy-production.sh` - Automated production deployment
+- `enable-https.sh` - SSL certificate setup and HTTPS enablement
+- `fix-mixed-content.sh` - Fix HTTP/HTTPS mixed content issues
+- `diagnose-domain-access.sh` - Domain and networking diagnostics
 
 ### Environment Configuration
 **Development:** Create `.env` file in `arrow_scraper/` directory:
@@ -571,7 +593,44 @@ The Arrow Tuning Platform provides:
 
 ## Troubleshooting & Development Notes
 
-### Common Issues & Solutions
+### Production Deployment Issues
+
+**Docker Permission Errors:**
+- **Issue**: `permission denied while trying to connect to the Docker daemon socket`
+- **Solution**: Add user to docker group: `sudo usermod -aG docker $USER && newgrp docker`
+- **Alternative**: Use `sudo` with docker commands
+
+**Frontend "nuxt: not found" Error:**
+- **Issue**: Container running `npm run dev` but nuxt CLI not available in production build
+- **Cause**: `docker-compose.override.yml` forces development mode
+- **Solution**: Use production configs or disable override file temporarily
+- **Script**: `./deploy-production.sh` handles this automatically
+
+**Mixed Content Error (HTTPS):**
+- **Issue**: "Blocked loading mixed active content" when frontend makes HTTP API calls from HTTPS
+- **Cause**: Frontend configured with `http://api:5000/api` instead of HTTPS URL
+- **Solution**: Update `NUXT_PUBLIC_API_BASE` to use `https://yourdomain.com/api`
+- **Script**: `./fix-mixed-content.sh` fixes this automatically
+
+**Database Schema Mismatch:**
+- **Issue**: `no such column: a.primary_image_url` API errors
+- **Cause**: Database built with `image_url` but API expects `primary_image_url`
+- **Solution**: Query uses `image_url as primary_image_url` for compatibility
+- **Location**: `/arrow_scraper/arrow_database.py:488`
+
+**Container Networking Issues:**
+- **Issue**: Frontend cannot reach API (ECONNREFUSED)
+- **Cause**: Wrong environment variable name (`API_BASE_URL` vs `NUXT_PUBLIC_API_BASE`)
+- **Solution**: All Docker Compose files now use correct `NUXT_PUBLIC_API_BASE`
+- **Verification**: `./test-container-network.sh` diagnoses connectivity
+
+**Domain Access Problems:**
+- **Issue**: Site not accessible via domain name
+- **Diagnosis**: `./diagnose-domain-access.sh` checks DNS, ports, containers
+- **Common causes**: DNS not pointing to server, nginx not running, firewall blocking ports
+- **Solution**: Use full `docker-compose.yml` with nginx, not `docker-compose.prod.yml`
+
+### Development Issues
 
 **Material Web Component Styling:**
 - **Issue**: Buttons showing purple background with invisible text/icons
@@ -588,16 +647,6 @@ The Arrow Tuning Platform provides:
 - **Fixed**: Added comprehensive dark mode CSS for all UI components
 - **Solution**: Enhanced CSS with `.dark` variants for cards, navigation tabs, input fields, badges, and compatibility indicators
 - **Files**: `/frontend/assets/css/main.css` (dark mode component styling), `/frontend/layouts/default.vue` (loading indicator fix)
-
-**Database Statistics:**
-- **Issue**: Total manufacturers showing as 0
-- **Fixed**: API now calculates `len(stats.get('manufacturers', []))` instead of hardcoded value
-- **Location**: `/arrow_scraper/api.py:155`
-
-**Manufacturer Filtering:**
-- **Issue**: Required two selections to work properly
-- **Fixed**: Enhanced reactivity with proper computed properties and debugging
-- **Location**: `/frontend/components/ArrowRecommendationsList.vue`
 
 ### Performance Optimizations
 
