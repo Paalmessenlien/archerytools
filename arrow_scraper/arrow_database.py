@@ -485,7 +485,7 @@ class ArrowDatabase:
         query = '''
         SELECT DISTINCT 
             a.id, a.manufacturer, a.model_name, a.material, a.arrow_type, 
-            a.description, a.primary_image_url,
+            a.description, a.image_url as primary_image_url,
             COUNT(s.id) as spine_count,
             MIN(s.spine) as min_spine, MAX(s.spine) as max_spine,
             MIN(s.gpi_weight) as min_gpi, MAX(s.gpi_weight) as max_gpi,
