@@ -1,0 +1,62 @@
+{
+  "session_id": "Easton_20250719_201318",
+  "started_at": "2025-07-19 20:13:18.526665",
+  "completed_at": "2025-07-19 20:13:53.694708",
+  "manufacturer": "Easton",
+  "urls_scraped": [
+    "https://eastonarchery.com/arrows_/4mm-axis-long-range-match-grade/",
+    "https://eastonarchery.com/arrows_/carbon-legacy/",
+    "https://eastonarchery.com/arrows_/bowhunter/",
+    "https://eastonarchery.com/arrows_/fmj/",
+    "https://eastonarchery.com/arrows_/axis-traditional/"
+  ],
+  "total_arrows_found": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/arrows_/4mm-axis-long-range-match-grade/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 6.819988250732422
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/arrows_/carbon-legacy/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 3.1293890476226807
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/arrows_/bowhunter/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 7.8760011196136475
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/arrows_/fmj/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 8.835501909255981
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/arrows_/axis-traditional/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 7.969177961349487
+    }
+  ]
+}

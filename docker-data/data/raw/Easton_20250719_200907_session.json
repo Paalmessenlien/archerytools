@@ -1,0 +1,22 @@
+{
+  "session_id": "Easton_20250719_200907",
+  "started_at": "2025-07-19 20:09:07.246473",
+  "completed_at": "2025-07-19 20:09:11.254688",
+  "manufacturer": "Easton",
+  "urls_scraped": [
+    "https://eastonarchery.com/huntingarrows/"
+  ],
+  "total_arrows_found": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/huntingarrows/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 3.9071547985076904
+    }
+  ]
+}

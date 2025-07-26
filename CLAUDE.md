@@ -44,17 +44,21 @@ python test_setup.py
 
 **Option 1: Docker Deployment (Recommended)**
 ```bash
-# Simple deployment with embedded database
-docker-compose up -d --build
+# Production deployment (avoids development overrides)
+docker-compose -f docker-compose.prod.yml up -d --build
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.prod.yml logs -f
 
 # Test deployment
-./test-simple-deployment.sh
+curl http://localhost:5000/api/health
+curl http://localhost:3000
 
 # Frontend: http://localhost:3000
 # API Backend: http://localhost:5000
+
+# Alternative: Simple API-only deployment for testing
+docker-compose -f docker-compose.simple.yml up -d --build
 ```
 
 **Option 2: Dual Architecture Startup**

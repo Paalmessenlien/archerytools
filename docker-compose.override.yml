@@ -2,8 +2,6 @@
 # This file is automatically loaded by docker-compose
 # and provides development-specific configuration
 
-version: '3.8'
-
 services:
   # API service overrides
   api:
@@ -12,7 +10,6 @@ services:
       - FLASK_DEBUG=True
     volumes:
       - ./arrow_scraper:/app
-      - arrowtuner-data:/app/data
     
   # Frontend service overrides  
   frontend:

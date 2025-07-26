@@ -1,0 +1,72 @@
+{
+  "session_id": "Easton_20250722_083445",
+  "started_at": "2025-07-22 08:34:45.759552",
+  "completed_at": "2025-07-22 08:34:54.662193",
+  "manufacturer": "Easton",
+  "urls_scraped": [
+    "https://eastonarchery.com/outdoor/",
+    "https://eastonarchery.com/indoor/",
+    "https://eastonarchery.com/huntingarrows/",
+    "https://eastonarchery.com/3d/",
+    "https://eastonarchery.com/targetarrows/",
+    "https://eastonarchery.com/recreational/"
+  ],
+  "total_arrows_found": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/outdoor/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 3.50813627243042
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/indoor/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 4.10128116607666
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/huntingarrows/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 4.53380823135376
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/3d/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 3.515493392944336
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/targetarrows/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 4.3472959995269775
+    },
+    {
+      "success": true,
+      "url": "https://eastonarchery.com/recreational/",
+      "arrows_found": 0,
+      "errors": [],
+      "raw_data": null,
+      "processed_data": [],
+      "processing_time": 4.162736177444458
+    }
+  ]
+}

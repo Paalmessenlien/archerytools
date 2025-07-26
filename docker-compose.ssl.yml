@@ -2,8 +2,6 @@
 # Use after setting up SSL certificates
 # Run with: docker-compose -f docker-compose.ssl.yml up
 
-version: '3.8'
-
 services:
   # Flask API Backend
   api:

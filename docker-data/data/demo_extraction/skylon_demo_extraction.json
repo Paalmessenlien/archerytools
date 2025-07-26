@@ -1,0 +1,163 @@
+{
+  "extraction_demo": {
+    "manufacturer": "Skylon Archery",
+    "extraction_date": "2025-07-19T16:27:46.154702",
+    "urls_processed": 5,
+    "total_arrows": 5,
+    "success_rate": "100.0%"
+  },
+  "arrows": [
+    {
+      "model_name": "Skylon Performa ID 3.2",
+      "spine_options": [
+        350,
+        400,
+        450,
+        500,
+        550,
+        600,
+        650,
+        700,
+        750,
+        800,
+        850,
+        900,
+        1000
+      ],
+      "diameter": 0.193,
+      "inner_diameter": 0.125,
+      "gpi_weight": 4.7,
+      "length_options": [
+        30,
+        31,
+        32
+      ],
+      "material": "40-TON Carbon",
+      "arrow_type": "ArrowType.TARGET",
+      "recommended_use": [
+        "target",
+        "indoor",
+        "outdoor"
+      ],
+      "description": "High-density carbon construction with smaller diameter for reduced wind drift, ideal for precision target shooting.",
+      "source_url": "https://www.skylonarchery.com/arrows/id-3-2/performa",
+      "scraped_at": "2025-07-19T16:26:47.978878"
+    },
+    {
+      "model_name": "Skylon Precium ID 3.2",
+      "spine_options": [
+        350,
+        400,
+        450,
+        500,
+        550,
+        600,
+        650,
+        700,
+        750,
+        800,
+        850,
+        900,
+        1000
+      ],
+      "diameter": 0.193,
+      "inner_diameter": 0.125,
+      "gpi_weight": 4.7,
+      "length_options": [
+        30,
+        31,
+        32
+      ],
+      "material": "40-TON Carbon",
+      "arrow_type": "ArrowType.TARGET",
+      "recommended_use": [
+        "target",
+        "indoor",
+        "outdoor"
+      ],
+      "description": "High-density carbon construction with smaller diameter for reduced wind drift, ideal for precision target shooting.",
+      "source_url": "https://www.skylonarchery.com/arrows/id-3-2/precium",
+      "scraped_at": "2025-07-19T16:27:04.575757"
+    },
+    {
+      "model_name": "Instec",
+      "spine_options": [
+        300,
+        350,
+        400,
+        500,
+        600,
+        700
+      ],
+      "diameter": 0.244,
+      "inner_diameter": 0.204,
+      "gpi_weight": 5.24,
+      "length_options": [
+        33
+      ],
+      "material": "24-TON Carbon",
+      "arrow_type": "ArrowType.TARGET",
+      "recommended_use": [
+        "target",
+        "indoor",
+        "outdoor"
+      ],
+      "description": "Full carbon construction with smaller diameter and X nock size, ideal for precision shooting.",
+      "source_url": "https://www.skylonarchery.com/arrows/id-5-2/instec",
+      "scraped_at": "2025-07-19T16:27:17.458070"
+    },
+    {
+      "model_name": "Skylon Edge",
+      "spine_options": [
+        300,
+        350,
+        400,
+        500,
+        600,
+        700,
+        800
+      ],
+      "diameter": 0.276,
+      "inner_diameter": 0.244,
+      "gpi_weight": 8.5,
+      "length_options": [
+        33
+      ],
+      "material": "24-TON Carbon",
+      "arrow_type": "ArrowType.TARGET",
+      "recommended_use": [
+        "target",
+        "indoor",
+        "outdoor"
+      ],
+      "description": "High-performance carbon arrow with full carbon construction, ideal for target archery with excellent straightness tolerance.",
+      "source_url": "https://www.skylonarchery.com/arrows/id-6-2/edge",
+      "scraped_at": "2025-07-19T16:27:31.503012"
+    },
+    {
+      "model_name": "bruxx",
+      "spine_options": [
+        300,
+        350,
+        400,
+        500
+      ],
+      "diameter": 0.348,
+      "inner_diameter": 0.315,
+      "gpi_weight": 6.61,
+      "length_options": [
+        33
+      ],
+      "material": "24-TON Carbon",
+      "arrow_type": "ArrowType.TARGET",
+      "recommended_use": [
+        "target",
+        "indoor",
+        "outdoor"
+      ],
+      "description": "High-performance carbon arrow with tight straightness tolerance (\u00b1.0015\"), ideal for competitive archery.",
+      "source_url": "https://www.skylonarchery.com/arrows/id-8-0/bruxx",
+      "scraped_at": "2025-07-19T16:27:45.066086"
+    }
+  ]
+}

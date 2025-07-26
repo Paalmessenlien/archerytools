@@ -1,0 +1,258 @@
+{
+  "extraction_timestamp": "2025-07-20T13:17:54.267304",
+  "manufacturer": "DK Bow",
+  "extraction_mode": "full",
+  "extraction_range": {
+    "start_index": 0,
+    "end_index": 3,
+    "total_urls_available": 6,
+    "urls_processed": 3,
+    "new_urls_only": false
+  },
+  "statistics": {
+    "processed": 3,
+    "successful": 3,
+    "arrows": 3
+  },
+  "success_rate": 100.0,
+  "total_arrows": 3,
+  "total_spine_specs": 21,
+  "arrows": [
+    {
+      "manufacturer": "DK Bowfactory",
+      "model_name": "DK Cougar Carbon Arrow - ID 4.2",
+      "spine_specifications": [
+        {
+          "spine": 600,
+          "outer_diameter": 0.226,
+          "gpi_weight": 7.14,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.44,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.217,
+          "gpi_weight": 5.95,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.5,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 1200,
+          "outer_diameter": 0.205,
+          "gpi_weight": 4.6,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 1300,
+          "outer_diameter": 0.205,
+          "gpi_weight": 4.6,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 1500,
+          "outer_diameter": 0.199,
+          "gpi_weight": 3.9,
+          "inner_diameter": 4.2,
+          "length_options": null
+        },
+        {
+          "spine": 1800,
+          "outer_diameter": 0.197,
+          "gpi_weight": 3.4,
+          "inner_diameter": 4.2,
+          "length_options": null
+        }
+      ],
+      "material": "hochmodulares Carbon",
+      "carbon_content": null,
+      "arrow_type": "target",
+      "recommended_use": null,
+      "description": "Der Cougar Schaft geh\u00f6rt mit seinem geringen Gewicht und der trotzdem hohen Stabilit\u00e4t zu den schnellsten Pfeilen seiner Art.",
+      "primary_image_url": "https://dkbow.de/media/76/fc/89/1708436415/25_Cougar2.jpg",
+      "gallery_images": [],
+      "saved_images": [
+        "data/images/DK_Bowfactory_DK_Cougar_Carbon_Arrow_-_ID_42_primary.jpg"
+      ],
+      "straightness_tolerance": null,
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Cougar-ID4.2/",
+      "scraped_at": "2025-07-20T13:16:50.780025",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "DK Bowfactory",
+      "model_name": "DK Panther ID6.2",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.288,
+          "gpi_weight": 7.25,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 4.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.277,
+          "gpi_weight": 4.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.275,
+          "gpi_weight": 4.3,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "hochmodulares Carbon",
+      "carbon_content": null,
+      "arrow_type": "target",
+      "recommended_use": null,
+      "description": "Der Panther Schaft geh\u00f6rt zu den leichtesten und schnellsten Pfeilen in diesem Durchmesserbereich. Exzellentes GPI Verh\u00e4ltnis f\u00fcr gestreckte Flugbahn und gute Gruppierungen bei jeder Witterung.",
+      "primary_image_url": "https://dkbow.de/media/0d/4f/b7/1708436426/26_Panther2.jpg",
+      "gallery_images": [],
+      "saved_images": [
+        "data/images/DK_Bowfactory_DK_Panther_ID62_primary.jpg"
+      ],
+      "straightness_tolerance": null,
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Panther-ID6.2/",
+      "scraped_at": "2025-07-20T13:17:12.826836",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "DK Bowfactory",
+      "model_name": "DK Tyrfing ID5.2",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 6.5,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 5.4,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 4.95,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 4.48,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 3.9,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 3.78,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 3.79,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.2518,
+          "gpi_weight": 3.49,
+          "inner_diameter": 0.204,
+          "length_options": [
+            33.0
+          ]
+        }
+      ],
+      "material": "ultrahochmodulares gewickeltes Carbon",
+      "carbon_content": null,
+      "arrow_type": "target",
+      "recommended_use": null,
+      "description": "Der Tyrfing ist in der Gr\u00f6\u00dfe 5,2mm Innendurchmesser (0.204 inch) einer der interessantesten Wettkampfpfeile auf dem Markt. Mit einer Spinepalette von 400 bis 1100 (!) und einer L\u00e4nge von 33 Zoll, l\u00e4sst er jeden Auszug und Zuggewichtsst\u00e4rke f\u00fcr Wettk\u00e4mpfer freie Auswahl. Dar\u00fcber hinaus ist er in seiner Durchmesserklasse, der leichteste Pfeil auf dem Markt, was er mit seinen GPI Zahlen eindrucksvoll beweist. Durch die Verwendung ultrahochmodularer gewickelter Carbone stabilisiert er schneller als ein Schwerthieb der G\u00f6tter ;). Er bringt selbst bei leichten oder mittleren Spitzen die Performance des Bogens in den Pfeil, womit enorme Geschwindigkeiten generiert werden k\u00f6nnen. Ebenso ist er mit seinem leichten GPI und einer mittleren Spitze ein sehr pr\u00e4ziser und fehlerverzeihender Begleiter f\u00fcr den Wettkampf.",
+      "primary_image_url": "https://dkbow.de/media/aa/67/e2/1708434750/Tyrfing%20%282%29.jpg?ts=1708436534",
+      "gallery_images": [
+        "https://dkbow.de/media/d4/e2/44/1707485474/1321.jpg?ts=1707485474"
+      ],
+      "saved_images": [
+        "data/images/DK_Bowfactory_DK_Tyrfing_ID52_primary.jpg",
+        "data/images/DK_Bowfactory_DK_Tyrfing_ID52_gallery_1.jpg"
+      ],
+      "straightness_tolerance": null,
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Tyrfing-ID5.2/",
+      "scraped_at": "2025-07-20T13:17:52.176354",
+      "scraper_version": "1.0"
+    }
+  ],
+  "failed_urls": []
+}
