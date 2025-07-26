@@ -11,7 +11,30 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import re
 import threading
-from models import classify_diameter, DiameterCategory
+try:
+    from models import classify_diameter, DiameterCategory
+except ImportError:
+    # Fallback for Docker environments where models.py dependencies might not be available
+    def classify_diameter(inner_diameter, outer_diameter=None):
+        """Fallback diameter classification"""
+        if inner_diameter and inner_diameter < 0.200:
+            return "Ultra-thin"
+        elif inner_diameter and inner_diameter < 0.220:
+            return "Thin"
+        elif inner_diameter and inner_diameter < 0.250:
+            return "Small hunting"
+        elif inner_diameter and inner_diameter < 0.270:
+            return "Standard target"
+        elif inner_diameter and inner_diameter < 0.320:
+            return "Standard hunting"
+        elif inner_diameter and inner_diameter < 0.360:
+            return "Large hunting"
+        else:
+            return "Heavy hunting"
+    
+    class DiameterCategory:
+        """Fallback diameter category"""
+        pass
 
 def normalize_material(material: Optional[str], description: Optional[str] = None) -> str:
     """
@@ -618,17 +641,21 @@ class ArrowDatabase:
         cursor.execute('SELECT MIN(outer_diameter) as min_diameter, MAX(outer_diameter) as max_diameter FROM spine_specifications WHERE outer_diameter IS NOT NULL')
         diameter_range = cursor.fetchone()
         
-        # Diameter category distribution
-        cursor.execute('''
-        SELECT diameter_category, COUNT(*) as count 
-        FROM spine_specifications 
-        WHERE diameter_category IS NOT NULL 
-        GROUP BY diameter_category 
-        ORDER BY count DESC
-        ''')
+        # Diameter category distribution (if column exists)
         diameter_categories = []
-        for row in cursor.fetchall():
-            diameter_categories.append(dict(row))
+        try:
+            cursor.execute('''
+            SELECT diameter_category, COUNT(*) as count 
+            FROM spine_specifications 
+            WHERE diameter_category IS NOT NULL 
+            GROUP BY diameter_category 
+            ORDER BY count DESC
+            ''')
+            for row in cursor.fetchall():
+                diameter_categories.append(dict(row))
+        except sqlite3.OperationalError:
+            # diameter_category column doesn't exist in this database
+            pass
         
         return {
             'total_arrows': arrow_count,
