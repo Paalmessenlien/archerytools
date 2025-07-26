@@ -1,0 +1,51 @@
+#\!/bin/bash
+
+echo "🔧 Docker Permission & Container Fix"
+echo "==================================="
+echo ""
+
+echo "The Docker error you're seeing is typically caused by:"
+echo "1. Docker permission issues"
+echo "2. Conflicting container configurations from previous deployments"
+echo ""
+
+echo "💡 Solution Options:"
+echo ""
+
+echo "Option 1: Run with sudo (Quick fix)"
+echo "-----------------------------------"
+echo "sudo docker-compose down --volumes --remove-orphans"
+echo "sudo docker-compose up -d --build"
+echo ""
+
+echo "Option 2: Fix Docker permissions (Permanent fix)"
+echo "-----------------------------------------------"
+echo "sudo usermod -aG docker $USER"
+echo "newgrp docker  # Or logout/login"
+echo "docker-compose down --volumes --remove-orphans"
+echo "docker-compose up -d --build"
+echo ""
+
+echo "Option 3: Clean slate rebuild (Recommended)"
+echo "------------------------------------------"
+echo "# Stop everything"
+echo "sudo docker-compose down --volumes --remove-orphans"
+echo ""
+echo "# Remove any conflicting containers/images"
+echo "sudo docker system prune -f"
+echo "sudo docker rmi \$(sudo docker images -q --filter 'reference=*arrowtuner*') 2>/dev/null || true"
+echo ""
+echo "# Rebuild with fresh containers"
+echo "sudo docker-compose up -d --build"
+echo ""
+echo "# Test the result"
+echo "curl http://localhost:5000/api/health"
+echo ""
+
+echo "🎯 Simplified API-only test:"
+echo "----------------------------"
+echo "sudo docker-compose -f docker-compose.simple.yml up -d --build"
+echo ""
+
+echo "The ContainerConfig error suggests Docker is confused about volume mounts"
+echo "from a previous deployment. A clean rebuild should resolve this."
