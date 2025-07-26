@@ -65,7 +65,7 @@ check_prerequisites() {
         success "curl is available for testing"
     fi
     
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+    if [ ${#missing_tools[@]} -gt 0 ]; then
         error "Missing required tools: ${missing_tools[*]}"
         echo
         echo "Install missing tools:"
@@ -83,39 +83,33 @@ check_prerequisites() {
     success "All prerequisites met"
 }
 
-# Test data preparation
+# Test source data for building database in image
 test_data_preparation() {
-    header "📦 Testing Data Preparation"
+    header "📦 Testing Source Data for Database Build"
     
-    # Check if docker-data directory exists
-    if [[ -d "docker-data" ]]; then
-        success "Docker data directory exists"
+    # Check if processed data exists for building database
+    if [ -d "arrow_scraper/data/processed" ]; then
+        success "Source processed data directory exists"
         
-        # Check database
-        if [[ -f "docker-data/arrow_database.db" ]]; then
-            if command -v sqlite3 &> /dev/null; then
-                ARROW_COUNT=$(sqlite3 "docker-data/arrow_database.db" "SELECT COUNT(*) FROM arrows;" 2>/dev/null || echo "0")
-                success "Database has $ARROW_COUNT arrows"
-            else
-                success "Database file exists (cannot verify contents without sqlite3)"
-            fi
+        JSON_COUNT=$(find arrow_scraper/data/processed -name "*.json" 2>/dev/null | wc -l || echo "0")
+        if [ "$JSON_COUNT" -gt 0 ]; then
+            success "Found $JSON_COUNT processed JSON files for database build"
         else
-            error "Database file missing from docker-data directory"
-            log "Run ./prepare-docker-data.sh to prepare the data volume"
+            error "No JSON files found in processed data directory"
             return 1
         fi
         
-        # Check processed data
-        if [[ -d "docker-data/data/processed" ]]; then
-            JSON_COUNT=$(find docker-data/data/processed -name "*.json" | wc -l)
-            success "Found $JSON_COUNT processed JSON files"
+        # Check if build script exists
+        if [ -f "arrow_scraper/build-database.py" ]; then
+            success "Database build script exists"
         else
-            warning "No processed data directory found"
+            error "Database build script missing"
+            return 1
         fi
         
     else
-        error "Docker data directory not found"
-        log "Run ./prepare-docker-data.sh to prepare the data volume"
+        error "Source processed data directory not found: arrow_scraper/data/processed"
+        log "Database will be built from processed JSON files during Docker image creation"
         return 1
     fi
 }
@@ -153,7 +147,7 @@ test_services() {
     local api_attempts=0
     local api_max_attempts=6
     
-    while [[ $api_attempts -lt $api_max_attempts ]]; do
+    while [ $api_attempts -lt $api_max_attempts ]; do
         if curl -f -s "http://localhost:5000/api/health" > /dev/null; then
             success "API health check passed"
             
@@ -162,16 +156,16 @@ test_services() {
             curl -s "http://localhost:5000/api/health" | python3 -m json.tool 2>/dev/null || curl -s "http://localhost:5000/api/health"
             break
         else
-            ((api_attempts++))
+            api_attempts=$((api_attempts + 1))
             warning "API health check failed (attempt $api_attempts/$api_max_attempts)"
-            if [[ $api_attempts -lt $api_max_attempts ]]; then
+            if [ $api_attempts -lt $api_max_attempts ]; then
                 log "Waiting 10 seconds before retry..."
                 sleep 10
             fi
         fi
     done
     
-    if [[ $api_attempts -eq $api_max_attempts ]]; then
+    if [ $api_attempts -eq $api_max_attempts ]; then
         error "API health checks failed after $api_max_attempts attempts"
         return 1
     fi
@@ -193,20 +187,20 @@ test_services() {
     local frontend_attempts=0
     local frontend_max_attempts=3
     
-    while [[ $frontend_attempts -lt $frontend_max_attempts ]]; do
+    while [ $frontend_attempts -lt $frontend_max_attempts ]; do
         if curl -f -s "http://localhost:3000" > /dev/null; then
             success "Frontend health check passed"
             break
         else
-            ((frontend_attempts++))
+            frontend_attempts=$((frontend_attempts + 1))
             warning "Frontend health check failed (attempt $frontend_attempts/$frontend_max_attempts)"
-            if [[ $frontend_attempts -lt $frontend_max_attempts ]]; then
+            if [ $frontend_attempts -lt $frontend_max_attempts ]; then
                 sleep 10
             fi
         fi
     done
     
-    if [[ $frontend_attempts -eq $frontend_max_attempts ]]; then
+    if [ $frontend_attempts -eq $frontend_max_attempts ]; then
         warning "Frontend health checks failed - this may be normal if Nuxt is still building"
     fi
     
