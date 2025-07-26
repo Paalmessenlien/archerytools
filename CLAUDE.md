@@ -106,18 +106,102 @@ python webapp.py
 ```
 
 ### Running the Scraper
+
+**🏹 Arrow Scraper Operations**
+
+**Basic Scraper Usage:**
 ```bash
+# Navigate to scraper directory
+cd arrow_scraper
+
+# Activate virtual environment (recommended)
+source venv/bin/activate
+
 # Run scraper for specific manufacturer
+python main.py easton
+
+# Run scraper for multiple manufacturers
+python main.py easton goldtip victory
+
+# List all available manufacturers (13 supported)
+python main.py --list-manufacturers
+
+# Deactivate virtual environment when done
+deactivate
+```
+
+**Environment Setup:**
+```bash
+# Set up API key (required for scraping)
+echo "DEEPSEEK_API_KEY=your_deepseek_api_key_here" > .env
+
+# Install/update dependencies in virtual environment
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Available Manufacturers:**
+- **Primary**: Easton, Gold Tip, Victory, Carbon Express
+- **European**: Nijora, DK Bow, Aurel, BigArchery/Cross-X  
+- **International**: Fivics, Pandarus, Skylon
+- **Traditional**: Wood arrow manufacturers
+
+**Complete Database Update Workflow:**
+```bash
+# 1. Scrape major manufacturers
+cd arrow_scraper
+source venv/bin/activate
+python main.py easton goldtip victory
+
+# 2. Check scraped data
+ls -la data/processed/
+
+# 3. Rebuild database with new data
+python arrow_database.py
+
+# 4. Verify the update
+python show_available_data.py
+
+# 5. Deploy to production (if satisfied)
+git add . && git commit -m "Update arrow database with latest scraped data"
+git push
+# On production: git pull && sudo docker-compose -f docker-compose.ssl.yml up -d --build
+```
+
+**Virtual Environment Options:**
+```bash
+# Option 1: With venv (recommended) - already set up
+cd arrow_scraper
+source venv/bin/activate
+python main.py easton
+
+# Option 2: Without venv (system Python)
 cd arrow_scraper
 python main.py easton
 
-# List available manufacturers (13 supported)
-python main.py --list-manufacturers
-
-# Run with virtual environment
-source venv/bin/activate
-python arrow_scraper/main.py easton
+# Option 3: Docker environment (production-like)
+docker build -t arrow-scraper ./arrow_scraper
+docker run -e DEEPSEEK_API_KEY=your_key arrow-scraper python main.py easton
 ```
+
+**Scraper Output Structure:**
+```
+arrow_scraper/
+├── data/
+│   ├── raw/              # Raw scraped HTML/content
+│   └── processed/        # Clean JSON arrow data
+│       ├── easton_arrows.json
+│       ├── goldtip_arrows.json
+│       └── victory_arrows.json
+├── arrow_database.db     # SQLite database
+└── logs/                 # Scraping logs
+```
+
+**Important Notes:**
+- Scraper includes respectful delays between requests
+- Requires DeepSeek API key for intelligent content extraction
+- Large scraping operations may take 30+ minutes
+- Always verify scraped data before production deployment
 
 ### Database Management
 ```bash
@@ -229,6 +313,60 @@ sudo docker-compose -f docker-compose.ssl.yml up -d --build
 - `enable-https.sh` - SSL certificate setup and HTTPS enablement
 - `fix-mixed-content.sh` - Fix HTTP/HTTPS mixed content issues
 - `diagnose-domain-access.sh` - Domain and networking diagnostics
+
+### Deploying Scraper Updates to Production
+
+**🚀 Quick Production Update (Latest Changes)**
+```bash
+# On your production server
+cd /path/to/your/arrowtuner/project
+
+# Pull latest changes
+git pull
+
+# Rebuild and restart containers with latest code
+sudo docker-compose -f docker-compose.ssl.yml down
+sudo docker-compose -f docker-compose.ssl.yml up -d --build
+
+# Verify deployment
+curl https://yourdomain.com/api/health
+```
+
+**🏹 Deploying Fresh Arrow Data**
+```bash
+# Method 1: Local scraping then production deploy
+# 1. Run scraper locally
+cd arrow_scraper
+source venv/bin/activate
+python main.py easton goldtip victory
+python arrow_database.py
+
+# 2. Commit and push changes
+git add .
+git commit -m "Update arrow database with latest scraped data"
+git push
+
+# 3. Deploy to production
+# On production server:
+git pull
+sudo docker-compose -f docker-compose.ssl.yml up -d --build
+
+# Method 2: Direct production scraping (advanced)
+# Run scraper in production Docker container
+sudo docker exec -it arrowtuner-api bash
+cd /app
+python main.py easton goldtip victory
+python arrow_database.py
+exit
+sudo docker-compose restart api
+```
+
+**⚠️ Production Deployment Notes:**
+- **Database Persistence**: Arrow database persists through container rebuilds
+- **HTTPS Required**: Always use `docker-compose.ssl.yml` for production
+- **Backup Recommended**: Backup database before major scraper updates
+- **Verification**: Always test API health endpoint after deployment
+- **Zero Downtime**: Rebuild process maintains service availability
 
 ### Environment Configuration
 **Development:** Create `.env` file in `arrow_scraper/` directory:
