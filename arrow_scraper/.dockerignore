@@ -1,0 +1,55 @@
+# Exclude unnecessary files from Docker build context
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.tox
+.coverage
+.pytest_cache
+*.egg-info/
+
+# Development
+venv/
+.venv
+.env
+*.log
+*.swp
+*.tmp
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Documentation
+*.md
+docs/
+
+# Tests (but keep the test data we need)
+tests/
+test_*.py
+debug_*.py
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs and temporary files
+logs/
+*.log
+
+# BUT INCLUDE these essential files:
+!data/
+!*.py
+!requirements.txt
+!Dockerfile
+!start-api.sh

@@ -42,7 +42,12 @@ RUN python build-database-robust.py && \
     python -c "import sqlite3; conn=sqlite3.connect('arrow_database.db'); print('Arrow count:', conn.execute('SELECT COUNT(*) FROM arrows').fetchone()[0]); conn.close()" && \
     echo "Copying database to backup location:" && \
     cp arrow_database.db /app/arrow_database_backup.db && \
-    chown -R appuser:appgroup /app
+    echo "Final database verification:" && \
+    ls -la /app/arrow*.db && \
+    echo "Setting ownership..." && \
+    chown -R appuser:appgroup /app && \
+    echo "Final file check after ownership change:" && \
+    ls -la /app/arrow*.db
 
 USER appuser
 
