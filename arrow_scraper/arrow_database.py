@@ -471,6 +471,38 @@ class ArrowDatabase:
             print(f"Error adding spine specification: {e}")
             return False
     
+    def get_arrows_by_manufacturer(self, manufacturer: str) -> List[Dict[str, Any]]:
+        """Get all arrows from a specific manufacturer"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT a.id, a.manufacturer, a.model_name, a.material, a.arrow_type, 
+                       a.description, a.image_url
+                FROM arrows a
+                WHERE LOWER(a.manufacturer) LIKE ?
+            ''', (f'%{manufacturer.lower()}%',))
+            
+            rows = cursor.fetchall()
+            arrows = []
+            for row in rows:
+                arrows.append({
+                    'id': row['id'],
+                    'manufacturer': row['manufacturer'],
+                    'model_name': row['model_name'],
+                    'material': row['material'],
+                    'arrow_type': row['arrow_type'],
+                    'description': row['description'],
+                    'image_url': row['image_url']
+                })
+            
+            return arrows
+            
+        except Exception as e:
+            print(f"Error getting arrows by manufacturer: {e}")
+            return []
+
     def search_arrows(self, manufacturer: str = None, arrow_type: str = None, 
                      material: str = None, spine_min: int = None, spine_max: int = None,
                      gpi_min: float = None, gpi_max: float = None,
