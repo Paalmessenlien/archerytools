@@ -15,7 +15,7 @@ services:
   frontend:
     environment:
       - NODE_ENV=development
-      - API_BASE_URL=http://api:5000/api
+      - NUXT_PUBLIC_API_BASE=http://api:5000/api
     volumes:
       - ./frontend:/app
       - /app/node_modules
