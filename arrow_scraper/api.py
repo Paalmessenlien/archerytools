@@ -324,6 +324,61 @@ def get_materials():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/materials/grouped', methods=['GET'])
+def get_grouped_materials():
+    """Get list of grouped material categories with arrow counts"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+            
+        # Get materials directly from database
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT material, COUNT(*) as count 
+            FROM arrows 
+            WHERE material IS NOT NULL 
+            GROUP BY material 
+            ORDER BY material
+        ''')
+        
+        # Group materials into categories
+        material_groups = {
+            'Carbon': 0,
+            'Carbon / Aluminum': 0,
+            'Aluminum': 0,
+            'Wood': 0
+        }
+        
+        for row in cursor.fetchall():
+            material = row['material'].lower()
+            count = row['count']
+            
+            # Categorize materials
+            if 'wood' in material or 'cedar' in material or 'pine' in material or 'bamboo' in material:
+                material_groups['Wood'] += count
+            elif 'carbon' in material and 'aluminum' in material:
+                material_groups['Carbon / Aluminum'] += count
+            elif 'carbon' in material:
+                material_groups['Carbon'] += count
+            elif 'aluminum' in material or 'alloy' in material:
+                material_groups['Aluminum'] += count
+        
+        # Convert to list format
+        grouped_materials = []
+        for material, count in material_groups.items():
+            if count > 0:  # Only include categories with arrows
+                grouped_materials.append({
+                    'material': material,
+                    'count': count
+                })
+        
+        return jsonify(grouped_materials)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/arrow-types', methods=['GET'])
 def get_arrow_types():
     """Get list of all arrow types with arrow counts"""

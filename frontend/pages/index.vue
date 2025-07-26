@@ -350,7 +350,7 @@ const showAdvancedSetup = ref(false)
 // Load materials from API
 const loadMaterials = async () => {
   try {
-    const materials = await api.getMaterials()
+    const materials = await api.getGroupedMaterials()
     availableMaterials.value = materials || []
   } catch (error) {
     console.error('Error loading materials:', error)

@@ -196,7 +196,7 @@ class ArrowDatabase:
             carbon_content TEXT,
             arrow_type TEXT,  -- target, hunting, etc.
             description TEXT,
-            primary_image_url TEXT,
+            image_url TEXT,
             source_url TEXT,
             scraped_at TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -384,18 +384,14 @@ class ArrowDatabase:
                             carbon_content = ?, 
                             arrow_type = ?, 
                             description = ?, 
-                            primary_image_url = ?, 
-                            source_url = ?, 
-                            scraped_at = ?
+                            image_url = ?
                         WHERE id = ?
                     ''', (
                         new_material,
                         arrow_data.get('carbon_content'),
                         arrow_data.get('arrow_type'),
                         new_description or existing_description,
-                        arrow_data.get('primary_image_url'),
-                        arrow_data.get('source_url'),
-                        arrow_data.get('scraped_at'),
+                        arrow_data.get('image_url'),
                         existing_id
                     ))
                     conn.commit()
@@ -406,8 +402,8 @@ class ArrowDatabase:
                 cursor.execute('''
                 INSERT INTO arrows 
                 (manufacturer, model_name, material, carbon_content, arrow_type, 
-                 description, primary_image_url, source_url, scraped_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 description, image_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     arrow_manufacturer,
                     model_name,
@@ -415,9 +411,7 @@ class ArrowDatabase:
                     arrow_data.get('carbon_content'),
                     arrow_data.get('arrow_type'),
                     arrow_data.get('description'),
-                    arrow_data.get('primary_image_url'),
-                    arrow_data.get('source_url'),
-                    arrow_data.get('scraped_at')
+                    arrow_data.get('image_url')
                 ))
                 
                 arrow_id = cursor.lastrowid
@@ -446,23 +440,26 @@ class ArrowDatabase:
             if spec_data.get('outer_diameter'):
                 # Use inner diameter if available, otherwise outer diameter
                 effective_diameter = spec_data.get('inner_diameter') or spec_data.get('outer_diameter')
-                diameter_category = classify_diameter(effective_diameter).value
+                diameter_result = classify_diameter(effective_diameter)
+                # Handle both enum and string returns
+                diameter_category = getattr(diameter_result, 'value', diameter_result)
             
             cursor.execute('''
             INSERT OR IGNORE INTO spine_specifications
             (arrow_id, spine, outer_diameter, gpi_weight, inner_diameter,
-             diameter_category, length_options, straightness_tolerance, weight_tolerance)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             length_options, wall_thickness, insert_weight_range, nock_size, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 arrow_id,
                 spec_data.get('spine'),
                 spec_data.get('outer_diameter'),
                 spec_data.get('gpi_weight'),
                 spec_data.get('inner_diameter'),
-                diameter_category,
                 length_options_json,
-                spec_data.get('straightness_tolerance'),
-                spec_data.get('weight_tolerance')
+                spec_data.get('wall_thickness'),
+                spec_data.get('insert_weight_range'),
+                spec_data.get('nock_size'),
+                spec_data.get('notes')
             ))
             
             if cursor.rowcount > 0:
@@ -485,7 +482,7 @@ class ArrowDatabase:
         query = '''
         SELECT DISTINCT 
             a.id, a.manufacturer, a.model_name, a.material, a.arrow_type, 
-            a.description, a.image_url as primary_image_url,
+            a.description, a.image_url,
             COUNT(s.id) as spine_count,
             MIN(s.spine) as min_spine, MAX(s.spine) as max_spine,
             MIN(s.gpi_weight) as min_gpi, MAX(s.gpi_weight) as max_gpi,

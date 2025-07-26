@@ -127,6 +127,13 @@ export const useApi = () => {
     }>>('/materials')
   }
 
+  const getGroupedMaterials = async () => {
+    return apiRequest<Array<{ 
+      material: string 
+      count: number 
+    }>>('/materials/grouped')
+  }
+
   const getArrowTypes = async () => {
     return apiRequest<Array<{ 
       arrow_type: string 
@@ -160,6 +167,7 @@ export const useApi = () => {
     // Manufacturers
     getManufacturers,
     getMaterials,
+    getGroupedMaterials,
     getArrowTypes,
     
     // System
