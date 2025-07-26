@@ -15,6 +15,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
         build-essential \
+        sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -38,7 +39,7 @@ RUN addgroup --gid 1000 appgroup && \
 RUN python build-database-robust.py && \
     echo "Database build completed, checking result:" && \
     ls -la arrow_database.db && \
-    sqlite3 arrow_database.db "SELECT COUNT(*) FROM arrows;" && \
+    python -c "import sqlite3; conn=sqlite3.connect('arrow_database.db'); print('Arrow count:', conn.execute('SELECT COUNT(*) FROM arrows').fetchone()[0]); conn.close()" && \
     echo "Copying database to backup location:" && \
     cp arrow_database.db /app/arrow_database_backup.db && \
     chown -R appuser:appgroup /app
