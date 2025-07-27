@@ -350,21 +350,66 @@ class SpineCalculator:
     def _get_recurve_base_spine(self, draw_weight: float, arrow_length: float) -> float:
         """Get base spine for recurve bows"""
         
-        # Recurve spine chart (generally stiffer than compound)
+        # Expanded recurve spine chart (generally weaker than compound for same draw weight)
+        # Based on standard archery spine charts and real-world recurve recommendations
         recurve_chart = {
-            35: {28: 700, 29: 600, 30: 600, 31: 500},
-            40: {28: 600, 29: 600, 30: 500, 31: 500},
-            45: {28: 600, 29: 500, 30: 500, 31: 400},
-            50: {28: 500, 29: 500, 30: 400, 31: 400},
-            55: {28: 500, 29: 400, 30: 400, 31: 340},
-            60: {28: 400, 29: 400, 30: 340, 31: 340}
+            20: {24: 2000, 25: 1900, 26: 1800, 27: 1700, 28: 1600, 29: 1500, 30: 1400, 31: 1300, 32: 1200},
+            25: {24: 1800, 25: 1700, 26: 1600, 27: 1500, 28: 1400, 29: 1300, 30: 1200, 31: 1100, 32: 1000},
+            30: {24: 1400, 25: 1300, 26: 1200, 27: 1100, 28: 1000, 29: 900, 30: 800, 31: 750, 32: 700},
+            35: {24: 1000, 25: 900, 26: 800, 27: 750, 28: 700, 29: 650, 30: 600, 31: 550, 32: 500},
+            40: {24: 800, 25: 750, 26: 700, 27: 650, 28: 600, 29: 550, 30: 500, 31: 450, 32: 400},
+            45: {24: 700, 25: 650, 26: 600, 27: 550, 28: 500, 29: 450, 30: 400, 31: 370, 32: 340},
+            50: {24: 600, 25: 550, 26: 500, 27: 450, 28: 400, 29: 370, 30: 340, 31: 320, 32: 300},
+            55: {24: 500, 25: 450, 26: 400, 27: 370, 28: 340, 29: 320, 30: 300, 31: 280, 32: 260},
+            60: {24: 450, 25: 400, 26: 370, 27: 340, 28: 320, 29: 300, 30: 280, 31: 260, 32: 240},
+            65: {24: 400, 25: 370, 26: 340, 27: 320, 28: 300, 29: 280, 30: 260, 31: 240, 32: 220}
         }
         
-        closest_weight = min(recurve_chart.keys(), key=lambda x: abs(x - draw_weight))
+        # Find closest weight and interpolate if necessary
+        available_weights = list(recurve_chart.keys())
+        closest_weight = min(available_weights, key=lambda x: abs(x - draw_weight))
+        
+        # Get spine for closest weight
         weight_chart = recurve_chart[closest_weight]
         closest_length = min(weight_chart.keys(), key=lambda x: abs(x - arrow_length))
+        base_spine = weight_chart[closest_length]
         
-        return weight_chart[closest_length]
+        # Interpolate between weights if necessary for better accuracy
+        if abs(draw_weight - closest_weight) > 2.5:
+            if draw_weight > closest_weight:
+                next_weight = min([w for w in available_weights if w > closest_weight], default=closest_weight)
+                if next_weight != closest_weight:
+                    lower_spine = recurve_chart[closest_weight][closest_length]
+                    upper_spine = recurve_chart[next_weight].get(closest_length, lower_spine)
+                    ratio = (draw_weight - closest_weight) / (next_weight - closest_weight)
+                    base_spine = lower_spine + (upper_spine - lower_spine) * ratio
+            else:
+                prev_weight = max([w for w in available_weights if w < closest_weight], default=closest_weight)
+                if prev_weight != closest_weight:
+                    upper_spine = recurve_chart[closest_weight][closest_length]
+                    lower_spine = recurve_chart[prev_weight].get(closest_length, upper_spine)
+                    ratio = (closest_weight - draw_weight) / (closest_weight - prev_weight)
+                    base_spine = upper_spine + (lower_spine - upper_spine) * ratio
+        
+        # Interpolate between lengths if necessary
+        if abs(arrow_length - closest_length) > 0.5:
+            available_lengths = list(weight_chart.keys())
+            if arrow_length > closest_length:
+                next_length = min([l for l in available_lengths if l > closest_length], default=closest_length)
+                if next_length != closest_length:
+                    lower_spine = weight_chart[closest_length]
+                    upper_spine = weight_chart[next_length]
+                    ratio = (arrow_length - closest_length) / (next_length - closest_length)
+                    base_spine = lower_spine + (upper_spine - lower_spine) * ratio
+            else:
+                prev_length = max([l for l in available_lengths if l < closest_length], default=closest_length)
+                if prev_length != closest_length:
+                    upper_spine = weight_chart[closest_length]
+                    lower_spine = weight_chart[prev_length]
+                    ratio = (closest_length - arrow_length) / (closest_length - prev_length)
+                    base_spine = upper_spine + (lower_spine - upper_spine) * ratio
+        
+        return base_spine
     
     def _get_traditional_base_spine(self, draw_weight: float, arrow_length: float) -> float:
         """Get base spine for traditional bows using actual wood arrow spine chart"""
