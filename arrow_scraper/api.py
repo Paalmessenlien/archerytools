@@ -192,11 +192,31 @@ def root():
         'message': 'ArrowTuner API Server',
         'version': '1.0.0',
         'status': 'running',
+        'environment_debug': {
+            'env_file_loaded': 'Path loaded successfully' if 'Path' in globals() else 'Path not loaded',
+            'secret_key_set': bool(os.environ.get('SECRET_KEY')),
+            'google_client_set': bool(os.environ.get('NUXT_PUBLIC_GOOGLE_CLIENT_ID')),
+        },
         'endpoints': {
             'health': '/api/health',
             'arrows': '/api/arrows',
             'manufacturers': '/api/manufacturers',
             'tuning': '/api/tuning/*'
+        }
+    })
+
+# Simple health check that doesn't require database
+@app.route('/api/simple-health', methods=['GET'])
+def simple_health():
+    """Simple health check without database dependency"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'version': '1.0.0',
+        'environment_vars': {
+            'SECRET_KEY': 'set' if os.environ.get('SECRET_KEY') else 'missing',
+            'GOOGLE_CLIENT_ID': 'set' if os.environ.get('NUXT_PUBLIC_GOOGLE_CLIENT_ID') else 'missing',
+            'GOOGLE_CLIENT_SECRET': 'set' if os.environ.get('GOOGLE_CLIENT_SECRET') else 'missing',
         }
     })
 
