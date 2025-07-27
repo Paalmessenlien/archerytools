@@ -26,9 +26,32 @@
           
           <div class="flex items-center space-x-4">
             <!-- Dark Mode Toggle (Desktop) -->
-            <div class="hidden md:block">
-              <DarkModeToggle />
-            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                  <NuxtLink
+                    v-if="user"
+                    to="/my-page"
+                    class="text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400 transition-colors"
+                  >
+                    My Page
+                  </NuxtLink>
+                  <CustomButton
+                    v-if="user"
+                    @click="logout"
+                    variant="outlined"
+                    class="text-gray-700 dark:text-gray-200"
+                  >
+                    Logout
+                  </CustomButton>
+                  <CustomButton
+                    v-else
+                    @click="loginWithGoogle"
+                    variant="filled"
+                    class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                  >
+                    Login with Google
+                  </CustomButton>
+                  <DarkModeToggle />
+                </div>
             
             <!-- Mobile menu button -->
             <button 
@@ -61,9 +84,42 @@
             @click="closeMobileMenu"
             class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
-            Database
+            Arrows
+          </NuxtLink>
+          <NuxtLink 
+            to="/components" 
+            @click="closeMobileMenu"
+            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            Components
           </NuxtLink>
           
+          <NuxtLink
+            v-if="user"
+            to="/my-page"
+            @click="closeMobileMenu"
+            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            My Page
+          </NuxtLink>
+          <div class="px-3 py-2">
+            <CustomButton
+              v-if="user"
+              @click="logout"
+              variant="outlined"
+              class="w-full text-gray-700 dark:text-gray-200"
+            >
+              Logout
+            </CustomButton>
+            <CustomButton
+              v-else
+              @click="loginWithGoogle"
+              variant="filled"
+              class="w-full bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+            >
+              Login with Google
+            </CustomButton>
+          </div>
           <!-- Dark Mode Toggle (Mobile) -->
           <div class="px-3 py-2">
             <DarkModeToggle />
@@ -96,16 +152,43 @@
               </NuxtLink>
               
               
-              <NuxtLink 
+              <NuxtLink
                 to="/database"
                 class="nav-tab"
                 :class="{ active: $route.path === '/database' }"
               >
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
+                  <path d="M8 17l4 4 4-4m-4-5v9"/>
+                  <path d="M16 12l-4-4-4 4"/>
+                  <path d="M12 1v3"/>
                 </svg>
-                <span class="hidden sm:block">Database</span>
+                <span class="hidden sm:block">Arrows</span>
+              </NuxtLink>
+              
+              <NuxtLink
+                to="/components"
+                class="nav-tab"
+                :class="{ active: $route.path === '/components' }"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span class="hidden sm:block">Components</span>
+              </NuxtLink>
+
+              <NuxtLink
+                v-if="user"
+                to="/my-page"
+                class="nav-tab"
+                :class="{ active: $route.path === '/my-page' }"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="hidden sm:block">My Page</span>
               </NuxtLink>
             </div>
           </nav>
@@ -130,9 +213,17 @@
 
 <script setup>
 import { useBowConfigStore } from '~/stores/bowConfig'
+import { useAuth } from '~/composables/useAuth'
 
 const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)
+
+const { user, logout, loginWithGoogle, fetchUser } = useAuth()
+
+// Fetch user on mount if token exists
+onMounted(() => {
+  fetchUser()
+})
 
 // Dark mode
 const { initializeTheme } = useDarkMode()

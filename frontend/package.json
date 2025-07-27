@@ -12,7 +12,7 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxtjs/tailwindcss": "^6.8.4",
-    "nuxt": "^3.8.0"
+    "nuxt": "^3.17.7"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.0",
@@ -22,6 +22,7 @@
     "@pinia/nuxt": "^0.5.1",
     "pinia": "^2.1.7",
     "vue": "^3.3.8",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vue3-google-login": "^2.0.33"
   }
 }

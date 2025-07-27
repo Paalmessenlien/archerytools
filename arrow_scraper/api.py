@@ -4,19 +4,22 @@ API-Only Flask Backend for Arrow Tuning System
 Provides RESTful API endpoints for the Nuxt 3 frontend
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import uuid
+from pathlib import Path
 
 # Import our arrow tuning system components
 from arrow_tuning_system import ArrowTuningSystem, ArcherProfile, TuningSession
 from spine_calculator import BowConfiguration, BowType
 from tuning_calculator import TuningGoal, ArrowType
 from arrow_database import ArrowDatabase
+from component_database import ComponentDatabase
+from compatibility_engine import CompatibilityEngine
 
 # Create Flask app
 app = Flask(__name__)
@@ -25,6 +28,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'arrow-tuning-secret-key
 # Enable CORS for the Nuxt frontend
 CORS(app, origins=[
     "http://localhost:3000",  # Nuxt dev server
+    "http://localhost:3001",  # Nuxt dev server alternate port
     "https://archerytool.online", # Production domain
     "https://www.archerytool.online", # Production domain with www
 ])
@@ -32,6 +36,8 @@ CORS(app, origins=[
 # Global variables for lazy initialization
 tuning_system = None
 database = None
+component_database = None
+compatibility_engine = None
 
 # In-memory session storage (use Redis in production)
 tuning_sessions = {}
@@ -106,6 +112,48 @@ def get_database():
             traceback.print_exc()
             database = None
     return database
+
+def get_component_database():
+    """Get component database with lazy initialization"""
+    global component_database
+    if component_database is None:
+        try:
+            # Use same database path as main database
+            db = get_database()
+            if db is None:
+                print("❌ Cannot initialize component database: no main database available")
+                return None
+            
+            db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+            print(f"🧩 Initializing component database with: {db_path}")
+            component_database = ComponentDatabase(db_path)
+        except Exception as e:
+            print(f"Error initializing component database: {e}")
+            import traceback
+            traceback.print_exc()
+            component_database = None
+    return component_database
+
+def get_compatibility_engine():
+    """Get compatibility engine with lazy initialization"""
+    global compatibility_engine
+    if compatibility_engine is None:
+        try:
+            # Use same database path as main database
+            db = get_database()
+            if db is None:
+                print("❌ Cannot initialize compatibility engine: no main database available")
+                return None
+            
+            db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+            print(f"🔗 Initializing compatibility engine with: {db_path}")
+            compatibility_engine = CompatibilityEngine(db_path)
+        except Exception as e:
+            print(f"Error initializing compatibility engine: {e}")
+            import traceback
+            traceback.print_exc()
+            compatibility_engine = None
+    return compatibility_engine
 
 # Error handler
 @app.errorhandler(Exception)
@@ -237,6 +285,15 @@ def get_arrows():
             limit=per_page * 10  # Get more for pagination
         )
         
+        # Enhance arrows with proper image URLs
+        for arrow in arrows:
+            arrow['primary_image_url'] = get_image_url(
+                arrow_id=arrow['id'],
+                image_url=arrow.get('image_url'),
+                saved_images=arrow.get('saved_images'),
+                local_image_path=arrow.get('local_image_path')
+            )
+        
         # Pagination
         total_arrows = len(arrows)
         total_pages = (total_arrows + per_page - 1) // per_page
@@ -269,6 +326,14 @@ def get_arrow_details(arrow_id):
         
         if not arrow_details:
             return jsonify({'error': 'Arrow not found'}), 404
+        
+        # Enhance with proper image URL
+        arrow_details['primary_image_url'] = get_image_url(
+            arrow_id=arrow_details['id'],
+            image_url=arrow_details.get('image_url'),
+            saved_images=arrow_details.get('saved_images'),
+            local_image_path=arrow_details.get('local_image_path')
+        )
         
         return jsonify(arrow_details)
         
@@ -583,7 +648,14 @@ def get_arrow_recommendations():
                         'min_inner_diameter': min_inner_diameter,
                         'max_inner_diameter': max_inner_diameter,
                         'min_outer_diameter': min_outer_diameter,
-                        'max_outer_diameter': max_outer_diameter
+                        'max_outer_diameter': max_outer_diameter,
+                        # Add cascading image URL
+                        'primary_image_url': get_image_url(
+                            arrow_id=getattr(rec, 'arrow_id', None),
+                            image_url=getattr(rec, 'image_url', None),
+                            saved_images=getattr(rec, 'saved_images', None),
+                            local_image_path=getattr(rec, 'local_image_path', None)
+                        )
                     },
                     'spine_specification': {
                         'spine': getattr(rec, 'matched_spine', None),
@@ -640,6 +712,135 @@ def create_tuning_session():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# User Authentication API
+import jwt
+from auth import token_required, get_user_from_google_token
+
+@app.route('/api/auth/google', methods=['POST'])
+def google_auth():
+    """Authenticate user with Google"""
+    data = request.get_json()
+    token = data.get('token')
+
+    if not token:
+        return jsonify({'error': 'No token provided'}), 400
+
+    user = get_user_from_google_token(token)
+
+    if not user:
+        return jsonify({'error': 'Invalid token or user not found'}), 401
+
+    # Create JWT
+    jwt_token = jwt.encode({
+        'user_id': user['id'],
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return jsonify({'token': jwt_token})
+
+# Bow Setups API
+@app.route('/api/bow-setups', methods=['GET'])
+@token_required
+def get_bow_setups(current_user):
+    """Get all bow setups for the current user"""
+    db = get_database()
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM bow_setups WHERE user_id = ?", (current_user['id'],))
+    setups = cursor.fetchall()
+    return jsonify([dict(row) for row in setups])
+
+@app.route('/api/bow-setups', methods=['POST'])
+@token_required
+def create_bow_setup(current_user):
+    """Create a new bow setup"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    db = get_database()
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight, nock_weight, fletching_weight, insert_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            current_user['id'],
+            data['name'],
+            data['bow_type'],
+            data['draw_weight'],
+            data['draw_length'],
+            data['arrow_length'],
+            data['point_weight'],
+            data.get('nock_weight'),
+            data.get('fletching_weight'),
+            data.get('insert_weight'),
+        ),
+    )
+    conn.commit()
+    new_setup_id = cursor.lastrowid
+    cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (new_setup_id,))
+    new_setup = cursor.fetchone()
+    return jsonify(dict(new_setup)), 201
+
+@app.route('/api/bow-setups/<int:setup_id>', methods=['PUT'])
+@token_required
+def update_bow_setup(current_user, setup_id):
+    """Update a bow setup"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    db = get_database()
+    conn = db.get_connection()
+    cursor = conn.cursor()
+
+    # Verify the setup belongs to the current user
+    cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+    setup = cursor.fetchone()
+    if not setup:
+        return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
+
+    cursor.execute(
+        "UPDATE bow_setups SET name = ?, bow_type = ?, draw_weight = ?, draw_length = ?, arrow_length = ?, point_weight = ?, nock_weight = ?, fletching_weight = ?, insert_weight = ? WHERE id = ?",
+        (
+            data['name'],
+            data['bow_type'],
+            data['draw_weight'],
+            data['draw_length'],
+            data['arrow_length'],
+            data['point_weight'],
+            data.get('nock_weight'),
+            data.get('fletching_weight'),
+            data.get('insert_weight'),
+            setup_id,
+        ),
+    )
+    conn.commit()
+
+    cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
+    updated_setup = cursor.fetchone()
+    return jsonify(dict(updated_setup))
+
+@app.route('/api/bow-setups/<int:setup_id>', methods=['DELETE'])
+@token_required
+def delete_bow_setup(current_user, setup_id):
+    """Delete a bow setup"""
+    db = get_database()
+    conn = db.get_connection()
+    cursor = conn.cursor()
+
+    # Verify the setup belongs to the current user
+    cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+    setup = cursor.fetchone()
+    if not setup:
+        return jsonify({'error': 'Setup not found or you do not have permission to delete it'}), 404
+
+    cursor.execute("DELETE FROM bow_setups WHERE id = ?", (setup_id,))
+    conn.commit()
+
+    return jsonify({'message': 'Setup deleted successfully'})
+
 
 @app.route('/api/tuning/sessions/<session_id>', methods=['GET'])
 def get_tuning_session(session_id):
@@ -756,6 +957,274 @@ def check_arrow_compatibility():
         print(f"❌ Compatible arrows error: {e}")
         print(f"Stack trace: {traceback.format_exc()}")
         return jsonify({'error': f'Compatible arrows error: {str(e)}'}), 500
+
+# Static File Serving for Images
+@app.route('/api/images/<filename>')
+def serve_image(filename):
+    """Serve downloaded arrow images"""
+    try:
+        print(f"🖼️  Serving image request for: {filename}")
+        images_dir = Path(__file__).parent / 'data' / 'images'
+        print(f"   Images directory: {images_dir}")
+        print(f"   Directory exists: {images_dir.exists()}")
+        
+        # Check if file exists before trying to serve it
+        file_path = images_dir / filename
+        print(f"   Full file path: {file_path}")
+        print(f"   File exists: {file_path.exists()}")
+        
+        if not file_path.exists():
+            return jsonify({'error': f'Image not found: {filename}'}), 404
+        
+        # Serve the file with appropriate MIME type
+        if filename.endswith('.svg'):
+            print(f"   Serving SVG with explicit mimetype")
+            return send_from_directory(str(images_dir), filename, mimetype='image/svg+xml')
+        else:
+            print(f"   Serving regular image file")
+            return send_from_directory(str(images_dir), filename)
+            
+    except Exception as e:
+        print(f"❌ Error serving image {filename}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error serving image: {str(e)}'}), 500
+
+def get_image_url(arrow_id, image_url=None, saved_images=None, local_image_path=None):
+    """Get the best available image URL for an arrow"""
+    try:
+        base_url = request.host_url.rstrip('/')
+        
+        # Option 1: Try local image path from database
+        if local_image_path:
+            filename = Path(local_image_path).name
+            # Verify the file actually exists before returning URL
+            images_dir = Path(__file__).parent / 'data' / 'images'
+            if (images_dir / filename).exists():
+                return f"{base_url}/api/images/{filename}"
+        
+        # Option 2: Try saved_images parameter (for compatibility)
+        if saved_images:
+            for saved_image in saved_images:
+                if saved_image:
+                    filename = Path(saved_image).name
+                    images_dir = Path(__file__).parent / 'data' / 'images'
+                    if (images_dir / filename).exists():
+                        return f"{base_url}/api/images/{filename}"
+        
+        # Option 3: Use original manufacturer image URL
+        if image_url and image_url.startswith('http'):
+            return image_url
+        
+        # Option 4: Use placeholder (always return this as fallback)
+        return f"{base_url}/api/images/placeholder.svg"
+        
+    except Exception as e:
+        print(f"Error generating image URL: {e}")
+        # Return a basic placeholder if everything fails
+        return "/api/images/placeholder.svg"
+
+# ===== COMPONENT API ENDPOINTS =====
+
+@app.route('/api/components', methods=['GET'])
+def get_components():
+    """Get components with optional filtering"""
+    try:
+        db = get_component_database()
+        if not db:
+            return jsonify({'error': 'Component database not available'}), 500
+        
+        # Get query parameters
+        category = request.args.get('category')
+        manufacturer = request.args.get('manufacturer')
+        limit = int(request.args.get('limit', 50))
+        
+        components = db.get_components(
+            category_name=category,
+            manufacturer=manufacturer,
+            limit=limit
+        )
+        
+        return jsonify({
+            'components': components,
+            'total': len(components),
+            'filters': {
+                'category': category,
+                'manufacturer': manufacturer,
+                'limit': limit
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/components/categories', methods=['GET'])
+def get_component_categories():
+    """Get all component categories"""
+    try:
+        db = get_component_database()
+        if not db:
+            return jsonify({'error': 'Component database not available'}), 500
+        
+        stats = db.get_component_statistics()
+        categories = stats.get('categories', [])
+        
+        return jsonify({
+            'categories': categories,
+            'total_categories': len(categories)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/components/statistics', methods=['GET'])
+def get_component_statistics():
+    """Get component database statistics"""
+    try:
+        db = get_component_database()
+        if not db:
+            return jsonify({'error': 'Component database not available'}), 500
+        
+        stats = db.get_component_statistics()
+        return jsonify(stats)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/arrows/<int:arrow_id>/compatible-components', methods=['GET'])
+def get_arrow_compatible_components(arrow_id):
+    """Get components compatible with a specific arrow"""
+    try:
+        engine = get_compatibility_engine()
+        if not engine:
+            return jsonify({'error': 'Compatibility engine not available'}), 500
+        
+        # Get query parameters
+        category = request.args.get('category')
+        limit = int(request.args.get('limit', 20))
+        
+        compatible_components = engine.get_compatible_components(arrow_id, category)
+        
+        # Limit results
+        if limit:
+            compatible_components = compatible_components[:limit]
+        
+        return jsonify({
+            'arrow_id': arrow_id,
+            'compatible_components': compatible_components,
+            'total': len(compatible_components),
+            'category_filter': category
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/compatibility/check', methods=['POST'])
+def check_compatibility():
+    """Check compatibility between arrow and component"""
+    try:
+        data = request.get_json()
+        arrow_id = data.get('arrow_id')
+        component_id = data.get('component_id')
+        
+        if not arrow_id or not component_id:
+            return jsonify({'error': 'arrow_id and component_id required'}), 400
+        
+        engine = get_compatibility_engine()
+        if not engine:
+            return jsonify({'error': 'Compatibility engine not available'}), 500
+        
+        result = engine.check_compatibility(arrow_id, component_id)
+        
+        return jsonify({
+            'arrow_id': result.arrow_id,
+            'component_id': result.component_id,
+            'compatibility_type': result.compatibility_type,
+            'score': result.score,
+            'matching_rules': result.matching_rules,
+            'notes': result.notes,
+            'compatible': result.compatibility_type != 'incompatible'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/compatibility/batch', methods=['POST'])
+def batch_compatibility_check():
+    """Check compatibility for multiple arrow-component pairs"""
+    try:
+        data = request.get_json()
+        arrow_ids = data.get('arrow_ids', [])
+        component_ids = data.get('component_ids', [])
+        
+        if not arrow_ids or not component_ids:
+            return jsonify({'error': 'arrow_ids and component_ids required'}), 400
+        
+        engine = get_compatibility_engine()
+        if not engine:
+            return jsonify({'error': 'Compatibility engine not available'}), 500
+        
+        results = engine.batch_compatibility_check(arrow_ids, component_ids)
+        
+        # Convert results to JSON-serializable format
+        compatibility_results = []
+        for result in results:
+            compatibility_results.append({
+                'arrow_id': result.arrow_id,
+                'component_id': result.component_id,
+                'compatibility_type': result.compatibility_type,
+                'score': result.score,
+                'matching_rules': result.matching_rules,
+                'notes': result.notes
+            })
+        
+        return jsonify({
+            'results': compatibility_results,
+            'total_combinations_checked': len(arrow_ids) * len(component_ids),
+            'compatible_combinations': len(compatibility_results)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/components', methods=['POST'])
+def add_component():
+    """Add a new component (admin/scraper endpoint)"""
+    try:
+        data = request.get_json()
+        
+        required_fields = ['category', 'manufacturer', 'model_name', 'specifications']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        db = get_component_database()
+        if not db:
+            return jsonify({'error': 'Component database not available'}), 500
+        
+        component_id = db.add_component(
+            category_name=data['category'],
+            manufacturer=data['manufacturer'],
+            model_name=data['model_name'],
+            specifications=data['specifications'],
+            image_url=data.get('image_url'),
+            local_image_path=data.get('local_image_path'),
+            price_range=data.get('price_range'),
+            description=data.get('description'),
+            source_url=data.get('source_url'),
+            scraped_at=data.get('scraped_at')
+        )
+        
+        if component_id:
+            return jsonify({
+                'message': 'Component added successfully',
+                'component_id': component_id
+            }), 201
+        else:
+            return jsonify({'error': 'Failed to add component'}), 500
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Configuration and setup
 if __name__ == '__main__':

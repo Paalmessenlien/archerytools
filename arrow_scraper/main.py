@@ -32,6 +32,11 @@ from config_loader import ConfigLoader
 from run_comprehensive_extraction import DirectLLMExtractor
 from easyocr_carbon_express_extractor import EasyOCRCarbonExpressExtractor
 from deepseek_knowledge_extractor import DeepSeekKnowledgeExtractor
+from deepseek_translator import DeepSeekTranslator
+from url_manager import URLManager
+from url_discovery import URLDiscovery
+from component_extractors import ComponentExtractorFactory
+from component_database import ComponentDatabase
 
 def load_environment():
     """Load environment variables"""
@@ -41,6 +46,78 @@ def load_environment():
     else:
         print("Warning: .env file not found. Please create one based on .env.example")
         print("You'll need to set DEEPSEEK_API_KEY")
+
+async def extract_components(url: str, component_type: str, manufacturer: str = None):
+    """Extract components from a URL"""
+    try:
+        print(f"🧩 Extracting {component_type} components from: {url}")
+        
+        # Get the appropriate extractor
+        extractor = ComponentExtractorFactory.get_extractor(component_type)
+        if not extractor:
+            print(f"❌ No extractor available for component type: {component_type}")
+            print(f"Available types: {ComponentExtractorFactory.get_available_types()}")
+            return False
+        
+        # Crawl the page
+        async with AsyncWebCrawler() as crawler:
+            result = await crawler.arun(url=url)
+            if not result.success:
+                print(f"❌ Failed to crawl {url}: {result.error_message}")
+                return False
+            
+            # Extract components using the specialized extractor
+            components = extractor.extract_component_data(result.html, url)
+            
+            if not components:
+                print(f"⚠️  No {component_type} found on the page")
+                return False
+            
+            # Initialize component database
+            component_db = ComponentDatabase()
+            
+            # Save components to database
+            saved_count = 0
+            for component in components:
+                # Override manufacturer if provided
+                if manufacturer:
+                    component['manufacturer'] = manufacturer
+                
+                component_id = component_db.add_component(
+                    category_name=component_type,
+                    manufacturer=component['manufacturer'],
+                    model_name=component['model_name'],
+                    specifications=component['specifications'],
+                    image_url=component.get('image_url'),
+                    local_image_path=component.get('local_image_path'),
+                    price_range=component.get('price_range'),
+                    description=component.get('description'),
+                    source_url=component.get('source_url', url),
+                    scraped_at=datetime.now().isoformat()
+                )
+                
+                if component_id:
+                    saved_count += 1
+            
+            print(f"✅ Extracted and saved {saved_count}/{len(components)} {component_type}")
+            
+            # Show sample extracted data
+            print(f"\n📦 Sample {component_type}:")
+            for i, component in enumerate(components[:3]):
+                print(f"  {i+1}. {component['manufacturer']} {component['model_name']}")
+                specs = component['specifications']
+                for key, value in list(specs.items())[:3]:  # Show first 3 specs
+                    print(f"     {key}: {value}")
+                if i < len(components) - 1:
+                    print()
+            
+            return saved_count > 0
+            
+    except Exception as e:
+        print(f"❌ Error extracting components: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 async def scrape_manufacturer(manufacturer: str, deepseek_api_key: str):
     """Scrape arrows for a specific manufacturer"""
@@ -80,11 +157,12 @@ async def scrape_manufacturer(manufacturer: str, deepseek_api_key: str):
             return False
     
     else:
-        print(f"Manufacturer '{manufacturer}' not yet implemented")
-        print(f"Available manufacturers: {list(MANUFACTURERS.keys())}")
+        print(f"Manufacturer '{manufacturer}' not yet implemented for individual scraping")
+        print(f"Available for individual scraping: ['easton']")
+        print(f"Use --update-all to scrape all {len(MANUFACTURERS)} configured manufacturers with translation support")
         return False
 
-async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = False):
+async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = False, enable_translation: bool = True):
     """Update all manufacturers in the database using the working architecture"""
     
     print("🚀 Starting comprehensive manufacturer update...")
@@ -108,6 +186,7 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
     
     print(f"📊 Updating {total_manufacturers} manufacturers from config...")
     print(f"🔄 Force update: {'Yes' if force_update else 'No'}")
+    print(f"🌍 Translation: {'Enabled' if enable_translation else 'Disabled'}")
     print()
     
     for i, manufacturer_name in enumerate(manufacturer_names, 1):
@@ -137,6 +216,7 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
             text_extractor = DirectLLMExtractor(deepseek_api_key)
             vision_extractor = None
             knowledge_extractor = DeepSeekKnowledgeExtractor(deepseek_api_key)
+            translator = DeepSeekTranslator(deepseek_api_key)
             
             # Initialize vision extractor if needed
             if config.is_vision_extraction(manufacturer_name):
@@ -186,6 +266,17 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                             arrows = knowledge_extractor.extract_from_failed_url(url, manufacturer_name)
                         
                         if arrows:
+                            # Translate arrows if not in English and translation enabled
+                            manufacturer_language = config.get_manufacturer_language(manufacturer_name)
+                            if enable_translation and manufacturer_language and manufacturer_language != 'english':
+                                print(f" → 🌍 Translating from {manufacturer_language}...", end="")
+                                translated_arrows = []
+                                for arrow in arrows:
+                                    translated_arrow = translator.translate_arrow_data(arrow, manufacturer_language)
+                                    translated_arrows.append(translated_arrow)
+                                arrows = translated_arrows
+                                print(" ✅")
+                            
                             manufacturer_arrows.extend(arrows)
                             print(f" → ✅ {len(arrows)} arrows")
                         else:
@@ -278,10 +369,21 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py easton                    # Scrape Easton only
-  python main.py --update-all             # Update all manufacturers
-  python main.py --update-all --force     # Force update all manufacturers
-  python main.py --list-manufacturers     # List available manufacturers
+  # Scraping
+  python main.py easton                           # Scrape Easton only
+  python main.py --update-all                    # Update all manufacturers (with translation)
+  python main.py --update-all --force            # Force update all manufacturers
+  python main.py --update-all --no-translate     # Update without translating non-English content
+  
+  # URL Management
+  python main.py --add --manufacturer=easton --type=arrow --url=http://example.com
+  python main.py --add-list --manufacturer=easton --type=components --url=http://example.com
+  python main.py --list-urls --manufacturer=easton --type=arrow
+  python main.py --list-manufacturers            # List available manufacturers with languages
+  
+  # Component Extraction
+  python main.py --extract-components --type=points --url=http://example.com --manufacturer=easton
+  python main.py --extract-components --type=nocks --url=http://example.com
         """
     )
     
@@ -304,6 +406,54 @@ Examples:
         "--list-manufacturers", 
         action="store_true",
         help="List available manufacturers"
+    )
+    parser.add_argument(
+        "--no-translate",
+        action="store_true", 
+        help="Disable automatic translation of non-English content"
+    )
+    parser.add_argument(
+        "--add",
+        action="store_true",
+        help="Add URL to manufacturer configuration"
+    )
+    parser.add_argument(
+        "--add-list", 
+        action="store_true",
+        help="Discover and add URLs from a page"
+    )
+    parser.add_argument(
+        "--list-urls",
+        action="store_true",
+        help="List URLs in configuration"
+    )
+    parser.add_argument(
+        "--manufacturer",
+        help="Manufacturer name for URL operations"
+    )
+    parser.add_argument(
+        "--type", 
+        help="URL content type (arrow, components, points, nocks, etc.)"
+    )
+    parser.add_argument(
+        "--url",
+        help="URL to add or discover from"
+    )
+    parser.add_argument(
+        "--auto-add",
+        action="store_true",
+        help="Automatically add discovered URLs without prompting"
+    )
+    parser.add_argument(
+        "--max-urls",
+        type=int,
+        default=50,
+        help="Maximum URLs to discover (default: 50)"
+    )
+    parser.add_argument(
+        "--extract-components",
+        action="store_true",
+        help="Extract components from a URL (requires --type and --url)"
     )
     
     args = parser.parse_args()
@@ -332,19 +482,100 @@ Examples:
             print(f"\nError loading config: {e}")
         return
     
-    # Load environment
+    # Handle URL management commands first (don't need API key)
+    if args.add:
+        if not all([args.manufacturer, args.type, args.url]):
+            print("❌ --add requires --manufacturer, --type, and --url")
+            print("Example: python main.py --add --manufacturer=easton --type=arrow --url=http://example.com")
+            sys.exit(1)
+        
+        url_manager = URLManager()
+        success = url_manager.add_url(args.manufacturer, args.type, args.url)
+        sys.exit(0 if success else 1)
+    
+    elif args.add_list:
+        if not all([args.url]):
+            print("❌ --add-list requires --url")
+            print("Example: python main.py --add-list --url=http://example.com --manufacturer=easton --type=components")
+            sys.exit(1)
+        
+        url_discovery = URLDiscovery()
+        discovered = url_discovery.discover_urls(
+            args.url, 
+            args.type or 'auto',
+            max_urls=args.max_urls
+        )
+        
+        # Validate discovered URLs
+        discovered = url_discovery.validate_discovered_urls(discovered)
+        
+        if args.manufacturer:
+            success = url_discovery.add_discovered_urls_to_config(
+                args.manufacturer, 
+                discovered, 
+                args.auto_add
+            )
+            sys.exit(0 if success else 1)
+        else:
+            print(f"\n📊 Discovery Results:")
+            total = sum(len(urls) for urls in discovered.values())
+            print(f"Total URLs discovered: {total}")
+            
+            for category, urls in discovered.items():
+                if urls:
+                    print(f"\n{category.upper()} ({len(urls)} URLs):")
+                    for url in urls[:5]:  # Show first 5
+                        print(f"  • {url}")
+                    if len(urls) > 5:
+                        print(f"  ... and {len(urls) - 5} more")
+            sys.exit(0)
+    
+    elif args.list_urls:
+        url_manager = URLManager()
+        results = url_manager.list_urls(args.manufacturer, args.type)
+        
+        if not results:
+            print("❌ No URLs found matching criteria")
+            sys.exit(1)
+        
+        print("📋 URL Configuration:")
+        print("=" * 60)
+        
+        for mfr_name, mfr_data in results.items():
+            print(f"\n🏭 {mfr_name}")
+            print(f"   Language: {mfr_data['language']}")
+            print(f"   Method: {mfr_data['extraction_method']}")
+            print(f"   Total URLs: {mfr_data['total_urls']}")
+            
+            for url_data in mfr_data['filtered_urls']:
+                print(f"   • [{url_data['type']}] {url_data['url']}")
+                print(f"     Added: {url_data['added_at']}")
+        sys.exit(0)
+    
+    # Handle component extraction command
+    if args.extract_components:
+        if not all([args.type, args.url]):
+            print("❌ --extract-components requires --type and --url")
+            print("Example: python main.py --extract-components --type=points --url=http://example.com --manufacturer=easton")
+            print(f"Available component types: {ComponentExtractorFactory.get_available_types()}")
+            sys.exit(1)
+        
+        success = await extract_components(args.url, args.type, args.manufacturer)
+        sys.exit(0 if success else 1)
+
+    # Load environment for scraping commands
     load_environment()
     
     deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
     
     if args.update_all:
         # Update all manufacturers
-        success = await update_all_manufacturers(deepseek_api_key, args.force)
+        success = await update_all_manufacturers(deepseek_api_key, args.force, not args.no_translate)
     elif args.manufacturer:
         # Scrape single manufacturer
         success = await scrape_manufacturer(args.manufacturer, deepseek_api_key)
     else:
-        print("Error: Please specify a manufacturer or use --update-all")
+        print("Error: Please specify a manufacturer, use --update-all, or use URL management commands")
         print("Use --help for usage information")
         sys.exit(1)
     

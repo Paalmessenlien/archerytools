@@ -117,13 +117,19 @@ cd arrow_scraper
 # Activate virtual environment (recommended)
 source venv/bin/activate
 
-# Run scraper for specific manufacturer
+# Run scraper for specific manufacturer (English-only)
 python main.py easton
 
-# Run scraper for multiple manufacturers
-python main.py easton goldtip victory
+# Update ALL manufacturers with automatic translation (RECOMMENDED)
+python main.py --update-all
 
-# List all available manufacturers (13 supported)
+# Update all manufacturers without translation (faster but English-only)
+python main.py --update-all --no-translate
+
+# Force update existing data with translation
+python main.py --update-all --force
+
+# List all available manufacturers (13+ supported with language info)
 python main.py --list-manufacturers
 
 # Deactivate virtual environment when done
@@ -141,31 +147,63 @@ pip install -r requirements.txt
 ```
 
 **Available Manufacturers:**
-- **Primary**: Easton, Gold Tip, Victory, Carbon Express
-- **European**: Nijora, DK Bow, Aurel, BigArchery/Cross-X  
+- **Primary (English)**: Easton, Gold Tip, Victory, Carbon Express
+- **European (German)**: Nijora, DK Bow, Aurel 
+- **European (Italian)**: BigArchery/Cross-X  
 - **International**: Fivics, Pandarus, Skylon
 - **Traditional**: Wood arrow manufacturers
 
-**Complete Database Update Workflow:**
+### 🌍 Automatic Translation System
+
+**DeepSeek Translation Features:**
+- **Smart Language Detection**: Automatically detects German, Italian, French, and Spanish content
+- **Technical Preservation**: Maintains spine numbers, diameters, weights, and brand names unchanged
+- **Cascading Fallback**: Falls back to original text if translation fails
+- **Translation Metadata**: Tracks confidence scores and original text for reference
+
+**Supported Languages:**
+- 🇩🇪 **German**: Nijora, DK Bow, Aurel manufacturers
+- 🇮🇹 **Italian**: BigArchery/Cross-X manufacturers  
+- 🇫🇷 **French**: Future manufacturer support
+- 🇪🇸 **Spanish**: Future manufacturer support
+
+**Translation Testing:**
 ```bash
-# 1. Scrape major manufacturers
+# Test translation functionality
+cd arrow_scraper
+python test_translation.py
+```
+
+**Translation Workflow:**
+1. 🌐 **Language Detection**: Analyzes content for language-specific indicators
+2. 🔤 **Content Translation**: Uses DeepSeek API with archery-specialized prompts
+3. 🔧 **Technical Preservation**: Maintains specifications, measurements, and product names
+4. 💾 **Dual Storage**: Stores both original and translated content
+5. 📊 **Metadata Tracking**: Records translation confidence and source language
+
+**Complete Database Update Workflow with Translation:**
+```bash
+# 1. Update ALL manufacturers with automatic translation (RECOMMENDED)
 cd arrow_scraper
 source venv/bin/activate
-python main.py easton goldtip victory
+python main.py --update-all
 
-# 2. Check scraped data
+# 2. Check scraped and translated data
 ls -la data/processed/
 
-# 3. Rebuild database with new data
-python arrow_database.py
-
-# 4. Verify the update
+# 3. Verify the update with language info
 python show_available_data.py
 
+# 4. Test specific translation results
+python test_translation.py
+
 # 5. Deploy to production (if satisfied)
-git add . && git commit -m "Update arrow database with latest scraped data"
+git add . && git commit -m "Update arrow database with latest scraped and translated data"
 git push
 # On production: git pull && sudo docker-compose -f docker-compose.ssl.yml up -d --build
+
+# Alternative: Update without translation (faster)
+python main.py --update-all --no-translate
 ```
 
 **Virtual Environment Options:**
@@ -383,6 +421,7 @@ API_PORT=5000
 
 # Frontend Configuration
 FRONTEND_PORT=3000
+NUXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id-here
 NODE_ENV=production
 API_BASE_URL=http://localhost:5000
 

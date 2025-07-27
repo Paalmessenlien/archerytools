@@ -48,7 +48,10 @@
       "Bash(./test-simple-deployment.sh:*)",
       "Bash(mv:*)",
       "Bash(./diagnose-domain-access.sh:*)",
-      "Bash(./fix-domain-access.sh:*)"
+      "Bash(./fix-domain-access.sh:*)",
+      "Bash(convert:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run postinstall:*)"
     ],
     "deny": []
   }

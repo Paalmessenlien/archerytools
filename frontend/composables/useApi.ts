@@ -4,7 +4,10 @@ import type {
   BowConfiguration, 
   ArrowRecommendation,
   TuningSession,
-  DatabaseStats 
+  DatabaseStats,
+  ComponentData,
+  ComponentStatistics,
+  CompatibilityResult
 } from '~/types/arrow'
 
 export const useApi = () => {
@@ -141,6 +144,74 @@ export const useApi = () => {
     }>>('/arrow-types')
   }
 
+  // Components API
+  const getComponents = async (params: {
+    category?: string
+    manufacturer?: string
+    limit?: number
+  } = {}) => {
+    const queryParams = new URLSearchParams()
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString())
+      }
+    })
+    
+    const queryString = queryParams.toString()
+    const endpoint = `/components${queryString ? `?${queryString}` : ''}`
+    
+    return apiRequest<{
+      components: ComponentData[]
+      total: number
+      filters: Record<string, any>
+    }>(endpoint)
+  }
+
+  const getComponentCategories = async () => {
+    return apiRequest<{
+      categories: Array<{
+        name: string
+        count: number
+      }>
+      total_categories: number
+    }>('/components/categories')
+  }
+
+  const getComponentStatistics = async () => {
+    return apiRequest<ComponentStatistics>('/components/statistics')
+  }
+
+  const getCompatibleComponents = async (arrowId: number, params: {
+    category?: string
+    limit?: number
+  } = {}) => {
+    const queryParams = new URLSearchParams()
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString())
+      }
+    })
+    
+    const queryString = queryParams.toString()
+    const endpoint = `/arrows/${arrowId}/compatible-components${queryString ? `?${queryString}` : ''}`
+    
+    return apiRequest<{
+      arrow_id: number
+      compatible_components: ComponentData[]
+      total: number
+      category_filter?: string
+    }>(endpoint)
+  }
+
+  const checkCompatibility = async (arrowId: number, componentId: number) => {
+    return apiRequest<CompatibilityResult>('/compatibility/check', {
+      method: 'POST',
+      body: JSON.stringify({ arrow_id: arrowId, component_id: componentId })
+    })
+  }
+
   // Health check
   const healthCheck = async () => {
     return apiRequest<{ 
@@ -170,10 +241,17 @@ export const useApi = () => {
     getGroupedMaterials,
     getArrowTypes,
     
+    // Components
+    getComponents,
+    getComponentCategories,
+    getComponentStatistics,
+    getCompatibleComponents,
+    checkCompatibility,
+    
     // System
     healthCheck,
     
     // Generic request
-    apiRequest
+    get: apiRequest
   }
 }

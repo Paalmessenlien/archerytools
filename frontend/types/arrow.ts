@@ -97,3 +97,76 @@ export interface DatabaseStats {
     max: number
   }
 }
+
+// Component Types
+export interface ComponentSpecification {
+  [key: string]: any
+  // Common fields across all components
+  weight?: string
+  material?: string
+  // Point-specific
+  thread_type?: string
+  diameter?: number
+  length?: number
+  point_type?: 'field' | 'broadhead' | 'blunt' | 'judo'
+  // Nock-specific
+  nock_size?: string
+  fit_type?: 'push_in' | 'snap_on' | 'pin'
+  colors?: string[]
+  throat_size?: number
+  // Fletching-specific
+  height?: number
+  profile?: 'low' | 'high' | 'parabolic'
+  attachment?: 'adhesive' | 'wrap'
+  // Insert-specific
+  outer_diameter?: number
+  inner_diameter?: number
+  thread?: string
+  type?: 'insert' | 'outsert' | 'combo'
+}
+
+export interface ComponentData {
+  id: number
+  category_id: number
+  category_name: string
+  manufacturer: string
+  model_name: string
+  specifications: ComponentSpecification
+  compatibility_rules?: any
+  image_url?: string
+  local_image_path?: string
+  price_range?: string
+  description?: string
+  source_url?: string
+  scraped_at?: string
+  created_at: string
+}
+
+export interface ComponentCategory {
+  id: number
+  name: string
+  description: string
+  count: number
+}
+
+export interface ComponentStatistics {
+  total_components: number
+  categories: ComponentCategory[]
+  compatibility_stats: {
+    [key: string]: number
+  }
+  manufacturers: Array<{
+    manufacturer: string
+    component_count: number
+  }>
+}
+
+export interface CompatibilityResult {
+  arrow_id: number
+  component_id: number
+  compatibility_type: 'direct' | 'universal' | 'adapter_required' | 'incompatible'
+  score: number
+  matching_rules: string[]
+  notes: string
+  compatible: boolean
+}

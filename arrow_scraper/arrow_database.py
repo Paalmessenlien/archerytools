@@ -179,7 +179,12 @@ class ArrowDatabase:
             arrow_count = cursor.fetchone()[0]
             if arrow_count > 0:
                 print(f"🗄️  Database already initialized with {arrow_count} arrows")
-                return
+                # Also check for user tables
+                try:
+                    cursor.execute("SELECT COUNT(*) FROM users")
+                    return # Assume all tables are created
+                except sqlite3.OperationalError:
+                    pass # users table doesn't exist, so create it
         except sqlite3.OperationalError:
             # Table doesn't exist, create it
             pass
@@ -222,6 +227,37 @@ class ArrowDatabase:
             UNIQUE(arrow_id, spine)
         )
         ''')
+
+        # Users table - for user accounts
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            google_id TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT,
+            profile_picture_url TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+
+        # Bow setups table - for user-saved bow configurations
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bow_setups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            bow_type TEXT NOT NULL,
+            draw_weight REAL NOT NULL,
+            draw_length REAL NOT NULL,
+            arrow_length REAL NOT NULL,
+            point_weight REAL NOT NULL,
+            nock_weight REAL,
+            fletching_weight REAL,
+            insert_weight REAL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+        ''')
         
         # Create indexes for performance (only if we're creating the schema)
         try:
@@ -231,6 +267,8 @@ class ArrowDatabase:
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_gpi ON spine_specifications (gpi_weight)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter ON spine_specifications (outer_diameter)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_spine_diameter_category ON spine_specifications (diameter_category)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_bow_setups_user_id ON bow_setups (user_id)')
             conn.commit()
             print("✅ Database schema created successfully")
         except sqlite3.OperationalError as e:
