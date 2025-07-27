@@ -7,6 +7,11 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 import httplib2 # For making HTTP requests
 import json # For parsing JSON responses
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from root .env file
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 from arrow_database import ArrowDatabase
 

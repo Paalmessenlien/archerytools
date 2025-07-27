@@ -13,22 +13,16 @@ from typing import Optional, Dict, Any, List
 from urllib.parse import urlparse
 import logging
 
-# Load environment variables from .env.cdn file
+# Load environment variables from root .env file
 try:
     from dotenv import load_dotenv
-    # Look for .env.cdn file in current directory
-    cdn_env_path = Path('.env.cdn')
-    if cdn_env_path.exists():
-        load_dotenv(cdn_env_path)
-        print(f"✅ Loaded CDN environment from: {cdn_env_path}")
+    # Load from root .env file which now contains CDN configuration
+    root_env_path = Path(__file__).parent.parent / '.env'
+    if root_env_path.exists():
+        load_dotenv(root_env_path)
+        print(f"✅ Loaded environment from: {root_env_path}")
     else:
-        # Try parent directory
-        parent_cdn_env = Path('../.env.cdn')
-        if parent_cdn_env.exists():
-            load_dotenv(parent_cdn_env)
-            print(f"✅ Loaded CDN environment from: {parent_cdn_env}")
-        else:
-            print("⚠️ No .env.cdn file found, using system environment variables")
+        print("⚠️ No root .env file found, using system environment variables")
 except ImportError:
     print("⚠️ python-dotenv not available, using system environment variables only")
 

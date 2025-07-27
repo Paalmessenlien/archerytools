@@ -10,8 +10,8 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from root .env file
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
