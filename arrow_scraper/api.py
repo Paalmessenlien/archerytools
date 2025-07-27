@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 import uuid
 from pathlib import Path
@@ -739,7 +739,7 @@ def google_auth():
     # Create JWT
     jwt_token = jwt.encode({
         'user_id': user['id'],
-        'exp': datetime.now(datetime.UTC) + timedelta(hours=24)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': jwt_token})
