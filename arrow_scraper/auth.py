@@ -10,8 +10,20 @@ import json # For parsing JSON responses
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from root .env file
-load_dotenv(Path(__file__).parent.parent / '.env')
+# Load environment variables - try multiple locations for robustness
+env_paths = [
+    Path(__file__).parent.parent / '.env',  # Root .env (local development)
+    Path(__file__).parent / '.env',         # Local .env (fallback)
+    Path('.env'),                           # Current directory (Docker)
+]
+
+for env_path in env_paths:
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ [Auth] Loaded environment from: {env_path}")
+        break
+else:
+    print("⚠️ [Auth] No .env file found, using system environment variables")
 
 from arrow_database import ArrowDatabase
 
