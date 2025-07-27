@@ -8,6 +8,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables - try multiple locations for robustness
@@ -28,7 +29,6 @@ else:
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 import uuid
-from pathlib import Path
 
 # Import our arrow tuning system components
 from arrow_tuning_system import ArrowTuningSystem, ArcherProfile, TuningSession
