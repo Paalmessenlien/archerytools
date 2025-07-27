@@ -44,8 +44,23 @@ python test_setup.py
 
 **Option 1: Docker Deployment (Recommended)**
 
-**For Development/Testing:**
+**Quick Deployment (Handles cleanup automatically):**
 ```bash
+# Deploy with default configuration
+./docker-deploy.sh
+
+# Deploy with SSL for production
+./docker-deploy.sh docker-compose.ssl.yml --build
+
+# Deploy development version
+./docker-deploy.sh docker-compose.dev.yml
+```
+
+**Manual Docker Commands:**
+```bash
+# Clean up orphan containers first (if needed)
+./docker-cleanup.sh
+
 # API-only testing
 docker-compose -f docker-compose.simple.yml up -d --build
 
@@ -254,6 +269,22 @@ python show_available_data.py
 python migrate_diameter_categories.py
 ```
 
+### CDN Image Management
+```bash
+# Bunny CDN setup and testing (Recommended)
+cd arrow_scraper
+python bunny_cdn_setup.py          # Show setup guide
+python bunny_cdn_setup.py test     # Test configuration
+python bunny_cdn_setup.py migrate  # Migrate existing images
+python bunny_cdn_setup.py optimize # Show optimization tips
+
+# General CDN integration
+python cdn_integration_example.py test     # Test any CDN
+python cdn_integration_example.py migrate  # Migrate existing data
+python cdn_integration_example.py setup    # Show setup guide
+python cdn_uploader.py                     # Test uploader directly
+```
+
 ### Arrow Tuning System
 ```bash
 # Interactive tuning calculator
@@ -418,23 +449,27 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 DEEPSEEK_API_KEY=your_deepseek_api_key_here
 SECRET_KEY=your-secret-key-here-change-this
 API_PORT=5000
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+GOOGLE_REDIRECT_URI=https://yourdomain.com
 
 # Frontend Configuration
 FRONTEND_PORT=3000
 NUXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id-here
 NODE_ENV=production
-API_BASE_URL=http://localhost:5000
+NUXT_PUBLIC_API_BASE=http://localhost:5000
 
 # Production Domain
 DOMAIN_NAME=yourdomain.com
 SSL_EMAIL=admin@yourdomain.com
 ```
 
-**IMPORTANT:** Also create `frontend/.env` file with Google Client ID:
-```
-NUXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id-here
-```
-**Note:** The frontend `.env` file takes precedence over the root `.env` file for frontend builds. Make sure both files contain the same Google Client ID to avoid "OAuth client was not found" errors.
+**Simplified Configuration:** All environment variables are now consolidated into the single root `.env` file, including:
+- Google OAuth credentials
+- CDN configuration (Bunny CDN, Cloudinary, AWS S3)
+- API keys and secrets
+- Development and production settings
+
+No additional `.env` files are needed. The root `.env` file contains all necessary configuration.
 
 **Legacy Production:** Edit `deploy/config/production.env`:
 ```
@@ -679,6 +714,7 @@ The system supports 13 manufacturers with comprehensive URL patterns and scrapin
 - **Custom Crawl4AI:** Includes enhanced fork of Crawl4AI in the `crawl4ai/` directory
 - **Respectful Scraping:** Follows ethical crawling practices with rate limiting
 - **Data Quality:** Comprehensive validation ensures accuracy across manufacturers
+- **CDN Integration:** Automatic image upload to Cloudinary, AWS S3, or other CDNs for optimized delivery
 
 ### Deployment & Operations
 - **Dual Architecture:** Modern SPA frontend + API backend deployment options
@@ -775,6 +811,122 @@ The Arrow Tuning Platform provides:
 10. **Real-time database statistics** with manufacturer and arrow count metrics
 
 ## Troubleshooting & Development Notes
+
+### Docker Issues
+
+**Orphan Container Errors:**
+- **Issue**: `ERROR: for arrowtuner-api 'ContainerConfig'` or needing `--remove-orphans` flag every time
+- **Cause**: Multiple Docker Compose files creating conflicting container configurations
+- **Solution**: Use the automated cleanup scripts:
+  ```bash
+  # Clean up before deployment (automatic)
+  ./docker-deploy.sh
+  
+  # Manual cleanup if needed
+  ./docker-cleanup.sh
+  
+  # Then deploy normally
+  docker-compose up -d
+  ```
+
+**Container Permission Issues:**
+- **Issue**: `permission denied while trying to connect to the Docker daemon socket`
+- **Solution**: Add user to docker group or use sudo:
+  ```bash
+  # Add user to docker group (logout/login required)
+  sudo usermod -aG docker $USER
+  
+  # Or use sudo for Docker commands
+  sudo ./docker-cleanup.sh
+  sudo ./docker-deploy.sh
+  ```
+
+**Container Restart Loops:**
+- **Issue**: API container keeps restarting
+- **Cause**: Missing environment variables or database connection issues
+- **Solution**: Check logs and environment configuration:
+  ```bash
+  # Check container logs
+  docker-compose logs api
+  
+  # Verify environment variables
+  docker-compose config
+  
+  # Test API health endpoint
+  curl http://localhost:5000/api/simple-health
+  ```
+
+### Recent Fixes & Enhancements (July 2025)
+
+This section details recent fixes and improvements to common development and deployment issues.
+
+**Frontend `localStorage` Access on Server:**
+- **Issue**: `localStorage is not defined` errors during Server-Side Rendering (SSR).
+- **Solution**: Implemented `process.client` checks in `frontend/composables/useAuth.ts` and `frontend/composables/useDarkMode.js` to ensure `localStorage` is only accessed in the browser environment.
+
+**Google Client ID Configuration:**
+- **Issue**: `Error 401: invalid_client` or `Prop client id required` for Google login.
+- **Cause**: Frontend not correctly picking up `NUXT_PUBLIC_GOOGLE_CLIENT_ID`.
+- **Solution**:
+    - Ensured `NUXT_PUBLIC_GOOGLE_CLIENT_ID` is explicitly exposed via `runtimeConfig.public` in `frontend/nuxt.config.ts`.
+    - **Updated**: Environment variables are now consolidated in the root `.env` file for simplified configuration.
+    - Verified `GOOGLE_CLIENT_SECRET` is set in the root `.env` for backend authentication.
+
+**Cross-Origin-Opener-Policy (COOP) Conflicts:**
+- **Issue**: Browser security policy blocking communication between main window and Google login pop-up (`Cross-Origin-Opener-Policy policy would block the window.closed call`).
+- **Solution**: Set `Cross-Origin-Opener-Policy: unsafe-none` in `frontend/nuxt.config.ts` under `nitro.headers` for development environments.
+
+**`await` Outside `async` Function Errors:**
+- **Issue**: `await` keyword used in non-`async` functions in `frontend/composables/useAuth.ts`.
+- **Solution**: Correctly marked `loginWithGoogle` and its internal `.then()` callback as `async`.
+
+**Incorrect API Base URL (Double `/api/`):**
+- **Issue**: Frontend making requests to `http://localhost:3000/api/api/auth/google` (404 Not Found).
+- **Cause**: `config.public.apiBase` already included `/api`, and `/api/auth/google` was appended.
+- **Solution**: Modified `fetch` calls in `frontend/composables/useAuth.ts` to use `config.public.apiBase` directly with `/auth/google` and `/user` (e.g., `${config.public.apiBase}/auth/google`).
+
+**Missing Python Dependencies in Backend:**
+- **Issue**: `ModuleNotFoundError: No module named 'httplib2'` or similar for backend dependencies.
+- **Cause**: Dependencies not correctly installed in the active Python virtual environment for the Flask API.
+- **Solution**:
+    - Added missing dependencies (e.g., `httplib2`) to `arrow_scraper/requirements.txt`.
+    - Emphasized running `source venv/bin/activate && pip install -r arrow_scraper/requirements.txt` from the project root to ensure installation into the correct virtual environment.
+
+**Missing `.env` Loading in Flask API:**
+- **Issue**: Flask backend not picking up environment variables (e.g., `CLIENT_ID: None`, `CLIENT_SECRET: NOT SET`).
+- **Cause**: `python-dotenv`'s `load_dotenv()` was not called in `api.py`.
+- **Solution**: Added `from dotenv import load_dotenv` and `load_dotenv()` at the top of `arrow_scraper/api.py`.
+
+**`NameError: name 'timedelta' is not defined` in Flask API:**
+- **Issue**: Error during JWT creation in `api.py`.
+- **Cause**: `timedelta` was used without being imported from `datetime`.
+- **Solution**: Modified `from datetime import datetime` to `from datetime import datetime, timedelta` in `arrow_scraper/api.py`.
+
+**`TypeError: Object of type Row is not JSON serializable` in Flask API:**
+- **Issue**: Backend failing to return user data from `/api/user` endpoint.
+- **Cause**: `sqlite3.Row` object (returned by `cursor.fetchone()`) cannot be directly JSON serialized by Flask's `jsonify`.
+- **Solution**: Converted `current_user` (a `sqlite3.Row` object) to a standard Python dictionary using `dict(current_user)` before passing it to `jsonify` in `api.py`'s `get_user` function.
+- **Status**: ✅ **FIXED** - Authentication flow now works correctly after user login.
+
+**`DeprecationWarning: datetime.datetime.utcnow()` in Flask API:**
+- **Issue**: `datetime.utcnow()` is deprecated and scheduled for removal in future Python versions.
+- **Cause**: Using deprecated `datetime.utcnow()` for JWT token expiration timestamps.
+- **Solution**: Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)` in JWT token creation (compatible with Python 3.7+).
+- **Status**: ✅ **FIXED** - No more deprecation warnings in logs.
+
+**`AttributeError: type object 'datetime.datetime' has no attribute 'UTC'` in Flask API:**
+- **Issue**: `datetime.UTC` not available in Python versions < 3.11, causing authentication to fail.
+- **Cause**: Using `datetime.now(datetime.UTC)` which was introduced in Python 3.11.
+- **Solution**: Changed to `datetime.now(timezone.utc)` for backward compatibility with Python 3.7+.
+- **Status**: ✅ **FIXED** - Google authentication now works on all Python versions.
+
+**Improved `start-dual-architecture.sh` Script:**
+- **Issue**: Script not stopping services reliably, or requiring `Ctrl+C` to exit the terminal.
+- **Solution**:
+    - Removed `wait` command from `start` action to allow the script to exit immediately after launching background services.
+    - Removed `EXIT` from `trap` command to prevent immediate shutdown upon script exit.
+    - Implemented more robust process termination in `stop_services` using `kill -- -PGID` and `pgrep -g` for process group management, along with better PID checks (`kill -0 $PID`).
+    - Added `PYTHONUNBUFFERED=1` to Flask startup command to ensure immediate log writes to `api.log`.
 
 ### Production Deployment Issues
 
