@@ -45,8 +45,8 @@ def get_user_from_google_token(authorization_code):
         
         # The redirect_uri must match what you configured in Google Cloud Console
         # For the initCodeClient flow, it's often 'postmessage' or the base URL of your app
-        # For local development, it's usually http://localhost:3000
-        redirect_uri = "http://localhost:3000"
+        # Use environment variable for production, fallback to localhost for development
+        redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost:3000')
 
         print(f"[Auth Debug] CLIENT_ID: {client_id}")
         print(f"[Auth Debug] CLIENT_SECRET: {client_secret[:5]}...{client_secret[-5:]}" if client_secret else "[Auth Debug] CLIENT_SECRET: NOT SET")
