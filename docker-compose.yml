@@ -12,6 +12,7 @@ services:
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID}
     # Database is built into the image, no volume mounting needed
     # volumes:
     #   - ./arrow_scraper:/app  # Uncomment for development
@@ -36,6 +37,7 @@ services:
     environment:
       - NODE_ENV=production
       - NUXT_PUBLIC_API_BASE=http://api:5000/api
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID}
     depends_on:
       - api
     networks:
