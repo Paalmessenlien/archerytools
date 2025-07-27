@@ -8,7 +8,12 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
-from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta
 from typing import Dict, List, Any, Optional
 import uuid
 from pathlib import Path
@@ -719,7 +724,7 @@ from auth import token_required, get_user_from_google_token
 
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
-    """Authenticate user with Google"""
+    print("[Auth Debug] /api/auth/google endpoint hit.")
     data = request.get_json()
     token = data.get('token')
 
@@ -738,6 +743,14 @@ def google_auth():
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': jwt_token})
+
+@app.route('/api/user', methods=['GET'])
+@token_required
+def get_user(current_user):
+    """Get current authenticated user's details"""
+    # The current_user object is passed by the token_required decorator
+    # It should contain at least 'id', 'email', and 'name' (if available)
+    return jsonify(current_user)
 
 # Bow Setups API
 @app.route('/api/bow-setups', methods=['GET'])
