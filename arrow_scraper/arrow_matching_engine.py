@@ -192,6 +192,7 @@ class ArrowMatchingEngine:
             candidate_mfrs[mfr] += 1
         print(f"   Candidates by manufacturer: {dict(sorted(candidate_mfrs.items()))}")
         
+        # First pass: strict spine options requirement
         for arrow_data in search_results:
             arrow_details = self.db.get_arrow_details(arrow_data['id'])
             # Relax spine options requirement for wood arrows (they typically have fewer options)
@@ -201,6 +202,37 @@ class ArrowMatchingEngine:
                 match = self._create_arrow_match(arrow_details, optimal_spine, spine_range, request)
                 if match:
                     arrow_matches.append(match)
+        
+        # Fallback: If no arrows found with strict requirements, relax spine options requirement
+        if not arrow_matches:
+            print(f"   No arrows found with {request.min_spine_options}+ spine options, trying with relaxed requirements...")
+            for arrow_data in search_results:
+                arrow_details = self.db.get_arrow_details(arrow_data['id'])
+                # Accept any arrow with at least 1 spine specification
+                if arrow_details and len(arrow_details['spine_specifications']) >= 1:
+                    match = self._create_arrow_match(arrow_details, optimal_spine, spine_range, request)
+                    if match:
+                        arrow_matches.append(match)
+        
+        # Second fallback: Expand spine range if still no matches found
+        if not arrow_matches:
+            print(f"   Still no arrows found, expanding spine search range...")
+            expanded_spine_search = spine_expansion * 2  # Double the expansion
+            expanded_search_params = search_params.copy()
+            expanded_search_params['spine_min'] = int(spine_range['minimum'] - expanded_spine_search)
+            expanded_search_params['spine_max'] = int(spine_range['maximum'] + expanded_spine_search)
+            
+            print(f"   Expanded search parameters: spine {expanded_search_params['spine_min']}-{expanded_search_params['spine_max']}")
+            
+            expanded_results = self.db.search_arrows(**expanded_search_params)
+            print(f"   Expanded search returned {len(expanded_results)} candidates")
+            
+            for arrow_data in expanded_results:
+                arrow_details = self.db.get_arrow_details(arrow_data['id'])
+                if arrow_details and len(arrow_details['spine_specifications']) >= 1:
+                    match = self._create_arrow_match(arrow_details, optimal_spine, spine_range, request)
+                    if match:
+                        arrow_matches.append(match)
                     
         # Debug: Show what manufacturers made it through
         match_mfrs = {}
