@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta
+from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta
 from typing import Dict, List, Any, Optional
 import uuid
 from pathlib import Path
@@ -739,7 +739,7 @@ def google_auth():
     # Create JWT
     jwt_token = jwt.encode({
         'user_id': user['id'],
-        'exp': datetime.utcnow() + timedelta(hours=24)
+        'exp': datetime.now(datetime.UTC) + timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': jwt_token})
@@ -750,7 +750,8 @@ def get_user(current_user):
     """Get current authenticated user's details"""
     # The current_user object is passed by the token_required decorator
     # It should contain at least 'id', 'email', and 'name' (if available)
-    return jsonify(current_user)
+    # Convert SQLite Row object to dictionary for JSON serialization
+    return jsonify(dict(current_user))
 
 # Bow Setups API
 @app.route('/api/bow-setups', methods=['GET'])
