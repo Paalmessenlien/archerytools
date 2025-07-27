@@ -51,8 +51,7 @@ export const useAuth = () => {
                 .then(async (data) => {
                   if (data.token) {
                     setToken(data.token);
-                    await fetchUser(); // Fetch user data immediately after setting token
-                    resolve(data.token);
+                    resolve({ token: data.token, needsProfileCompletion: data.needs_profile_completion });
                   } else {
                     // Ensure rejection is always with an Error object
                     reject(new Error(data.error || 'Failed to get token'));
@@ -95,11 +94,38 @@ export const useAuth = () => {
     }
   };
 
+  const updateUserProfile = async (name: string) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/user/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      if (res.ok) {
+        await fetchUser(); // Refresh user data after update
+        return true;
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error updating user profile:', err);
+      throw err;
+    }
+  };
+
   return {
     token,
     user,
     loginWithGoogle,
     logout,
     fetchUser,
+    updateUserProfile,
   };
 };

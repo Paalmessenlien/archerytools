@@ -26,6 +26,7 @@ else:
     print("⚠️ [Auth] No .env file found, using system environment variables")
 
 from arrow_database import ArrowDatabase
+from user_database import UserDatabase
 
 def token_required(f):
     @wraps(f)
@@ -38,11 +39,8 @@ def token_required(f):
 
         try:
             data = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=["HS256"])
-            db = ArrowDatabase()
-            conn = db.get_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE id = ?", (data["user_id"],))
-            current_user = cursor.fetchone()
+            user_db = UserDatabase()
+            current_user = user_db.get_user_by_id(data["user_id"])
             if not current_user:
                 return jsonify({"message": "User not found!"}), 401
         except Exception as e:
@@ -120,34 +118,30 @@ def get_user_from_google_token(authorization_code):
         name = idinfo.get("name")
         profile_picture_url = idinfo.get("picture")
 
-        db = ArrowDatabase()
-        conn = db.get_connection()
-        cursor = conn.cursor()
+        user_db = UserDatabase()
 
         # Check if user already exists
-        cursor.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
-        user = cursor.fetchone()
+        user = user_db.get_user_by_google_id(google_id)
+        is_new_user = False
 
         if not user:
             # Create new user
             print(f"[Auth Debug] Creating new user: {email}")
-            cursor.execute(
-                "INSERT INTO users (google_id, email, name, profile_picture_url) VALUES (?, ?, ?, ?)",
-                (google_id, email, name, profile_picture_url),
-            )
-            conn.commit()
-            cursor.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
-            user = cursor.fetchone()
+            user = user_db.create_user(google_id, email, name, profile_picture_url)
+            is_new_user = True
             print(f"[Auth Debug] New user created: {user}")
         else:
-            print(f"[Auth Debug] User already exists: {email}")
+            print(f"[Auth Debug] User already exists: {dict(user)}")
 
-        return user
+        # Check if user needs profile completion (True for all new users)
+        needs_profile_completion = is_new_user
+
+        return user, needs_profile_completion
     except ValueError as e:
         print(f"[Auth Error] ValueError during Google token verification: {e}")
-        return None
+        return None, False
     except Exception as e:
         print(f"[Auth Error] Unexpected error in get_user_from_google_token: {e}")
         import traceback
         traceback.print_exc()
-        return None
+        return None, False

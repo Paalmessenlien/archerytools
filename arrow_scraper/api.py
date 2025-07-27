@@ -26,7 +26,7 @@ for env_path in env_paths:
 else:
     print("⚠️ No .env file found, using system environment variables")
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timezone
 from typing import Dict, List, Any, Optional
 import uuid
 
@@ -763,7 +763,7 @@ def google_auth():
     if not token:
         return jsonify({'error': 'No token provided'}), 400
 
-    user = get_user_from_google_token(token)
+    user, needs_profile_completion = get_user_from_google_token(token)
 
     if not user:
         return jsonify({'error': 'Invalid token or user not found'}), 401
@@ -771,10 +771,11 @@ def google_auth():
     # Create JWT
     jwt_token = jwt.encode({
         'user_id': user['id'],
+        'needs_profile_completion': needs_profile_completion,
         'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
-    return jsonify({'token': jwt_token})
+    return jsonify({'token': jwt_token, 'needs_profile_completion': needs_profile_completion})
 
 @app.route('/api/user', methods=['GET'])
 @token_required
@@ -784,6 +785,27 @@ def get_user(current_user):
     # It should contain at least 'id', 'email', and 'name' (if available)
     # Convert SQLite Row object to dictionary for JSON serialization
     return jsonify(dict(current_user))
+
+@app.route('/api/user/profile', methods=['PUT'])
+@token_required
+def update_user_profile(current_user):
+    """Update current authenticated user's profile details"""
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    data = request.get_json()
+    
+    name = data.get('name')
+    if not name:
+        return jsonify({'error': 'Name is required'}), 400
+    
+    try:
+        updated_user = user_db.update_user_profile(current_user['id'], name=name)
+        if updated_user:
+            return jsonify(dict(updated_user))
+        else:
+            return jsonify({'error': 'Failed to update user profile'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Bow Setups API
 @app.route('/api/bow-setups', methods=['GET'])
@@ -1295,6 +1317,187 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             raise e
+
+# ===== RETAILER ENHANCEMENT API ENDPOINTS =====
+
+@app.route('/api/arrows/<int:arrow_id>/retailer-data', methods=['GET'])
+def get_arrow_retailer_data(arrow_id):
+    """Get retailer data for a specific arrow"""
+    try:
+        from enhance_database_schema import get_retailer_enhanced_data
+        
+        enhanced_data = get_retailer_enhanced_data('arrow_database.db', arrow_id)
+        
+        if not enhanced_data:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        return jsonify({
+            'arrow_id': arrow_id,
+            'basic_data': {
+                'manufacturer': enhanced_data.get('manufacturer'),
+                'model_name': enhanced_data.get('model_name'),
+                'material': enhanced_data.get('material'),
+                'arrow_type': enhanced_data.get('arrow_type')
+            },
+            'retailer_data': enhanced_data.get('retailer_data', []),
+            'enhancements': enhanced_data.get('enhancements'),
+            'price_history': enhanced_data.get('price_history', []),
+            'total_retailer_sources': len(enhanced_data.get('retailer_data', [])),
+            'has_pricing': any(d.get('price') for d in enhanced_data.get('retailer_data', []))
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/arrows/<int:arrow_id>/enhance-retailer-data', methods=['POST'])
+def enhance_arrow_retailer_data(arrow_id):
+    """Enhance arrow with retailer data from specified URLs"""
+    try:
+        import os
+        from retailer_integration import RetailerIntegrationManager
+        
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            return jsonify({'error': 'DEEPSEEK_API_KEY not configured'}), 500
+        
+        data = request.get_json()
+        retailer_urls = data.get('retailer_urls', []) if data else []
+        
+        # Create manager and enhance arrow
+        manager = RetailerIntegrationManager(api_key)
+        
+        # Run async enhancement
+        import asyncio
+        result = asyncio.run(manager.enhance_arrow_with_retailer_data(arrow_id, retailer_urls))
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/arrows/batch-enhance-retailer-data', methods=['POST'])
+def batch_enhance_retailer_data():
+    """Batch enhance multiple arrows with retailer data"""
+    try:
+        import os
+        from retailer_integration import RetailerIntegrationManager
+        
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            return jsonify({'error': 'DEEPSEEK_API_KEY not configured'}), 500
+        
+        data = request.get_json() or {}
+        manufacturer = data.get('manufacturer')
+        limit = int(data.get('limit', 5))  # Limit to 5 by default for safety
+        
+        # Create manager and run batch enhancement
+        manager = RetailerIntegrationManager(api_key)
+        
+        import asyncio
+        result = asyncio.run(manager.batch_enhance_arrows(manufacturer, limit))
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/retailers', methods=['GET'])
+def get_retailers():
+    """Get list of supported retailers"""
+    try:
+        conn = sqlite3.connect('arrow_database.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT rs.*, COUNT(rad.id) as arrow_count
+            FROM retailer_sources rs
+            LEFT JOIN retailer_arrow_data rad ON rs.id = rad.retailer_id
+            GROUP BY rs.id
+            ORDER BY rs.retailer_name
+        """)
+        
+        retailers = []
+        for row in cursor.fetchall():
+            retailers.append({
+                'id': row[0],
+                'name': row[1],
+                'base_url': row[2],
+                'language': row[3],
+                'currency': row[4],
+                'arrow_count': row[6],
+                'created_at': row[5]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'retailers': retailers,
+            'total_retailers': len(retailers)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/arrows/with-retailer-data', methods=['GET'])
+def get_arrows_with_retailer_data():
+    """Get arrows that have retailer enhancement data"""
+    try:
+        conn = sqlite3.connect('arrow_database.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Get query parameters
+        retailer_id = request.args.get('retailer_id', type=int)
+        has_pricing = request.args.get('has_pricing', '').lower() == 'true'
+        limit = request.args.get('limit', 20, type=int)
+        
+        # Build query
+        query = """
+            SELECT DISTINCT a.*, 
+                   COUNT(rad.id) as retailer_count,
+                   AVG(rad.price) as avg_price,
+                   MIN(rad.price) as min_price,
+                   MAX(rad.price) as max_price,
+                   GROUP_CONCAT(rs.retailer_name) as retailers
+            FROM arrows a
+            JOIN retailer_arrow_data rad ON a.id = rad.arrow_id
+            JOIN retailer_sources rs ON rad.retailer_id = rs.id
+            WHERE 1=1
+        """
+        
+        params = []
+        
+        if retailer_id:
+            query += " AND rad.retailer_id = ?"
+            params.append(retailer_id)
+        
+        if has_pricing:
+            query += " AND rad.price IS NOT NULL"
+        
+        query += """
+            GROUP BY a.id
+            ORDER BY retailer_count DESC, a.manufacturer, a.model_name
+            LIMIT ?
+        """
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        arrows = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            'arrows': arrows,
+            'total': len(arrows),
+            'filters': {
+                'retailer_id': retailer_id,
+                'has_pricing': has_pricing,
+                'limit': limit
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/debug/database', methods=['GET'])
 def debug_database():

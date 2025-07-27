@@ -928,6 +928,49 @@ This section details recent fixes and improvements to common development and dep
     - Implemented more robust process termination in `stop_services` using `kill -- -PGID` and `pgrep -g` for process group management, along with better PID checks (`kill -0 $PID`).
     - Added `PYTHONUNBUFFERED=1` to Flask startup command to ensure immediate log writes to `api.log`.
 
+### User Management & Profile Editing
+
+This section details the newly implemented user authentication and profile management features.
+
+**Persistent User Database:**
+- **Issue**: User data (accounts, profiles) was previously stored in the main `arrow_database.db`, which is frequently rebuilt during scraping, leading to data loss.
+- **Solution**: Implemented a separate SQLite database file (`user_data.db`) dedicated solely to user accounts. This ensures user data persists across database rebuilds and application updates.
+- **Files**: `arrow_scraper/user_database.py` (new), `arrow_scraper/auth.py`, `arrow_scraper/api.py`.
+
+**Optional User Registration (Full Name):**
+- **Feature**: After initial Google login, new users are optionally redirected to a registration page to provide their full name. This allows for a more personalized experience.
+- **Backend (`arrow_scraper/auth.py`, `arrow_scraper/api.py`):**
+    - `get_user_from_google_token` now returns a `needs_profile_completion` flag, which is `True` for all newly created users.
+    - The `/api/auth/google` endpoint includes this flag in the JWT response.
+- **Frontend (`frontend/composables/useAuth.ts`, `frontend/layouts/default.vue`, `frontend/pages/register.vue`):**
+    - `useAuth.ts`'s `loginWithGoogle` now resolves with the `needsProfileCompletion` flag.
+    - `frontend/layouts/default.vue` checks this flag after login and redirects to `/register` if `True`.
+    - `frontend/pages/register.vue` provides a form for users to enter their full name.
+
+**User Profile Editing on "My Page":**
+- **Feature**: Authenticated users can now edit their full name directly from their "My Page".
+- **Backend (`arrow_scraper/api.py`):**
+    - New `PUT /api/user/profile` endpoint added, allowing authenticated users to update their `name`. This endpoint uses the dedicated `user_database.py`.
+- **Frontend (`frontend/pages/my-page.vue`, `frontend/composables/useAuth.ts`):**
+    - `frontend/pages/my-page.vue` now displays an "Edit Profile" button.
+    - A modal form allows users to input a new name, which is sent via `updateUserProfile` in `useAuth.ts`.
+    - `useAuth.ts`'s `updateUserProfile` sends the `PUT` request and refreshes the local user state.
+
+**Frontend Reactivity & Display Fixes (My Page / Edit Button):**
+- **Issue**: After login, "My Page" sometimes required a manual refresh to display user data or the "Edit Profile" button.
+- **Cause**: Reactivity issues where the `user` object was not consistently updated or watched by `my-page.vue` after asynchronous login operations.
+- **Solution**:
+    - Removed `await fetchUser()` from `loginWithGoogle` in `useAuth.ts` to prevent premature state updates.
+    - Explicitly called `fetchUser()` in `frontend/layouts/default.vue` after login (if no redirection to `/register` is needed).
+    - Added explicit `fetchUser()` call within `onMounted` of `frontend/pages/my-page.vue` to ensure data is always fresh when the component mounts.
+    - Added a `watch` listener on the `user` ref in `frontend/pages/my-page.vue` to reactively update the UI when user data changes.
+
+**`start-dual-architecture.sh` Script `ps` Error Fix:**
+- **Issue**: Recurring `error: process ID list syntax error` messages in the console when running `start-dual-architecture.sh`.
+- **Cause**: Problematic `ps` command syntax (`ps -o pgid= -p $ | awk '{print $1}'`) used to retrieve the script's process group ID, likely due to shell variable expansion or `ps` version differences.
+- **Solution**: Replaced the problematic `ps` command with a more robust Python one-liner: `python -c "import os; print(os.getpgrp())"`. This directly retrieves the process group ID using Python's `os` module, bypassing shell-specific `ps` issues.
+- **Status**: ✅ **FIXED** - Script output is now clean.
+
 ### Production Deployment Issues
 
 **Docker Permission Errors:**

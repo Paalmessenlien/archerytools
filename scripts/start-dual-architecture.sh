@@ -79,10 +79,10 @@ start_api() {
     
     # Start Flask API with port environment variable
     if [ "$ENVIRONMENT" = "development" ]; then
-        PORT=$API_PORT FLASK_DEBUG=true python api.py > ../logs/api.log 2>&1 &
+        PORT=$API_PORT FLASK_DEBUG=true PYTHONUNBUFFERED=1 python api.py > ../logs/api.log 2>&1 &
     else
         # Use python for now, install gunicorn for production
-        PORT=$API_PORT python api.py > ../logs/api.log 2>&1 &
+        PORT=$API_PORT PYTHONUNBUFFERED=1 python api.py > ../logs/api.log 2>&1 &
     fi
     
     API_PID=$!
@@ -155,36 +155,61 @@ show_status() {
 stop_services() {
     log "Stopping services..."
     
+    # Try to kill the entire process group if PGID is known
+    if [ -f logs/script.pgid ]; then
+        PGID=$(cat logs/script.pgid)
+        if [ -n "$PGID" ] && kill -0 -- -$PGID 2>/dev/null; then # Check if process group exists and PGID is not empty
+            log "Killing process group $PGID..."
+            kill -- -$PGID 2>/dev/null || true
+            sleep 2 # Give processes time to terminate
+            if [ -n "$PGID" ] && kill -0 -- -$PGID 2>/dev/null; then
+                warning "Process group $PGID still running, attempting forceful kill..."
+                kill -9 -- -$PGID 2>/dev/null || true
+            fi
+        fi
+        rm -f logs/script.pgid
+        rm -f logs/script.pid
+    fi
+
+    # Clean up individual PID files if they exist (fallback/cleanup)
     if [ -f logs/api.pid ]; then
         API_PID=$(cat logs/api.pid)
-        kill $API_PID 2>/dev/null || true
-        rm logs/api.pid
-        success "API backend stopped"
+        if [ -n "$API_PID" ] && kill -0 $API_PID 2>/dev/null; then # Check if process exists and PID is not empty
+            log "Killing API backend (PID: $API_PID)..."
+            kill $API_PID 2>/dev/null || true
+        fi
+        rm -f logs/api.pid
     fi
     
     if [ -f logs/frontend.pid ]; then
         FRONTEND_PID=$(cat logs/frontend.pid)
-        kill $FRONTEND_PID 2>/dev/null || true
-        rm logs/frontend.pid
-        success "Frontend stopped"
+        if [ -n "$FRONTEND_PID" ] && kill -0 $FRONTEND_PID 2>/dev/null; then # Check if process exists and PID is not empty
+            log "Killing Frontend (PID: $FRONTEND_PID)..."
+            kill $FRONTEND_PID 2>/dev/null || true
+        fi
+        rm -f logs/frontend.pid
     fi
+    
+    success "Services stopped."
 }
 
 # Handle script termination
-trap stop_services EXIT INT TERM
+trap stop_services INT TERM
 
 # Main execution
 case "${1:-start}" in
     start)
         log "Starting ArrowTuner Dual Architecture..."
+        
+        # Save script's PID and PGID for robust stopping
+        echo $ > logs/script.pid
+        python -c "import os; print(os.getpgrp())" > logs/script.pgid
+        
         start_api
         start_frontend
         check_health
         show_status
         
-        # Keep script running
-        log "Services are running. Press Ctrl+C to stop."
-        wait
         ;;
     
     stop)

@@ -44,7 +44,7 @@
                   </CustomButton>
                   <CustomButton
                     v-else
-                    @click="loginWithGoogle"
+                    @click="handleLogin"
                     variant="filled"
                     class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
                   >
@@ -219,6 +219,21 @@ const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)
 
 const { user, logout, loginWithGoogle, fetchUser } = useAuth()
+const router = useRouter()
+
+const handleLogin = async () => {
+  try {
+    const result = await loginWithGoogle()
+    if (result && result.needsProfileCompletion) {
+      router.push('/register')
+    } else {
+      await fetchUser(); // Fetch user data only if not redirecting to register
+    }
+  } catch (error) {
+    console.error('Login failed:', error)
+    // Optionally show an error message to the user
+  }
+}
 
 // Fetch user on mount if token exists
 onMounted(() => {
