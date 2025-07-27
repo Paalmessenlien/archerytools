@@ -49,17 +49,23 @@
     <!-- Search and Filters -->
     <md-elevated-card class="mb-6 light-surface light-elevation">
       <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Main Search Field -->
+        <div class="mb-4">
           <md-outlined-text-field 
-            class="md:col-span-2"
+            class="w-full"
             :value="filters.search"
-            @input="filters.search = $event.target.value"
-            label="Search arrows..."
+            @input="handleSearchInput($event.target.value)"
+            label="Search arrows... (3+ letters for typeahead)"
+            placeholder="Type arrow name, manufacturer, model..."
           >
             <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
+            <i v-if="filters.search && filters.search.length >= 3" class="fas fa-spinner fa-spin" slot="trailing-icon" style="color: #6b7280;" v-show="loading"></i>
           </md-outlined-text-field>
-          
-          <md-filled-select :value="filters.manufacturer" @change="filters.manufacturer = $event.target.value" label="Manufacturer">
+        </div>
+        
+        <!-- Basic Filter Dropdowns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <md-filled-select :value="filters.manufacturer" @change="handleFilterChange('manufacturer', $event.target.value)" label="Manufacturer">
             <md-select-option value="">
               <div slot="headline">All Manufacturers</div>
             </md-select-option>
@@ -68,7 +74,7 @@
             </md-select-option>
           </md-filled-select>
           
-          <md-filled-select :value="filters.arrow_type" @change="filters.arrow_type = $event.target.value" label="Arrow Type">
+          <md-filled-select :value="filters.arrow_type" @change="handleFilterChange('arrow_type', $event.target.value)" label="Arrow Type">
             <md-select-option value="">
               <div slot="headline">All Types</div>
             </md-select-option>
@@ -77,7 +83,7 @@
             </md-select-option>
           </md-filled-select>
           
-          <md-filled-select :value="filters.material" @change="filters.material = $event.target.value" label="Material">
+          <md-filled-select :value="filters.material" @change="handleFilterChange('material', $event.target.value)" label="Material">
             <md-select-option value="">
               <div slot="headline">All Materials</div>
             </md-select-option>
@@ -95,13 +101,6 @@
             </md-select-option>
           </md-filled-select>
         </div>
-        
-        <div class="mt-4 text-center">
-          <md-filled-button @click="searchArrows">
-            <i class="fas fa-search" style="margin-right: 6px;"></i>
-            Search
-          </md-filled-button>
-        </div>
       
         <!-- Advanced Filters Toggle -->
         <div class="mt-4">
@@ -114,24 +113,24 @@
         <!-- Advanced Filters -->
         <div v-if="showAdvancedFilters" class="mt-4 pt-4">
           <md-divider class="mb-4"></md-divider>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            <!-- Spine Range -->
+          
+          <!-- Row 1: Spine Range + Diameter Range ---->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <md-outlined-text-field 
               :value="filters.spine_min"
-              @input="filters.spine_min = $event.target.value"
+              @input="handleAdvancedFilterChange('spine_min', $event.target.value)"
               type="number" 
               label="Min Spine"
             ></md-outlined-text-field>
             
             <md-outlined-text-field 
               :value="filters.spine_max"
-              @input="filters.spine_max = $event.target.value"
+              @input="handleAdvancedFilterChange('spine_max', $event.target.value)"
               type="number" 
               label="Max Spine"
             ></md-outlined-text-field>
             
-            <!-- Diameter Range Dropdown -->
-            <md-filled-select :value="filters.diameter_range" @change="filters.diameter_range = $event.target.value" label="Diameter Range">
+            <md-filled-select :value="filters.diameter_range" @change="handleFilterChange('diameter_range', $event.target.value)" label="Diameter Range">
               <md-select-option value="">
                 <div slot="headline">All Diameters</div>
               </md-select-option>
@@ -151,11 +150,13 @@
                 <div slot="headline">0.400" - 0.450"</div>
               </md-select-option>
             </md-filled-select>
-            
-            <!-- Weight Range -->
+          </div>
+          
+          <!-- Row 2: Weight Range ---->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <md-outlined-text-field 
               :value="filters.gpi_min"
-              @input="filters.gpi_min = $event.target.value"
+              @input="handleAdvancedFilterChange('gpi_min', $event.target.value)"
               type="number" 
               step="0.1"
               label="Min Weight (GPI)"
@@ -163,11 +164,14 @@
             
             <md-outlined-text-field 
               :value="filters.gpi_max"
-              @input="filters.gpi_max = $event.target.value"
+              @input="handleAdvancedFilterChange('gpi_max', $event.target.value)"
               type="number" 
               step="0.1"
               label="Max Weight (GPI)"
             ></md-outlined-text-field>
+            
+            <!-- Empty slot for 3-column alignment -->
+            <div></div>
           </div>
           
           <div class="mt-4 flex justify-end">
@@ -482,6 +486,7 @@ const clearFilters = () => {
   filters.value = {
     search: '',
     manufacturer: '',
+    arrow_type: '',
     material: '',
     spine_min: '',
     spine_max: '',
@@ -551,11 +556,35 @@ const getGPIRange = (arrow) => {
   return 'N/A'
 }
 
-// Watchers
-watch(() => filters.value.search, debounce(() => {
+// Enhanced search handling
+const handleSearchInput = (value) => {
+  filters.value.search = value
+  if (value.length >= 3 || value.length === 0) {
+    currentPage.value = 1
+    debouncedSearch()
+  }
+}
+
+const handleFilterChange = (filterName, value) => {
+  filters.value[filterName] = value
   currentPage.value = 1
   searchArrows()
-}, 500))
+}
+
+const handleAdvancedFilterChange = (filterName, value) => {
+  filters.value[filterName] = value
+  currentPage.value = 1
+  debouncedAdvancedSearch()
+}
+
+// Create debounced functions
+const debouncedSearch = debounce(() => {
+  searchArrows()
+}, 300)
+
+const debouncedAdvancedSearch = debounce(() => {
+  searchArrows()
+}, 500)
 
 // Debounce function
 function debounce(func, wait) {

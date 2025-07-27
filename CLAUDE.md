@@ -430,6 +430,12 @@ DOMAIN_NAME=yourdomain.com
 SSL_EMAIL=admin@yourdomain.com
 ```
 
+**IMPORTANT:** Also create `frontend/.env` file with Google Client ID:
+```
+NUXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id-here
+```
+**Note:** The frontend `.env` file takes precedence over the root `.env` file for frontend builds. Make sure both files contain the same Google Client ID to avoid "OAuth client was not found" errors.
+
 **Legacy Production:** Edit `deploy/config/production.env`:
 ```
 SECRET_KEY=your-secret-key-here-change-this
