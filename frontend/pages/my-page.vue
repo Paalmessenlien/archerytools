@@ -2,7 +2,12 @@
   <div class="card p-6">
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">My Page</h2>
 
-    <div v-if="user">
+    <div v-if="isLoadingUser" class="text-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
+      <p class="text-gray-700 dark:text-gray-300">Loading user data...</p>
+    </div>
+
+    <div v-else-if="user">
       <p class="text-gray-700 dark:text-gray-300 mb-2">
         Welcome, <span class="font-medium">{{ user.name || user.email }}</span>!
       </p>
@@ -93,6 +98,8 @@ const editedName = ref('');
 const isSaving = ref(false);
 const editError = ref(null);
 
+const isLoadingUser = ref(true);
+
 const openEditModal = () => {
   editedName.value = user.value?.name || '';
   isEditing.value = true;
@@ -117,13 +124,12 @@ const saveProfile = async () => {
   }
 };
 
-// Ensure user data is fetched on page load if not already present
-// This is important for direct access to /my-page
-onMounted(() => {
-  // Ensure user data is fetched on page load if not already present
+onMounted(async () => {
+  // Ensure user data is fetched on page load
   if (!user.value) {
-    fetchUser();
+    await fetchUser();
   }
+  isLoadingUser.value = false;
 });
 
 // Watch for changes in the user object and update editedName accordingly

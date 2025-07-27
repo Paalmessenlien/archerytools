@@ -59,42 +59,66 @@ create_backup_structure() {
 # Backup database
 backup_database() {
     local backup_path="$1"
-    local db_file="$DATA_DIR/arrow_database.db"
+    local arrow_db_file="$DATA_DIR/arrow_database.db"
+    local user_db_file="$APP_DIR/arrow_scraper/user_data.db"
     
-    if [[ -f "$db_file" ]]; then
-        info "Backing up database..."
-        
-        # Create SQL dump
-        sqlite3 "$db_file" ".dump" | gzip -"$COMPRESSION_LEVEL" > "$backup_path/database/arrow_database.sql.gz"
-        
-        # Copy binary database file
-        cp "$db_file" "$backup_path/database/"
+    info "Backing up databases..."
+    
+    # Backup arrow_database.db
+    if [[ -f "$arrow_db_file" ]]; then
+        info "  - Backing up arrow_database.db..."
+        sqlite3 "$arrow_db_file" ".dump" | gzip -"$COMPRESSION_LEVEL" > "$backup_path/database/arrow_database.sql.gz"
+        cp "$arrow_db_file" "$backup_path/database/"
         gzip -"$COMPRESSION_LEVEL" "$backup_path/database/arrow_database.db"
+        success "  - arrow_database.db backup completed"
+    else
+        warn "  - arrow_database.db not found: $arrow_db_file"
+    fi
+
+    # Backup user_data.db
+    if [[ -f "$user_db_file" ]]; then
+        info "  - Backing up user_data.db..."
+        sqlite3 "$user_db_file" ".dump" | gzip -"$COMPRESSION_LEVEL" > "$backup_path/database/user_data.sql.gz"
+        cp "$user_db_file" "$backup_path/database/"
+        gzip -"$COMPRESSION_LEVEL" "$backup_path/database/user_data.db"
+        success "  - user_data.db backup completed"
+    else
+        warn "  - user_data.db not found: $user_db_file"
+    fi
         
-        # Database statistics
-        local table_count
-        local arrow_count
-        local db_size
+    # Database statistics
+    local arrow_table_count
+    local arrow_count
+    local arrow_db_size
+    local user_count
+    local user_db_size
+    
+    arrow_table_count=$(sqlite3 "$arrow_db_file" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';" 2>/dev/null || echo "0")
+    arrow_count=$(sqlite3 "$arrow_db_file" "SELECT COUNT(*) FROM arrows;" 2>/dev/null || echo "0")
+    arrow_db_size=$(du -h "$arrow_db_file" | cut -f1 2>/dev/null || echo "N/A")
+
+    user_count=$(sqlite3 "$user_db_file" "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "0")
+    user_db_size=$(du -h "$user_db_file" | cut -f1 2>/dev/null || echo "N/A")
         
-        table_count=$(sqlite3 "$db_file" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';")
-        arrow_count=$(sqlite3 "$db_file" "SELECT COUNT(*) FROM arrows;" 2>/dev/null || echo "0")
-        db_size=$(du -h "$db_file" | cut -f1)
-        
-        cat > "$backup_path/database/stats.txt" << EOF
+    cat > "$backup_path/database/stats.txt" << EOF
 Database Backup Statistics
 =========================
 Backup Date: $(date)
-Database Size: $db_size
-Table Count: $table_count
-Arrow Count: $arrow_count
+
+Arrow Database (arrow_database.db):
+  Size: $arrow_db_size
+  Table Count: $arrow_table_count
+  Arrow Count: $arrow_count
+
+User Database (user_data.db):
+  Size: $user_db_size
+  User Count: $user_count
+
 Backup Method: SQL dump + Binary copy
 Compression: gzip level $COMPRESSION_LEVEL
 EOF
-        
-        success "Database backup completed"
-    else
-        warn "Database file not found: $db_file"
-    fi
+    
+    success "Database backup process completed"
 }
 
 # Backup configuration files
@@ -315,11 +339,19 @@ restore_backup() {
         error "Could not find extracted backup directory"
     fi
     
-    # Restore database
+    # Restore arrow_database.db
     if [[ -f "$extracted_dir/database/arrow_database.db.gz" ]]; then
         gunzip -c "$extracted_dir/database/arrow_database.db.gz" > "$DATA_DIR/arrow_database.db"
         chown arrowtuner:arrowtuner "$DATA_DIR/arrow_database.db"
-        success "Database restored"
+        success "Arrow database restored"
+    fi
+
+    # Restore user_data.db
+    local user_db_file="$APP_DIR/arrow_scraper/user_data.db"
+    if [[ -f "$extracted_dir/database/user_data.db.gz" ]]; then
+        gunzip -c "$extracted_dir/database/user_data.db.gz" > "$user_db_file"
+        chown arrowtuner:arrowtuner "$user_db_file"
+        success "User database restored"
     fi
     
     # Restore configuration (manual review recommended)
