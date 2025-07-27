@@ -22,7 +22,7 @@ export const useAuth = () => {
     }
   };
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = async () => {
     console.log('loginWithGoogle called');
     return new Promise((resolve, reject) => {
       googleSdkLoaded((google) => {
@@ -30,28 +30,40 @@ export const useAuth = () => {
         google.accounts.oauth2.initCodeClient({
           client_id: config.public.googleClientId,
           scope: 'email profile openid',
-          callback: (response) => {
+          callback: async (response) => {
             console.log('Google callback response:', response);
             if (response.code) {
-              fetch('/api/auth/google', {
+              console.log('API Base URL:', config.public.apiBase);
+              fetch(`${config.public.apiBase}/auth/google`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ token: response.code }),
               })
-                .then((res) => res.json())
-                .then((data) => {
+                .then(async (res) => {
+                  if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || `API error: ${res.status}`);
+                  }
+                  return res.json();
+                })
+                .then(async (data) => {
                   if (data.token) {
                     setToken(data.token);
+                    await fetchUser(); // Fetch user data immediately after setting token
                     resolve(data.token);
                   } else {
-                    reject(data.error || 'Failed to get token');
+                    // Ensure rejection is always with an Error object
+                    reject(new Error(data.error || 'Failed to get token'));
                   }
                 })
-                .catch((err) => reject(err));
+                .catch((err) => {
+                  console.error('Error during Google auth API call:', err);
+                  reject(err); // Propagate the error
+                });
             } else {
-              reject('No code in response');
+              reject(new Error('No code in response')); // Ensure rejection is always with an Error object
             }
           },
         }).requestCode();
@@ -68,7 +80,7 @@ export const useAuth = () => {
     if (!token.value) return;
 
     try {
-      const res = await fetch('/api/user', {
+      const res = await fetch(`${config.public.apiBase}/user`, {
         headers: {
           Authorization: `Bearer ${token.value}`,
         },
