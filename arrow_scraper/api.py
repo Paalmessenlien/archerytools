@@ -21,10 +21,7 @@ env_paths = [
 for env_path in env_paths:
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ Loaded environment from: {env_path}")
         break
-else:
-    print("⚠️ No .env file found, using system environment variables")
 
 from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timezone
 from typing import Dict, List, Any, Optional
@@ -67,17 +64,13 @@ def get_tuning_system():
             # Get the database path from the database function to ensure consistency
             db = get_database()
             if db is None:
-                print("❌ Cannot initialize tuning system: no database available")
                 return None
             
             # Use the same path the database is using
             db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
-            print(f"🧮 Initializing tuning system with database: {db_path}")
             tuning_system = ArrowTuningSystem(database_path=db_path)
         except Exception as e:
-            print(f"Error initializing tuning system: {e}")
             import traceback
-            traceback.print_exc()
             tuning_system = None
     return tuning_system
 
@@ -106,27 +99,18 @@ def get_database():
                         conn.close()
                         
                         if count > 0:
-                            print(f"🗄️  Using database: {db_path} ({count} arrows)")
                             database_path = db_path
                             break
-                        else:
-                            print(f"⚠️  Database exists but empty: {db_path}")
                     except Exception as e:
-                        print(f"⚠️  Database check failed for {db_path}: {e}")
                         continue
-                else:
-                    print(f"❌ Database not found: {db_path}")
             
             if not database_path:
-                print("💥 No valid database found in any location")
                 return None
             
             database = ArrowDatabase(database_path)
             
         except Exception as e:
-            print(f"❌ Error initializing database: {e}")
             import traceback
-            traceback.print_exc()
             database = None
     return database
 
@@ -138,16 +122,12 @@ def get_component_database():
             # Use same database path as main database
             db = get_database()
             if db is None:
-                print("❌ Cannot initialize component database: no main database available")
                 return None
             
             db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
-            print(f"🧩 Initializing component database with: {db_path}")
             component_database = ComponentDatabase(db_path)
         except Exception as e:
-            print(f"Error initializing component database: {e}")
             import traceback
-            traceback.print_exc()
             component_database = None
     return component_database
 
@@ -159,16 +139,12 @@ def get_compatibility_engine():
             # Use same database path as main database
             db = get_database()
             if db is None:
-                print("❌ Cannot initialize compatibility engine: no main database available")
                 return None
             
             db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
-            print(f"🔗 Initializing compatibility engine with: {db_path}")
             compatibility_engine = CompatibilityEngine(db_path)
         except Exception as e:
-            print(f"Error initializing compatibility engine: {e}")
             import traceback
-            traceback.print_exc()
             compatibility_engine = None
     return compatibility_engine
 
@@ -177,8 +153,6 @@ def get_compatibility_engine():
 def handle_error(error):
     """Global error handler"""
     import traceback
-    print(f"API Error: {error}")
-    print(traceback.format_exc())
     return jsonify({
         'error': str(error),
         'type': type(error).__name__
@@ -756,7 +730,6 @@ from auth import token_required, get_user_from_google_token
 
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
-    print("[Auth Debug] /api/auth/google endpoint hit.")
     data = request.get_json()
     token = data.get('token')
 
@@ -1022,8 +995,6 @@ def check_arrow_compatibility():
         
     except Exception as e:
         import traceback
-        print(f"❌ Compatible arrows error: {e}")
-        print(f"Stack trace: {traceback.format_exc()}")
         return jsonify({'error': f'Compatible arrows error: {str(e)}'}), 500
 
 # Static File Serving for Images
@@ -1031,31 +1002,22 @@ def check_arrow_compatibility():
 def serve_image(filename):
     """Serve downloaded arrow images"""
     try:
-        print(f"🖼️  Serving image request for: {filename}")
         images_dir = Path(__file__).parent / 'data' / 'images'
-        print(f"   Images directory: {images_dir}")
-        print(f"   Directory exists: {images_dir.exists()}")
         
         # Check if file exists before trying to serve it
         file_path = images_dir / filename
-        print(f"   Full file path: {file_path}")
-        print(f"   File exists: {file_path.exists()}")
         
         if not file_path.exists():
             return jsonify({'error': f'Image not found: {filename}'}), 404
         
         # Serve the file with appropriate MIME type
         if filename.endswith('.svg'):
-            print(f"   Serving SVG with explicit mimetype")
             return send_from_directory(str(images_dir), filename, mimetype='image/svg+xml')
         else:
-            print(f"   Serving regular image file")
             return send_from_directory(str(images_dir), filename)
             
     except Exception as e:
-        print(f"❌ Error serving image {filename}: {e}")
         import traceback
-        traceback.print_exc()
         return jsonify({'error': f'Error serving image: {str(e)}'}), 500
 
 def get_image_url(arrow_id, image_url=None, saved_images=None, local_image_path=None):
@@ -1300,9 +1262,6 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
-    print(f"🚀 Starting ArrowTuner API Server on port {port}")
-    print(f"Debug mode: {debug}")
-    
     try:
         app.run(
             host='0.0.0.0',
@@ -1311,8 +1270,6 @@ if __name__ == '__main__':
         )
     except OSError as e:
         if "Address already in use" in str(e):
-            print(f"❌ Port {port} is already in use!")
-            print(f"Please check for other running instances or use a different port.")
             import sys
             sys.exit(1)
         else:

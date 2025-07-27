@@ -20,10 +20,7 @@ env_paths = [
 for env_path in env_paths:
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ [Auth] Loaded environment from: {env_path}")
         break
-else:
-    print("⚠️ [Auth] No .env file found, using system environment variables")
 
 from arrow_database import ArrowDatabase
 from user_database import UserDatabase
@@ -51,8 +48,6 @@ def token_required(f):
     return decorated
 
 def get_user_from_google_token(authorization_code):
-    print("[Auth Debug] Entering get_user_from_google_token")
-    print(f"[Auth Debug] Received authorization_code: {authorization_code[:10]}...")
     try:
         # Exchange authorization code for access token and ID token
         client_id = os.environ.get("NUXT_PUBLIC_GOOGLE_CLIENT_ID") # Use NUXT_PUBLIC_GOOGLE_CLIENT_ID from frontend
@@ -63,12 +58,7 @@ def get_user_from_google_token(authorization_code):
         # Use environment variable for production, fallback to localhost for development
         redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost:3000')
 
-        print(f"[Auth Debug] CLIENT_ID: {client_id}")
-        print(f"[Auth Debug] CLIENT_SECRET: {client_secret[:5]}...{client_secret[-5:]}" if client_secret else "[Auth Debug] CLIENT_SECRET: NOT SET")
-        print(f"[Auth Debug] REDIRECT_URI: {redirect_uri}")
-
         if not client_id or not client_secret:
-            print("Error: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in environment variables.")
             return None
 
         # Build the request to Google's token endpoint
@@ -92,25 +82,17 @@ def get_user_from_google_token(authorization_code):
             body=encoded_data
         )
         
-        print(f"[Auth Debug] Google Token Endpoint Response Status: {resp.status}")
-        print(f"[Auth Debug] Google Token Endpoint Response Content: {content.decode('utf-8')}")
-
         token_data = json.loads(content.decode("utf-8"))
-        print(f"[Auth Debug] Parsed Token Data: {token_data}")
 
         if "error" in token_data:
-            print(f"Error exchanging code for token: {token_data.get('error_description', token_data['error'])}")
             return None
 
         id_token_jwt = token_data.get("id_token")
-        print(f"[Auth Debug] ID Token JWT: {id_token_jwt[:10]}..." if id_token_jwt else "[Auth Debug] ID Token JWT: NOT FOUND")
         if not id_token_jwt:
-            print("Error: No ID token found in response from Google.")
             return None
 
         # Verify the ID token
         idinfo = id_token.verify_oauth2_token(id_token_jwt, requests.Request(), client_id)
-        print(f"[Auth Debug] ID Token Verified. idinfo: {idinfo}")
 
         # ID token is valid. Get the user's Google Account ID from the decoded token.
         google_id = idinfo["sub"]
@@ -126,22 +108,15 @@ def get_user_from_google_token(authorization_code):
 
         if not user:
             # Create new user
-            print(f"[Auth Debug] Creating new user: {email}")
             user = user_db.create_user(google_id, email, name, profile_picture_url)
             is_new_user = True
-            print(f"[Auth Debug] New user created: {user}")
-        else:
-            print(f"[Auth Debug] User already exists: {dict(user)}")
-
+        
         # Check if user needs profile completion (True for all new users)
         needs_profile_completion = is_new_user
 
         return user, needs_profile_completion
     except ValueError as e:
-        print(f"[Auth Error] ValueError during Google token verification: {e}")
         return None, False
     except Exception as e:
-        print(f"[Auth Error] Unexpected error in get_user_from_google_token: {e}")
         import traceback
-        traceback.print_exc()
         return None, False
