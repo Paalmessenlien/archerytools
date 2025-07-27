@@ -611,9 +611,7 @@ const loadRecommendations = async () => {
   error.value = null
 
   try {
-    const result = await api.apiRequest('/tuning/recommendations', {
-      method: 'POST',
-      body: JSON.stringify({
+    const result = await api.getArrowRecommendations({
         draw_weight: bowConfig.value.draw_weight,
         draw_length: bowConfig.value.draw_length,
         bow_type: bowConfig.value.bow_type,
@@ -625,7 +623,6 @@ const loadRecommendations = async () => {
         primary_goal: 'maximum_accuracy',
         arrow_type: 'target_outdoor'
       })
-    })
 
     recommendations.value = result.recommended_arrows || []
     console.log('Loaded recommendations:', recommendations.value.length, 'arrows')

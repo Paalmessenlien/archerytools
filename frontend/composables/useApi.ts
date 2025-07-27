@@ -252,6 +252,7 @@ export const useApi = () => {
     healthCheck,
     
     // Generic request
-    get: apiRequest
+    get: apiRequest,
+    apiRequest
   }
 }
