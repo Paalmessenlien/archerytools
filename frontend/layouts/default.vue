@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+      <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-3">
             <!-- Logo -->
@@ -13,24 +13,29 @@
             </svg>
             
             <div>
-              <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                <NuxtLink to="/" class="hover:text-blue-600 dark:hover:text-purple-400 transition-colors">
-                  ArrowTune
-                </NuxtLink>
-              </h1>
-              <p class="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
-                Professional Arrow Selection
+              <div class="flex items-center space-x-2">
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  <NuxtLink to="/" class="transition-colors hover:text-blue-600 dark:hover:text-purple-400">
+                    ArcheryTool
+                  </NuxtLink>
+                </h1>
+                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded-full">
+                  BETA
+                </span>
+              </div>
+              <p class="hidden text-sm text-gray-600 dark:text-gray-300 sm:block">
+                Professional Archery Tools - Invitation Only
               </p>
             </div>
           </div>
           
           <div class="flex items-center space-x-4">
             <!-- Dark Mode Toggle (Desktop) -->
-            <div class="hidden md:flex items-center space-x-4">
+            <div class="items-center hidden space-x-4 md:flex">
                   <NuxtLink
                     v-if="user"
                     to="/my-page"
-                    class="text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400 transition-colors"
+                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
                   >
                     My Page
                   </NuxtLink>
@@ -46,7 +51,7 @@
                     v-else
                     @click="handleLogin"
                     variant="filled"
-                    class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                    class="text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
                   >
                     Login with Google
                   </CustomButton>
@@ -56,7 +61,7 @@
             <!-- Mobile menu button -->
             <button 
               @click="toggleMobileMenu"
-              class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+              class="p-2 text-gray-600 transition-colors rounded-lg md:hidden hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               <svg v-if="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -70,26 +75,26 @@
       </div>
       
       <!-- Mobile menu -->
-      <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700">
+      <div v-if="mobileMenuOpen" class="bg-white border-t border-gray-200 md:hidden dark:bg-gray-800 dark:border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <NuxtLink 
             to="/" 
             @click="closeMobileMenu"
-            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Bow Setup
           </NuxtLink>
           <NuxtLink 
             to="/database" 
             @click="closeMobileMenu"
-            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Arrows
           </NuxtLink>
           <NuxtLink 
             to="/components" 
             @click="closeMobileMenu"
-            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Components
           </NuxtLink>
@@ -98,9 +103,18 @@
             v-if="user"
             to="/my-page"
             @click="closeMobileMenu"
-            class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             My Page
+          </NuxtLink>
+          <NuxtLink
+            v-if="user && isAdmin"
+            to="/admin"
+            @click="closeMobileMenu"
+            class="block px-3 py-2 text-red-700 transition-colors rounded-lg hover:bg-red-100 dark:text-red-200 dark:hover:bg-red-900/20"
+          >
+            <i class="fas fa-shield-alt mr-2"></i>
+            Admin Panel
           </NuxtLink>
           <div class="px-3 py-2">
             <CustomButton
@@ -115,7 +129,7 @@
               v-else
               @click="loginWithGoogle"
               variant="filled"
-              class="w-full bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+              class="w-full text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
             >
               Login with Google
             </CustomButton>
@@ -129,67 +143,111 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex flex-col lg:flex-row gap-6">
+    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-6 lg:flex-row">
         <!-- Sidebar Navigation -->
-        <aside class="lg:w-64 flex-shrink-0">
+        <aside class="flex-shrink-0 lg:w-64">
           <nav class="card">
-            <div class="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
-              <NuxtLink 
-                to="/"
-                class="nav-tab"
-                :class="{ active: $route.path === '/' }"
-              >
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 1v6m0 6v6"/>
-                  <path d="m15.14 8.86 4.24-4.24"/>
-                  <path d="m4.86 19.14 4.24-4.24"/>
-                  <path d="m8.86 8.86-4.24-4.24"/>
-                  <path d="m19.14 19.14-4.24-4.24"/>
-                </svg>
-                <span class="hidden sm:block">Bow Setup</span>
-              </NuxtLink>
-              
-              
-              <NuxtLink
-                to="/database"
-                class="nav-tab"
-                :class="{ active: $route.path === '/database' }"
-              >
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 17l4 4 4-4m-4-5v9"/>
-                  <path d="M16 12l-4-4-4 4"/>
-                  <path d="M12 1v3"/>
-                </svg>
-                <span class="hidden sm:block">Arrows</span>
-              </NuxtLink>
-              
-              <NuxtLink
-                to="/components"
-                class="nav-tab"
-                :class="{ active: $route.path === '/components' }"
-              >
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="7" height="7"/>
-                  <rect x="14" y="3" width="7" height="7"/>
-                  <rect x="14" y="14" width="7" height="7"/>
-                  <rect x="3" y="14" width="7" height="7"/>
-                </svg>
-                <span class="hidden sm:block">Components</span>
-              </NuxtLink>
+            <div class="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-x-visible">
+              <!-- Bow Setup - Always accessible for logged-in users -->
+              <template v-if="user">
+                <NuxtLink 
+                  to="/"
+                  class="nav-tab"
+                  :class="{ active: $route.path === '/' }"
+                >
+                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6"/>
+                    <path d="m15.14 8.86 4.24-4.24"/>
+                    <path d="m4.86 19.14 4.24-4.24"/>
+                    <path d="m8.86 8.86-4.24-4.24"/>
+                    <path d="m19.14 19.14-4.24-4.24"/>
+                  </svg>
+                  <span class="hidden sm:block">Bow Setup</span>
+                </NuxtLink>
+                
+                <NuxtLink
+                  to="/database"
+                  class="nav-tab"
+                  :class="{ active: $route.path === '/database' }"
+                >
+                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 17l4 4 4-4m-4-5v9"/>
+                    <path d="M16 12l-4-4-4 4"/>
+                    <path d="M12 1v3"/>
+                  </svg>
+                  <span class="hidden sm:block">Arrows</span>
+                </NuxtLink>
+                
+                <NuxtLink
+                  to="/components"
+                  class="nav-tab"
+                  :class="{ active: $route.path === '/components' }"
+                >
+                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                  </svg>
+                  <span class="hidden sm:block">Components</span>
+                </NuxtLink>
 
-              <NuxtLink
-                v-if="user"
-                to="/my-page"
-                class="nav-tab"
-                :class="{ active: $route.path === '/my-page' }"
-              >
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span class="hidden sm:block">My Page</span>
-              </NuxtLink>
+                <NuxtLink
+                  to="/my-page"
+                  class="nav-tab"
+                  :class="{ active: $route.path === '/my-page' }"
+                >
+                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span class="hidden sm:block">My Page</span>
+                </NuxtLink>
+
+                <NuxtLink
+                  v-if="isAdmin"
+                  to="/admin"
+                  class="nav-tab"
+                  :class="{ active: $route.path === '/admin' }"
+                >
+                  <i class="fas fa-shield-alt flex-shrink-0 w-5 h-5 text-red-600 dark:text-red-400"></i>
+                  <span class="hidden sm:block">Admin</span>
+                </NuxtLink>
+              </template>
+              
+              <!-- Locked Navigation for Non-authenticated Users -->
+              <template v-else>
+                <div 
+                  @click="redirectToLogin"
+                  class="nav-tab cursor-not-allowed opacity-60"
+                  title="Login required to access Bow Setup"
+                >
+                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
+                  <span class="hidden sm:block">Bow Setup</span>
+                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
+                </div>
+                
+                <div 
+                  @click="redirectToLogin"
+                  class="nav-tab cursor-not-allowed opacity-60"
+                  title="Login required to access Arrow Database"
+                >
+                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
+                  <span class="hidden sm:block">Arrows</span>
+                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
+                </div>
+                
+                <div 
+                  @click="redirectToLogin"
+                  class="nav-tab cursor-not-allowed opacity-60"
+                  title="Login required to access Components"
+                >
+                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
+                  <span class="hidden sm:block">Components</span>
+                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
+                </div>
+              </template>
             </div>
           </nav>
         </aside>
@@ -202,9 +260,9 @@
     </main>
 
     <!-- Loading Indicator -->
-    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 dark:border-purple-400"></div>
+    <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="flex items-center p-6 space-x-3 bg-white dark:bg-gray-800 rounded-xl">
+        <div class="w-6 h-6 border-b-2 border-blue-600 rounded-full animate-spin dark:border-purple-400"></div>
         <span class="text-gray-700 dark:text-gray-200">Loading...</span>
       </div>
     </div>
@@ -221,6 +279,11 @@ const isLoading = computed(() => bowConfigStore.isLoading)
 const { user, logout, loginWithGoogle, fetchUser } = useAuth()
 const router = useRouter()
 
+// Check if user is admin
+const isAdmin = computed(() => {
+  return user.value?.email === 'messenlien@gmail.com'
+})
+
 const handleLogin = async () => {
   try {
     const result = await loginWithGoogle()
@@ -233,6 +296,10 @@ const handleLogin = async () => {
     console.error('Login failed:', error)
     // Optionally show an error message to the user
   }
+}
+
+const redirectToLogin = () => {
+  router.push('/login')
 }
 
 // Fetch user on mount if token exists

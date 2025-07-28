@@ -49,17 +49,19 @@ def token_required(f):
 
 def get_user_from_google_token(authorization_code):
     try:
+        print(f"DEBUG: Received authorization code: {authorization_code[:20]}..." if authorization_code else "None")
+        
         # Exchange authorization code for access token and ID token
         client_id = os.environ.get("NUXT_PUBLIC_GOOGLE_CLIENT_ID") # Use NUXT_PUBLIC_GOOGLE_CLIENT_ID from frontend
         client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
         
         # The redirect_uri must match what you configured in Google Cloud Console
-        # For the initCodeClient flow, it's often 'postmessage' or the base URL of your app
-        # Use environment variable for production, fallback to localhost for development
-        redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost:3000')
+        # For the initCodeClient flow with popup, it should be 'postmessage'
+        redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'postmessage')
 
         if not client_id or not client_secret:
-            return None
+            print(f"Missing client credentials: client_id={bool(client_id)}, client_secret={bool(client_secret)}")
+            return None, False
 
         # Build the request to Google's token endpoint
         token_url = "https://oauth2.googleapis.com/token"
@@ -85,11 +87,14 @@ def get_user_from_google_token(authorization_code):
         token_data = json.loads(content.decode("utf-8"))
 
         if "error" in token_data:
-            return None
+            print(f"DEBUG: Google OAuth error response: {token_data}")
+            print(f"DEBUG: Request data sent: client_id={client_id[:10]}..., redirect_uri={redirect_uri}")
+            return None, False
 
         id_token_jwt = token_data.get("id_token")
         if not id_token_jwt:
-            return None
+            print(f"No ID token in response: {token_data}")
+            return None, False
 
         # Verify the ID token
         idinfo = id_token.verify_oauth2_token(id_token_jwt, requests.Request(), client_id)
@@ -110,6 +115,18 @@ def get_user_from_google_token(authorization_code):
             # Create new user
             user = user_db.create_user(google_id, email, name, profile_picture_url)
             is_new_user = True
+            
+            # Automatically grant admin access to messenlien@gmail.com
+            if email == "messenlien@gmail.com":
+                user_db.set_admin_status(user['id'], True)
+                user['is_admin'] = True
+                print(f"✅ Automatically granted admin access to {email}")
+        else:
+            # For existing users, check if they should be admin (in case database was reset)
+            if email == "messenlien@gmail.com" and not user.get('is_admin'):
+                user_db.set_admin_status(user['id'], True)
+                user['is_admin'] = True
+                print(f"✅ Restored admin access to {email}")
         
         # Check if user needs profile completion (True for all new users)
         needs_profile_completion = is_new_user

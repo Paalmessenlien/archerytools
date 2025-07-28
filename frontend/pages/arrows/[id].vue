@@ -43,7 +43,7 @@
             {{ arrow.manufacturer }} {{ arrow.model_name }}
           </h1>
           <p v-if="arrow.arrow_type" class="text-gray-600 dark:text-gray-300 mt-2">
-            {{ arrow.arrow_type.charAt(0).toUpperCase() + arrow.arrow_type.slice(1) }} Arrow
+            {{ arrow.arrow_type && arrow.arrow_type.length > 0 ? arrow.arrow_type.charAt(0).toUpperCase() + arrow.arrow_type.slice(1) : 'Unknown' }} Arrow
           </p>
         </div>
         

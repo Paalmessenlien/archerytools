@@ -7,11 +7,9 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     draw_weight: 45,
     draw_length: 28,
     bow_type: 'compound',
-    arrow_length: 29,
     arrow_material: 'Carbon',
     arrow_type: '',
     arrow_rest_type: 'drop-away',
-    point_weight: 100,
     nock_type: 'pin',
     vane_type: 'plastic',
     vane_length: 4,
@@ -81,10 +79,8 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       draw_weight: 45,
       draw_length: 28,
       bow_type: 'compound',
-      arrow_length: 29,
       arrow_material: 'Carbon',
       arrow_rest_type: 'drop-away',
-      point_weight: 100,
       nock_type: 'pin',
       vane_type: 'plastic',
       vane_length: 4,
@@ -147,8 +143,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       bowConfig.value.draw_weight,
       bowConfig.value.draw_length,
       bowConfig.value.bow_type,
-      bowConfig.value.arrow_material,
-      bowConfig.value.point_weight
+      bowConfig.value.arrow_material
     ]
   })
 

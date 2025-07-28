@@ -34,15 +34,41 @@ export interface BowConfiguration {
   draw_weight: number
   draw_length: number
   bow_type: 'compound' | 'recurve' | 'longbow' | 'traditional'
-  arrow_length: number
   arrow_material: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
   arrow_type?: string
   arrow_rest_type?: 'drop-away' | 'whisker-biscuit' | 'blade'
-  point_weight: number
   nock_type: 'pin' | 'press-fit' | 'over-nock' | 'lighted' | 'half-moon'
   vane_type: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
   vane_length: number
   number_of_vanes: number
+}
+
+export interface ArrowConfiguration {
+  id?: number
+  name: string
+  arrow_length: number
+  point_weight: number
+  nock_weight?: number
+  fletching_weight?: number
+  insert_weight?: number
+  total_weight?: number
+  calculated_foc?: number
+  arrow_spine?: number
+  shaft_model?: string
+  shaft_manufacturer?: string
+  notes?: string
+  created_at?: string
+}
+
+export interface BowSetup {
+  id?: number
+  name: string
+  bow_config: BowConfiguration
+  arrow_configurations: ArrowConfiguration[]
+  created_at?: string
+  updated_at?: string
+  description?: string
+  user_id?: number
 }
 
 export interface ArrowSearchFilters {

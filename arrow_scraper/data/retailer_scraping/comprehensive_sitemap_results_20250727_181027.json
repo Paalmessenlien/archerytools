@@ -1,0 +1,909 @@
+{
+  "started_at": "2025-07-27T18:10:27.467803",
+  "total_manufacturers": 14,
+  "manufacturer_results": {
+    "easton": {
+      "manufacturer": "easton",
+      "total_urls": 20,
+      "processed_urls": 20,
+      "matched_arrows": 45,
+      "stored_mappings": 15,
+      "errors": [
+        "No database match for Easton 6Mm",
+        "No database match for Easton 6Mm",
+        "No database match for Easton 6Mm",
+        "No database match for Easton 6Mm",
+        "No database match for Easton 6Mm"
+      ],
+      "successful_mappings": [
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7260/easton-xx75-camo-hunter-2016",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2016
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7261/easton-xx75-camo-hunter-2018",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2018
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7262/easton-xx75-camo-hunter-2114",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2114
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7263/easton-xx75-camo-hunter-2117",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2117
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7264/easton-xx75-camo-hunter-2213",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2213
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7265/easton-xx75-camo-hunter-2215",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2215
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7266/easton-xx75-camo-hunter-2216",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2216
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7267/easton-xx75-camo-hunter-2219",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2219
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7268/easton-xx75-camo-hunter-2314",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2314
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7269/easton-xx75-camo-hunter-2315",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2315
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7270/easton-xx75-camo-hunter-2317",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2317
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7271/easton-xx75-camo-hunter-2413",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2413
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7277/easton-xx75-legacy-1916",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 1916
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7279/easton-xx75-legacy-2016",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2016
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/easton/xx75/7280/easton-xx75-legacy-2018",
+          "product": {
+            "manufacturer": "Easton",
+            "model": "Xx75",
+            "spine": 2018
+          },
+          "matched_arrow": {
+            "id": 144,
+            "manufacturer": "Easton",
+            "model_name": "XX75 PLATINUM PLUS™"
+          }
+        }
+      ],
+      "match_rate": 2.25,
+      "storage_rate": 0.3333333333333333
+    },
+    "carbon-express": {
+      "manufacturer": "carbon-express",
+      "total_urls": 15,
+      "processed_urls": 15,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Carbon Express Maxima Pro Rz",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Medallion Xr",
+        "No database match for Carbon Express Nano.116",
+        "No database match for Carbon Express Nano.116"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    },
+    "goldtip": {
+      "manufacturer": "goldtip",
+      "total_urls": 15,
+      "processed_urls": 15,
+      "matched_arrows": 15,
+      "stored_mappings": 15,
+      "errors": [],
+      "successful_mappings": [
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7644/gold-tip-airstrike-250",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 250
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7645/gold-tip-airstrike-300",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 300
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7646/gold-tip-airstrike-340",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 340
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7647/gold-tip-airstrike-400",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 400
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7649/gold-tip-black-label-300",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 300
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7650/gold-tip-black-label-340",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 340
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7651/gold-tip-black-label-400",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 400
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7653/gold-tip-black-label-quantum-400",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 400
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7654/gold-tip-black-label-quantum-340",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 340
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7655/gold-tip-black-label-quantum-300",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 300
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7656/gold-tip-black-label-quantum-250",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 250
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7679/gold-tip-hunter-pro-300",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 300
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7680/gold-tip-hunter-pro-340",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 340
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7681/gold-tip-hunter-pro-400",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 400
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/goldtip/airstrike/7682/gold-tip-hunter-pro-500",
+          "product": {
+            "manufacturer": "Gold Tip",
+            "model": "Airstrike",
+            "spine": 500
+          },
+          "matched_arrow": {
+            "id": 25,
+            "manufacturer": "Gold Tip",
+            "model_name": "Airstrike Hunting Arrows"
+          }
+        }
+      ],
+      "match_rate": 1.0,
+      "storage_rate": 1.0
+    },
+    "skylon-archery": {
+      "manufacturer": "skylon-archery",
+      "total_urls": 10,
+      "processed_urls": 10,
+      "matched_arrows": 10,
+      "stored_mappings": 10,
+      "errors": [],
+      "successful_mappings": [
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8097/skylon-archery-novice-2000",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 2000
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8098/skylon-archery-novice-1800",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 1800
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8099/skylon-archery-novice-1500",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 1500
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8100/skylon-archery-novice-1300",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 1300
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8101/skylon-archery-novice-1100",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 1100
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8102/skylon-archery-novice-1000",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 1000
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8103/skylon-archery-novice-900",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 900
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8104/skylon-archery-novice-800",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 800
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8105/skylon-archery-novice-700",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 700
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/skylon-archery/novice/8106/skylon-archery-novice-600",
+          "product": {
+            "manufacturer": "Skylon-Archery",
+            "model": "Novice",
+            "spine": 600
+          },
+          "matched_arrow": {
+            "id": 5,
+            "manufacturer": "Skylon Archery",
+            "model_name": "Novice"
+          }
+        }
+      ],
+      "match_rate": 1.0,
+      "storage_rate": 1.0
+    },
+    "black-eagle": {
+      "manufacturer": "black-eagle",
+      "total_urls": 10,
+      "processed_urls": 10,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Carnivore",
+        "No database match for Black-Eagle Zombie Slayer",
+        "No database match for Black-Eagle Zombie Slayer",
+        "No database match for Black-Eagle Zombie Slayer"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    },
+    "crossx": {
+      "manufacturer": "crossx",
+      "total_urls": 10,
+      "processed_urls": 10,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition",
+        "No database match for Crossx Ambition"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    },
+    "nijora": {
+      "manufacturer": "nijora",
+      "total_urls": 10,
+      "processed_urls": 10,
+      "matched_arrows": 20,
+      "stored_mappings": 10,
+      "errors": [],
+      "successful_mappings": [
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7579/nijora-tokala-350",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 350
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7581/nijora-tokala-400",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 400
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7583/nijora-tokala-500",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 500
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7584/nijora-tokala-600",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 600
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7585/nijora-tokala-700",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 700
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7586/nijora-tokala-800",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 800
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7587/nijora-tokala-200-strong",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 200
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7589/nijora-tokala-500-light",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 500
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7590/nijora-tokala-ks-570",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 570
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/nijora/tokala/7591/nijora-tokala-600-m",
+          "product": {
+            "manufacturer": "Nijora",
+            "model": "Tokala",
+            "spine": 600
+          },
+          "matched_arrow": {
+            "id": 45,
+            "manufacturer": "Nijora",
+            "model_name": "Tokala M 500-800"
+          }
+        }
+      ],
+      "match_rate": 2.0,
+      "storage_rate": 0.5
+    },
+    "victory": {
+      "manufacturer": "victory",
+      "total_urls": 8,
+      "processed_urls": 8,
+      "matched_arrows": 10,
+      "stored_mappings": 4,
+      "errors": [
+        "Could not extract product info from https://tophatarchery.com/komponentensuche-nach-schaft/marke/victory/",
+        "No database match for Victory Carbon Trad",
+        "No database match for Victory Momentum Tdt",
+        "No database match for Victory Nvx"
+      ],
+      "successful_mappings": [
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/victory/3dhv/",
+          "product": {
+            "manufacturer": "Victory",
+            "model": "3Dhv",
+            "spine": null
+          },
+          "matched_arrow": {
+            "id": 134,
+            "manufacturer": "Victory Archery",
+            "model_name": "Victory Archery 3DHV"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/victory/rip/",
+          "product": {
+            "manufacturer": "Victory",
+            "model": "Rip",
+            "spine": null
+          },
+          "matched_arrow": {
+            "id": 120,
+            "manufacturer": "Victory Archery",
+            "model_name": "Victory Archery RIP"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/victory/v-tac/",
+          "product": {
+            "manufacturer": "Victory",
+            "model": "V Tac",
+            "spine": null
+          },
+          "matched_arrow": {
+            "id": 131,
+            "manufacturer": "Victory Archery",
+            "model_name": "V Tac27"
+          }
+        },
+        {
+          "url": "https://tophatarchery.com/komponentensuche-nach-schaft/marke/victory/vap/",
+          "product": {
+            "manufacturer": "Victory",
+            "model": "Vap",
+            "spine": null
+          },
+          "matched_arrow": {
+            "id": 119,
+            "manufacturer": "Victory Archery",
+            "model_name": "Victory Archery VAP"
+          }
+        }
+      ],
+      "match_rate": 1.25,
+      "storage_rate": 0.4
+    },
+    "bearpaw": {
+      "manufacturer": "bearpaw",
+      "total_urls": 5,
+      "processed_urls": 5,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Bearpaw Bandit",
+        "No database match for Bearpaw Bandit",
+        "No database match for Bearpaw Bandit",
+        "No database match for Bearpaw Bandit",
+        "No database match for Bearpaw Bandit"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    },
+    "aurel": {
+      "manufacturer": "aurel",
+      "total_urls": 5,
+      "processed_urls": 5,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Aurel Mako",
+        "No database match for Aurel Mako",
+        "No database match for Aurel Mako",
+        "No database match for Aurel Mako",
+        "No database match for Aurel Mako"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    },
+    "carbon-impact": {
+      "manufacturer": "carbon-impact",
+      "total_urls": 5,
+      "processed_urls": 5,
+      "matched_arrows": 0,
+      "stored_mappings": 0,
+      "errors": [
+        "No database match for Carbon-Impact Fast Shaft",
+        "No database match for Carbon-Impact Fast Shaft",
+        "No database match for Carbon-Impact Fast Shaft",
+        "No database match for Carbon-Impact Fast Shaft",
+        "No database match for Carbon-Impact Hunter"
+      ],
+      "successful_mappings": [],
+      "match_rate": 0.0,
+      "storage_rate": 0
+    }
+  },
+  "overall_stats": {
+    "total_urls": 113,
+    "total_processed": 113,
+    "total_matched": 100,
+    "total_stored": 54,
+    "total_errors": 59
+  },
+  "completed_at": "2025-07-27T18:10:27.807303"
+}

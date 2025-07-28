@@ -780,16 +780,19 @@ def update_user_profile(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+from user_database import UserDatabase
+
 # Bow Setups API
 @app.route('/api/bow-setups', methods=['GET'])
 @token_required
 def get_bow_setups(current_user):
     """Get all bow setups for the current user"""
-    db = get_database()
-    conn = db.get_connection()
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM bow_setups WHERE user_id = ?", (current_user['id'],))
     setups = cursor.fetchall()
+    conn.close()
     return jsonify([dict(row) for row in setups])
 
 @app.route('/api/bow-setups', methods=['POST'])
@@ -800,29 +803,35 @@ def create_bow_setup(current_user):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    db = get_database()
-    conn = db.get_connection()
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight, nock_weight, fletching_weight, insert_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (
-            current_user['id'],
-            data['name'],
-            data['bow_type'],
-            data['draw_weight'],
-            data['draw_length'],
-            data['arrow_length'],
-            data['point_weight'],
-            data.get('nock_weight'),
-            data.get('fletching_weight'),
-            data.get('insert_weight'),
-        ),
-    )
-    conn.commit()
-    new_setup_id = cursor.lastrowid
-    cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (new_setup_id,))
-    new_setup = cursor.fetchone()
-    return jsonify(dict(new_setup)), 201
+    try:
+        cursor.execute(
+            "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight, nock_weight, fletching_weight, insert_weight, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                current_user['id'],
+                data['name'],
+                data['bow_type'],
+                data['draw_weight'],
+                data['draw_length'],
+                data.get('arrow_length'),
+                data.get('point_weight'),
+                data.get('nock_weight'),
+                data.get('fletching_weight'),
+                data.get('insert_weight'),
+                data.get('description'),
+            ),
+        )
+        conn.commit()
+        new_setup_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (new_setup_id,))
+        new_setup = cursor.fetchone()
+        conn.close()
+        return jsonify(dict(new_setup)), 201
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>', methods=['PUT'])
 @token_required
@@ -832,55 +841,67 @@ def update_bow_setup(current_user, setup_id):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    db = get_database()
-    conn = db.get_connection()
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
 
     # Verify the setup belongs to the current user
     cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
     setup = cursor.fetchone()
     if not setup:
+        conn.close()
         return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
 
-    cursor.execute(
-        "UPDATE bow_setups SET name = ?, bow_type = ?, draw_weight = ?, draw_length = ?, arrow_length = ?, point_weight = ?, nock_weight = ?, fletching_weight = ?, insert_weight = ? WHERE id = ?",
-        (
-            data['name'],
-            data['bow_type'],
-            data['draw_weight'],
-            data['draw_length'],
-            data['arrow_length'],
-            data['point_weight'],
-            data.get('nock_weight'),
-            data.get('fletching_weight'),
-            data.get('insert_weight'),
-            setup_id,
-        ),
-    )
-    conn.commit()
+    try:
+        cursor.execute(
+            "UPDATE bow_setups SET name = ?, bow_type = ?, draw_weight = ?, draw_length = ?, arrow_length = ?, point_weight = ?, nock_weight = ?, fletching_weight = ?, insert_weight = ?, description = ? WHERE id = ?",
+            (
+                data['name'],
+                data['bow_type'],
+                data['draw_weight'],
+                data['draw_length'],
+                data.get('arrow_length'),
+                data.get('point_weight'),
+                data.get('nock_weight'),
+                data.get('fletching_weight'),
+                data.get('insert_weight'),
+                data.get('description'),
+                setup_id,
+            ),
+        )
+        conn.commit()
 
-    cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
-    updated_setup = cursor.fetchone()
-    return jsonify(dict(updated_setup))
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
+        updated_setup = cursor.fetchone()
+        conn.close()
+        return jsonify(dict(updated_setup))
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>', methods=['DELETE'])
 @token_required
 def delete_bow_setup(current_user, setup_id):
     """Delete a bow setup"""
-    db = get_database()
-    conn = db.get_connection()
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
 
     # Verify the setup belongs to the current user
     cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
     setup = cursor.fetchone()
     if not setup:
+        conn.close()
         return jsonify({'error': 'Setup not found or you do not have permission to delete it'}), 404
 
-    cursor.execute("DELETE FROM bow_setups WHERE id = ?", (setup_id,))
-    conn.commit()
-
-    return jsonify({'message': 'Setup deleted successfully'})
+    try:
+        cursor.execute("DELETE FROM bow_setups WHERE id = ?", (setup_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Setup deleted successfully'})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/tuning/sessions/<session_id>', methods=['GET'])
@@ -1252,6 +1273,88 @@ def add_component():
             }), 201
         else:
             return jsonify({'error': 'Failed to add component'}), 500
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== ADMIN API ENDPOINTS =====
+
+def admin_required(f):
+    """Decorator to require admin access"""
+    from functools import wraps
+    
+    @wraps(f)
+    def decorated_function(current_user, *args, **kwargs):
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        
+        if not user_db.is_user_admin(current_user['id']):
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated_function
+
+@app.route('/api/admin/users', methods=['GET'])
+@token_required
+@admin_required
+def get_all_users_admin(current_user):
+    """Get all users (admin only)"""
+    try:
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        
+        users = user_db.get_all_users()
+        
+        return jsonify({
+            'users': users,
+            'total': len(users)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>/admin', methods=['PUT'])
+@token_required
+@admin_required
+def set_user_admin_status(current_user, user_id):
+    """Set admin status for a user (admin only)"""
+    try:
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        
+        data = request.get_json()
+        is_admin = data.get('is_admin', False)
+        
+        success = user_db.set_admin_status(user_id, is_admin)
+        
+        if success:
+            return jsonify({
+                'message': f'User {user_id} admin status updated to {is_admin}',
+                'user_id': user_id,
+                'is_admin': is_admin
+            })
+        else:
+            return jsonify({'error': 'Failed to update admin status'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/check', methods=['GET'])
+@token_required
+def check_admin_status(current_user):
+    """Check if current user has admin access"""
+    try:
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        
+        is_admin = user_db.is_user_admin(current_user['id'])
+        
+        return jsonify({
+            'is_admin': is_admin,
+            'user_id': current_user['id'],
+            'email': current_user.get('email')
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

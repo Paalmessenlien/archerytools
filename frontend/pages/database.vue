@@ -1,9 +1,22 @@
 <template>
   <div>
+    <!-- Beta Notice Banner -->
+    <div class="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="fas fa-flask text-orange-600 dark:text-orange-400 mr-3"></i>
+        <div>
+          <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200">Beta Testing Phase</h4>
+          <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+            Arrow database is in beta. Data may be incomplete and subject to updates.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 mb-2">Arrow Database</h1>
-      <p class="text-gray-600">Browse and search our comprehensive arrow database</p>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Arrow Database</h1>
+      <p class="text-gray-600 dark:text-gray-300">Browse and search our comprehensive arrow database</p>
     </div>
 
     <!-- Database Stats -->
@@ -606,7 +619,9 @@ const formatArrowType = (arrowType) => {
   
   return arrowType
     .split(/[-_\s]+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .filter(word => word && word.length > 0)
+    .map(word => word && word.length > 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+    .filter(word => word.length > 0)
     .join(' ')
 }
 
@@ -629,9 +644,14 @@ onMounted(() => {
 
 // Set page title
 useHead({
-  title: 'Arrow Database',
+  title: 'Arrow Database - Beta',
   meta: [
-    { name: 'description', content: 'Browse and search our comprehensive database of arrow specifications' }
+    { name: 'description', content: 'Browse and search our comprehensive database of arrow specifications (Beta)' }
   ]
+})
+
+// Protect this page with authentication
+definePageMeta({
+  middleware: ['auth-check']
 })
 </script>

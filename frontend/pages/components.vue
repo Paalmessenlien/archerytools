@@ -1,5 +1,18 @@
 <template>
   <div>
+    <!-- Beta Notice Banner -->
+    <div class="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="fas fa-flask text-orange-600 dark:text-orange-400 mr-3"></i>
+        <div>
+          <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200">Beta Testing Phase</h4>
+          <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+            Component database is in beta. Functionality may be limited and data may be incomplete.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Components</h1>
@@ -37,7 +50,7 @@
           >
             <option value="">All Components</option>
             <option v-for="category in availableCategories" :key="category" :value="category">
-              {{ category.charAt(0).toUpperCase() + category.slice(1) }}
+              {{ category && category.length > 0 ? category.charAt(0).toUpperCase() + category.slice(1) : 'Unknown' }}
             </option>
           </select>
         </div>
@@ -265,10 +278,15 @@ import type { ComponentData, ComponentStatistics } from '~/types/arrow'
 
 // Meta
 useHead({
-  title: 'Components - ArrowTune',
+  title: 'Components - ArrowTune Beta',
   meta: [
-    { name: 'description', content: 'Browse arrow components including points, nocks, fletchings, and inserts' }
+    { name: 'description', content: 'Browse arrow components including points, nocks, fletchings, and inserts (Beta)' }
   ]
+})
+
+// Protect this page with authentication
+definePageMeta({
+  middleware: ['auth-check']
 })
 
 // API composable

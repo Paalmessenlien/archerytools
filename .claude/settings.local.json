@@ -52,7 +52,13 @@
       "Bash(convert:*)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run postinstall:*)",
-      "Bash(./start-dual-architecture.sh:*)"
+      "Bash(./start-dual-architecture.sh:*)",
+      "Bash(echo $VIRTUAL_ENV)",
+      "Bash(ping:*)",
+      "Bash(git rm:*)",
+      "WebFetch(domain:tophatarchery.com)",
+      "Bash(npm run dev:*)",
+      "Bash(scripts/start-dual-architecture.sh:*)"
     ],
     "deny": []
   }

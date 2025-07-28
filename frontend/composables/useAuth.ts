@@ -2,11 +2,12 @@
 import { ref } from 'vue';
 import { googleSdkLoaded } from 'vue3-google-login';
 
+// Global state - shared across all useAuth() calls
+const token = ref(process.client ? localStorage.getItem('token') : null);
+const user = ref(null);
+
 export const useAuth = () => {
   const config = useRuntimeConfig();
-  // Initialize token only on the client side
-  const token = ref(process.client ? localStorage.getItem('token') : null);
-  const user = ref(null);
 
   const setToken = (newToken) => {
     token.value = newToken;
@@ -120,6 +121,153 @@ export const useAuth = () => {
     }
   };
 
+  const fetchBowSetups = async () => {
+    if (!token.value) return [];
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+      if (res.ok) {
+        return await res.json();
+      } else {
+        console.error('Failed to fetch bow setups:', res.status, await res.text());
+        return [];
+      }
+    } catch (err) {
+      console.error('Error fetching bow setups:', err);
+      return [];
+    }
+  };
+
+  const addBowSetup = async (setupData) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(setupData),
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error adding bow setup:', err);
+      throw err;
+    }
+  };
+
+  const deleteBowSetup = async (setupId) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups/${setupId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+
+      if (res.ok) {
+        return true;
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error deleting bow setup:', err);
+      throw err;
+    }
+  };
+
+  // Admin functionality
+  const checkAdminStatus = async () => {
+    console.log('checkAdminStatus called, token exists:', !!token.value);
+    if (!token.value) {
+      console.log('No token available for admin check');
+      return false;
+    }
+
+    try {
+      console.log('Making admin check request to:', `${config.public.apiBase}/admin/check`);
+      const res = await fetch(`${config.public.apiBase}/admin/check`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+      console.log('Admin check response status:', res.status);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Admin check response data:', data);
+        return data.is_admin;
+      } else {
+        const errorData = await res.text();
+        console.log('Admin check failed:', res.status, errorData);
+        return false;
+      }
+    } catch (err) {
+      console.error('Error checking admin status:', err);
+      return false;
+    }
+  };
+
+  const getAllUsers = async () => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/admin/users`, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.users;
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      throw err;
+    }
+  };
+
+  const setUserAdminStatus = async (userId, isAdmin) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/admin/users/${userId}/admin`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify({ is_admin: isAdmin }),
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error setting admin status:', err);
+      throw err;
+    }
+  };
+
   return {
     token,
     user,
@@ -127,5 +275,11 @@ export const useAuth = () => {
     logout,
     fetchUser,
     updateUserProfile,
+    fetchBowSetups,
+    addBowSetup,
+    deleteBowSetup,
+    checkAdminStatus,
+    getAllUsers,
+    setUserAdminStatus,
   };
 };
