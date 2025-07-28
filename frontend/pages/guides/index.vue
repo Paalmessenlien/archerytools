@@ -53,33 +53,65 @@
             </div>
           </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-weight-hanging text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Bow Weight Selection
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/bow-weight"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-weight-hanging text-green-600 dark:text-green-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400">
+                    Bow Weight Selection
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Choose the optimal draw weight for your goals
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400"></i>
             </div>
-          </div>
+          </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-bullseye text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Sight Setup & Tuning
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/sight-setup"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-bullseye text-purple-600 dark:text-purple-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                    Sight Setup & Tuning
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Master bow sight installation and calibration
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400"></i>
             </div>
-          </div>
+          </NuxtLink>
+
+          <NuxtLink 
+            to="/guides/string-selection"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-grip-lines text-red-600 dark:text-red-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-red-600 dark:group-hover:text-red-400">
+                    Recurve String Selection
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Choose the perfect bowstring with interactive calculator
+                  </p>
+                </div>
+              </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400"></i>
+            </div>
+          </NuxtLink>
         </div>
       </div>
 
@@ -94,47 +126,65 @@
         <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Master proper shooting form and technique.</p>
         
         <div class="space-y-3">
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-hand-paper text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Proper Grip & Stance
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/grip-stance"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-hand-paper text-orange-600 dark:text-orange-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400">
+                    Proper Grip & Stance
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Master the fundamental foundation of accurate archery
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400"></i>
             </div>
-          </div>
+          </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-eye text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Aiming Techniques
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/aiming-techniques"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-eye text-green-600 dark:text-green-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400">
+                    Aiming Techniques
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Master different aiming methods for consistent accuracy
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400"></i>
             </div>
-          </div>
+          </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-hand-point-up text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Release Techniques
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/release-techniques"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-hand-point-up text-blue-600 dark:text-blue-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    Release Techniques
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Learn proper release methods for improved arrow flight
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
 
@@ -149,47 +199,65 @@
         <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Learn to tune and maintain your equipment for optimal performance.</p>
         
         <div class="space-y-3">
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-arrows-alt-h text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Paper Tuning Guide
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/paper-tuning"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-arrows-alt-h text-indigo-600 dark:text-indigo-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                    Paper Tuning Guide
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Fine-tune your bow for perfect arrow flight
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"></i>
             </div>
-          </div>
+          </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-wrench text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Rest Adjustment
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/rest-adjustment"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-wrench text-yellow-600 dark:text-yellow-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-yellow-600 dark:group-hover:text-yellow-400">
+                    Rest Adjustment
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Optimize arrow rest position for perfect clearance
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-yellow-600 dark:group-hover:text-yellow-400"></i>
             </div>
-          </div>
+          </NuxtLink>
 
-          <div class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-60">
-            <div class="flex items-center">
-              <i class="fas fa-broom text-gray-400 mr-3"></i>
-              <div>
-                <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Equipment Maintenance
-                </h4>
-                <p class="text-xs text-gray-400">
-                  Coming soon
-                </p>
+          <NuxtLink 
+            to="/guides/equipment-maintenance"
+            class="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-tools text-purple-600 dark:text-purple-400 mr-3"></i>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                    Equipment Maintenance
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Keep your archery gear in peak condition
+                  </p>
+                </div>
               </div>
+              <i class="fas fa-chevron-right text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400"></i>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
     </div>

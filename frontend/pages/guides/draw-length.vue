@@ -135,6 +135,19 @@
             <span class="text-sm font-medium text-green-600 dark:text-green-400">Easiest • 2 minutes • ±0.5" accuracy</span>
           </div>
 
+          <!-- Illustration -->
+          <div class="illustration-container mb-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <img 
+              src="/images/guides/wingspan-method.svg" 
+              alt="Wingspan method for measuring draw length"
+              class="w-full max-w-lg mx-auto"
+            />
+            <p class="text-sm text-blue-700 dark:text-blue-300 text-center mt-3">
+              <i class="fas fa-info-circle mr-2"></i>
+              Stand with arms extended, measure fingertip to fingertip, divide by 2.5
+            </p>
+          </div>
+
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">What You Need:</h3>
           <ul class="list-disc list-inside text-gray-700 dark:text-gray-300 mb-6 space-y-1">
             <li>Measuring tape or ruler</li>
