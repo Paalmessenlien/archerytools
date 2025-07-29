@@ -14,6 +14,7 @@ class UserDatabase:
         
         # Try common locations for user_data.db
         possible_paths = [
+            Path("/app/user_data") / db_path,  # Docker volume mount path
             Path("/app") / db_path,  # Docker/production path
             Path(__file__).parent / db_path, # Default development path (arrow_scraper/)
             Path(__file__).parent.parent / db_path # Root directory path

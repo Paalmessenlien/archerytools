@@ -18,6 +18,7 @@ services:
     # Mount .env file for configuration
     volumes:
       - ./.env:/app/.env:ro  # Mount root .env file as read-only
+      - arrowtuner-userdata:/app/user_data  # Persist user database
     networks:
       - arrowtuner-network
     healthcheck:
@@ -78,6 +79,8 @@ services:
 
 volumes:
   nginx-logs:
+    driver: local
+  arrowtuner-userdata:
     driver: local
 
 networks:

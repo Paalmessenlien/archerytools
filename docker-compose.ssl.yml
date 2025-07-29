@@ -19,9 +19,10 @@ services:
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://archerytool.online}
-    # Mount .env file for configuration
+    # Mount .env file for configuration and persist user database
     volumes:
       - ./.env:/app/.env:ro  # Mount root .env file as read-only
+      - arrowtuner-userdata:/app/user_data  # Persist user database
     networks:
       - arrowtuner-network
     healthcheck:
@@ -80,6 +81,8 @@ services:
 
 volumes:
   arrowtuner-data:
+    driver: local
+  arrowtuner-userdata:
     driver: local
 
 networks:
