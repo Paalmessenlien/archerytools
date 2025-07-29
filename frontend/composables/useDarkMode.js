@@ -1,16 +1,16 @@
 export const useDarkMode = () => {
-  const isDarkMode = ref(false)
+  const isDarkMode = ref(true) // Default to dark mode
 
-  // Check for saved theme preference or default to light mode
+  // Check for saved theme preference or default to dark mode
   const initializeTheme = () => {
     if (process.client) {
       const savedTheme = localStorage.getItem('theme')
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       
       if (savedTheme) {
         isDarkMode.value = savedTheme === 'dark'
       } else {
-        isDarkMode.value = prefersDark
+        // Default to dark mode for new users
+        isDarkMode.value = true
       }
       
       applyTheme()

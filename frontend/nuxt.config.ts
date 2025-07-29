@@ -37,7 +37,11 @@ export default defineNuxtConfig({
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' },
         // Roboto font for Material Design
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap' }
-      ]
+      ],
+      // Set default dark mode class on HTML element for SSR
+      htmlAttrs: {
+        class: 'dark'
+      }
     }
   },
 

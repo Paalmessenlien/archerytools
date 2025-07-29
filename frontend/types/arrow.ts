@@ -45,7 +45,8 @@ export interface ArrowSpecification {
   scraper_version: string
 }
 
-export interface BowConfiguration {
+// Base bow configuration
+export interface BaseBowConfiguration {
   draw_weight: number
   draw_length: number
   bow_type: 'compound' | 'recurve' | 'longbow' | 'traditional'
@@ -57,6 +58,80 @@ export interface BowConfiguration {
   vane_type?: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
   vane_length?: number
   number_of_vanes?: number
+}
+
+// Bow type specific configurations
+export interface CompoundBowConfig extends BaseBowConfiguration {
+  bow_type: 'compound'
+  name: string
+  brand?: string
+  poundage: number // Peak draw weight
+  ibo_speed?: number
+}
+
+export interface RecurveBowConfig extends BaseBowConfiguration {
+  bow_type: 'recurve'
+  name: string
+  limb_brand?: string
+  riser_brand?: string
+  poundage: number
+  limb_fitting: 'ILF' | 'Formula'
+}
+
+export interface LongbowConfig extends BaseBowConfiguration {
+  bow_type: 'longbow'
+  name: string
+  bow_brand?: string
+  poundage: number
+}
+
+export interface TraditionalBowConfig extends BaseBowConfiguration {
+  bow_type: 'traditional'
+  name: string
+  construction: 'one_piece' | 'two_piece'
+  // For two-piece only
+  limb_fitting?: 'ILF' | 'Bolt_Down'
+  limb_brand?: string
+  riser_brand?: string
+  poundage: number
+}
+
+export type BowConfiguration = CompoundBowConfig | RecurveBowConfig | LongbowConfig | TraditionalBowConfig
+
+// Bow settings and changelog system
+export interface BowSetting {
+  id?: number
+  bow_setup_id: number
+  setting_name: string
+  setting_value: string | number
+  unit?: string
+  notes?: string
+  created_at: string
+  created_by?: string
+}
+
+export interface BowSettingChangelog {
+  id?: number
+  bow_setup_id: number
+  setting_name: string
+  old_value?: string | number
+  new_value: string | number
+  change_reason?: string
+  changed_at: string
+  changed_by?: string
+}
+
+// Equipment management
+export interface BowEquipment {
+  id?: number
+  bow_setup_id: number
+  category: 'sight' | 'stabilizer' | 'rest' | 'release' | 'quiver' | 'dampener' | 'other'
+  manufacturer?: string
+  model?: string
+  description?: string
+  weight?: number
+  notes?: string
+  installed_at?: string
 }
 
 export interface ArrowConfiguration {
@@ -81,6 +156,8 @@ export interface BowSetup {
   name: string
   bow_config: BowConfiguration
   arrow_configurations: ArrowConfiguration[]
+  settings?: BowSetting[]
+  equipment?: BowEquipment[]
   created_at?: string
   updated_at?: string
   description?: string
