@@ -94,12 +94,22 @@ EXPOSE 3000
 # Create startup verification script
 USER root
 RUN echo '#!/bin/sh' > /app/start-enhanced.sh && \
+    echo 'set -e' >> /app/start-enhanced.sh && \
     echo 'echo "🚀 Starting enhanced Nuxt application..."' >> /app/start-enhanced.sh && \
     echo 'echo "🔍 Pre-start verification:"' >> /app/start-enhanced.sh && \
     echo 'echo "  Node version: $(node --version)"' >> /app/start-enhanced.sh && \
-    echo 'echo "  App directory: $(ls -la /app/.output/)"' >> /app/start-enhanced.sh && \
-    echo 'echo "  Memory available: $(free -h | grep Mem)"' >> /app/start-enhanced.sh && \
-    echo 'echo "✅ Starting server..."' >> /app/start-enhanced.sh && \
+    echo 'echo "  Environment: NODE_ENV=$NODE_ENV"' >> /app/start-enhanced.sh && \
+    echo 'echo "  API Base: $NUXT_PUBLIC_API_BASE"' >> /app/start-enhanced.sh && \
+    echo 'if [ -f "/app/.output/server/index.mjs" ]; then' >> /app/start-enhanced.sh && \
+    echo '  echo "  ✅ Server file exists"' >> /app/start-enhanced.sh && \
+    echo 'else' >> /app/start-enhanced.sh && \
+    echo '  echo "  ❌ Server file missing"' >> /app/start-enhanced.sh && \
+    echo '  ls -la /app/.output/' >> /app/start-enhanced.sh && \
+    echo '  exit 1' >> /app/start-enhanced.sh && \
+    echo 'fi' >> /app/start-enhanced.sh && \
+    echo 'echo "✅ Starting server on port 3000..."' >> /app/start-enhanced.sh && \
+    echo 'export HOST=0.0.0.0' >> /app/start-enhanced.sh && \
+    echo 'export PORT=3000' >> /app/start-enhanced.sh && \
     echo 'exec node .output/server/index.mjs' >> /app/start-enhanced.sh && \
     chmod +x /app/start-enhanced.sh && \
     chown nuxtjs:nodejs /app/start-enhanced.sh
