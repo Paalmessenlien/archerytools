@@ -268,32 +268,61 @@
 
         <!-- Add/Edit Bow Setup Modal -->
         <div v-if="isAddingSetup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-lg shadow-lg">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Add New Bow Setup</h3>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+              <i class="fas fa-plus-circle mr-2 text-blue-600"></i>
+              Create New Bow Setup
+            </h3>
             <form @submit.prevent="saveBowSetup">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="mb-4">
-                  <label for="setupName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Name</label>
-                  <input type="text" id="setupName" v-model="newSetup.name" class="form-input" required />
+              <!-- Setup Name -->
+              <div class="mb-6">
+                <md-outlined-text-field 
+                  class="w-full"
+                  :value="newSetup.name"
+                  @input="newSetup.name = $event.target.value"
+                  label="Setup Name"
+                  placeholder="e.g. My Hunting Bow, Competition Setup..."
+                  required
+                >
+                  <i class="fas fa-tag" slot="leading-icon" style="color: #6b7280;"></i>
+                </md-outlined-text-field>
+              </div>
+
+              <!-- Bow Configuration -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Bow Type -->
+                <div>
+                  <md-filled-select
+                    label="Bow Type"
+                    :value="newSetup.bow_type"
+                    @change="newSetup.bow_type = $event.target.value"
+                    class="w-full"
+                    required
+                  >
+                    <md-select-option value="compound">
+                      <div slot="headline">Compound</div>
+                    </md-select-option>
+                    <md-select-option value="recurve">
+                      <div slot="headline">Recurve</div>
+                    </md-select-option>
+                    <md-select-option value="longbow">
+                      <div slot="headline">Longbow</div>
+                    </md-select-option>
+                    <md-select-option value="traditional">
+                      <div slot="headline">Traditional</div>
+                    </md-select-option>
+                  </md-filled-select>
                 </div>
-                <div class="mb-4">
-                  <label for="bowType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bow Type</label>
-                  <select id="bowType" v-model="newSetup.bow_type" class="form-select" required>
-                    <option value="">Select Bow Type</option>
-                    <option value="compound">Compound</option>
-                    <option value="recurve">Recurve</option>
-                    <option value="longbow">Longbow</option>
-                    <option value="traditional">Traditional</option>
-                  </select>
-                </div>
-                <div class="mb-4">
+
+                <!-- Draw Weight -->
+                <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.draw_weight || 45 }} lbs</span>
                   </label>
                   <md-slider
-                    ref="drawWeightSlider"
                     min="20"
                     max="80"
+                    step="5"
                     :value="newSetup.draw_weight || 45"
                     @input="newSetup.draw_weight = parseInt($event.target.value)"
                     labeled
@@ -305,20 +334,85 @@
                     <span>80 lbs</span>
                   </div>
                 </div>
-                <!-- Draw length removed - now comes from archer profile -->
-              </div>
-              <div class="mb-4">
-                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optional)</label>
-                <textarea id="description" v-model="newSetup.description" class="form-textarea"></textarea>
+
+                <!-- Point Weight -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Point Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.point_weight || 125 }} gr</span>
+                  </label>
+                  <md-slider
+                    min="75"
+                    max="200"
+                    step="25"
+                    :value="newSetup.point_weight || 125"
+                    @input="newSetup.point_weight = parseInt($event.target.value)"
+                    labeled
+                    ticks
+                    class="w-full"
+                  ></md-slider>
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>75 gr</span>
+                    <span>200 gr</span>
+                  </div>
+                </div>
+
+                <!-- Arrow Length -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Arrow Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.arrow_length || 29 }}"</span>
+                  </label>
+                  <md-slider
+                    min="24"
+                    max="34"
+                    step="0.5"
+                    :value="newSetup.arrow_length || 29"
+                    @input="newSetup.arrow_length = parseFloat($event.target.value)"
+                    labeled
+                    ticks
+                    class="w-full"
+                  ></md-slider>
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>24"</span>
+                    <span>34"</span>
+                  </div>
+                </div>
               </div>
 
-              <div class="flex justify-end space-x-3">
+              <!-- Draw Length Info -->
+              <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                  <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                  <strong>Draw Length:</strong> {{ user?.draw_length || '28.0' }}" (from your archer profile)
+                </p>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  Update your draw length in the "Edit Profile" section above if needed.
+                </p>
+              </div>
+
+              <!-- Description -->
+              <div class="mb-6">
+                <md-outlined-text-field 
+                  class="w-full"
+                  :value="newSetup.description"
+                  @input="newSetup.description = $event.target.value"
+                  label="Description (optional)"
+                  type="textarea"
+                  rows="3"
+                  placeholder="Notes about this bow setup, intended use, etc..."
+                >
+                  <i class="fas fa-comment" slot="leading-icon" style="color: #6b7280;"></i>
+                </md-outlined-text-field>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <CustomButton
                   type="button"
                   @click="closeAddSetupModal"
                   variant="outlined"
                   class="text-gray-700 dark:text-gray-200"
                 >
+                  <i class="fas fa-times mr-2"></i>
                   Cancel
                 </CustomButton>
                 <CustomButton
@@ -327,11 +421,16 @@
                   :disabled="isSavingSetup"
                   class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
                 >
-                  <span v-if="isSavingSetup">Saving...</span>
-                  <span v-else>Add Setup</span>
+                  <i v-if="isSavingSetup" class="fas fa-spinner fa-spin mr-2"></i>
+                  <i v-else class="fas fa-save mr-2"></i>
+                  <span v-if="isSavingSetup">Creating Setup...</span>
+                  <span v-else>Create Setup</span>
                 </CustomButton>
               </div>
-              <p v-if="addSetupError" class="text-red-500 text-sm mt-3">{{ addSetupError }}</p>
+              <p v-if="addSetupError" class="text-red-500 text-sm mt-3 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {{ addSetupError }}
+              </p>
             </form>
           </div>
         </div>
@@ -426,6 +525,8 @@ const newSetup = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
+  point_weight: 125,
+  arrow_length: 29,
   description: '',
 });
 
@@ -489,6 +590,8 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
+    point_weight: 125,
+    arrow_length: 29,
     description: '',
   };
   addSetupError.value = null;
@@ -510,9 +613,9 @@ const saveBowSetup = async () => {
       draw_weight: Number(newSetup.value.draw_weight),
       draw_length: user.value?.draw_length || 28.0, // Use user's draw length from profile
       description: newSetup.value.description,
-      // Optional fields with defaults
-      arrow_length: 29,
-      point_weight: 125
+      // Include the new configurable fields
+      arrow_length: Number(newSetup.value.arrow_length),
+      point_weight: Number(newSetup.value.point_weight)
     };
 
     await addBowSetup(setupData);
