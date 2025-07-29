@@ -954,6 +954,7 @@ def delete_bow_setup(current_user, setup_id):
 @token_required
 def add_arrow_to_setup(current_user, setup_id):
     """Add an arrow to a bow setup"""
+    conn = None
     try:
         data = request.get_json()
         
@@ -964,7 +965,8 @@ def add_arrow_to_setup(current_user, setup_id):
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
         # Get user database connection
-        user_db = get_user_database()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -1040,7 +1042,8 @@ def add_arrow_to_setup(current_user, setup_id):
         })
         
     except Exception as e:
-        conn.close()
+        if conn:
+            conn.close()
         return jsonify({'error': str(e)}), 500
 
 
@@ -1048,9 +1051,11 @@ def add_arrow_to_setup(current_user, setup_id):
 @token_required
 def get_setup_arrows(current_user, setup_id):
     """Get all arrows associated with a bow setup"""
+    conn = None
     try:
         # Get user database connection
-        user_db = get_user_database()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -1096,7 +1101,8 @@ def get_setup_arrows(current_user, setup_id):
         return jsonify({'arrows': arrows})
         
     except Exception as e:
-        conn.close()
+        if conn:
+            conn.close()
         return jsonify({'error': str(e)}), 500
 
 
