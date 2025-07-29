@@ -190,6 +190,56 @@ export const useAuth = () => {
     }
   };
 
+  // Arrow management for bow setups
+  const addArrowToSetup = async (setupId, arrowData) => {
+    if (!token.value) throw new Error('No authentication token found.');
+    
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups/${setupId}/arrows`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(arrowData),
+      });
+      
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error adding arrow to setup:', err);
+      throw err;
+    }
+  };
+
+  const fetchSetupArrows = async (setupId) => {
+    if (!token.value) throw new Error('No authentication token found.');
+    
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups/${setupId}/arrows`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        return data.arrows;
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error fetching setup arrows:', err);
+      throw err;
+    }
+  };
+
   // Admin functionality
   const checkAdminStatus = async () => {
     console.log('checkAdminStatus called, token exists:', !!token.value);
@@ -278,6 +328,8 @@ export const useAuth = () => {
     fetchBowSetups,
     addBowSetup,
     deleteBowSetup,
+    addArrowToSetup,
+    fetchSetupArrows,
     checkAdminStatus,
     getAllUsers,
     setUserAdminStatus,

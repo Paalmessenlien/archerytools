@@ -950,6 +950,156 @@ def delete_bow_setup(current_user, setup_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/bow-setups/<int:setup_id>/arrows', methods=['POST'])
+@token_required
+def add_arrow_to_setup(current_user, setup_id):
+    """Add an arrow to a bow setup"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['arrow_id', 'arrow_length', 'point_weight']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Get user database connection
+        user_db = get_user_database()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the bow setup belongs to the current user
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        bow_setup = cursor.fetchone()
+        
+        if not bow_setup:
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Create the setup_arrows table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS setup_arrows (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                setup_id INTEGER NOT NULL,
+                arrow_id INTEGER NOT NULL,
+                arrow_length REAL NOT NULL,
+                point_weight REAL NOT NULL,
+                calculated_spine INTEGER,
+                compatibility_score INTEGER,
+                notes TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (setup_id) REFERENCES bow_setups (id),
+                FOREIGN KEY (arrow_id) REFERENCES arrows (id),
+                UNIQUE(setup_id, arrow_id, arrow_length, point_weight)
+            )
+        ''')
+        
+        # Insert the arrow association
+        cursor.execute('''
+            INSERT INTO setup_arrows 
+            (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            setup_id,
+            data['arrow_id'],
+            data['arrow_length'],
+            data['point_weight'],
+            data.get('calculated_spine'),
+            data.get('compatibility_score'),
+            data.get('notes')
+        ))
+        
+        arrow_association_id = cursor.lastrowid
+        conn.commit()
+        
+        # Return the created association
+        cursor.execute('''
+            SELECT sa.*, a.manufacturer, a.model_name, a.material 
+            FROM setup_arrows sa
+            JOIN arrows a ON sa.arrow_id = a.id
+            WHERE sa.id = ?
+        ''', (arrow_association_id,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        return jsonify({
+            'id': result['id'],
+            'setup_id': result['setup_id'], 
+            'arrow_id': result['arrow_id'],
+            'arrow_length': result['arrow_length'],
+            'point_weight': result['point_weight'],
+            'calculated_spine': result['calculated_spine'],
+            'compatibility_score': result['compatibility_score'],
+            'notes': result['notes'],
+            'arrow': {
+                'manufacturer': result['manufacturer'],
+                'model_name': result['model_name'],
+                'material': result['material']
+            },
+            'created_at': result['created_at']
+        })
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/bow-setups/<int:setup_id>/arrows', methods=['GET'])
+@token_required
+def get_setup_arrows(current_user, setup_id):
+    """Get all arrows associated with a bow setup"""
+    try:
+        # Get user database connection
+        user_db = get_user_database()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the bow setup belongs to the current user
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        bow_setup = cursor.fetchone()
+        
+        if not bow_setup:
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Get all arrows for this setup
+        cursor.execute('''
+            SELECT sa.*, a.manufacturer, a.model_name, a.material, a.description
+            FROM setup_arrows sa
+            JOIN arrows a ON sa.arrow_id = a.id
+            WHERE sa.setup_id = ?
+            ORDER BY sa.created_at DESC
+        ''', (setup_id,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        arrows = []
+        for row in rows:
+            arrows.append({
+                'id': row['id'],
+                'setup_id': row['setup_id'],
+                'arrow_id': row['arrow_id'],
+                'arrow_length': row['arrow_length'],
+                'point_weight': row['point_weight'],
+                'calculated_spine': row['calculated_spine'],
+                'compatibility_score': row['compatibility_score'],
+                'notes': row['notes'],
+                'arrow': {
+                    'manufacturer': row['manufacturer'], 
+                    'model_name': row['model_name'],
+                    'material': row['material'],
+                    'description': row['description']
+                },
+                'created_at': row['created_at']
+            })
+        
+        return jsonify({'arrows': arrows})
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/tuning/sessions/<session_id>', methods=['GET'])
 def get_tuning_session(session_id):
     """Get a specific tuning session"""

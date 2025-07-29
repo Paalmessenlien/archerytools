@@ -731,6 +731,7 @@ class ArrowDatabase:
         return {
             'total_arrows': arrow_count,
             'total_specifications': spec_count,
+            'total_manufacturers': len(manufacturers),
             'manufacturers': manufacturers,
             'spine_range': dict(spine_range) if spine_range else {},
             'gpi_range': dict(gpi_range) if gpi_range else {},

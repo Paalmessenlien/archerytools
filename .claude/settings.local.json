@@ -58,7 +58,16 @@
       "Bash(git rm:*)",
       "WebFetch(domain:tophatarchery.com)",
       "Bash(npm run dev:*)",
-      "Bash(scripts/start-dual-architecture.sh:*)"
+      "Bash(scripts/start-dual-architecture.sh:*)",
+      "Bash(gh project list:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh issue:*)",
+      "Bash(npm:*)",
+      "Bash(echo:*)",
+      "Bash(git config:*)",
+      "Bash(pgrep:*)",
+      "Bash(./docker-deploy.sh:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

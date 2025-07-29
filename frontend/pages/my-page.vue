@@ -227,18 +227,32 @@
           <div v-else>
             <div v-if="bowSetups.length > 0" class="space-y-4 mb-6">
               <div v-for="setup in bowSetups" :key="setup.id" class="card p-4 border border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center mb-2">
-                  <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_type }})</h4>
-                  <CustomButton
-                    @click="confirmDeleteSetup(setup.id)"
-                    variant="text"
-                    class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 p-1"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                  </CustomButton>
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_config?.bow_type || 'Unknown' }})</h4>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.bow_config?.draw_weight || 'N/A' }} lbs</p>
+                    <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ setup.description }}</p>
+                  </div>
+                  <div class="flex space-x-2 ml-4">
+                    <CustomButton
+                      @click="openArrowSearchModal(setup)"
+                      variant="filled"
+                      size="small"
+                      class="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <i class="fas fa-search mr-1"></i>
+                      Add Arrow
+                    </CustomButton>
+                    <CustomButton
+                      @click="confirmDeleteSetup(setup.id)"
+                      variant="text"
+                      size="small"
+                      class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 p-1"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </CustomButton>
+                  </div>
                 </div>
-                <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight }} lbs</p>
-                <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ setup.description }}</p>
               </div>
             </div>
             <p v-else class="text-gray-600 dark:text-gray-400 mb-4">No bow setups added yet.</p>
@@ -347,6 +361,16 @@
           </div>
         </div>
         <!-- End of Confirm Delete Modal -->
+
+        <!-- Arrow Search Modal -->
+        <ArrowSearchModal
+          :is-open="isArrowSearchOpen"
+          :bow-setup="selectedBowSetup"
+          @close="closeArrowSearchModal"
+          @add-arrow="handleAddArrow"
+        />
+        <!-- End of Arrow Search Modal -->
+
       </div>
       <!-- End of Bow Setups Section -->
     </div>
@@ -370,8 +394,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import ArrowSearchModal from '~/components/ArrowSearchModal.vue';
 
-const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, deleteBowSetup } = useAuth();
+const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, deleteBowSetup, addArrowToSetup } = useAuth();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
@@ -392,6 +417,10 @@ const addSetupError = ref(null);
 const isConfirmingDelete = ref(false);
 const setupToDeleteId = ref(null);
 const deleteSetupError = ref(null);
+
+// Arrow search modal state
+const isArrowSearchOpen = ref(false);
+const selectedBowSetup = ref(null);
 
 const newSetup = ref({
   name: '',
@@ -474,7 +503,19 @@ const saveBowSetup = async () => {
   isSavingSetup.value = true;
   addSetupError.value = null;
   try {
-    await addBowSetup(newSetup.value);
+    // Send data in the flat format expected by the API
+    const setupData = {
+      name: newSetup.value.name,
+      bow_type: newSetup.value.bow_type,
+      draw_weight: Number(newSetup.value.draw_weight),
+      draw_length: user.value?.draw_length || 28.0, // Use user's draw length from profile
+      description: newSetup.value.description,
+      // Optional fields with defaults
+      arrow_length: 29,
+      point_weight: 125
+    };
+
+    await addBowSetup(setupData);
     closeAddSetupModal();
     await loadBowSetups(); // Reload setups after adding
   } catch (err) {
@@ -510,6 +551,41 @@ const deleteSetup = async () => {
     deleteSetupError.value = err.message || 'Failed to delete bow setup.';
   } finally {
     isSavingSetup.value = false;
+  }
+};
+
+// Arrow search modal methods
+const openArrowSearchModal = (setup) => {
+  selectedBowSetup.value = setup;
+  isArrowSearchOpen.value = true;
+};
+
+const closeArrowSearchModal = () => {
+  isArrowSearchOpen.value = false;
+  selectedBowSetup.value = null;
+};
+
+const handleAddArrow = async (arrowData) => {
+  try {
+    // Create the API payload
+    const apiData = {
+      arrow_id: arrowData.arrow.id,
+      arrow_length: arrowData.adjustments.arrow_length,
+      point_weight: arrowData.adjustments.point_weight,
+      calculated_spine: arrowData.calculatedSpine,
+      compatibility_score: arrowData.compatibility_score,
+      notes: `Added via arrow search - ${arrowData.compatibility_score}% match`
+    };
+    
+    // Call the API to add arrow to setup
+    await addArrowToSetup(selectedBowSetup.value.id, apiData);
+    
+    // Show success message (you could add a toast notification here)
+    alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value.name}!`);
+    
+  } catch (err) {
+    console.error('Error adding arrow to setup:', err);
+    alert('Failed to add arrow to setup. Please try again.');
   }
 };
 
