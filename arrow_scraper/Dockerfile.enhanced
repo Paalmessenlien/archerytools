@@ -1,0 +1,115 @@
+# Enhanced ArrowTuner API Backend Dockerfile with comprehensive verification
+FROM python:3.9-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=api.py
+ENV FLASK_ENV=production
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies including verification tools
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        wget \
+        build-essential \
+        sqlite3 \
+        jq \
+        tree \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/data/processed /app/data/raw /app/logs /app/user_data
+
+# Make scripts executable
+RUN chmod +x /app/api.py \
+    /app/build-database.py \
+    /app/start-api.sh \
+    /app/start-api-robust.sh \
+    /app/verify-databases.py
+
+# Create non-root user with specific UID/GID
+RUN addgroup --gid 1000 appgroup && \
+    adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
+
+# Build and verify arrow database as root
+RUN echo "🔨 Building arrow database..." && \
+    python3 build-database-robust.py && \
+    echo "✅ Database build completed" && \
+    \
+    echo "🔍 Verifying database content..." && \
+    python3 -c "
+import sqlite3
+conn = sqlite3.connect('arrow_database.db')
+cursor = conn.cursor()
+cursor.execute('SELECT COUNT(*) FROM arrows')
+arrow_count = cursor.fetchone()[0]
+cursor.execute('SELECT COUNT(*) FROM spine_specifications')
+spine_count = cursor.fetchone()[0]
+cursor.execute('SELECT COUNT(DISTINCT manufacturer) FROM arrows')
+mfg_count = cursor.fetchone()[0]
+print(f'Database verification:')
+print(f'  Arrows: {arrow_count}')
+print(f'  Spine specs: {spine_count}')
+print(f'  Manufacturers: {mfg_count}')
+if arrow_count < 50:
+    print('⚠️ Warning: Low arrow count')
+    exit(1)
+if spine_count < 100:
+    print('⚠️ Warning: Low spine specification count')
+    exit(1)
+print('✅ Database verification passed')
+conn.close()
+" && \
+    \
+    echo "💾 Creating database backup..." && \
+    cp arrow_database.db /app/arrow_database_backup.db && \
+    \
+    echo "🔧 Setting permissions..." && \
+    chown -R appuser:appgroup /app && \
+    chmod 664 /app/arrow*.db && \
+    chmod 755 /app/logs /app/user_data && \
+    \
+    echo "✅ Enhanced build completed successfully"
+
+# Verify build integrity
+RUN echo "🔍 Final build verification..." && \
+    ls -la /app/arrow*.db && \
+    python3 -c "
+import sys
+import os
+sys.path.append('/app')
+try:
+    from user_database import UserDatabase
+    from arrow_database import ArrowDatabase  
+    import flask, sqlite3, requests, jwt
+    print('✅ All imports successful')
+except ImportError as e:
+    print(f'❌ Import failed: {e}')
+    exit(1)
+" && \
+    echo "✅ Build verification completed"
+
+# Switch to non-root user
+USER appuser
+
+# Enhanced health check
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=5 \
+    CMD curl -f http://localhost:5000/api/health && \
+        curl -f http://localhost:5000/api/simple-health || exit 1
+
+# Expose port
+EXPOSE 5000
+
+# Use enhanced startup script
+CMD ["./start-api-robust.sh"]

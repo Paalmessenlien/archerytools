@@ -1,0 +1,113 @@
+# Enhanced ArrowTuner Frontend Dockerfile with build verification
+FROM node:20-alpine AS builder
+
+# Set work directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache \
+    curl \
+    wget \
+    tree
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies with verification
+RUN echo "📦 Installing dependencies..." && \
+    npm ci && \
+    echo "✅ Dependencies installed" && \
+    npm list --depth=0
+
+# Copy source code
+COPY . .
+
+# Verify source code structure
+RUN echo "🔍 Verifying source code structure..." && \
+    ls -la && \
+    [ -d "pages" ] || { echo "❌ pages directory missing"; exit 1; } && \
+    [ -d "components" ] || { echo "❌ components directory missing"; exit 1; } && \
+    [ -f "nuxt.config.ts" ] || { echo "❌ nuxt.config.ts missing"; exit 1; } && \
+    [ -f "pages/tuning.vue" ] || { echo "❌ tuning.vue missing"; exit 1; } && \
+    [ -f "components/GuideWalkthrough.vue" ] || { echo "❌ GuideWalkthrough.vue missing"; exit 1; } && \
+    echo "✅ Source code structure verified"
+
+# Build the application with verification
+RUN echo "🔨 Building application..." && \
+    npm run build && \
+    echo "✅ Build completed" && \
+    \
+    echo "🔍 Verifying build output..." && \
+    ls -la .output/ && \
+    [ -d ".output/server" ] || { echo "❌ Server build missing"; exit 1; } && \
+    [ -f ".output/server/index.mjs" ] || { echo "❌ Server entry point missing"; exit 1; } && \
+    [ -d ".output/public" ] || { echo "❌ Public assets missing"; exit 1; } && \
+    \
+    echo "📊 Build statistics:" && \
+    du -sh .output/ && \
+    find .output/public -name "*.js" | wc -l | xargs echo "  JS files:" && \
+    find .output/public -name "*.css" | wc -l | xargs echo "  CSS files:" && \
+    echo "✅ Build verification passed"
+
+# Production stage
+FROM node:20-alpine AS runner
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Set work directory
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    wget
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nuxtjs -u 1001
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nuxtjs:nodejs /app/.output /app/.output
+
+# Verify copied application
+RUN echo "🔍 Verifying copied application..." && \
+    ls -la /app/.output/ && \
+    [ -f "/app/.output/server/index.mjs" ] || { echo "❌ Server file missing in production image"; exit 1; } && \
+    echo "✅ Application copy verified"
+
+# Set proper permissions
+RUN chown -R nuxtjs:nodejs /app
+
+# Switch to non-root user
+USER nuxtjs
+
+# Enhanced health check that verifies key pages
+HEALTHCHECK --interval=30s --timeout=15s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ && \
+        wget --no-verbose --tries=1 --spider http://localhost:3000/database && \
+        wget --no-verbose --tries=1 --spider http://localhost:3000/tuning || exit 1
+
+# Expose port
+EXPOSE 3000
+
+# Create startup verification script
+USER root
+RUN echo '#!/bin/sh' > /app/start-enhanced.sh && \
+    echo 'echo "🚀 Starting enhanced Nuxt application..."' >> /app/start-enhanced.sh && \
+    echo 'echo "🔍 Pre-start verification:"' >> /app/start-enhanced.sh && \
+    echo 'echo "  Node version: $(node --version)"' >> /app/start-enhanced.sh && \
+    echo 'echo "  App directory: $(ls -la /app/.output/)"' >> /app/start-enhanced.sh && \
+    echo 'echo "  Memory available: $(free -h | grep Mem)"' >> /app/start-enhanced.sh && \
+    echo 'echo "✅ Starting server..."' >> /app/start-enhanced.sh && \
+    echo 'exec node .output/server/index.mjs' >> /app/start-enhanced.sh && \
+    chmod +x /app/start-enhanced.sh && \
+    chown nuxtjs:nodejs /app/start-enhanced.sh
+
+USER nuxtjs
+
+# Run the application with verification
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/app/start-enhanced.sh"]
