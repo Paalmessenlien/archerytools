@@ -145,9 +145,11 @@ def get_arrow_db():
         if not database_path:
             return None
         
-        # Return connection to the found database
+        # Return connection to the found database with row factory
         import sqlite3
-        return sqlite3.connect(database_path)
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        return conn
         
     except Exception as e:
         import traceback
@@ -1094,24 +1096,46 @@ def add_arrow_to_setup(current_user, setup_id):
         result = cursor.fetchone()
         conn.close()
         
-        response_data = {
-            'id': result['id'],
-            'setup_id': result['setup_id'], 
-            'arrow_id': result['arrow_id'],
-            'arrow_length': result['arrow_length'],
-            'point_weight': result['point_weight'],
-            'calculated_spine': result['calculated_spine'],
-            'compatibility_score': result['compatibility_score'],
-            'notes': result['notes'],
-            'created_at': result['created_at']
-        }
+        # Safely access result data (handle both tuple and dict)
+        if hasattr(result, 'keys'):  # Dictionary-like (sqlite3.Row)
+            response_data = {
+                'id': result['id'],
+                'setup_id': result['setup_id'], 
+                'arrow_id': result['arrow_id'],
+                'arrow_length': result['arrow_length'],
+                'point_weight': result['point_weight'],
+                'calculated_spine': result['calculated_spine'],
+                'compatibility_score': result['compatibility_score'],
+                'notes': result['notes'],
+                'created_at': result['created_at']
+            }
+        else:  # Tuple access
+            response_data = {
+                'id': result[0],
+                'setup_id': result[1], 
+                'arrow_id': result[2],
+                'arrow_length': result[3],
+                'point_weight': result[4],
+                'calculated_spine': result[5],
+                'compatibility_score': result[6],
+                'notes': result[7],
+                'created_at': result[8]
+            }
         
         if arrow_data:
-            response_data['arrow'] = {
-                'manufacturer': arrow_data['manufacturer'],
-                'model_name': arrow_data['model_name'],
-                'material': arrow_data['material']
-            }
+            # Safely access arrow data (handle both tuple and dict)
+            if hasattr(arrow_data, 'keys'):  # Dictionary-like (sqlite3.Row)
+                response_data['arrow'] = {
+                    'manufacturer': arrow_data['manufacturer'],
+                    'model_name': arrow_data['model_name'],
+                    'material': arrow_data['material']
+                }
+            else:  # Tuple access (index based on SELECT order: manufacturer, model_name, material)
+                response_data['arrow'] = {
+                    'manufacturer': arrow_data[0],
+                    'model_name': arrow_data[1],
+                    'material': arrow_data[2]
+                }
         
         return jsonify(response_data)
         
