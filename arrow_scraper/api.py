@@ -1278,7 +1278,14 @@ def serve_image(filename):
 def get_image_url(arrow_id, image_url=None, saved_images=None, local_image_path=None):
     """Get the best available image URL for an arrow"""
     try:
+        # Handle HTTPS/HTTP protocol correctly for reverse proxy setups
         base_url = request.host_url.rstrip('/')
+        
+        # Check if request came through HTTPS (via headers from reverse proxy)
+        if (request.headers.get('X-Forwarded-Proto') == 'https' or 
+            request.headers.get('X-Forwarded-SSL') == 'on' or
+            request.is_secure):
+            base_url = base_url.replace('http://', 'https://')
         
         # Option 1: Try local image path from database
         if local_image_path:
@@ -1306,7 +1313,7 @@ def get_image_url(arrow_id, image_url=None, saved_images=None, local_image_path=
         
     except Exception as e:
         print(f"Error generating image URL: {e}")
-        # Return a basic placeholder if everything fails
+        # Return a protocol-relative placeholder if everything fails
         return "/api/images/placeholder.svg"
 
 # ===== COMPONENT API ENDPOINTS =====
