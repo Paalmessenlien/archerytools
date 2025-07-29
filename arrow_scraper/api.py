@@ -1015,18 +1015,25 @@ def add_arrow_to_setup(current_user, setup_id):
         arrow_association_id = cursor.lastrowid
         conn.commit()
         
-        # Return the created association
-        cursor.execute('''
-            SELECT sa.*, a.manufacturer, a.model_name, a.material 
-            FROM setup_arrows sa
-            JOIN arrows a ON sa.arrow_id = a.id
-            WHERE sa.id = ?
-        ''', (arrow_association_id,))
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
+        if arrow_conn:
+            arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.execute('''
+                SELECT manufacturer, model_name, material
+                FROM arrows WHERE id = ?
+            ''', (data['arrow_id'],))
+            arrow_data = arrow_cursor.fetchone()
+            arrow_conn.close()
+        else:
+            arrow_data = None
         
+        # Get the created association
+        cursor.execute('SELECT * FROM setup_arrows WHERE id = ?', (arrow_association_id,))
         result = cursor.fetchone()
         conn.close()
         
-        return jsonify({
+        response_data = {
             'id': result['id'],
             'setup_id': result['setup_id'], 
             'arrow_id': result['arrow_id'],
@@ -1035,13 +1042,17 @@ def add_arrow_to_setup(current_user, setup_id):
             'calculated_spine': result['calculated_spine'],
             'compatibility_score': result['compatibility_score'],
             'notes': result['notes'],
-            'arrow': {
-                'manufacturer': result['manufacturer'],
-                'model_name': result['model_name'],
-                'material': result['material']
-            },
             'created_at': result['created_at']
-        })
+        }
+        
+        if arrow_data:
+            response_data['arrow'] = {
+                'manufacturer': arrow_data['manufacturer'],
+                'model_name': arrow_data['model_name'],
+                'material': arrow_data['material']
+            }
+        
+        return jsonify(response_data)
         
     except Exception as e:
         if conn:
@@ -1070,19 +1081,32 @@ def get_setup_arrows(current_user, setup_id):
         
         # Get all arrows for this setup
         cursor.execute('''
-            SELECT sa.*, a.manufacturer, a.model_name, a.material, a.description
-            FROM setup_arrows sa
-            JOIN arrows a ON sa.arrow_id = a.id
-            WHERE sa.setup_id = ?
-            ORDER BY sa.created_at DESC
+            SELECT * FROM setup_arrows
+            WHERE setup_id = ?
+            ORDER BY created_at DESC
         ''', (setup_id,))
         
         rows = cursor.fetchall()
         conn.close()
         
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
+        arrow_details = {}
+        if arrow_conn:
+            arrow_cursor = arrow_conn.cursor()
+            for row in rows:
+                arrow_cursor.execute('''
+                    SELECT manufacturer, model_name, material, description
+                    FROM arrows WHERE id = ?
+                ''', (row['arrow_id'],))
+                arrow_data = arrow_cursor.fetchone()
+                if arrow_data:
+                    arrow_details[row['arrow_id']] = arrow_data
+            arrow_conn.close()
+        
         arrows = []
         for row in rows:
-            arrows.append({
+            arrow_info = {
                 'id': row['id'],
                 'setup_id': row['setup_id'],
                 'arrow_id': row['arrow_id'],
@@ -1091,14 +1115,20 @@ def get_setup_arrows(current_user, setup_id):
                 'calculated_spine': row['calculated_spine'],
                 'compatibility_score': row['compatibility_score'],
                 'notes': row['notes'],
-                'arrow': {
-                    'manufacturer': row['manufacturer'], 
-                    'model_name': row['model_name'],
-                    'material': row['material'],
-                    'description': row['description']
-                },
                 'created_at': row['created_at']
-            })
+            }
+            
+            # Add arrow details if available
+            if row['arrow_id'] in arrow_details:
+                arrow_data = arrow_details[row['arrow_id']]
+                arrow_info['arrow'] = {
+                    'manufacturer': arrow_data['manufacturer'], 
+                    'model_name': arrow_data['model_name'],
+                    'material': arrow_data['material'],
+                    'description': arrow_data['description']
+                }
+            
+            arrows.append(arrow_info)
         
         return jsonify({'arrows': arrows})
         
