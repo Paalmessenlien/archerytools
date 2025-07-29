@@ -104,9 +104,17 @@ run_migrations() {
         )
         
         for migration in "${migrations[@]}"; do
+            # Check both Docker and local paths
+            local migration_path=""
             if [ -f "/app/$migration" ]; then
+                migration_path="/app/$migration"
+            elif [ -f "$migration" ]; then
+                migration_path="$migration"
+            fi
+            
+            if [ -n "$migration_path" ]; then
                 echo "🔄 Running migration: $migration"
-                python3 "/app/$migration" || echo "⚠️  Migration $migration failed or already applied"
+                python3 "$migration_path" || echo "⚠️  Migration $migration failed or already applied"
             else
                 echo "⏭️  Migration $migration not found, skipping"
             fi
@@ -118,14 +126,29 @@ run_migrations() {
 echo "🔍 Step 1: Database Verification"
 echo "================================"
 
-# Check arrow database (built into container)
-ARROW_DB="/app/arrow_database.db"
-USER_DB="/app/user_data.db"
-
-# Try user_data directory first (Docker volume)
-if [ -d "/app/user_data" ]; then
-    USER_DB="/app/user_data/user_data.db"
-    echo "📁 Using user_data directory for user database"
+# Determine if running in Docker or local environment
+if [ -d "/app" ] && [ -f "/app/api.py" ]; then
+    # Docker environment
+    echo "🐳 Running in Docker environment"
+    ARROW_DB="/app/arrow_database.db"
+    USER_DB="/app/user_data.db"
+    
+    # Try user_data directory first (Docker volume)
+    if [ -d "/app/user_data" ]; then
+        USER_DB="/app/user_data/user_data.db"
+        echo "📁 Using user_data directory for user database"
+    fi
+else
+    # Local development environment
+    echo "💻 Running in local development environment"
+    ARROW_DB="arrow_database.db"
+    USER_DB="user_data.db"
+    
+    # Check if we're in the arrow_scraper directory
+    if [ ! -f "api.py" ] && [ -f "../arrow_scraper/api.py" ]; then
+        cd ../arrow_scraper
+        echo "📁 Changed to arrow_scraper directory"
+    fi
 fi
 
 # Verify arrow database
@@ -225,7 +248,12 @@ print('✅ All critical Python imports successful')
 
 # Check disk space
 echo "💾 Checking disk space..."
-DISK_USAGE=$(df /app | tail -1 | awk '{print $5}' | sed 's/%//')
+if [ -d "/app" ]; then
+    DISK_USAGE=$(df /app | tail -1 | awk '{print $5}' | sed 's/%//')
+else
+    DISK_USAGE=$(df . | tail -1 | awk '{print $5}' | sed 's/%//')
+fi
+
 if [ "$DISK_USAGE" -gt 90 ]; then
     echo "⚠️  Warning: Disk usage is high ($DISK_USAGE%)"
 else
