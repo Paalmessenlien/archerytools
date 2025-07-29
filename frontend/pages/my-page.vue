@@ -741,50 +741,6 @@
                   </div>
                 </div>
 
-                <!-- Arrow Configuration -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Point Weight -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Point Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.point_weight || 125 }} gr</span>
-                    </label>
-                    <md-slider
-                      min="75"
-                      max="200"
-                      step="25"
-                      :value="newSetup.point_weight || 125"
-                      @input="newSetup.point_weight = parseInt($event.target.value)"
-                      labeled
-                      ticks
-                      class="w-full"
-                    ></md-slider>
-                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      <span>75 gr</span>
-                      <span>200 gr</span>
-                    </div>
-                  </div>
-
-                  <!-- Arrow Length -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Arrow Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.arrow_length || 29 }}"</span>
-                    </label>
-                    <md-slider
-                      min="24"
-                      max="34"
-                      step="0.5"
-                      :value="newSetup.arrow_length || 29"
-                      @input="newSetup.arrow_length = parseFloat($event.target.value)"
-                      labeled
-                      ticks
-                      class="w-full"
-                    ></md-slider>
-                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      <span>24"</span>
-                      <span>34"</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <!-- Draw Length Info -->
@@ -935,8 +891,6 @@ const newSetup = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
-  point_weight: 125,
-  arrow_length: 29,
   description: '',
   // Compound specific
   brand: '',
@@ -1039,8 +993,6 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
-    point_weight: 125,
-    arrow_length: 29,
     description: '',
     // Compound specific
     brand: '',
@@ -1115,9 +1067,6 @@ const saveBowSetup = async () => {
       draw_weight: Number(newSetup.value.draw_weight),
       draw_length: user.value?.draw_length || 28.0, // Use user's draw length from profile
       description: newSetup.value.description,
-      // Include the new configurable fields
-      arrow_length: Number(newSetup.value.arrow_length),
-      point_weight: Number(newSetup.value.point_weight),
       // Bow type specific fields with custom brand handling
       brand: getBrandValue('brand', 'custom_brand'),
       ibo_speed: newSetup.value.ibo_speed ? Number(newSetup.value.ibo_speed) : null,

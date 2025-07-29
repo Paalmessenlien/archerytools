@@ -854,15 +854,13 @@ def create_bow_setup(current_user):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight, nock_weight, fletching_weight, insert_weight, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, nock_weight, fletching_weight, insert_weight, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 current_user['id'],
                 data['name'],
                 data['bow_type'],
                 data['draw_weight'],
                 data['draw_length'],
-                data.get('arrow_length'),
-                data.get('point_weight'),
                 data.get('nock_weight'),
                 data.get('fletching_weight'),
                 data.get('insert_weight'),
