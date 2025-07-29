@@ -114,6 +114,45 @@ def get_database():
             database = None
     return database
 
+def get_arrow_db():
+    """Get arrow database connection with fallback locations"""
+    try:
+        # Try multiple database locations
+        db_paths = [
+            '/app/arrow_database.db',          # Primary location
+            '/app/arrow_database_backup.db',   # Backup location
+            'arrow_database.db',               # Development location
+        ]
+        
+        database_path = None
+        for db_path in db_paths:
+            if os.path.exists(db_path):
+                try:
+                    # Quick check if database has data
+                    import sqlite3
+                    conn = sqlite3.connect(db_path)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT COUNT(*) FROM arrows")
+                    count = cursor.fetchone()[0]
+                    conn.close()
+                    
+                    if count > 0:
+                        database_path = db_path
+                        break
+                except Exception as e:
+                    continue
+        
+        if not database_path:
+            return None
+        
+        # Return connection to the found database
+        import sqlite3
+        return sqlite3.connect(database_path)
+        
+    except Exception as e:
+        import traceback
+        return None
+
 def get_component_database():
     """Get component database with lazy initialization"""
     global component_database
@@ -997,22 +1036,44 @@ def add_arrow_to_setup(current_user, setup_id):
             )
         ''')
         
-        # Insert the arrow association
+        # Check if this exact combination already exists
         cursor.execute('''
-            INSERT INTO setup_arrows 
-            (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            setup_id,
-            data['arrow_id'],
-            data['arrow_length'],
-            data['point_weight'],
-            data.get('calculated_spine'),
-            data.get('compatibility_score'),
-            data.get('notes')
-        ))
+            SELECT id FROM setup_arrows 
+            WHERE setup_id = ? AND arrow_id = ? AND arrow_length = ? AND point_weight = ?
+        ''', (setup_id, data['arrow_id'], data['arrow_length'], data['point_weight']))
         
-        arrow_association_id = cursor.lastrowid
+        existing_record = cursor.fetchone()
+        
+        if existing_record:
+            # Update existing record
+            cursor.execute('''
+                UPDATE setup_arrows 
+                SET calculated_spine = ?, compatibility_score = ?, notes = ?
+                WHERE id = ?
+            ''', (
+                data.get('calculated_spine'),
+                data.get('compatibility_score'),
+                data.get('notes'),
+                existing_record[0]
+            ))
+            arrow_association_id = existing_record[0]
+        else:
+            # Insert new record
+            cursor.execute('''
+                INSERT INTO setup_arrows 
+                (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                setup_id,
+                data['arrow_id'],
+                data['arrow_length'],
+                data['point_weight'],
+                data.get('calculated_spine'),
+                data.get('compatibility_score'),
+                data.get('notes')
+            ))
+            arrow_association_id = cursor.lastrowid
+        
         conn.commit()
         
         # Get arrow details from arrow database
