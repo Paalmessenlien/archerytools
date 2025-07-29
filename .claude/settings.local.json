@@ -67,7 +67,8 @@
       "Bash(git config:*)",
       "Bash(pgrep:*)",
       "Bash(./docker-deploy.sh:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

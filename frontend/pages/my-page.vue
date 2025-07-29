@@ -253,6 +253,14 @@
                     </CustomButton>
                   </div>
                 </div>
+                
+                <!-- Arrows List for this Bow Setup -->
+                <BowSetupArrowsList
+                  :arrows="setup.arrows || []"
+                  :loading="setup.loadingArrows || false"
+                  @remove-arrow="removeArrowFromSetup"
+                  @view-details="viewArrowDetails"
+                />
               </div>
             </div>
             <p v-else class="text-gray-600 dark:text-gray-400 mb-4">No bow setups added yet.</p>
@@ -895,8 +903,9 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import ArrowSearchModal from '~/components/ArrowSearchModal.vue';
+import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 
-const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, deleteBowSetup, addArrowToSetup } = useAuth();
+const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows } = useAuth();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
@@ -993,13 +1002,35 @@ const saveProfile = async () => {
 const loadBowSetups = async () => {
   isLoadingSetups.value = true;
   try {
-    bowSetups.value = await fetchBowSetups();
+    const setups = await fetchBowSetups();
+    bowSetups.value = setups;
+    
+    // Load arrows for each setup
+    await loadArrowsForAllSetups();
   } catch (err) {
     console.error('Error loading bow setups:', err);
     // Optionally display an error message to the user
   } finally {
     isLoadingSetups.value = false;
   }
+};
+
+const loadArrowsForAllSetups = async () => {
+  // Load arrows for each setup in parallel
+  const arrowPromises = bowSetups.value.map(async (setup) => {
+    try {
+      setup.loadingArrows = true;
+      const arrows = await fetchSetupArrows(setup.id);
+      setup.arrows = arrows || [];
+    } catch (err) {
+      console.error(`Error loading arrows for setup ${setup.id}:`, err);
+      setup.arrows = [];
+    } finally {
+      setup.loadingArrows = false;
+    }
+  });
+  
+  await Promise.all(arrowPromises);
 };
 
 const openAddSetupModal = () => {
@@ -1169,10 +1200,65 @@ const handleAddArrow = async (arrowData) => {
     // Show success message (you could add a toast notification here)
     alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value.name}!`);
     
+    // Reload arrows for the setup to show the new arrow
+    await loadArrowsForSetup(selectedBowSetup.value.id);
+    
   } catch (err) {
     console.error('Error adding arrow to setup:', err);
     alert('Failed to add arrow to setup. Please try again.');
   }
+};
+
+const loadArrowsForSetup = async (setupId) => {
+  const setup = bowSetups.value.find(s => s.id === setupId);
+  if (!setup) return;
+  
+  try {
+    setup.loadingArrows = true;
+    const arrows = await fetchSetupArrows(setupId);
+    setup.arrows = arrows || [];
+  } catch (err) {
+    console.error(`Error loading arrows for setup ${setupId}:`, err);
+    setup.arrows = [];
+  } finally {
+    setup.loadingArrows = false;
+  }
+};
+
+const removeArrowFromSetup = async (arrowSetupId) => {
+  if (!confirm('Are you sure you want to remove this arrow from the setup?')) {
+    return;
+  }
+  
+  try {
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+    
+    // Call API to remove arrow from setup (need to implement this endpoint)
+    const response = await fetch(`${config.public.apiBase}/setup-arrows/${arrowSetupId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token.value}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to remove arrow');
+    }
+    
+    // Reload all setups to refresh the display
+    await loadBowSetups();
+    
+  } catch (err) {
+    console.error('Error removing arrow from setup:', err);
+    alert('Failed to remove arrow. Please try again.');
+  }
+};
+
+const viewArrowDetails = (arrowId) => {
+  // Navigate to arrow details page
+  navigateTo(`/arrows/${arrowId}`);
 };
 
 // Helper functions for display formatting
