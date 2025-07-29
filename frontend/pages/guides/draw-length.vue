@@ -137,11 +137,13 @@
 
           <!-- Illustration -->
           <div class="illustration-container mb-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-            <img 
-              src="/images/guides/wingspan-method.svg" 
-              alt="Wingspan method for measuring draw length"
-              class="w-full max-w-lg mx-auto"
-            />
+            <!-- TODO: Add wingspan method illustration -->
+            <div class="w-full max-w-lg mx-auto h-48 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
+              <div class="text-center text-blue-600 dark:text-blue-300">
+                <i class="fas fa-image text-4xl mb-2"></i>
+                <p class="text-sm">Wingspan Method Illustration</p>
+              </div>
+            </div>
             <p class="text-sm text-blue-700 dark:text-blue-300 text-center mt-3">
               <i class="fas fa-info-circle mr-2"></i>
               Stand with arms extended, measure fingertip to fingertip, divide by 2.5

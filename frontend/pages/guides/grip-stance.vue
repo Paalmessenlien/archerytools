@@ -250,11 +250,13 @@
 
           <!-- Illustration -->
           <div class="illustration-container mb-6 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-            <img 
-              src="/images/guides/bow-grip.svg" 
-              alt="Proper bow grip technique with correct vs incorrect examples"
-              class="w-full max-w-md mx-auto"
-            />
+            <!-- TODO: Add bow grip illustration -->
+            <div class="w-full max-w-md mx-auto h-48 bg-orange-100 dark:bg-orange-800 rounded-lg flex items-center justify-center">
+              <div class="text-center text-orange-600 dark:text-orange-300">
+                <i class="fas fa-image text-4xl mb-2"></i>
+                <p class="text-sm">Bow Grip Technique</p>
+              </div>
+            </div>
             <p class="text-sm text-orange-700 dark:text-orange-300 text-center mt-3">
               <i class="fas fa-hand-paper mr-2"></i>
               Proper grip: Push with palm heel at 45°, keep fingers relaxed

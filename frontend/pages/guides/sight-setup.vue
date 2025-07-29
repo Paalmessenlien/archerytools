@@ -79,11 +79,13 @@
 
           <!-- Illustration -->
           <div class="illustration-container mb-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-            <img 
-              src="/images/guides/sight-types.svg" 
-              alt="Comparison of different bow sight types"
-              class="w-full max-w-2xl mx-auto"
-            />
+            <!-- TODO: Add sight types illustration -->
+            <div class="w-full max-w-2xl mx-auto h-48 bg-purple-100 dark:bg-purple-800 rounded-lg flex items-center justify-center">
+              <div class="text-center text-purple-600 dark:text-purple-300">
+                <i class="fas fa-image text-4xl mb-2"></i>
+                <p class="text-sm">Sight Types Comparison</p>
+              </div>
+            </div>
             <p class="text-sm text-purple-700 dark:text-purple-300 text-center mt-3">
               <i class="fas fa-bullseye mr-2"></i>
               Choose the sight type that matches your archery discipline and skill level
