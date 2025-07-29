@@ -289,91 +289,232 @@
               </div>
 
               <!-- Bow Configuration -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="space-y-6 mb-6">
                 <!-- Bow Type -->
-                <div>
-                  <md-filled-select
-                    label="Bow Type"
-                    :value="newSetup.bow_type"
-                    @change="newSetup.bow_type = $event.target.value"
-                    class="w-full"
-                    required
-                  >
-                    <md-select-option value="compound">
-                      <div slot="headline">Compound</div>
-                    </md-select-option>
-                    <md-select-option value="recurve">
-                      <div slot="headline">Recurve</div>
-                    </md-select-option>
-                    <md-select-option value="longbow">
-                      <div slot="headline">Longbow</div>
-                    </md-select-option>
-                    <md-select-option value="traditional">
-                      <div slot="headline">Traditional</div>
-                    </md-select-option>
-                  </md-filled-select>
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <md-filled-select
+                      label="Bow Type"
+                      :value="newSetup.bow_type"
+                      @change="newSetup.bow_type = $event.target.value"
+                      class="w-full"
+                      required
+                    >
+                      <md-select-option value="compound">
+                        <div slot="headline">Compound</div>
+                      </md-select-option>
+                      <md-select-option value="recurve">
+                        <div slot="headline">Recurve</div>
+                      </md-select-option>
+                      <md-select-option value="longbow">
+                        <div slot="headline">Longbow</div>
+                      </md-select-option>
+                      <md-select-option value="traditional">
+                        <div slot="headline">Traditional</div>
+                      </md-select-option>
+                    </md-filled-select>
+                  </div>
 
-                <!-- Draw Weight -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.draw_weight || 45 }} lbs</span>
-                  </label>
-                  <md-slider
-                    min="20"
-                    max="80"
-                    step="5"
-                    :value="newSetup.draw_weight || 45"
-                    @input="newSetup.draw_weight = parseInt($event.target.value)"
-                    labeled
-                    ticks
-                    class="w-full"
-                  ></md-slider>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>20 lbs</span>
-                    <span>80 lbs</span>
+                  <!-- Draw Weight -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.draw_weight || 45 }} lbs</span>
+                    </label>
+                    <md-slider
+                      min="20"
+                      max="80"
+                      step="5"
+                      :value="newSetup.draw_weight || 45"
+                      @input="newSetup.draw_weight = parseInt($event.target.value)"
+                      labeled
+                      ticks
+                      class="w-full"
+                    ></md-slider>
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      <span>20 lbs</span>
+                      <span>80 lbs</span>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Point Weight -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Point Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.point_weight || 125 }} gr</span>
-                  </label>
-                  <md-slider
-                    min="75"
-                    max="200"
-                    step="25"
-                    :value="newSetup.point_weight || 125"
-                    @input="newSetup.point_weight = parseInt($event.target.value)"
-                    labeled
-                    ticks
-                    class="w-full"
-                  ></md-slider>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>75 gr</span>
-                    <span>200 gr</span>
+                <!-- Bow Type Specific Configuration -->
+                <div v-if="newSetup.bow_type" class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <i class="fas fa-cog mr-2 text-blue-600"></i>
+                    {{ newSetup.bow_type.charAt(0).toUpperCase() + newSetup.bow_type.slice(1) }} Specific Configuration
+                  </h4>
+
+                  <!-- Compound Bow Configuration -->
+                  <div v-if="newSetup.bow_type === 'compound'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <md-outlined-text-field 
+                      class="w-full"
+                      :value="newSetup.brand || ''"
+                      @input="newSetup.brand = $event.target.value"
+                      label="Bow Brand"
+                      placeholder="e.g., Hoyt, Mathews, PSE..."
+                    >
+                      <i class="fas fa-industry" slot="leading-icon" style="color: #6b7280;"></i>
+                    </md-outlined-text-field>
+                    
+                    <md-outlined-text-field 
+                      class="w-full"
+                      :value="newSetup.ibo_speed || ''"
+                      @input="newSetup.ibo_speed = parseInt($event.target.value) || ''"
+                      label="IBO Speed (fps)"
+                      type="number"
+                      placeholder="e.g., 320, 340..."
+                    >
+                      <i class="fas fa-tachometer-alt" slot="leading-icon" style="color: #6b7280;"></i>
+                    </md-outlined-text-field>
+                  </div>
+
+                  <!-- Recurve Bow Configuration -->
+                  <div v-else-if="newSetup.bow_type === 'recurve'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <md-outlined-text-field 
+                      class="w-full"
+                      :value="newSetup.riser_brand || ''"
+                      @input="newSetup.riser_brand = $event.target.value"
+                      label="Riser Brand"
+                      placeholder="e.g., Hoyt, Win&Win, Uukha..."
+                    >
+                      <i class="fas fa-grip-vertical" slot="leading-icon" style="color: #6b7280;"></i>
+                    </md-outlined-text-field>
+                    
+                    <md-outlined-text-field 
+                      class="w-full"
+                      :value="newSetup.limb_brand || ''"
+                      @input="newSetup.limb_brand = $event.target.value"
+                      label="Limb Brand"
+                      placeholder="e.g., Hoyt, Border, Win&Win..."
+                    >
+                      <i class="fas fa-expand-arrows-alt" slot="leading-icon" style="color: #6b7280;"></i>
+                    </md-outlined-text-field>
+                    
+                    <md-filled-select
+                      label="Limb Fitting"
+                      :value="newSetup.limb_fitting || 'ILF'"
+                      @change="newSetup.limb_fitting = $event.target.value"
+                      class="w-full"
+                    >
+                      <md-select-option value="ILF">
+                        <div slot="headline">ILF (International Limb Fitting)</div>
+                      </md-select-option>
+                      <md-select-option value="Formula">
+                        <div slot="headline">Formula (WA Standard)</div>
+                      </md-select-option>
+                    </md-filled-select>
+                  </div>
+
+                  <!-- Longbow Configuration -->
+                  <div v-else-if="newSetup.bow_type === 'longbow'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <md-outlined-text-field 
+                      class="w-full"
+                      :value="newSetup.bow_brand || ''"
+                      @input="newSetup.bow_brand = $event.target.value"
+                      label="Bow Brand/Maker"
+                      placeholder="e.g., Howard Hill, Bear, Bodnik..."
+                    >
+                      <i class="fas fa-industry" slot="leading-icon" style="color: #6b7280;"></i>
+                    </md-outlined-text-field>
+                  </div>
+
+                  <!-- Traditional Bow Configuration -->
+                  <div v-else-if="newSetup.bow_type === 'traditional'" class="space-y-4">
+                    <md-filled-select
+                      label="Construction Type"
+                      :value="newSetup.construction || 'one_piece'"
+                      @change="newSetup.construction = $event.target.value"
+                      class="w-full"
+                    >
+                      <md-select-option value="one_piece">
+                        <div slot="headline">One Piece</div>
+                      </md-select-option>
+                      <md-select-option value="two_piece">
+                        <div slot="headline">Two Piece (Takedown)</div>
+                      </md-select-option>
+                    </md-filled-select>
+
+                    <!-- Two-piece specific fields -->
+                    <div v-if="newSetup.construction === 'two_piece'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <md-outlined-text-field 
+                        class="w-full"
+                        :value="newSetup.riser_brand || ''"
+                        @input="newSetup.riser_brand = $event.target.value"
+                        label="Riser Brand"
+                        placeholder="e.g., Samick, Bear, PSE..."
+                      >
+                        <i class="fas fa-grip-vertical" slot="leading-icon" style="color: #6b7280;"></i>
+                      </md-outlined-text-field>
+                      
+                      <md-outlined-text-field 
+                        class="w-full"
+                        :value="newSetup.limb_brand || ''"
+                        @input="newSetup.limb_brand = $event.target.value"
+                        label="Limb Brand"
+                        placeholder="e.g., Samick, Bear, PSE..."
+                      >
+                        <i class="fas fa-expand-arrows-alt" slot="leading-icon" style="color: #6b7280;"></i>
+                      </md-outlined-text-field>
+                      
+                      <md-filled-select
+                        label="Limb Fitting"
+                        :value="newSetup.limb_fitting || 'ILF'"
+                        @change="newSetup.limb_fitting = $event.target.value"
+                        class="w-full"
+                      >
+                        <md-select-option value="ILF">
+                          <div slot="headline">ILF (International Limb Fitting)</div>
+                        </md-select-option>
+                        <md-select-option value="Bolt_Down">
+                          <div slot="headline">Bolt Down</div>
+                        </md-select-option>
+                      </md-filled-select>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Arrow Length -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Arrow Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.arrow_length || 29 }}"</span>
-                  </label>
-                  <md-slider
-                    min="24"
-                    max="34"
-                    step="0.5"
-                    :value="newSetup.arrow_length || 29"
-                    @input="newSetup.arrow_length = parseFloat($event.target.value)"
-                    labeled
-                    ticks
-                    class="w-full"
-                  ></md-slider>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>24"</span>
-                    <span>34"</span>
+                <!-- Arrow Configuration -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Point Weight -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Point Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.point_weight || 125 }} gr</span>
+                    </label>
+                    <md-slider
+                      min="75"
+                      max="200"
+                      step="25"
+                      :value="newSetup.point_weight || 125"
+                      @input="newSetup.point_weight = parseInt($event.target.value)"
+                      labeled
+                      ticks
+                      class="w-full"
+                    ></md-slider>
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      <span>75 gr</span>
+                      <span>200 gr</span>
+                    </div>
+                  </div>
+
+                  <!-- Arrow Length -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Arrow Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.arrow_length || 29 }}"</span>
+                    </label>
+                    <md-slider
+                      min="24"
+                      max="34"
+                      step="0.5"
+                      :value="newSetup.arrow_length || 29"
+                      @input="newSetup.arrow_length = parseFloat($event.target.value)"
+                      labeled
+                      ticks
+                      class="w-full"
+                    ></md-slider>
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      <span>24"</span>
+                      <span>34"</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -528,6 +669,17 @@ const newSetup = ref({
   point_weight: 125,
   arrow_length: 29,
   description: '',
+  // Compound specific
+  brand: '',
+  ibo_speed: '',
+  // Recurve specific
+  riser_brand: '',
+  limb_brand: '',
+  limb_fitting: 'ILF',
+  // Longbow specific
+  bow_brand: '',
+  // Traditional specific
+  construction: 'one_piece',
 });
 
 const openEditModal = () => {
@@ -593,6 +745,17 @@ const openAddSetupModal = () => {
     point_weight: 125,
     arrow_length: 29,
     description: '',
+    // Compound specific
+    brand: '',
+    ibo_speed: '',
+    // Recurve specific
+    riser_brand: '',
+    limb_brand: '',
+    limb_fitting: 'ILF',
+    // Longbow specific
+    bow_brand: '',
+    // Traditional specific
+    construction: 'one_piece',
   };
   addSetupError.value = null;
   isAddingSetup.value = true;
@@ -615,7 +778,15 @@ const saveBowSetup = async () => {
       description: newSetup.value.description,
       // Include the new configurable fields
       arrow_length: Number(newSetup.value.arrow_length),
-      point_weight: Number(newSetup.value.point_weight)
+      point_weight: Number(newSetup.value.point_weight),
+      // Bow type specific fields
+      brand: newSetup.value.brand || null,
+      ibo_speed: newSetup.value.ibo_speed ? Number(newSetup.value.ibo_speed) : null,
+      riser_brand: newSetup.value.riser_brand || null,
+      limb_brand: newSetup.value.limb_brand || null,
+      limb_fitting: newSetup.value.limb_fitting || null,
+      bow_brand: newSetup.value.bow_brand || null,
+      construction: newSetup.value.construction || null,
     };
 
     await addBowSetup(setupData);
