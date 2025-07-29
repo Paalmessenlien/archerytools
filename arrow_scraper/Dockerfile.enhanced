@@ -48,29 +48,7 @@ RUN echo "🔨 Building arrow database..." && \
     echo "✅ Database build completed" && \
     \
     echo "🔍 Verifying database content..." && \
-    python3 -c "
-import sqlite3
-conn = sqlite3.connect('arrow_database.db')
-cursor = conn.cursor()
-cursor.execute('SELECT COUNT(*) FROM arrows')
-arrow_count = cursor.fetchone()[0]
-cursor.execute('SELECT COUNT(*) FROM spine_specifications')
-spine_count = cursor.fetchone()[0]
-cursor.execute('SELECT COUNT(DISTINCT manufacturer) FROM arrows')
-mfg_count = cursor.fetchone()[0]
-print(f'Database verification:')
-print(f'  Arrows: {arrow_count}')
-print(f'  Spine specs: {spine_count}')
-print(f'  Manufacturers: {mfg_count}')
-if arrow_count < 50:
-    print('⚠️ Warning: Low arrow count')
-    exit(1)
-if spine_count < 100:
-    print('⚠️ Warning: Low spine specification count')
-    exit(1)
-print('✅ Database verification passed')
-conn.close()
-" && \
+    python3 -c "import sqlite3; conn = sqlite3.connect('arrow_database.db'); cursor = conn.cursor(); cursor.execute('SELECT COUNT(*) FROM arrows'); arrow_count = cursor.fetchone()[0]; cursor.execute('SELECT COUNT(*) FROM spine_specifications'); spine_count = cursor.fetchone()[0]; cursor.execute('SELECT COUNT(DISTINCT manufacturer) FROM arrows'); mfg_count = cursor.fetchone()[0]; print(f'Database verification:'); print(f'  Arrows: {arrow_count}'); print(f'  Spine specs: {spine_count}'); print(f'  Manufacturers: {mfg_count}'); exit(1) if arrow_count < 50 or spine_count < 100 else print('✅ Database verification passed'); conn.close()" && \
     \
     echo "💾 Creating database backup..." && \
     cp arrow_database.db /app/arrow_database_backup.db && \
@@ -85,19 +63,7 @@ conn.close()
 # Verify build integrity
 RUN echo "🔍 Final build verification..." && \
     ls -la /app/arrow*.db && \
-    python3 -c "
-import sys
-import os
-sys.path.append('/app')
-try:
-    from user_database import UserDatabase
-    from arrow_database import ArrowDatabase  
-    import flask, sqlite3, requests, jwt
-    print('✅ All imports successful')
-except ImportError as e:
-    print(f'❌ Import failed: {e}')
-    exit(1)
-" && \
+    python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && \
     echo "✅ Build verification completed"
 
 # Switch to non-root user
