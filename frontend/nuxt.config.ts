@@ -1,4 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// Debug: Log environment variables during build
+console.log('🔍 Nuxt Config Debug:');
+console.log('  NUXT_PUBLIC_GOOGLE_CLIENT_ID:', process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID);
+console.log('  NUXT_PUBLIC_API_BASE:', process.env.NUXT_PUBLIC_API_BASE);
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [

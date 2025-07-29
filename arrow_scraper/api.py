@@ -1020,23 +1020,7 @@ def add_arrow_to_setup(current_user, setup_id):
         if not bow_setup:
             return jsonify({'error': 'Bow setup not found or access denied'}), 404
         
-        # Create the setup_arrows table if it doesn't exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS setup_arrows (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                setup_id INTEGER NOT NULL,
-                arrow_id INTEGER NOT NULL,
-                arrow_length REAL NOT NULL,
-                point_weight REAL NOT NULL,
-                calculated_spine INTEGER,
-                compatibility_score INTEGER,
-                notes TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (setup_id) REFERENCES bow_setups (id),
-                FOREIGN KEY (arrow_id) REFERENCES arrows (id),
-                UNIQUE(setup_id, arrow_id, arrow_length, point_weight)
-            )
-        ''')
+        # The setup_arrows table is now created in user_database.py initialization
         
         # Check if this exact combination already exists
         cursor.execute('''

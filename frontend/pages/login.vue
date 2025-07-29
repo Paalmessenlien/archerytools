@@ -131,9 +131,12 @@ const isLoggingIn = ref(false)
 const betaVersion = ref('1.0.0-beta')
 
 const handleLogin = async () => {
+  console.log('🚀 handleLogin called in login.vue');
   isLoggingIn.value = true
   try {
+    console.log('🔍 About to call loginWithGoogle()');
     const result = await loginWithGoogle()
+    console.log('📥 loginWithGoogle result:', result);
     if (result.success) {
       // User logged in successfully, the template will automatically update
       // and show the "Enter Platform" button

@@ -117,6 +117,23 @@ class UserDatabase:
                 )
             """)
             
+            # Create setup_arrows table for tracking arrows added to bow setups
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS setup_arrows (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    setup_id INTEGER NOT NULL,
+                    arrow_id INTEGER NOT NULL,
+                    arrow_length REAL NOT NULL,
+                    point_weight REAL NOT NULL,
+                    calculated_spine INTEGER,
+                    compatibility_score INTEGER,
+                    notes TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (setup_id) REFERENCES bow_setups (id) ON DELETE CASCADE,
+                    UNIQUE(setup_id, arrow_id, arrow_length, point_weight)
+                )
+            """)
+            
             # Create tuning_history table for tracking changes over time
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS tuning_history (

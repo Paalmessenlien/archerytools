@@ -1,6 +1,5 @@
 
 import { ref } from 'vue';
-import { googleSdkLoaded } from 'vue3-google-login';
 
 // Global state - shared across all useAuth() calls
 const token = ref(process.client ? localStorage.getItem('token') : null);
@@ -25,49 +24,67 @@ export const useAuth = () => {
 
   const loginWithGoogle = async () => {
     console.log('loginWithGoogle called');
+    console.log('Runtime config in useAuth:', config.public);
+    console.log('Google Client ID in useAuth:', config.public.googleClientId);
+    
+    const clientId = config.public.googleClientId || '1039369917961-dq95hj3ip0krmhjajgo0h9qjdchq5pca.apps.googleusercontent.com';
+    console.log('Using client_id for OAuth:', clientId);
+    
     return new Promise((resolve, reject) => {
-      googleSdkLoaded((google) => {
-        console.log('Google SDK loaded', google);
-        google.accounts.oauth2.initCodeClient({
-          client_id: config.public.googleClientId,
-          scope: 'email profile openid',
-          callback: async (response) => {
-            console.log('Google callback response:', response);
-            if (response.code) {
-              console.log('API Base URL:', config.public.apiBase);
-              fetch(`${config.public.apiBase}/auth/google`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token: response.code }),
-              })
-                .then(async (res) => {
+      // Wait for Google Identity Services to be available
+      const checkGoogle = () => {
+        if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+          console.log('✅ Google Identity Services available');
+          console.log('About to call initCodeClient with client_id:', clientId);
+          
+          const client = window.google.accounts.oauth2.initCodeClient({
+            client_id: clientId,
+            scope: 'email profile openid',
+            callback: async (response) => {
+              console.log('Google callback response:', response);
+              if (response.code) {
+                console.log('API Base URL:', config.public.apiBase);
+                try {
+                  const res = await fetch(`${config.public.apiBase}/auth/google`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: response.code }),
+                  });
+                  
                   if (!res.ok) {
                     const errorData = await res.json();
-                    throw new Error(errorData.error || `API error: ${res.status}`);
+                    reject(new Error(errorData.error || `API error: ${res.status}`));
+                    return;
                   }
-                  return res.json();
-                })
-                .then(async (data) => {
+                  
+                  const data = await res.json();
                   if (data.token) {
                     setToken(data.token);
                     resolve({ token: data.token, needsProfileCompletion: data.needs_profile_completion });
                   } else {
-                    // Ensure rejection is always with an Error object
                     reject(new Error(data.error || 'Failed to get token'));
                   }
-                })
-                .catch((err) => {
+                } catch (err) {
                   console.error('Error during Google auth API call:', err);
-                  reject(err); // Propagate the error
-                });
-            } else {
-              reject(new Error('No code in response')); // Ensure rejection is always with an Error object
-            }
-          },
-        }).requestCode();
-      });
+                  reject(err);
+                }
+              } else {
+                reject(new Error('No code in response'));
+              }
+            },
+          });
+          
+          console.log('✅ Google OAuth client initialized, requesting code...');
+          client.requestCode();
+        } else {
+          console.log('⏳ Waiting for Google Identity Services to load...');
+          setTimeout(checkGoogle, 100);
+        }
+      };
+      
+      checkGoogle();
     });
   };
 

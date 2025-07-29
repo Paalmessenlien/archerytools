@@ -69,7 +69,9 @@
       "Bash(./docker-deploy.sh:*)",
       "Bash(sed:*)",
       "WebFetch(domain:github.com)",
-      "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh restart)"
+      "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh restart)",
+      "Bash(node:*)",
+      "Bash(ln:*)"
     ],
     "deny": []
   }

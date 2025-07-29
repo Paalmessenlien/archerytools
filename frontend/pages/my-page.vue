@@ -1209,6 +1209,12 @@ const closeArrowSearchModal = () => {
 
 const handleAddArrow = async (arrowData) => {
   try {
+    // Check if a bow setup is selected
+    if (!selectedBowSetup.value) {
+      alert('Please select a bow setup first before adding arrows.');
+      return;
+    }
+    
     // Create the API payload
     const apiData = {
       arrow_id: arrowData.arrow.id,
