@@ -178,6 +178,21 @@ wait_for_health() {
         
         if [ $attempt -eq $max_attempts ]; then
             log_error "Services failed to become healthy within timeout"
+            log_error "Showing container logs for diagnosis:"
+            echo ""
+            
+            # Show logs for unhealthy services
+            for service in $services; do
+                if [[ "$service" != "db-verifier" ]]; then
+                    local health=$(docker-compose -f "$COMPOSE_FILE" ps -q "$service" | xargs -r docker inspect --format='{{.State.Health.Status}}' 2>/dev/null || echo "unhealthy")
+                    if [ "$health" != "healthy" ]; then
+                        log_error "=== $service logs ==="
+                        docker-compose -f "$COMPOSE_FILE" logs --tail=20 "$service"
+                        echo ""
+                    fi
+                fi
+            done
+            
             return 1
         fi
         
