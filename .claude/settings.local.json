@@ -68,7 +68,8 @@
       "Bash(pgrep:*)",
       "Bash(./docker-deploy.sh:*)",
       "Bash(sed:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh restart)"
     ],
     "deny": []
   }

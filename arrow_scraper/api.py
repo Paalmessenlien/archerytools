@@ -1600,6 +1600,366 @@ def check_admin_status(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== GUIDE WALKTHROUGH API ENDPOINTS =====
+
+@app.route('/api/guides', methods=['GET'])
+def get_available_guides():
+    """Get list of available guides for walkthrough"""
+    guides = [
+        {
+            'id': 'paper-tuning',
+            'name': 'Paper Tuning Guide',
+            'description': 'Fine-tune your bow for perfect arrow flight through systematic paper testing',
+            'type': 'tuning',
+            'difficulty': 'intermediate',
+            'estimated_time': 25,
+            'total_steps': 8,
+            'icon': 'arrows-alt-h',
+            'color': 'indigo'
+        },
+        {
+            'id': 'rest-adjustment',
+            'name': 'Rest Adjustment',
+            'description': 'Optimize arrow rest position for perfect clearance',
+            'type': 'tuning',
+            'difficulty': 'beginner',
+            'estimated_time': 15,
+            'total_steps': 6,
+            'icon': 'wrench',
+            'color': 'yellow'
+        },
+        {
+            'id': 'sight-setup',
+            'name': 'Sight Setup & Tuning',
+            'description': 'Master bow sight installation and calibration',
+            'type': 'setup',
+            'difficulty': 'beginner',
+            'estimated_time': 20,
+            'total_steps': 7,
+            'icon': 'bullseye',
+            'color': 'purple'
+        }
+    ]
+    return jsonify({'guides': guides})
+
+@app.route('/api/guide-sessions', methods=['POST'])
+@token_required
+def start_guide_session(current_user):
+    """Start a new guide walkthrough session"""
+    conn = None
+    try:
+        data = request.get_json()
+        guide_name = data.get('guide_name')
+        guide_type = data.get('guide_type')
+        bow_setup_id = data.get('bow_setup_id')
+        total_steps = data.get('total_steps', 1)
+        
+        if not guide_name or not guide_type:
+            return jsonify({'error': 'Guide name and type are required'}), 400
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify bow setup belongs to user if provided
+        if bow_setup_id:
+            cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?', 
+                         (bow_setup_id, current_user['id']))
+            if not cursor.fetchone():
+                return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Create new guide session
+        cursor.execute('''
+            INSERT INTO guide_sessions (user_id, bow_setup_id, guide_name, guide_type, total_steps)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (current_user['id'], bow_setup_id, guide_name, guide_type, total_steps))
+        
+        session_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'session_id': session_id,
+            'message': 'Guide session started successfully'
+        })
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions/<int:session_id>/steps', methods=['POST'])
+@token_required
+def record_guide_step(current_user, session_id):
+    """Record the result of a guide step"""
+    conn = None
+    try:
+        data = request.get_json()
+        step_number = data.get('step_number')
+        step_name = data.get('step_name')
+        result_type = data.get('result_type')
+        result_value = data.get('result_value')
+        measurements = data.get('measurements')
+        adjustments_made = data.get('adjustments_made')
+        notes = data.get('notes')
+        
+        if not step_number or not step_name:
+            return jsonify({'error': 'Step number and name are required'}), 400
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify session belongs to user
+        cursor.execute('SELECT id FROM guide_sessions WHERE id = ? AND user_id = ?', 
+                     (session_id, current_user['id']))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        # Record step result
+        cursor.execute('''
+            INSERT INTO guide_step_results 
+            (session_id, step_number, step_name, result_type, result_value, measurements, adjustments_made, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, step_number, step_name, result_type, result_value, 
+              measurements, adjustments_made, notes))
+        
+        # Update session current step
+        cursor.execute('UPDATE guide_sessions SET current_step = ? WHERE id = ?', 
+                     (step_number + 1, session_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Step result recorded successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions/<int:session_id>/complete', methods=['POST'])
+@token_required
+def complete_guide_session(current_user, session_id):
+    """Mark a guide session as completed"""
+    conn = None
+    try:
+        data = request.get_json()
+        notes = data.get('notes', '')
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify session belongs to user
+        cursor.execute('SELECT id FROM guide_sessions WHERE id = ? AND user_id = ?', 
+                     (session_id, current_user['id']))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        # Mark session as completed
+        cursor.execute('''
+            UPDATE guide_sessions 
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP, notes = ?
+            WHERE id = ?
+        ''', (notes, session_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Guide session completed successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions', methods=['GET'])
+@token_required
+def get_guide_sessions(current_user):
+    """Get user's guide session history"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get sessions with bow setup info
+        cursor.execute('''
+            SELECT gs.*, bs.name as bow_name, bs.bow_type,
+                   COUNT(gsr.id) as completed_steps
+            FROM guide_sessions gs
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            LEFT JOIN guide_step_results gsr ON gs.id = gsr.session_id
+            WHERE gs.user_id = ?
+            GROUP BY gs.id
+            ORDER BY gs.started_at DESC
+        ''', (current_user['id'],))
+        
+        sessions = []
+        for row in cursor.fetchall():
+            session = dict(row)
+            sessions.append(session)
+        
+        conn.close()
+        
+        return jsonify({'sessions': sessions})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions/<int:session_id>', methods=['GET'])
+@token_required
+def get_guide_session_details(current_user, session_id):
+    """Get detailed information about a guide session"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get session info
+        cursor.execute('''
+            SELECT gs.*, bs.name as bow_name, bs.bow_type, bs.draw_weight, bs.draw_length
+            FROM guide_sessions gs
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.id = ? AND gs.user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        # Get step results
+        cursor.execute('''
+            SELECT * FROM guide_step_results 
+            WHERE session_id = ? 
+            ORDER BY step_number
+        ''', (session_id,))
+        
+        steps = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            'session': dict(session),
+            'steps': steps
+        })
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tuning-history', methods=['POST'])
+@token_required
+def record_tuning_adjustment(current_user):
+    """Record a tuning adjustment to history"""
+    conn = None
+    try:
+        data = request.get_json()
+        bow_setup_id = data.get('bow_setup_id')
+        guide_session_id = data.get('guide_session_id')
+        adjustment_type = data.get('adjustment_type')
+        before_value = data.get('before_value')
+        after_value = data.get('after_value')
+        improvement_score = data.get('improvement_score')
+        confidence_rating = data.get('confidence_rating')
+        shooting_distance = data.get('shooting_distance')
+        conditions = data.get('conditions')
+        
+        if not adjustment_type:
+            return jsonify({'error': 'Adjustment type is required'}), 400
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify bow setup belongs to user if provided
+        if bow_setup_id:
+            cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?', 
+                         (bow_setup_id, current_user['id']))
+            if not cursor.fetchone():
+                return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Record tuning adjustment
+        cursor.execute('''
+            INSERT INTO tuning_history 
+            (user_id, bow_setup_id, guide_session_id, adjustment_type, before_value, 
+             after_value, improvement_score, confidence_rating, shooting_distance, conditions)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (current_user['id'], bow_setup_id, guide_session_id, adjustment_type, 
+              before_value, after_value, improvement_score, confidence_rating, 
+              shooting_distance, conditions))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Tuning adjustment recorded successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tuning-history', methods=['GET'])
+@token_required
+def get_tuning_history(current_user):
+    """Get user's tuning adjustment history"""
+    conn = None
+    try:
+        bow_setup_id = request.args.get('bow_setup_id')
+        limit = request.args.get('limit', 50)
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Build query
+        query = '''
+            SELECT th.*, bs.name as bow_name, bs.bow_type, gs.guide_name
+            FROM tuning_history th
+            LEFT JOIN bow_setups bs ON th.bow_setup_id = bs.id
+            LEFT JOIN guide_sessions gs ON th.guide_session_id = gs.id
+            WHERE th.user_id = ?
+        '''
+        params = [current_user['id']]
+        
+        if bow_setup_id:
+            query += ' AND th.bow_setup_id = ?'
+            params.append(bow_setup_id)
+        
+        query += ' ORDER BY th.created_at DESC LIMIT ?'
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        history = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({'history': history})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
 # Configuration and setup
 if __name__ == '__main__':
     # Development server

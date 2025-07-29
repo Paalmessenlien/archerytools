@@ -81,6 +81,63 @@ class UserDatabase:
                 )
             """)
             
+            # Create guide_sessions table for tracking guide walkthroughs
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS guide_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    bow_setup_id INTEGER,
+                    guide_name TEXT NOT NULL,
+                    guide_type TEXT NOT NULL,
+                    status TEXT DEFAULT 'in_progress',
+                    current_step INTEGER DEFAULT 1,
+                    total_steps INTEGER,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    completed_at TIMESTAMP,
+                    notes TEXT,
+                    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    FOREIGN KEY (bow_setup_id) REFERENCES bow_setups (id) ON DELETE SET NULL
+                )
+            """)
+            
+            # Create guide_step_results table for tracking individual step results
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS guide_step_results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    step_number INTEGER NOT NULL,
+                    step_name TEXT NOT NULL,
+                    result_type TEXT,
+                    result_value TEXT,
+                    measurements TEXT,
+                    adjustments_made TEXT,
+                    notes TEXT,
+                    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (session_id) REFERENCES guide_sessions (id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Create tuning_history table for tracking changes over time
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS tuning_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    bow_setup_id INTEGER,
+                    guide_session_id INTEGER,
+                    adjustment_type TEXT NOT NULL,
+                    before_value TEXT,
+                    after_value TEXT,
+                    improvement_score INTEGER,
+                    confidence_rating INTEGER,
+                    shooting_distance REAL,
+                    conditions TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    FOREIGN KEY (bow_setup_id) REFERENCES bow_setups (id) ON DELETE SET NULL,
+                    FOREIGN KEY (guide_session_id) REFERENCES guide_sessions (id) ON DELETE SET NULL
+                )
+            """)
+            
             conn.commit()
             
             # Run migration to add new columns if they don't exist
