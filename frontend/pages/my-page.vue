@@ -427,6 +427,38 @@
 
                   <!-- Recurve Bow Configuration -->
                   <div v-else-if="newSetup.bow_type === 'recurve'" class="space-y-4">
+                    <!-- Bow Usage Selection -->
+                    <div class="mb-4">
+                      <md-filled-select
+                        label="Bow Usage Style"
+                        :value="newSetup.bow_usage || ''"
+                        @change="newSetup.bow_usage = $event.target.value"
+                        class="w-full"
+                      >
+                        <md-select-option value="">
+                          <div slot="headline">Select Usage Style</div>
+                        </md-select-option>
+                        <md-select-option value="Olympic">
+                          <div slot="headline">Olympic (Target with sight)</div>
+                        </md-select-option>
+                        <md-select-option value="Barebow">
+                          <div slot="headline">Barebow (No sight, instinctive)</div>
+                        </md-select-option>
+                        <md-select-option value="Traditional">
+                          <div slot="headline">Traditional (Historical style)</div>
+                        </md-select-option>
+                        <md-select-option value="Field">
+                          <div slot="headline">Field Archery</div>
+                        </md-select-option>
+                        <md-select-option value="3D">
+                          <div slot="headline">3D Competition</div>
+                        </md-select-option>
+                        <md-select-option value="Other">
+                          <div slot="headline">Other</div>
+                        </md-select-option>
+                      </md-filled-select>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <!-- Riser Brand Selection -->
                       <div>
@@ -479,6 +511,18 @@
                           required
                         >
                           <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
+                        
+                        <!-- Riser Model Name -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.riser_brand"
+                          class="w-full mt-2"
+                          :value="newSetup.riser_model || ''"
+                          @input="newSetup.riser_model = $event.target.value"
+                          label="Riser Model Name"
+                          placeholder="e.g., Formula X, Prodigy, Epic..."
+                        >
+                          <i class="fas fa-tag" slot="leading-icon" style="color: #6b7280;"></i>
                         </md-outlined-text-field>
                       </div>
                       
@@ -533,6 +577,18 @@
                           required
                         >
                           <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
+                        
+                        <!-- Limb Model Name -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.limb_brand"
+                          class="w-full mt-2"
+                          :value="newSetup.limb_model || ''"
+                          @input="newSetup.limb_model = $event.target.value"
+                          label="Limb Model Name"
+                          placeholder="e.g., Quattro, Inno Max, Veloce..."
+                        >
+                          <i class="fas fa-tag" slot="leading-icon" style="color: #6b7280;"></i>
                         </md-outlined-text-field>
                       </div>
                     </div>
@@ -902,6 +958,9 @@ const newSetup = ref({
   limb_brand: '',
   custom_limb_brand: '',
   limb_fitting: 'ILF',
+  bow_usage: '', // New field for Olympic/Barebow/other
+  riser_model: '', // New field for riser model name
+  limb_model: '', // New field for limb model name
   // Longbow specific
   bow_brand: '',
   custom_bow_brand: '',
@@ -1004,6 +1063,9 @@ const openAddSetupModal = () => {
     limb_brand: '',
     custom_limb_brand: '',
     limb_fitting: 'ILF',
+    bow_usage: '', // New field for Olympic/Barebow/other
+    riser_model: '', // New field for riser model name
+    limb_model: '', // New field for limb model name
     // Longbow specific
     bow_brand: '',
     custom_bow_brand: '',
