@@ -67,12 +67,14 @@ class UserDatabase:
                     bow_type TEXT NOT NULL,
                     draw_weight REAL NOT NULL,
                     draw_length REAL NOT NULL,
-                    arrow_length REAL,
-                    point_weight REAL,
                     nock_weight REAL,
                     fletching_weight REAL,
                     insert_weight REAL,
                     description TEXT,
+                    bow_usage TEXT,
+                    riser_model TEXT,
+                    limb_model TEXT,
+                    compound_model TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )

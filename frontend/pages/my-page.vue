@@ -410,6 +410,18 @@
                         >
                           <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
                         </md-outlined-text-field>
+                        
+                        <!-- Compound Model Name -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.brand"
+                          class="w-full mt-2"
+                          :value="newSetup.compound_model || ''"
+                          @input="newSetup.compound_model = $event.target.value"
+                          label="Bow Model Name"
+                          placeholder="e.g., RX-7 Ultra, Halon X, V3X..."
+                        >
+                          <i class="fas fa-tag" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
                       </div>
                       
                       <md-outlined-text-field 
@@ -951,6 +963,7 @@ const newSetup = ref({
   // Compound specific
   brand: '',
   custom_brand: '',
+  compound_model: '', // New field for compound bow model name
   ibo_speed: '',
   // Recurve specific
   riser_brand: '',
@@ -1056,6 +1069,7 @@ const openAddSetupModal = () => {
     // Compound specific
     brand: '',
     custom_brand: '',
+    compound_model: '', // New field for compound bow model name
     ibo_speed: '',
     // Recurve specific
     riser_brand: '',
