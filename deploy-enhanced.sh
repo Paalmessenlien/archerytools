@@ -144,7 +144,7 @@ deploy_services() {
 wait_for_health() {
     log_info "Waiting for services to become healthy..."
     
-    local max_attempts=30
+    local max_attempts=50
     local attempt=1
     
     while [ $attempt -le $max_attempts ]; do

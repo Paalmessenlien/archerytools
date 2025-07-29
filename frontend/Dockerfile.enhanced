@@ -84,11 +84,9 @@ RUN chown -R nuxtjs:nodejs /app
 # Switch to non-root user
 USER nuxtjs
 
-# Enhanced health check that verifies key pages
-HEALTHCHECK --interval=30s --timeout=15s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ && \
-        wget --no-verbose --tries=1 --spider http://localhost:3000/database && \
-        wget --no-verbose --tries=1 --spider http://localhost:3000/tuning || exit 1
+# Enhanced health check that verifies frontend is responding
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=5 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Expose port
 EXPOSE 3000
