@@ -7,8 +7,9 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     draw_weight: 45,
     draw_length: 28,
     bow_type: 'compound',
-    arrow_material: 'Carbon',
-    arrow_type: '',
+    arrow_length: 29,
+    point_weight: 125,
+    arrow_material: 'carbon',
     arrow_rest_type: 'drop-away',
     nock_type: 'pin',
     vane_type: 'plastic',
@@ -25,26 +26,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
   const isCompoundBow = computed(() => bowConfig.value.bow_type === 'compound')
   const isTraditionalBow = computed(() => ['longbow', 'traditional'].includes(bowConfig.value.bow_type))
   const arrowSetupDescription = computed(() => {
-    const nockTypes = {
-      'pin': 'Pin Nock',
-      'press-fit': 'Press-Fit',
-      'over-nock': 'Over Nock',
-      'lighted': 'Lighted Nock',
-      'half-moon': 'Half-Moon'
-    }
-    
-    const vaneTypes = {
-      'plastic': 'Plastic Vanes',
-      'feather': 'Natural Feathers',
-      'hybrid': 'Hybrid Vanes',
-      'blazer': 'Blazer Vanes',
-      'helical': 'Helical Vanes'
-    }
-    
-    const nockType = nockTypes[bowConfig.value.nock_type] || 'Pin Nock'
-    const vaneType = vaneTypes[bowConfig.value.vane_type] || 'Plastic Vanes'
-    
-    return `${nockType} / ${bowConfig.value.number_of_vanes}x ${bowConfig.value.vane_length}" ${vaneType}`
+    return `${bowConfig.value.arrow_length}" arrow with ${bowConfig.value.point_weight}gr point`
   })
 
   const configSummary = computed(() => {
@@ -79,7 +61,9 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       draw_weight: 45,
       draw_length: 28,
       bow_type: 'compound',
-      arrow_material: 'Carbon',
+      arrow_length: 29,
+      point_weight: 125,
+      arrow_material: 'carbon',
       arrow_rest_type: 'drop-away',
       nock_type: 'pin',
       vane_type: 'plastic',
@@ -143,7 +127,8 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       bowConfig.value.draw_weight,
       bowConfig.value.draw_length,
       bowConfig.value.bow_type,
-      bowConfig.value.arrow_material
+      bowConfig.value.arrow_length,
+      bowConfig.value.point_weight
     ]
   })
 

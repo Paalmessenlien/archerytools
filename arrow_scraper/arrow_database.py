@@ -220,6 +220,10 @@ class ArrowDatabase:
             inner_diameter REAL,
             diameter_category TEXT,  -- Categorized diameter classification
             length_options TEXT,  -- JSON array of available lengths
+            wall_thickness REAL,
+            insert_weight_range TEXT,
+            nock_size TEXT,
+            notes TEXT,
             straightness_tolerance TEXT,
             weight_tolerance TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,

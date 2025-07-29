@@ -47,15 +47,16 @@ export interface ArrowSpecification {
 
 export interface BowConfiguration {
   draw_weight: number
+  draw_length: number
   bow_type: 'compound' | 'recurve' | 'longbow' | 'traditional'
-  arrow_material: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
-  arrow_type?: string
+  arrow_length: number
+  point_weight: number
+  arrow_material?: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
   arrow_rest_type?: 'drop-away' | 'whisker-biscuit' | 'blade'
-  nock_type: 'pin' | 'press-fit' | 'over-nock' | 'lighted' | 'half-moon'
-  vane_type: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
-  vane_length: number
-  number_of_vanes: number
-  // Note: draw_length removed - now part of user profile
+  nock_type?: 'pin' | 'press-fit' | 'over-nock' | 'lighted' | 'half-moon'
+  vane_type?: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
+  vane_length?: number
+  number_of_vanes?: number
 }
 
 export interface ArrowConfiguration {
