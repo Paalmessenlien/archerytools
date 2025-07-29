@@ -345,50 +345,189 @@
                   </h4>
 
                   <!-- Compound Bow Configuration -->
-                  <div v-if="newSetup.bow_type === 'compound'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <md-outlined-text-field 
-                      class="w-full"
-                      :value="newSetup.brand || ''"
-                      @input="newSetup.brand = $event.target.value"
-                      label="Bow Brand"
-                      placeholder="e.g., Hoyt, Mathews, PSE..."
-                    >
-                      <i class="fas fa-industry" slot="leading-icon" style="color: #6b7280;"></i>
-                    </md-outlined-text-field>
-                    
-                    <md-outlined-text-field 
-                      class="w-full"
-                      :value="newSetup.ibo_speed || ''"
-                      @input="newSetup.ibo_speed = parseInt($event.target.value) || ''"
-                      label="IBO Speed (fps)"
-                      type="number"
-                      placeholder="e.g., 320, 340..."
-                    >
-                      <i class="fas fa-tachometer-alt" slot="leading-icon" style="color: #6b7280;"></i>
-                    </md-outlined-text-field>
+                  <div v-if="newSetup.bow_type === 'compound'" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <!-- Compound Brand Selection -->
+                      <div>
+                        <md-filled-select
+                          label="Bow Brand"
+                          :value="newSetup.brand || ''"
+                          @change="handleBrandSelection('brand', $event.target.value)"
+                          class="w-full"
+                        >
+                          <md-select-option value="">
+                            <div slot="headline">Select Brand</div>
+                          </md-select-option>
+                          <md-select-option value="Hoyt">
+                            <div slot="headline">Hoyt</div>
+                          </md-select-option>
+                          <md-select-option value="Mathews">
+                            <div slot="headline">Mathews</div>
+                          </md-select-option>
+                          <md-select-option value="PSE">
+                            <div slot="headline">PSE</div>
+                          </md-select-option>
+                          <md-select-option value="Bowtech">
+                            <div slot="headline">Bowtech</div>
+                          </md-select-option>
+                          <md-select-option value="Prime">
+                            <div slot="headline">Prime</div>
+                          </md-select-option>
+                          <md-select-option value="Elite">
+                            <div slot="headline">Elite</div>
+                          </md-select-option>
+                          <md-select-option value="Bear">
+                            <div slot="headline">Bear</div>
+                          </md-select-option>
+                          <md-select-option value="Diamond">
+                            <div slot="headline">Diamond</div>
+                          </md-select-option>
+                          <md-select-option value="Mission">
+                            <div slot="headline">Mission</div>
+                          </md-select-option>
+                          <md-select-option value="Other">
+                            <div slot="headline">Other...</div>
+                          </md-select-option>
+                        </md-filled-select>
+                        
+                        <!-- Custom brand input when "Other" is selected -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.brand === 'Other'"
+                          class="w-full mt-2"
+                          :value="newSetup.custom_brand || ''"
+                          @input="newSetup.custom_brand = $event.target.value"
+                          label="Custom Brand Name"
+                          placeholder="Enter brand name..."
+                          required
+                        >
+                          <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
+                      </div>
+                      
+                      <md-outlined-text-field 
+                        class="w-full"
+                        :value="newSetup.ibo_speed || ''"
+                        @input="newSetup.ibo_speed = parseInt($event.target.value) || ''"
+                        label="IBO Speed (fps)"
+                        type="number"
+                        placeholder="e.g., 320, 340..."
+                      >
+                        <i class="fas fa-tachometer-alt" slot="leading-icon" style="color: #6b7280;"></i>
+                      </md-outlined-text-field>
+                    </div>
                   </div>
 
                   <!-- Recurve Bow Configuration -->
-                  <div v-else-if="newSetup.bow_type === 'recurve'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <md-outlined-text-field 
-                      class="w-full"
-                      :value="newSetup.riser_brand || ''"
-                      @input="newSetup.riser_brand = $event.target.value"
-                      label="Riser Brand"
-                      placeholder="e.g., Hoyt, Win&Win, Uukha..."
-                    >
-                      <i class="fas fa-grip-vertical" slot="leading-icon" style="color: #6b7280;"></i>
-                    </md-outlined-text-field>
-                    
-                    <md-outlined-text-field 
-                      class="w-full"
-                      :value="newSetup.limb_brand || ''"
-                      @input="newSetup.limb_brand = $event.target.value"
-                      label="Limb Brand"
-                      placeholder="e.g., Hoyt, Border, Win&Win..."
-                    >
-                      <i class="fas fa-expand-arrows-alt" slot="leading-icon" style="color: #6b7280;"></i>
-                    </md-outlined-text-field>
+                  <div v-else-if="newSetup.bow_type === 'recurve'" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <!-- Riser Brand Selection -->
+                      <div>
+                        <md-filled-select
+                          label="Riser Brand"
+                          :value="newSetup.riser_brand || ''"
+                          @change="handleBrandSelection('riser_brand', $event.target.value)"
+                          class="w-full"
+                        >
+                          <md-select-option value="">
+                            <div slot="headline">Select Riser Brand</div>
+                          </md-select-option>
+                          <md-select-option value="Hoyt">
+                            <div slot="headline">Hoyt</div>
+                          </md-select-option>
+                          <md-select-option value="Win&Win">
+                            <div slot="headline">Win&Win</div>
+                          </md-select-option>
+                          <md-select-option value="Uukha">
+                            <div slot="headline">Uukha</div>
+                          </md-select-option>
+                          <md-select-option value="Samick">
+                            <div slot="headline">Samick</div>
+                          </md-select-option>
+                          <md-select-option value="Bernardini">
+                            <div slot="headline">Bernardini</div>
+                          </md-select-option>
+                          <md-select-option value="Border">
+                            <div slot="headline">Border</div>
+                          </md-select-option>
+                          <md-select-option value="Mybo">
+                            <div slot="headline">Mybo</div>
+                          </md-select-option>
+                          <md-select-option value="Fivics">
+                            <div slot="headline">Fivics</div>
+                          </md-select-option>
+                          <md-select-option value="Other">
+                            <div slot="headline">Other...</div>
+                          </md-select-option>
+                        </md-filled-select>
+                        
+                        <!-- Custom riser brand input -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.riser_brand === 'Other'"
+                          class="w-full mt-2"
+                          :value="newSetup.custom_riser_brand || ''"
+                          @input="newSetup.custom_riser_brand = $event.target.value"
+                          label="Custom Riser Brand"
+                          placeholder="Enter riser brand name..."
+                          required
+                        >
+                          <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
+                      </div>
+                      
+                      <!-- Limb Brand Selection -->
+                      <div>
+                        <md-filled-select
+                          label="Limb Brand"
+                          :value="newSetup.limb_brand || ''"
+                          @change="handleBrandSelection('limb_brand', $event.target.value)"
+                          class="w-full"
+                        >
+                          <md-select-option value="">
+                            <div slot="headline">Select Limb Brand</div>
+                          </md-select-option>
+                          <md-select-option value="Hoyt">
+                            <div slot="headline">Hoyt</div>
+                          </md-select-option>
+                          <md-select-option value="Win&Win">
+                            <div slot="headline">Win&Win</div>
+                          </md-select-option>
+                          <md-select-option value="Uukha">
+                            <div slot="headline">Uukha</div>
+                          </md-select-option>
+                          <md-select-option value="Border">
+                            <div slot="headline">Border</div>
+                          </md-select-option>
+                          <md-select-option value="Samick">
+                            <div slot="headline">Samick</div>
+                          </md-select-option>
+                          <md-select-option value="SF Archery">
+                            <div slot="headline">SF Archery</div>
+                          </md-select-option>
+                          <md-select-option value="Core">
+                            <div slot="headline">Core</div>
+                          </md-select-option>
+                          <md-select-option value="Fivics">
+                            <div slot="headline">Fivics</div>
+                          </md-select-option>
+                          <md-select-option value="Other">
+                            <div slot="headline">Other...</div>
+                          </md-select-option>
+                        </md-filled-select>
+                        
+                        <!-- Custom limb brand input -->
+                        <md-outlined-text-field 
+                          v-if="newSetup.limb_brand === 'Other'"
+                          class="w-full mt-2"
+                          :value="newSetup.custom_limb_brand || ''"
+                          @input="newSetup.custom_limb_brand = $event.target.value"
+                          label="Custom Limb Brand"
+                          placeholder="Enter limb brand name..."
+                          required
+                        >
+                          <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                        </md-outlined-text-field>
+                      </div>
+                    </div>
                     
                     <md-filled-select
                       label="Limb Fitting"
@@ -406,16 +545,59 @@
                   </div>
 
                   <!-- Longbow Configuration -->
-                  <div v-else-if="newSetup.bow_type === 'longbow'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <md-outlined-text-field 
-                      class="w-full"
-                      :value="newSetup.bow_brand || ''"
-                      @input="newSetup.bow_brand = $event.target.value"
-                      label="Bow Brand/Maker"
-                      placeholder="e.g., Howard Hill, Bear, Bodnik..."
-                    >
-                      <i class="fas fa-industry" slot="leading-icon" style="color: #6b7280;"></i>
-                    </md-outlined-text-field>
+                  <div v-else-if="newSetup.bow_type === 'longbow'" class="space-y-4">
+                    <div>
+                      <md-filled-select
+                        label="Bow Brand/Maker"
+                        :value="newSetup.bow_brand || ''"
+                        @change="handleBrandSelection('bow_brand', $event.target.value)"
+                        class="w-full"
+                      >
+                        <md-select-option value="">
+                          <div slot="headline">Select Brand/Maker</div>
+                        </md-select-option>
+                        <md-select-option value="Howard Hill">
+                          <div slot="headline">Howard Hill</div>
+                        </md-select-option>
+                        <md-select-option value="Bear">
+                          <div slot="headline">Bear</div>
+                        </md-select-option>
+                        <md-select-option value="Bodnik">
+                          <div slot="headline">Bodnik</div>
+                        </md-select-option>
+                        <md-select-option value="Black Widow">
+                          <div slot="headline">Black Widow</div>
+                        </md-select-option>
+                        <md-select-option value="Great Plains">
+                          <div slot="headline">Great Plains</div>
+                        </md-select-option>
+                        <md-select-option value="Three Rivers Archery">
+                          <div slot="headline">Three Rivers Archery</div>
+                        </md-select-option>
+                        <md-select-option value="Martin">
+                          <div slot="headline">Martin</div>
+                        </md-select-option>
+                        <md-select-option value="Samick">
+                          <div slot="headline">Samick</div>
+                        </md-select-option>
+                        <md-select-option value="Other">
+                          <div slot="headline">Other...</div>
+                        </md-select-option>
+                      </md-filled-select>
+                      
+                      <!-- Custom bow brand input -->
+                      <md-outlined-text-field 
+                        v-if="newSetup.bow_brand === 'Other'"
+                        class="w-full mt-2"
+                        :value="newSetup.custom_bow_brand || ''"
+                        @input="newSetup.custom_bow_brand = $event.target.value"
+                        label="Custom Brand/Maker Name"
+                        placeholder="Enter brand or maker name..."
+                        required
+                      >
+                        <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                      </md-outlined-text-field>
+                    </div>
                   </div>
 
                   <!-- Traditional Bow Configuration -->
@@ -435,26 +617,104 @@
                     </md-filled-select>
 
                     <!-- Two-piece specific fields -->
-                    <div v-if="newSetup.construction === 'two_piece'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <md-outlined-text-field 
-                        class="w-full"
-                        :value="newSetup.riser_brand || ''"
-                        @input="newSetup.riser_brand = $event.target.value"
-                        label="Riser Brand"
-                        placeholder="e.g., Samick, Bear, PSE..."
-                      >
-                        <i class="fas fa-grip-vertical" slot="leading-icon" style="color: #6b7280;"></i>
-                      </md-outlined-text-field>
-                      
-                      <md-outlined-text-field 
-                        class="w-full"
-                        :value="newSetup.limb_brand || ''"
-                        @input="newSetup.limb_brand = $event.target.value"
-                        label="Limb Brand"
-                        placeholder="e.g., Samick, Bear, PSE..."
-                      >
-                        <i class="fas fa-expand-arrows-alt" slot="leading-icon" style="color: #6b7280;"></i>
-                      </md-outlined-text-field>
+                    <div v-if="newSetup.construction === 'two_piece'" class="space-y-4">
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Traditional Riser Brand -->
+                        <div>
+                          <md-filled-select
+                            label="Riser Brand"
+                            :value="newSetup.riser_brand || ''"
+                            @change="handleBrandSelection('riser_brand', $event.target.value)"
+                            class="w-full"
+                          >
+                            <md-select-option value="">
+                              <div slot="headline">Select Riser Brand</div>
+                            </md-select-option>
+                            <md-select-option value="Samick">
+                              <div slot="headline">Samick</div>
+                            </md-select-option>
+                            <md-select-option value="Bear">
+                              <div slot="headline">Bear</div>
+                            </md-select-option>
+                            <md-select-option value="PSE">
+                              <div slot="headline">PSE</div>
+                            </md-select-option>
+                            <md-select-option value="Martin">
+                              <div slot="headline">Martin</div>
+                            </md-select-option>
+                            <md-select-option value="Black Widow">
+                              <div slot="headline">Black Widow</div>
+                            </md-select-option>
+                            <md-select-option value="Sage">
+                              <div slot="headline">Sage</div>
+                            </md-select-option>
+                            <md-select-option value="Other">
+                              <div slot="headline">Other...</div>
+                            </md-select-option>
+                          </md-filled-select>
+                          
+                          <!-- Custom traditional riser brand input -->
+                          <md-outlined-text-field 
+                            v-if="newSetup.riser_brand === 'Other'"
+                            class="w-full mt-2"
+                            :value="newSetup.custom_trad_riser_brand || ''"
+                            @input="newSetup.custom_trad_riser_brand = $event.target.value"
+                            label="Custom Riser Brand"
+                            placeholder="Enter riser brand name..."
+                            required
+                          >
+                            <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                          </md-outlined-text-field>
+                        </div>
+                        
+                        <!-- Traditional Limb Brand -->
+                        <div>
+                          <md-filled-select
+                            label="Limb Brand"
+                            :value="newSetup.limb_brand || ''"
+                            @change="handleBrandSelection('limb_brand', $event.target.value)"
+                            class="w-full"
+                          >
+                            <md-select-option value="">
+                              <div slot="headline">Select Limb Brand</div>
+                            </md-select-option>
+                            <md-select-option value="Samick">
+                              <div slot="headline">Samick</div>
+                            </md-select-option>
+                            <md-select-option value="Bear">
+                              <div slot="headline">Bear</div>
+                            </md-select-option>
+                            <md-select-option value="PSE">
+                              <div slot="headline">PSE</div>
+                            </md-select-option>
+                            <md-select-option value="Martin">
+                              <div slot="headline">Martin</div>
+                            </md-select-option>
+                            <md-select-option value="Black Widow">
+                              <div slot="headline">Black Widow</div>
+                            </md-select-option>
+                            <md-select-option value="Sage">
+                              <div slot="headline">Sage</div>
+                            </md-select-option>
+                            <md-select-option value="Other">
+                              <div slot="headline">Other...</div>
+                            </md-select-option>
+                          </md-filled-select>
+                          
+                          <!-- Custom traditional limb brand input -->
+                          <md-outlined-text-field 
+                            v-if="newSetup.limb_brand === 'Other'"
+                            class="w-full mt-2"
+                            :value="newSetup.custom_trad_limb_brand || ''"
+                            @input="newSetup.custom_trad_limb_brand = $event.target.value"
+                            label="Custom Limb Brand"
+                            placeholder="Enter limb brand name..."
+                            required
+                          >
+                            <i class="fas fa-edit" slot="leading-icon" style="color: #6b7280;"></i>
+                          </md-outlined-text-field>
+                        </div>
+                      </div>
                       
                       <md-filled-select
                         label="Limb Fitting"
@@ -671,15 +931,21 @@ const newSetup = ref({
   description: '',
   // Compound specific
   brand: '',
+  custom_brand: '',
   ibo_speed: '',
   // Recurve specific
   riser_brand: '',
+  custom_riser_brand: '',
   limb_brand: '',
+  custom_limb_brand: '',
   limb_fitting: 'ILF',
   // Longbow specific
   bow_brand: '',
+  custom_bow_brand: '',
   // Traditional specific
   construction: 'one_piece',
+  custom_trad_riser_brand: '',
+  custom_trad_limb_brand: '',
 });
 
 const openEditModal = () => {
@@ -747,15 +1013,21 @@ const openAddSetupModal = () => {
     description: '',
     // Compound specific
     brand: '',
+    custom_brand: '',
     ibo_speed: '',
     // Recurve specific
     riser_brand: '',
+    custom_riser_brand: '',
     limb_brand: '',
+    custom_limb_brand: '',
     limb_fitting: 'ILF',
     // Longbow specific
     bow_brand: '',
+    custom_bow_brand: '',
     // Traditional specific
     construction: 'one_piece',
+    custom_trad_riser_brand: '',
+    custom_trad_limb_brand: '',
   };
   addSetupError.value = null;
   isAddingSetup.value = true;
@@ -765,10 +1037,46 @@ const closeAddSetupModal = () => {
   isAddingSetup.value = false;
 };
 
+const handleBrandSelection = (fieldName, value) => {
+  newSetup.value[fieldName] = value;
+  // Clear custom field when switching away from "Other"
+  if (value !== 'Other') {
+    const customFields = {
+      'brand': 'custom_brand',
+      'riser_brand': 'custom_riser_brand', 
+      'limb_brand': 'custom_limb_brand',
+      'bow_brand': 'custom_bow_brand'
+    };
+    
+    const traditionalFields = {
+      'riser_brand': 'custom_trad_riser_brand',
+      'limb_brand': 'custom_trad_limb_brand'
+    };
+    
+    if (customFields[fieldName]) {
+      newSetup.value[customFields[fieldName]] = '';
+    }
+    
+    // Clear traditional custom fields
+    if (newSetup.value.bow_type === 'traditional' && traditionalFields[fieldName]) {
+      newSetup.value[traditionalFields[fieldName]] = '';
+    }
+  }
+};
+
 const saveBowSetup = async () => {
   isSavingSetup.value = true;
   addSetupError.value = null;
   try {
+    // Handle brand selection logic - use custom brand if "Other" is selected
+    const getBrandValue = (brandField, customField) => {
+      const selectedBrand = newSetup.value[brandField];
+      if (selectedBrand === 'Other') {
+        return newSetup.value[customField] || null;
+      }
+      return selectedBrand || null;
+    };
+
     // Send data in the flat format expected by the API
     const setupData = {
       name: newSetup.value.name,
@@ -779,13 +1087,17 @@ const saveBowSetup = async () => {
       // Include the new configurable fields
       arrow_length: Number(newSetup.value.arrow_length),
       point_weight: Number(newSetup.value.point_weight),
-      // Bow type specific fields
-      brand: newSetup.value.brand || null,
+      // Bow type specific fields with custom brand handling
+      brand: getBrandValue('brand', 'custom_brand'),
       ibo_speed: newSetup.value.ibo_speed ? Number(newSetup.value.ibo_speed) : null,
-      riser_brand: newSetup.value.riser_brand || null,
-      limb_brand: newSetup.value.limb_brand || null,
+      riser_brand: newSetup.value.bow_type === 'traditional' 
+        ? getBrandValue('riser_brand', 'custom_trad_riser_brand')
+        : getBrandValue('riser_brand', 'custom_riser_brand'),
+      limb_brand: newSetup.value.bow_type === 'traditional'
+        ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
+        : getBrandValue('limb_brand', 'custom_limb_brand'),
       limb_fitting: newSetup.value.limb_fitting || null,
-      bow_brand: newSetup.value.bow_brand || null,
+      bow_brand: getBrandValue('bow_brand', 'custom_bow_brand'),
       construction: newSetup.value.construction || null,
     };
 
