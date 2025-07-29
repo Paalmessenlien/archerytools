@@ -37,7 +37,7 @@
                     to="/my-page"
                     class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
                   >
-                    My Page
+                    My Setup
                   </NuxtLink>
                   <CustomButton
                     v-if="user"
@@ -112,7 +112,7 @@
             @click="closeMobileMenu"
             class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            My Page
+            My Setup
           </NuxtLink>
           <NuxtLink
             v-if="user && isAdmin"
@@ -220,7 +220,7 @@
                   <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  <span class="hidden sm:block">My Page</span>
+                  <span class="hidden sm:block">My Setup</span>
                 </NuxtLink>
 
                 <NuxtLink
