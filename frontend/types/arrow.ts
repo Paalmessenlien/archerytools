@@ -1,5 +1,20 @@
 // Arrow Types and Interfaces
 
+export interface UserProfile {
+  id: number
+  google_id: string
+  email: string
+  name?: string
+  profile_picture_url?: string
+  is_admin: boolean
+  draw_length: number
+  skill_level: 'beginner' | 'intermediate' | 'advanced'
+  shooting_style: 'target' | 'hunting' | 'traditional' | '3d'
+  preferred_manufacturers: string[]
+  notes?: string
+  created_at: string
+}
+
 export interface SpineSpecification {
   spine: number
   outer_diameter: number
@@ -32,7 +47,6 @@ export interface ArrowSpecification {
 
 export interface BowConfiguration {
   draw_weight: number
-  draw_length: number
   bow_type: 'compound' | 'recurve' | 'longbow' | 'traditional'
   arrow_material: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
   arrow_type?: string
@@ -41,6 +55,7 @@ export interface BowConfiguration {
   vane_type: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
   vane_length: number
   number_of_vanes: number
+  // Note: draw_length removed - now part of user profile
 }
 
 export interface ArrowConfiguration {
@@ -95,7 +110,7 @@ export interface ArrowRecommendation {
 
 export interface TuningSession {
   id: string
-  archer_name: string
+  archer_profile: UserProfile
   bow_config: BowConfiguration
   recommended_spine: number | string
   recommended_arrows: ArrowRecommendation[]

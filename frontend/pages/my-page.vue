@@ -8,47 +8,189 @@
     </div>
 
     <div v-else-if="user">
-      <div>
-        <p class="text-gray-700 dark:text-gray-300 mb-2">
-          Welcome, <span class="font-medium">{{ user.name || user.email }}</span>!
-        </p>
-        <p v-if="user.email" class="text-gray-600 dark:text-gray-400 mb-4">
-          Email: {{ user.email }}
-        </p>
-        <div class="flex space-x-4 mb-8">
-          <CustomButton
-            @click="openEditModal"
-            variant="filled"
-            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-          >
-            Edit Profile
-          </CustomButton>
-          <CustomButton
-            @click="logout"
-            variant="outlined"
-            class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
-          >
-            Logout
-          </CustomButton>
+      <!-- Archer Profile Section -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Archer Profile</h2>
+          <div class="flex space-x-3">
+            <CustomButton
+              @click="openEditModal"
+              variant="filled"
+              class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+            >
+              Edit Profile
+            </CustomButton>
+            <CustomButton
+              @click="logout"
+              variant="outlined"
+              class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
+            >
+              Logout
+            </CustomButton>
+          </div>
         </div>
 
-        <!-- Edit Profile Modal -->
-        <div v-if="isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-lg">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Edit Profile</h3>
-            <form @submit.prevent="saveProfile">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Basic Info -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Basic Information</h3>
+            <div class="space-y-3">
+              <div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.name || 'Not set' }}</p>
+              </div>
+              <div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Email:</span>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.email }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Archer Specifications -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Physical Specifications</h3>
+            <div class="space-y-3">
+              <div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Draw Length:</span>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.draw_length || 28.0 }}"</p>
+              </div>
+              <div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Skill Level:</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="getSkillLevelClass(user.skill_level)">
+                  {{ formatSkillLevel(user.skill_level) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shooting Preferences -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Shooting Preferences</h3>
+            <div class="space-y-3">
+              <div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Primary Style:</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="getShootingStyleClass(user.shooting_style)">
+                  {{ formatShootingStyle(user.shooting_style) }}
+                </span>
+              </div>
+              <div v-if="user.preferred_manufacturers && user.preferred_manufacturers.length > 0">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Preferred Brands:</span>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  <span v-for="brand in user.preferred_manufacturers" :key="brand"
+                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {{ brand }}
+                  </span>
+                </div>
+              </div>
+              <div v-if="user.notes">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Notes:</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ user.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Profile Modal -->
+      <div v-if="isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-screen overflow-y-auto">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Edit Archer Profile</h3>
+          <form @submit.prevent="saveProfile">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Basic Information -->
+                <div class="mb-4">
+                  <label for="editedName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="editedName"
+                    v-model="editedName"
+                    class="form-input w-full"
+                    required
+                  />
+                </div>
+
+                <!-- Skill Level -->
+                <div class="mb-4">
+                  <label for="skillLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Skill Level
+                  </label>
+                  <select id="skillLevel" v-model="editedSkillLevel" class="form-select w-full" required>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+
+                <!-- Draw Length -->
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editedDrawLength }}"</span>
+                  </label>
+                  <md-slider
+                    min="20"
+                    max="36"
+                    step="0.25"
+                    :value="editedDrawLength"
+                    @input="editedDrawLength = parseFloat($event.target.value)"
+                    labeled
+                    ticks
+                    class="w-full"
+                  ></md-slider>
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>20"</span>
+                    <span>36"</span>
+                  </div>
+                </div>
+
+                <!-- Shooting Style -->
+                <div class="mb-4">
+                  <label for="shootingStyle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Primary Shooting Style
+                  </label>
+                  <select id="shootingStyle" v-model="editedShootingStyle" class="form-select w-full" required>
+                    <option value="target">Target</option>
+                    <option value="hunting">Hunting</option>
+                    <option value="traditional">Traditional</option>
+                    <option value="3d">3D</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Preferred Manufacturers -->
               <div class="mb-4">
-                <label for="editedName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Full Name
+                <label for="preferredManufacturers" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Preferred Arrow Manufacturers (comma-separated)
                 </label>
                 <input
                   type="text"
-                  id="editedName"
-                  v-model="editedName"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                  required
+                  id="preferredManufacturers"
+                  v-model="editedPreferredManufacturers"
+                  class="form-input w-full"
+                  placeholder="e.g., Easton, Gold Tip, Victory"
                 />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Enter manufacturer names separated by commas
+                </p>
               </div>
+
+              <!-- Notes -->
+              <div class="mb-6">
+                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  id="notes"
+                  v-model="editedNotes"
+                  class="form-textarea w-full"
+                  rows="3"
+                  placeholder="Additional notes about your archery preferences, goals, etc."
+                ></textarea>
+              </div>
+
               <div class="flex justify-end space-x-3">
                 <CustomButton
                   type="button"
@@ -70,11 +212,11 @@
               </div>
               <p v-if="editError" class="text-red-500 text-sm mt-3">{{ editError }}</p>
             </form>
-          </div>
         </div>
+      </div>
 
-        <!-- Bow Setups Section -->
-        <div class="mt-8">
+      <!-- Bow Setups Section -->
+      <div class="mt-8">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">My Bow Setups</h3>
 
           <div v-if="isLoadingSetups" class="text-center py-8">
@@ -95,7 +237,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   </CustomButton>
                 </div>
-                <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight }} lbs, Draw Length: {{ setup.draw_length }} "</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight }} lbs</p>
                 <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ setup.description }}</p>
               </div>
             </div>
@@ -109,7 +251,6 @@
               Add New Bow Setup
             </CustomButton>
           </div>
-        </div>
 
         <!-- Add/Edit Bow Setup Modal -->
         <div v-if="isAddingSetup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -150,26 +291,7 @@
                     <span>80 lbs</span>
                   </div>
                 </div>
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ newSetup.draw_length || 28 }}"</span>
-                  </label>
-                  <md-slider
-                    ref="drawLengthSlider"
-                    min="24"
-                    max="34"
-                    step="0.25"
-                    :value="newSetup.draw_length || 28"
-                    @input="newSetup.draw_length = parseFloat($event.target.value)"
-                    labeled
-                    ticks
-                    class="w-full"
-                  ></md-slider>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>24"</span>
-                    <span>34"</span>
-                  </div>
-                </div>
+                <!-- Draw length removed - now comes from archer profile -->
               </div>
               <div class="mb-4">
                 <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optional)</label>
@@ -224,8 +346,11 @@
             <p v-if="deleteSetupError" class="text-red-500 text-sm mt-3">{{ deleteSetupError }}</p>
           </div>
         </div>
+        <!-- End of Confirm Delete Modal -->
       </div>
+      <!-- End of Bow Setups Section -->
     </div>
+    <!-- End of v-else-if="user" section -->
 
     <div v-else>
       <p class="text-gray-700 dark:text-gray-300 mb-4">
@@ -251,6 +376,11 @@ const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSet
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
 const editedName = ref('');
+const editedDrawLength = ref(28.0);
+const editedSkillLevel = ref('intermediate');
+const editedShootingStyle = ref('target');
+const editedPreferredManufacturers = ref('');
+const editedNotes = ref('');
 const isSaving = ref(false);
 const editError = ref(null);
 
@@ -267,12 +397,16 @@ const newSetup = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
-  draw_length: 28,
   description: '',
 });
 
 const openEditModal = () => {
   editedName.value = user.value?.name || '';
+  editedDrawLength.value = user.value?.draw_length || 28.0;
+  editedSkillLevel.value = user.value?.skill_level || 'intermediate';
+  editedShootingStyle.value = user.value?.shooting_style || 'target';
+  editedPreferredManufacturers.value = (user.value?.preferred_manufacturers || []).join(', ');
+  editedNotes.value = user.value?.notes || '';
   isEditing.value = true;
   editError.value = null;
 };
@@ -285,7 +419,20 @@ const saveProfile = async () => {
   isSaving.value = true;
   editError.value = null;
   try {
-    await updateUserProfile(editedName.value);
+    // Parse preferred manufacturers from comma-separated string
+    const preferredManufacturers = editedPreferredManufacturers.value
+      .split(',')
+      .map(brand => brand.trim())
+      .filter(brand => brand.length > 0);
+    
+    await updateUserProfile({
+      name: editedName.value,
+      draw_length: editedDrawLength.value,
+      skill_level: editedSkillLevel.value,
+      shooting_style: editedShootingStyle.value,
+      preferred_manufacturers: preferredManufacturers,
+      notes: editedNotes.value
+    });
     closeEditModal();
   } catch (err) {
     console.error('Error saving profile:', err);
@@ -313,7 +460,6 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
-    draw_length: 28,
     description: '',
   };
   addSetupError.value = null;
@@ -365,6 +511,45 @@ const deleteSetup = async () => {
   } finally {
     isSavingSetup.value = false;
   }
+};
+
+// Helper functions for display formatting
+const formatSkillLevel = (level) => {
+  const levels = {
+    'beginner': 'Beginner',
+    'intermediate': 'Intermediate', 
+    'advanced': 'Advanced'
+  };
+  return levels[level] || level;
+};
+
+const formatShootingStyle = (style) => {
+  const styles = {
+    'target': 'Target',
+    'hunting': 'Hunting',
+    'traditional': 'Traditional',
+    '3d': '3D'
+  };
+  return styles[style] || style;
+};
+
+const getSkillLevelClass = (level) => {
+  const classes = {
+    'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'intermediate': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'advanced': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+  };
+  return classes[level] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+};
+
+const getShootingStyleClass = (style) => {
+  const classes = {
+    'target': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'hunting': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'traditional': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+    '3d': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+  };
+  return classes[style] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
 };
 
 onMounted(async () => {

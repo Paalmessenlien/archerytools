@@ -753,28 +753,74 @@ def google_auth():
 @app.route('/api/user', methods=['GET'])
 @token_required
 def get_user(current_user):
-    """Get current authenticated user's details"""
-    # The current_user object is passed by the token_required decorator
-    # It should contain at least 'id', 'email', and 'name' (if available)
+    """Get current authenticated user's details including archer profile"""
     # Convert SQLite Row object to dictionary for JSON serialization
-    return jsonify(dict(current_user))
+    user_dict = dict(current_user)
+    
+    # Convert preferred_manufacturers JSON string to list if it exists
+    if user_dict.get('preferred_manufacturers'):
+        try:
+            user_dict['preferred_manufacturers'] = json.loads(user_dict['preferred_manufacturers'])
+        except (json.JSONDecodeError, TypeError):
+            user_dict['preferred_manufacturers'] = []
+    else:
+        user_dict['preferred_manufacturers'] = []
+    
+    return jsonify(user_dict)
 
 @app.route('/api/user/profile', methods=['PUT'])
 @token_required
 def update_user_profile(current_user):
-    """Update current authenticated user's profile details"""
+    """Update current authenticated user's profile details including archer-specific fields"""
     from user_database import UserDatabase
     user_db = UserDatabase()
     data = request.get_json()
     
+    # Extract all possible fields from request
     name = data.get('name')
-    if not name:
-        return jsonify({'error': 'Name is required'}), 400
+    draw_length = data.get('draw_length')
+    skill_level = data.get('skill_level')
+    shooting_style = data.get('shooting_style')
+    preferred_manufacturers = data.get('preferred_manufacturers')
+    notes = data.get('notes')
+    
+    # Validate fields
+    if skill_level and skill_level not in ['beginner', 'intermediate', 'advanced']:
+        return jsonify({'error': 'Invalid skill level. Must be beginner, intermediate, or advanced'}), 400
+    
+    if shooting_style and shooting_style not in ['target', 'hunting', 'traditional', '3d']:
+        return jsonify({'error': 'Invalid shooting style. Must be target, hunting, traditional, or 3d'}), 400
+    
+    if draw_length and (draw_length < 20 or draw_length > 36):
+        return jsonify({'error': 'Draw length must be between 20 and 36 inches'}), 400
+    
+    # Convert preferred_manufacturers list to JSON string if provided
+    if preferred_manufacturers and isinstance(preferred_manufacturers, list):
+        preferred_manufacturers = json.dumps(preferred_manufacturers)
     
     try:
-        updated_user = user_db.update_user_profile(current_user['id'], name=name)
+        updated_user = user_db.update_user_profile(
+            current_user['id'], 
+            name=name,
+            draw_length=draw_length,
+            skill_level=skill_level,
+            shooting_style=shooting_style,
+            preferred_manufacturers=preferred_manufacturers,
+            notes=notes
+        )
+        
         if updated_user:
-            return jsonify(dict(updated_user))
+            # Convert preferred_manufacturers back to list for frontend
+            user_dict = dict(updated_user)
+            if user_dict.get('preferred_manufacturers'):
+                try:
+                    user_dict['preferred_manufacturers'] = json.loads(user_dict['preferred_manufacturers'])
+                except (json.JSONDecodeError, TypeError):
+                    user_dict['preferred_manufacturers'] = []
+            else:
+                user_dict['preferred_manufacturers'] = []
+            
+            return jsonify(user_dict)
         else:
             return jsonify({'error': 'Failed to update user profile'}), 500
     except Exception as e:

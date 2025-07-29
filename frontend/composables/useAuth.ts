@@ -95,7 +95,7 @@ export const useAuth = () => {
     }
   };
 
-  const updateUserProfile = async (name: string) => {
+  const updateUserProfile = async (profileData: any) => {
     if (!token.value) throw new Error('No authentication token found.');
 
     try {
@@ -105,7 +105,7 @@ export const useAuth = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token.value}`,
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(profileData),
       });
 
       if (res.ok) {
