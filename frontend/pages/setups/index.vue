@@ -8,6 +8,18 @@
         <p><strong>Bow Type:</strong> {{ setup.bow_type }}</p>
         <p><strong>Draw Weight:</strong> {{ setup.draw_weight }}#</p>
         <p><strong>Draw Length:</strong> {{ setup.draw_length }}"</p>
+        <div v-if="setup.bow_usage" class="mt-2">
+          <p class="text-sm text-gray-600 mb-1"><strong>Usage:</strong></p>
+          <div class="flex flex-wrap gap-1">
+            <span 
+              v-for="usage in getBowUsageArray(setup.bow_usage)" 
+              :key="usage"
+              class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+            >
+              {{ usage }}
+            </span>
+          </div>
+        </div>
         <div class="flex justify-end mt-4">
           <button @click="editSetup(setup)" class="px-4 py-2 mr-2 text-white bg-blue-500 rounded">Edit</button>
           <button @click="deleteSetup(setup.id)" class="px-4 py-2 text-white bg-red-500 rounded">Delete</button>
@@ -48,6 +60,25 @@
             <input v-model="form.arrow_length" type="number" step="0.1" class="w-full p-2 border rounded" required>
           </div>
           <div class="mb-4">
+            <label class="block mb-1">Bow Usage</label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="usage in usageOptions"
+                :key="usage"
+                type="button"
+                @click="toggleUsage(usage)"
+                :class="[
+                  'px-3 py-1 text-sm rounded-full border transition-colors',
+                  isUsageSelected(usage)
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                ]"
+              >
+                {{ usage }}
+              </button>
+            </div>
+          </div>
+          <div class="mb-4">
             <label class="block mb-1">Point Weight</label>
             <input v-model="form.point_weight" type="number" class="w-full p-2 border rounded" required>
           </div>
@@ -77,7 +108,10 @@ const form = ref({
   draw_length: 29,
   arrow_length: 28.5,
   point_weight: 100,
+  bow_usage: [],
 });
+
+const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
 
 const fetchSetups = async () => {
   try {
@@ -100,7 +134,10 @@ onMounted(fetchSetups);
 
 const editSetup = (setup) => {
   editingSetup.value = setup;
-  form.value = { ...setup };
+  form.value = { 
+    ...setup,
+    bow_usage: setup.bow_usage ? JSON.parse(setup.bow_usage) : []
+  };
 };
 
 const deleteSetup = async (id) => {
@@ -128,13 +165,18 @@ const saveSetup = async () => {
   const method = editingSetup.value ? 'PUT' : 'POST';
 
   try {
+    const setupData = {
+      ...form.value,
+      bow_usage: JSON.stringify(form.value.bow_usage)
+    };
+    
     const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token.value}`,
       },
-      body: JSON.stringify(form.value),
+      body: JSON.stringify(setupData),
     });
 
     if (res.ok) {
@@ -148,6 +190,28 @@ const saveSetup = async () => {
   }
 };
 
+const toggleUsage = (usage) => {
+  const index = form.value.bow_usage.indexOf(usage);
+  if (index > -1) {
+    form.value.bow_usage.splice(index, 1);
+  } else {
+    form.value.bow_usage.push(usage);
+  }
+};
+
+const isUsageSelected = (usage) => {
+  return form.value.bow_usage.includes(usage);
+};
+
+const getBowUsageArray = (usageString) => {
+  if (!usageString) return [];
+  try {
+    return JSON.parse(usageString);
+  } catch {
+    return [];
+  }
+};
+
 const cancelForm = () => {
   showCreateForm.value = false;
   editingSetup.value = null;
@@ -158,6 +222,7 @@ const cancelForm = () => {
     draw_length: 29,
     arrow_length: 28.5,
     point_weight: 100,
+    bow_usage: [],
   };
 };
 </script>

@@ -20,11 +20,30 @@
           </div>
           <div class="mb-4">
             <label for="drawWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Draw Weight (lbs)</label>
-            <input type="number" id="drawWeight" v-model.number="setupData.draw_weight" class="form-input" required step="0.1" />
+            <input type="number" id="drawWeight" v-model.number="setupData.draw_weight" class="form-input" required step="0.5" />
           </div>
           <div class="mb-4">
             <label for="drawLength" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Draw Length (inches)</label>
             <input type="number" id="drawLength" v-model.number="setupData.draw_length" class="form-input" required step="0.1" />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bow Usage</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="usage in usageOptions"
+              :key="usage"
+              type="button"
+              @click="toggleUsage(usage)"
+              :class="[
+                'px-3 py-1 text-sm rounded-full border transition-colors',
+                isUsageSelected(usage)
+                  ? 'bg-blue-500 text-white border-blue-500 dark:bg-purple-600 dark:border-purple-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+              ]"
+            >
+              {{ usage }}
+            </button>
           </div>
         </div>
         <div class="mb-4">
@@ -75,7 +94,23 @@ const setupData = ref({
   draw_weight: null,
   draw_length: null,
   description: '',
+  bow_usage: [],
 });
+
+const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
+
+const toggleUsage = (usage) => {
+  const index = setupData.value.bow_usage.indexOf(usage);
+  if (index > -1) {
+    setupData.value.bow_usage.splice(index, 1);
+  } else {
+    setupData.value.bow_usage.push(usage);
+  }
+};
+
+const isUsageSelected = (usage) => {
+  return setupData.value.bow_usage.includes(usage);
+};
 
 // Watch for changes in the modelValue prop and update local setupData
 watch(() => props.modelValue, (newValue) => {

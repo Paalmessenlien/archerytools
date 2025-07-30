@@ -59,22 +59,22 @@
         <!-- Point Weight -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gr</span>
+            Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gn ({{ (bowConfig.point_weight || 125) }} gr)</span>
           </label>
           <md-slider
             ref="pointWeightSlider"
-            min="75"
+            min="40"
             max="200"
-            step="25"
+            step="0.5"
             :value="bowConfig.point_weight || 125"
-            @input="updateBowConfig({ point_weight: parseInt($event.target.value) })"
+            @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
             labeled
             ticks
             class="w-full"
           ></md-slider>
           <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-            <span>75 gr</span>
-            <span>200 gr</span>
+            <span>40 gn</span>
+            <span>200 gn</span>
           </div>
         </div>
 
@@ -87,8 +87,9 @@
             ref="drawWeightSlider"
             min="20"
             max="80"
+            step="0.5"
             :value="bowConfig.draw_weight"
-            @input="updateBowConfig({ draw_weight: parseInt($event.target.value) })"
+            @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
             labeled
             ticks
             class="w-full"

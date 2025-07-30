@@ -68,6 +68,8 @@ class UserDatabase:
                     bow_type TEXT NOT NULL,
                     draw_weight REAL NOT NULL,
                     draw_length REAL NOT NULL,
+                    arrow_length REAL,
+                    point_weight REAL,
                     nock_weight REAL,
                     fletching_weight REAL,
                     insert_weight REAL,
@@ -157,8 +159,9 @@ class UserDatabase:
             
             conn.commit()
             
-            # Run migration to add new columns if they don't exist
+            # Run migrations to add new columns if they don't exist
             self._migrate_user_profile_fields(cursor)
+            self._migrate_bow_setup_fields(cursor)
             
             print(f"✅ User database initialized at {self.db_path}")
         except sqlite3.Error as e:
@@ -196,6 +199,24 @@ class UserDatabase:
                 
         except sqlite3.Error as e:
             print(f"⚠️ Warning during migration: {e}")
+
+    def _migrate_bow_setup_fields(self, cursor):
+        """Add new bow setup fields to existing bow_setups table"""
+        try:
+            # Check if new columns exist, add if they don't
+            cursor.execute("PRAGMA table_info(bow_setups)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'arrow_length' not in columns:
+                cursor.execute("ALTER TABLE bow_setups ADD COLUMN arrow_length REAL")
+                print("✅ Added arrow_length column to bow_setups table")
+                
+            if 'point_weight' not in columns:
+                cursor.execute("ALTER TABLE bow_setups ADD COLUMN point_weight REAL")
+                print("✅ Added point_weight column to bow_setups table")
+                
+        except sqlite3.Error as e:
+            print(f"⚠️ Warning during bow_setups migration: {e}")
 
     def migrate_draw_length_to_users(self):
         """Migration: Move draw_length from bow_setups to users table"""
@@ -470,16 +491,18 @@ class UserDatabase:
             
             cursor.execute("""
                 INSERT INTO bow_setups (
-                    user_id, name, bow_type, draw_weight, draw_length,
+                    user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight,
                     nock_weight, fletching_weight, insert_weight, description,
                     bow_usage, riser_model, limb_model, compound_model
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id,
                 setup_data.get('name'),
                 setup_data.get('bow_type'),
                 setup_data.get('draw_weight'),
                 setup_data.get('draw_length'),
+                setup_data.get('arrow_length'),
+                setup_data.get('point_weight'),
                 setup_data.get('nock_weight'),
                 setup_data.get('fletching_weight'),
                 setup_data.get('insert_weight'),
@@ -517,9 +540,9 @@ class UserDatabase:
             params = []
             
             for field in ['name', 'bow_type', 'draw_weight', 'draw_length', 
-                         'nock_weight', 'fletching_weight', 'insert_weight', 
-                         'description', 'bow_usage', 'riser_model', 'limb_model', 
-                         'compound_model']:
+                         'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
+                         'insert_weight', 'description', 'bow_usage', 'riser_model', 
+                         'limb_model', 'compound_model']:
                 if field in setup_data:
                     update_fields.append(f"{field} = ?")
                     params.append(setup_data[field])

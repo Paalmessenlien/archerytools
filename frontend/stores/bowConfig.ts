@@ -26,7 +26,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
   const isCompoundBow = computed(() => bowConfig.value.bow_type === 'compound')
   const isTraditionalBow = computed(() => ['longbow', 'traditional'].includes(bowConfig.value.bow_type))
   const arrowSetupDescription = computed(() => {
-    return `${bowConfig.value.arrow_length}" arrow with ${bowConfig.value.point_weight}gr point`
+    return `${bowConfig.value.arrow_length}" arrow with ${bowConfig.value.point_weight}gn point`
   })
 
   const configSummary = computed(() => {
