@@ -493,8 +493,9 @@ class UserDatabase:
                 INSERT INTO bow_setups (
                     user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight,
                     nock_weight, fletching_weight, insert_weight, description,
-                    bow_usage, riser_model, limb_model, compound_model
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    bow_usage, riser_brand, riser_model, riser_length, limb_brand, limb_model, limb_length,
+                    compound_brand, compound_model
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id,
                 setup_data.get('name'),
@@ -508,8 +509,13 @@ class UserDatabase:
                 setup_data.get('insert_weight'),
                 setup_data.get('description'),
                 setup_data.get('bow_usage'),
+                setup_data.get('riser_brand'),
                 setup_data.get('riser_model'),
+                setup_data.get('riser_length'),
+                setup_data.get('limb_brand'),
                 setup_data.get('limb_model'),
+                setup_data.get('limb_length'),
+                setup_data.get('compound_brand'),
                 setup_data.get('compound_model')
             ))
             
@@ -542,7 +548,7 @@ class UserDatabase:
             for field in ['name', 'bow_type', 'draw_weight', 'draw_length', 
                          'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
                          'insert_weight', 'description', 'bow_usage', 'riser_brand', 'riser_model', 
-                         'limb_brand', 'limb_model', 'compound_brand', 'compound_model']:
+                         'riser_length', 'limb_brand', 'limb_model', 'limb_length', 'compound_brand', 'compound_model']:
                 if field in setup_data:
                     update_fields.append(f"{field} = ?")
                     params.append(setup_data[field])
