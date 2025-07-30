@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a comprehensive Arrow Database & Tuning Calculator project that scrapes arrow specifications from manufacturer websites and provides professional tuning calculations for archery equipment. The project has completed all development phases (1-6) and is **READY FOR BETA TESTING** with a production-ready full-stack arrow tuning platform featuring modern UI/UX.
+This is a comprehensive Archery Tools project that scrapes arrow specifications from manufacturer websites and provides professional tuning calculations for archery equipment. The project has completed all development phases (1-9) and is **READY FOR BETA TESTING** with a production-ready full-stack archery tools platform featuring modern UI/UX.
 
 **Technology Stack:**
 - **Web Scraping**: Crawl4AI + DeepSeek API for intelligent content extraction
@@ -34,6 +34,10 @@ This is a comprehensive Arrow Database & Tuning Calculator project that scrapes 
 - ✅ **Interactive Tuning Guides**: Complete guided tuning system with step-by-step walkthroughs
 - ✅ **Bow Saving Fix**: Resolved production database persistence issues with enhanced infrastructure
 - ✅ **GitHub Issue #16 Completion**: Complete bow configuration system fixes including 0.5 draw weight increments, point weight validation (40+ gn), arrow length fields, and enhanced form persistence
+- ✅ **Rebranding**: Changed from "Arrow Tuning Platform" to "Archery Tools" throughout the system
+- ✅ **Navigation Update**: Replaced "Bow Setup" with "Home" in navigation menu
+- ✅ **API Authentication**: Added JWT token authentication to all API requests
+- ✅ **Custom Length Fields**: Simplified bow setup form to use single field for custom lengths
 
 ## Development Commands
 
@@ -766,7 +770,7 @@ The system supports 13 manufacturers with comprehensive URL patterns and scrapin
 ## Important Notes
 
 ### Current Platform Status (2025)
-- **Production-Ready Platform:** Complete arrow tuning solution with modern UI/UX and admin system
+- **Production-Ready Platform:** Complete archery tools solution with modern UI/UX and admin system
 - **Modern Architecture:** Nuxt 3 SPA frontend + Flask API backend with dual deployment
 - **Material Design 3:** Professional UI with Google's latest design system and dark mode
 - **Enhanced UX:** Improved accessibility, responsive design, and user interaction
@@ -875,7 +879,7 @@ sudo systemctl start/stop/restart arrowtuner
 
 ## Current System Capabilities
 
-The Arrow Tuning Platform provides:
+The Archery Tools platform provides:
 1. **Professional spine calculations** based on bow specifications and shooting style
 2. **Intelligent arrow recommendations** with confidence scoring and alternatives  
 3. **Advanced tuning optimization** including FOC, kinetic energy, and momentum calculations

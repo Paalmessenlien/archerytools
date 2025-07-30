@@ -1,10 +1,10 @@
-# ArrowTuner - Professional Arrow Selection & Tuning System
+# ArcheryTool - Professional Archery Tools
 
 **Version:** 2.0.0-beta  
 **Status:** Ready for Beta Testing  
 **Architecture:** Modern SPA with API Backend
 
-ArrowTuner is a comprehensive web application that helps archers find the perfect arrows for their bow setup. Built with modern web technologies, it provides professional-grade spine calculations, intelligent arrow recommendations, and a comprehensive database of arrow specifications.
+ArcheryTool is a comprehensive web application that provides professional archery tools including arrow selection, tuning calculations, equipment guides, and component databases. Built with modern web technologies, it offers professional-grade spine calculations, intelligent arrow recommendations, and a comprehensive database of archery equipment specifications.
 
 ## 🎯 Features
 
