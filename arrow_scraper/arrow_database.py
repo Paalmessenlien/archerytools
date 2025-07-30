@@ -774,8 +774,10 @@ if __name__ == "__main__":
     if stats.get('spine_range'):
         print(f"\n🎯 SPINE RANGE: {stats['spine_range']['min_spine']} - {stats['spine_range']['max_spine']}")
     
-    if stats.get('gpi_range'):
+    if stats.get('gpi_range') and stats['gpi_range']['min_gpi'] is not None and stats['gpi_range']['max_gpi'] is not None:
         print(f"⚖️  GPI RANGE: {stats['gpi_range']['min_gpi']:.1f} - {stats['gpi_range']['max_gpi']:.1f}")
+    elif stats.get('gpi_range'):
+        print(f"⚖️  GPI RANGE: No GPI data available")
     
     # Test search
     print(f"\n🔍 SEARCH TEST - Target arrows:")
