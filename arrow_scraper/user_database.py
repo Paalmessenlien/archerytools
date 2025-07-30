@@ -75,8 +75,13 @@ class UserDatabase:
                     insert_weight REAL,
                     description TEXT,
                     bow_usage TEXT,
+                    riser_brand TEXT,
                     riser_model TEXT,
+                    riser_length TEXT,
+                    limb_brand TEXT,
                     limb_model TEXT,
+                    limb_length TEXT,
+                    compound_brand TEXT,
                     compound_model TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
