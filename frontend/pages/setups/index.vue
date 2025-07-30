@@ -3,7 +3,7 @@
   <div class="container p-4 mx-auto">
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">My Bow Setups</h1>
+      <h1 class="mb-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">My Bow Setups</h1>
       <p class="text-gray-600 dark:text-gray-300">Manage your bow configurations and arrow setups</p>
     </div>
 
@@ -11,15 +11,15 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <md-elevated-card v-for="setup in setups" :key="setup.id" class="cursor-pointer light-surface light-elevation">
         <div class="p-6">
-          <div class="flex justify-between items-start mb-4">
+          <div class="flex items-start justify-between mb-4">
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ setup.name }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300 capitalize">{{ setup.bow_type }}</p>
+              <p class="text-sm text-gray-600 capitalize dark:text-gray-300">{{ setup.bow_type }}</p>
             </div>
           </div>
           
           <!-- Bow Specifications -->
-          <div class="space-y-2 mb-4">
+          <div class="mb-4 space-y-2">
             <div class="flex justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-300">Draw Weight:</span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.draw_weight }}#</span>
@@ -34,7 +34,25 @@
             </div>
             <div v-if="setup.point_weight" class="flex justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-300">Point Weight:</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.point_weight }} gn ({{ setup.point_weight }} gr)</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.point_weight }} gn</span>
+            </div>
+            
+            <!-- Bow Brand and Model Display -->
+            <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Riser:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.riser_brand }} {{ setup.riser_model }}</span>
+            </div>
+            <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Limbs:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.limb_brand }} {{ setup.limb_model }}</span>
+            </div>
+            <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Bow:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.compound_brand }} {{ setup.compound_model }}</span>
+            </div>
+            <div v-if="setup.description" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Notes:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.description }}</span>
             </div>
           </div>
 
@@ -44,7 +62,7 @@
               <span 
                 v-for="usage in getBowUsageArray(setup.bow_usage)" 
                 :key="usage"
-                class="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full"
+                class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-200"
               >
                 {{ usage }}
               </span>
@@ -52,7 +70,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end space-x-2 mt-4">
+          <div class="flex justify-end mt-4 space-x-2">
             <CustomButton @click="editSetup(setup)" variant="outlined" size="small">
               Edit
             </CustomButton>
@@ -66,8 +84,8 @@
 
     <!-- Create New Setup Button -->
     <div class="mt-8">
-      <CustomButton @click="showCreateForm = true" variant="filled" class="bg-green-600 text-white hover:bg-green-700">
-        <i class="fas fa-plus mr-2"></i>
+      <CustomButton @click="showCreateForm = true" variant="filled" class="text-white bg-green-600 hover:bg-green-700">
+        <i class="mr-2 fas fa-plus"></i>
         Create New Setup
       </CustomButton>
     </div>

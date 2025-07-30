@@ -231,6 +231,18 @@
                   <div class="flex-1">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_type || 'Unknown' }})</h4>
                     <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight || 'N/A' }} lbs</p>
+                    
+                    <!-- Brand Information Display -->
+                    <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
+                    </div>
+                    <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400">
+                      <span class="font-medium">Limbs:</span> {{ setup.limb_brand }} {{ setup.limb_model }}
+                    </div>
+                    <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
+                    </div>
+                    
                     <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ setup.description }}</p>
                   </div>
                   <div class="flex space-x-2 ml-4">
@@ -339,9 +351,9 @@
                     <md-slider
                       min="20"
                       max="80"
-                      step="5"
+                      step="0.5"
                       :value="newSetup.draw_weight || 45"
-                      @input="newSetup.draw_weight = parseInt($event.target.value)"
+                      @input="newSetup.draw_weight = parseFloat($event.target.value)"
                       labeled
                       ticks
                       class="w-full"
@@ -1121,23 +1133,19 @@ const openEditBowSetupModal = (setup) => {
     draw_weight: setup.draw_weight || 45,
     draw_length: setup.draw_length || user.value?.draw_length || 28.0,
     description: setup.description || '',
-    nock_weight: setup.nock_weight || '',
-    fletching_weight: setup.fletching_weight || '',
-    insert_weight: setup.insert_weight || '',
-    bow_usage: setup.bow_usage || '',
-    // Model fields
+    bow_usage: setup.bow_usage ? JSON.parse(setup.bow_usage)[0] : '', // Get first usage from array
+    // Brand and model fields populated from database
+    brand: setup.compound_brand || '', // For compound bows
     compound_model: setup.compound_model || '',
+    riser_brand: setup.riser_brand || '', // For recurve/traditional bows  
     riser_model: setup.riser_model || '',
+    limb_brand: setup.limb_brand || '',
     limb_model: setup.limb_model || '',
-    // Brand fields - these will need to be parsed from the model fields
-    brand: '',
-    riser_brand: '',
-    limb_brand: '',
-    bow_brand: '',
+    bow_brand: setup.bow_brand || '', // For longbows
     // Other fields
-    ibo_speed: '',
-    limb_fitting: '',
-    construction: ''
+    ibo_speed: setup.ibo_speed || '',
+    limb_fitting: setup.limb_fitting || 'ILF',
+    construction: setup.construction || 'one_piece'
   };
   
   isAddingSetup.value = true;
@@ -1190,19 +1198,25 @@ const saveBowSetup = async () => {
       bow_type: newSetup.value.bow_type,
       draw_weight: Number(newSetup.value.draw_weight),
       draw_length: user.value?.draw_length || 28.0, // Use user's draw length from profile
+      arrow_length: user.value?.draw_length ? user.value.draw_length - 1 : 27.0, // Default arrow length
+      point_weight: 100, // Default point weight
       description: newSetup.value.description,
-      // Bow type specific fields with custom brand handling
-      brand: getBrandValue('brand', 'custom_brand'),
-      ibo_speed: newSetup.value.ibo_speed ? Number(newSetup.value.ibo_speed) : null,
-      riser_brand: newSetup.value.bow_type === 'traditional' 
-        ? getBrandValue('riser_brand', 'custom_trad_riser_brand')
-        : getBrandValue('riser_brand', 'custom_riser_brand'),
-      limb_brand: newSetup.value.bow_type === 'traditional'
-        ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
-        : getBrandValue('limb_brand', 'custom_limb_brand'),
-      limb_fitting: newSetup.value.limb_fitting || null,
-      bow_brand: getBrandValue('bow_brand', 'custom_bow_brand'),
-      construction: newSetup.value.construction || null,
+      bow_usage: JSON.stringify([newSetup.value.bow_usage || 'Target']), // Convert to JSON array
+      // Map brand fields correctly to database schema
+      compound_brand: newSetup.value.bow_type === 'compound' ? getBrandValue('brand', 'custom_brand') : '',
+      compound_model: newSetup.value.bow_type === 'compound' ? newSetup.value.compound_model || '' : '',
+      riser_brand: (newSetup.value.bow_type === 'recurve' || newSetup.value.bow_type === 'traditional') 
+        ? (newSetup.value.bow_type === 'traditional' 
+          ? getBrandValue('riser_brand', 'custom_trad_riser_brand')
+          : getBrandValue('riser_brand', 'custom_riser_brand')) : '',
+      riser_model: (newSetup.value.bow_type === 'recurve' || newSetup.value.bow_type === 'traditional') 
+        ? newSetup.value.riser_model || '' : '',
+      limb_brand: (newSetup.value.bow_type === 'recurve' || newSetup.value.bow_type === 'traditional')
+        ? (newSetup.value.bow_type === 'traditional'
+          ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
+          : getBrandValue('limb_brand', 'custom_limb_brand')) : '',
+      limb_model: (newSetup.value.bow_type === 'recurve' || newSetup.value.bow_type === 'traditional') 
+        ? newSetup.value.limb_model || '' : '',
     };
 
     if (isEditMode.value && editingSetupId.value) {
