@@ -229,8 +229,8 @@
               <div v-for="setup in bowSetups" :key="setup.id" class="card p-4 border border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
-                    <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_config?.bow_type || 'Unknown' }})</h4>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.bow_config?.draw_weight || 'N/A' }} lbs</p>
+                    <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_type || 'Unknown' }})</h4>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight || 'N/A' }} lbs</p>
                     <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ setup.description }}</p>
                   </div>
                   <div class="flex space-x-2 ml-4">
@@ -242,6 +242,14 @@
                     >
                       <i class="fas fa-search mr-1"></i>
                       Add Arrow
+                    </CustomButton>
+                    <CustomButton
+                      @click="openEditBowSetupModal(setup)"
+                      variant="text"
+                      size="small"
+                      class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 p-1"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     </CustomButton>
                     <CustomButton
                       @click="confirmDeleteSetup(setup.id)"
@@ -278,8 +286,8 @@
         <div v-if="isAddingSetup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-screen overflow-y-auto">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-              <i class="fas fa-plus-circle mr-2 text-blue-600"></i>
-              Create New Bow Setup
+              <i :class="isEditMode ? 'fas fa-edit' : 'fas fa-plus-circle'" class="mr-2 text-blue-600"></i>
+              {{ isEditMode ? 'Edit Bow Setup' : 'Create New Bow Setup' }}
             </h3>
             <form @submit.prevent="saveBowSetup">
               <!-- Setup Name -->
@@ -929,7 +937,7 @@ import { useAuth } from '~/composables/useAuth';
 import ArrowSearchModal from '~/components/ArrowSearchModal.vue';
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 
-const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows } = useAuth();
+const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup } = useAuth();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
@@ -950,6 +958,8 @@ const addSetupError = ref(null);
 const isConfirmingDelete = ref(false);
 const setupToDeleteId = ref(null);
 const deleteSetupError = ref(null);
+const isEditMode = ref(false);
+const editingSetupId = ref(null);
 
 // Arrow search modal state
 const isArrowSearchOpen = ref(false);
@@ -1061,6 +1071,8 @@ const loadArrowsForAllSetups = async () => {
 
 const openAddSetupModal = () => {
   // Reset form for new entry
+  isEditMode.value = false;
+  editingSetupId.value = null;
   newSetup.value = {
     name: '',
     bow_type: '',
@@ -1094,6 +1106,42 @@ const openAddSetupModal = () => {
 
 const closeAddSetupModal = () => {
   isAddingSetup.value = false;
+  isEditMode.value = false;
+  editingSetupId.value = null;
+};
+
+const openEditBowSetupModal = (setup) => {
+  // Populate form with existing setup data
+  isEditMode.value = true;
+  editingSetupId.value = setup.id;
+  
+  newSetup.value = {
+    name: setup.name || '',
+    bow_type: setup.bow_type || '',
+    draw_weight: setup.draw_weight || 45,
+    draw_length: setup.draw_length || user.value?.draw_length || 28.0,
+    description: setup.description || '',
+    nock_weight: setup.nock_weight || '',
+    fletching_weight: setup.fletching_weight || '',
+    insert_weight: setup.insert_weight || '',
+    bow_usage: setup.bow_usage || '',
+    // Model fields
+    compound_model: setup.compound_model || '',
+    riser_model: setup.riser_model || '',
+    limb_model: setup.limb_model || '',
+    // Brand fields - these will need to be parsed from the model fields
+    brand: '',
+    riser_brand: '',
+    limb_brand: '',
+    bow_brand: '',
+    // Other fields
+    ibo_speed: '',
+    limb_fitting: '',
+    construction: ''
+  };
+  
+  isAddingSetup.value = true;
+  addSetupError.value = null;
 };
 
 const handleBrandSelection = (fieldName, value) => {
@@ -1157,12 +1205,19 @@ const saveBowSetup = async () => {
       construction: newSetup.value.construction || null,
     };
 
-    await addBowSetup(setupData);
+    if (isEditMode.value && editingSetupId.value) {
+      // Update existing setup
+      await updateBowSetup(editingSetupId.value, setupData);
+    } else {
+      // Create new setup
+      await addBowSetup(setupData);
+    }
+    
     closeAddSetupModal();
-    await loadBowSetups(); // Reload setups after adding
+    await loadBowSetups(); // Reload setups after saving
   } catch (err) {
     console.error('Error saving bow setup:', err);
-    addSetupError.value = err.message || 'Failed to add bow setup.';
+    addSetupError.value = err.message || `Failed to ${isEditMode.value ? 'update' : 'add'} bow setup.`;
   } finally {
     isSavingSetup.value = false;
   }
@@ -1215,6 +1270,10 @@ const handleAddArrow = async (arrowData) => {
       return;
     }
     
+    // Store the setup info before it gets cleared
+    const setupId = selectedBowSetup.value.id;
+    const setupName = selectedBowSetup.value.name;
+    
     // Create the API payload
     const apiData = {
       arrow_id: arrowData.arrow.id,
@@ -1226,13 +1285,13 @@ const handleAddArrow = async (arrowData) => {
     };
     
     // Call the API to add arrow to setup
-    await addArrowToSetup(selectedBowSetup.value.id, apiData);
+    await addArrowToSetup(setupId, apiData);
     
-    // Show success message (you could add a toast notification here)
-    alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value.name}!`);
+    // Show success message
+    alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${setupName}!`);
     
     // Reload arrows for the setup to show the new arrow
-    await loadArrowsForSetup(selectedBowSetup.value.id);
+    await loadArrowsForSetup(setupId);
     
   } catch (err) {
     console.error('Error adding arrow to setup:', err);
@@ -1256,31 +1315,19 @@ const loadArrowsForSetup = async (setupId) => {
   }
 };
 
+
 const removeArrowFromSetup = async (arrowSetupId) => {
   if (!confirm('Are you sure you want to remove this arrow from the setup?')) {
     return;
   }
   
   try {
-    const config = useRuntimeConfig();
-    const { token } = useAuth();
+    await deleteArrowFromSetup(arrowSetupId);
     
-    // Call API to remove arrow from setup (need to implement this endpoint)
-    const response = await fetch(`${config.public.apiBase}/setup-arrows/${arrowSetupId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to remove arrow');
-    }
-    
-    // Reload all setups to refresh the display
+    // Reload all bow setups to refresh the arrows lists 
     await loadBowSetups();
     
+    alert('Arrow removed successfully!');
   } catch (err) {
     console.error('Error removing arrow from setup:', err);
     alert('Failed to remove arrow. Please try again.');

@@ -184,6 +184,31 @@ export const useAuth = () => {
     }
   };
 
+  const updateBowSetup = async (setupId, setupData) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/bow-setups/${setupId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(setupData),
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error updating bow setup:', err);
+      throw err;
+    }
+  };
+
   const deleteBowSetup = async (setupId) => {
     if (!token.value) throw new Error('No authentication token found.');
 
@@ -253,6 +278,29 @@ export const useAuth = () => {
       }
     } catch (err) {
       console.error('Error fetching setup arrows:', err);
+      throw err;
+    }
+  };
+
+  const deleteArrowFromSetup = async (arrowSetupId) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/setup-arrows/${arrowSetupId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to remove arrow from setup.');
+      }
+    } catch (err) {
+      console.error('Error removing arrow from setup:', err);
       throw err;
     }
   };
@@ -344,9 +392,11 @@ export const useAuth = () => {
     updateUserProfile,
     fetchBowSetups,
     addBowSetup,
+    updateBowSetup,
     deleteBowSetup,
     addArrowToSetup,
     fetchSetupArrows,
+    deleteArrowFromSetup,
     checkAdminStatus,
     getAllUsers,
     setUserAdminStatus,

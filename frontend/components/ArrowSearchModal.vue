@@ -10,7 +10,7 @@
               Search & Match Arrows
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Find arrows compatible with: {{ bowSetup?.name }} ({{ bowSetup?.bow_config?.bow_type }}, {{ bowSetup?.bow_config?.draw_weight }}lbs)
+              Find arrows compatible with: {{ bowSetup?.name }} ({{ bowSetup?.bow_type }}, {{ bowSetup?.draw_weight }}lbs)
             </p>
           </div>
           <CustomButton
@@ -278,10 +278,10 @@ const adjustments = ref({
 
 // Computed
 const calculatedSpine = computed(() => {
-  if (!props.bowSetup?.bow_config) return null
+  if (!props.bowSetup) return null
   
   // Simple spine calculation based on draw weight, arrow length, and point weight
-  const drawWeight = props.bowSetup.bow_config.draw_weight || 50
+  const drawWeight = props.bowSetup.draw_weight || 50
   const arrowLength = adjustments.value.arrow_length
   const pointWeight = adjustments.value.point_weight
   
@@ -494,9 +494,10 @@ const debouncedSearch = debounce(() => {
 
 // Initialize adjustments from bow setup
 watch(() => props.bowSetup, (newSetup) => {
-  if (newSetup?.bow_config) {
-    adjustments.value.arrow_length = newSetup.bow_config.arrow_length || 29.0
-    adjustments.value.point_weight = newSetup.bow_config.point_weight || 125
+  if (newSetup) {
+    // Arrow length and point weight are set by the user when searching for arrows
+    adjustments.value.arrow_length = 29.0  // Default arrow length
+    adjustments.value.point_weight = 125   // Default point weight
   }
 }, { immediate: true })
 

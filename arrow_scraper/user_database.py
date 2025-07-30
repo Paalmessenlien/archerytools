@@ -471,21 +471,23 @@ class UserDatabase:
             cursor.execute("""
                 INSERT INTO bow_setups (
                     user_id, name, bow_type, draw_weight, draw_length,
-                    arrow_length, point_weight, nock_weight, fletching_weight,
-                    insert_weight, description
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    nock_weight, fletching_weight, insert_weight, description,
+                    bow_usage, riser_model, limb_model, compound_model
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id,
                 setup_data.get('name'),
                 setup_data.get('bow_type'),
                 setup_data.get('draw_weight'),
                 setup_data.get('draw_length'),
-                setup_data.get('arrow_length'),
-                setup_data.get('point_weight'),
                 setup_data.get('nock_weight'),
                 setup_data.get('fletching_weight'),
                 setup_data.get('insert_weight'),
-                setup_data.get('description')
+                setup_data.get('description'),
+                setup_data.get('bow_usage'),
+                setup_data.get('riser_model'),
+                setup_data.get('limb_model'),
+                setup_data.get('compound_model')
             ))
             
             setup_id = cursor.lastrowid
@@ -497,6 +499,53 @@ class UserDatabase:
             
         except sqlite3.Error as e:
             print(f"Error creating bow setup: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+
+    def update_bow_setup(self, user_id, setup_id, setup_data):
+        """Update a bow setup if it belongs to the user"""
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # Build update query dynamically based on provided fields
+            update_fields = []
+            params = []
+            
+            for field in ['name', 'bow_type', 'draw_weight', 'draw_length', 
+                         'nock_weight', 'fletching_weight', 'insert_weight', 
+                         'description', 'bow_usage', 'riser_model', 'limb_model', 
+                         'compound_model']:
+                if field in setup_data:
+                    update_fields.append(f"{field} = ?")
+                    params.append(setup_data[field])
+            
+            if not update_fields:
+                return None
+            
+            params.extend([setup_id, user_id])
+            
+            cursor.execute(f"""
+                UPDATE bow_setups 
+                SET {', '.join(update_fields)}
+                WHERE id = ? AND user_id = ?
+            """, params)
+            
+            conn.commit()
+            
+            if cursor.rowcount == 0:
+                return None
+            
+            # Return the updated setup
+            cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
+            return dict(cursor.fetchone())
+            
+        except sqlite3.Error as e:
+            print(f"Error updating bow setup: {e}")
             return None
         finally:
             if conn:

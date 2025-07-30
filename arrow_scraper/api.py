@@ -39,13 +39,13 @@ from compatibility_engine import CompatibilityEngine
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'arrow-tuning-secret-key-change-in-production')
 
-# Enable CORS for the Nuxt frontend
+# Enable CORS for the Nuxt frontend with explicit method support
 CORS(app, origins=[
     "http://localhost:3000",  # Nuxt dev server
     "http://localhost:3001",  # Nuxt dev server alternate port
     "https://archerytool.online", # Production domain
     "https://www.archerytool.online", # Production domain with www
-])
+], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 
 # Global variables for lazy initialization
 tuning_system = None
@@ -930,42 +930,16 @@ def update_bow_setup(current_user, setup_id):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    user_db = UserDatabase()
-    conn = user_db.get_connection()
-    cursor = conn.cursor()
-
-    # Verify the setup belongs to the current user
-    cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
-    setup = cursor.fetchone()
-    if not setup:
-        conn.close()
-        return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
-
     try:
-        cursor.execute(
-            "UPDATE bow_setups SET name = ?, bow_type = ?, draw_weight = ?, draw_length = ?, arrow_length = ?, point_weight = ?, nock_weight = ?, fletching_weight = ?, insert_weight = ?, description = ? WHERE id = ?",
-            (
-                data['name'],
-                data['bow_type'],
-                data['draw_weight'],
-                data['draw_length'],
-                data.get('arrow_length'),
-                data.get('point_weight'),
-                data.get('nock_weight'),
-                data.get('fletching_weight'),
-                data.get('insert_weight'),
-                data.get('description'),
-                setup_id,
-            ),
-        )
-        conn.commit()
-
-        cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
-        updated_setup = cursor.fetchone()
-        conn.close()
-        return jsonify(dict(updated_setup))
+        # Use the user database method for updating
+        user_db = UserDatabase()
+        updated_setup = user_db.update_bow_setup(current_user['id'], setup_id, data)
+        
+        if not updated_setup:
+            return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
+        
+        return jsonify(updated_setup)
     except Exception as e:
-        conn.close()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>', methods=['DELETE'])
