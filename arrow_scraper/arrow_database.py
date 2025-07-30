@@ -768,24 +768,35 @@ if __name__ == "__main__":
     print(f"   Total specifications: {stats['total_specifications']}")
     
     print(f"\n🏭 MANUFACTURERS:")
-    for mfr in stats['manufacturers']:
-        print(f"   {mfr['manufacturer']}: {mfr['arrow_count']} arrows, {mfr['spec_count']} specs")
+    if stats.get('manufacturers') and len(stats['manufacturers']) > 0:
+        for mfr in stats['manufacturers']:
+            print(f"   {mfr['manufacturer']}: {mfr['arrow_count']} arrows, {mfr['spec_count']} specs")
+    else:
+        print("   No manufacturers found - database appears to be empty")
     
-    if stats.get('spine_range'):
+    if stats.get('spine_range') and stats['spine_range']['min_spine'] is not None and stats['spine_range']['max_spine'] is not None:
         print(f"\n🎯 SPINE RANGE: {stats['spine_range']['min_spine']} - {stats['spine_range']['max_spine']}")
+    else:
+        print(f"\n🎯 SPINE RANGE: No spine data available")
     
     if stats.get('gpi_range') and stats['gpi_range']['min_gpi'] is not None and stats['gpi_range']['max_gpi'] is not None:
         print(f"⚖️  GPI RANGE: {stats['gpi_range']['min_gpi']:.1f} - {stats['gpi_range']['max_gpi']:.1f}")
-    elif stats.get('gpi_range'):
+    else:
         print(f"⚖️  GPI RANGE: No GPI data available")
     
     # Test search
     print(f"\n🔍 SEARCH TEST - Target arrows:")
     results = db.search_arrows(arrow_type="target", limit=5)
-    for arrow in results:
-        print(f"   {arrow['manufacturer']} {arrow['model_name']}: {arrow['spine_count']} spine options")
+    if results and len(results) > 0:
+        for arrow in results:
+            print(f"   {arrow['manufacturer']} {arrow['model_name']}: {arrow['spine_count']} spine options")
+    else:
+        print("   No target arrows found")
     
     print(f"\n🔍 SEARCH TEST - Spine 300-400:")
     results = db.search_arrows(spine_min=300, spine_max=400, limit=5)
-    for arrow in results:
-        print(f"   {arrow['manufacturer']} {arrow['model_name']}: spine {arrow['min_spine']}-{arrow['max_spine']}")
+    if results and len(results) > 0:
+        for arrow in results:
+            print(f"   {arrow['manufacturer']} {arrow['model_name']}: spine {arrow['min_spine']}-{arrow['max_spine']}")
+    else:
+        print("   No arrows found in spine range 300-400")
