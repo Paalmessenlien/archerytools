@@ -121,9 +121,80 @@
             </div>
           </div>
           <div class="mb-4">
-            <label class="block mb-1">Point Weight</label>
+            <label class="block mb-1">Point Weight (grains)</label>
             <input v-model="form.point_weight" type="number" step="0.5" min="40" class="w-full p-2 border rounded" required>
           </div>
+          
+          
+          <!-- Bow Brand and Model Information -->
+          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+            <label class="block mb-1">Riser Brand</label>
+            <select v-model="form.riser_brand" class="w-full p-2 border rounded">
+              <option value="">Select Riser Brand</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="Win&Win">Win&Win</option>
+              <option value="Sebastian Flute">Sebastian Flute</option>
+              <option value="Gillo">Gillo</option>
+              <option value="Samick">Samick</option>
+              <option value="KTA">KTA</option>
+              <option value="Border">Border</option>
+              <option value="Dryad">Dryad</option>
+              <option value="Bear">Bear</option>
+              <option value="Martin">Martin</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+            <label class="block mb-1">Riser Model</label>
+            <input v-model="form.riser_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., Satori, Formula Xi, etc.">
+          </div>
+          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+            <label class="block mb-1">Limb Brand</label>
+            <select v-model="form.limb_brand" class="w-full p-2 border rounded">
+              <option value="">Select Limb Brand</option>
+              <option value="Uukha">Uukha</option>
+              <option value="Win&Win">Win&Win</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="KTA">KTA</option>
+              <option value="SF Archery">SF Archery</option>
+              <option value="Border">Border</option>
+              <option value="Samick">Samick</option>
+              <option value="Bear">Bear</option>
+              <option value="Martin">Martin</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+            <label class="block mb-1">Limb Model</label>
+            <input v-model="form.limb_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., VX1000, Storm, etc.">
+          </div>
+          <div class="mb-4" v-if="form.bow_type === 'compound'">
+            <label class="block mb-1">Compound Bow Brand</label>
+            <select v-model="form.compound_brand" class="w-full p-2 border rounded">
+              <option value="">Select Compound Brand</option>
+              <option value="Mathews">Mathews</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="PSE">PSE</option>
+              <option value="Bowtech">Bowtech</option>
+              <option value="Bear">Bear</option>
+              <option value="Prime">Prime</option>
+              <option value="Elite">Elite</option>
+              <option value="Mission">Mission</option>
+              <option value="Diamond">Diamond</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-4" v-if="form.bow_type === 'compound'">
+            <label class="block mb-1">Compound Bow Model</label>
+            <input v-model="form.compound_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., V3X 33, RX-7 Ultra, etc.">
+          </div>
+          
+          <!-- Description -->
+          <div class="mb-4">
+            <label class="block mb-1">Description</label>
+            <textarea v-model="form.description" class="w-full p-2 border rounded" rows="3" placeholder="Optional notes about this bow setup"></textarea>
+          </div>
+          
           <div class="flex justify-end">
             <button type="button" @click="cancelForm" class="px-4 py-2 mr-2 text-gray-700 bg-gray-200 rounded">Cancel</button>
             <button type="submit" class="px-4 py-2 text-white bg-blue-500 rounded">Save</button>
@@ -151,6 +222,13 @@ const form = ref({
   arrow_length: 28.5,
   point_weight: 100,
   bow_usage: [],
+  description: '',
+  riser_brand: '',
+  riser_model: '',
+  limb_brand: '',
+  limb_model: '',
+  compound_brand: '',
+  compound_model: '',
 });
 
 const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
@@ -183,6 +261,13 @@ const editSetup = (setup) => {
     draw_length: parseFloat(setup.draw_length) || 29,
     arrow_length: parseFloat(setup.arrow_length) || 28.5,
     point_weight: parseFloat(setup.point_weight) || 100,
+    description: setup.description || '',
+    riser_brand: setup.riser_brand || '',
+    riser_model: setup.riser_model || '',
+    limb_brand: setup.limb_brand || '',
+    limb_model: setup.limb_model || '',
+    compound_brand: setup.compound_brand || '',
+    compound_model: setup.compound_model || '',
     bow_usage: setup.bow_usage ? JSON.parse(setup.bow_usage) : []
   };
 };
@@ -219,6 +304,13 @@ const saveSetup = async () => {
       draw_length: parseFloat(form.value.draw_length),
       arrow_length: parseFloat(form.value.arrow_length),
       point_weight: parseFloat(form.value.point_weight),
+      description: form.value.description || '',
+      riser_brand: form.value.riser_brand || '',
+      riser_model: form.value.riser_model || '',
+      limb_brand: form.value.limb_brand || '',
+      limb_model: form.value.limb_model || '',
+      compound_brand: form.value.compound_brand || '',
+      compound_model: form.value.compound_model || '',
       bow_usage: JSON.stringify(form.value.bow_usage)
     };
     
@@ -276,6 +368,13 @@ const cancelForm = () => {
     arrow_length: 28.5,
     point_weight: 100,
     bow_usage: [],
+    description: '',
+    riser_brand: '',
+    riser_model: '',
+    limb_brand: '',
+    limb_model: '',
+    compound_brand: '',
+    compound_model: '',
   };
 };
 </script>

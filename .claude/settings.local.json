@@ -76,7 +76,16 @@
       "Bash(gh pr list:*)",
       "Bash(test-bow-saving.py)",
       "Bash(NODE_ENV=development npm run dev)",
-      "Bash(./start-fresh.sh:*)"
+      "Bash(./start-fresh.sh:*)",
+      "Bash(/home/paal/arrowtuner2/scripts/start-dual-architecture.sh:*)",
+      "WebFetch(domain:newflexarchery.com)",
+      "WebFetch(domain:www.60xcustomstrings.com)",
+      "WebFetch(domain:bogensportshop.eu)",
+      "Bash(grep -n \"</div>\" /home/paal/arrowtuner2/frontend/pages/my-page.vue)",
+      "Bash(grep -c \"<div\" /home/paal/arrowtuner2/frontend/pages/my-page.vue)",
+      "Bash(grep -c \"</div>\" /home/paal/arrowtuner2/frontend/pages/my-page.vue)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }

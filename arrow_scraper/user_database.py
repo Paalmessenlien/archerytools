@@ -541,8 +541,8 @@ class UserDatabase:
             
             for field in ['name', 'bow_type', 'draw_weight', 'draw_length', 
                          'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
-                         'insert_weight', 'description', 'bow_usage', 'riser_model', 
-                         'limb_model', 'compound_model']:
+                         'insert_weight', 'description', 'bow_usage', 'riser_brand', 'riser_model', 
+                         'limb_brand', 'limb_model', 'compound_brand', 'compound_model']:
                 if field in setup_data:
                     update_fields.append(f"{field} = ?")
                     params.append(setup_data[field])

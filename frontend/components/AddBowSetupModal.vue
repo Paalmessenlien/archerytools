@@ -35,6 +35,73 @@
             <input type="number" id="pointWeight" v-model.number="setupData.point_weight" class="form-input" required step="0.5" min="40" />
           </div>
         </div>
+        
+        <!-- Bow Brand and Model Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" v-if="setupData.bow_type === 'recurve' || setupData.bow_type === 'traditional'">
+          <div>
+            <label for="riserBrand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Riser Brand</label>
+            <select id="riserBrand" v-model="setupData.riser_brand" class="form-select">
+              <option value="">Select Riser Brand</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="Win&Win">Win&Win</option>
+              <option value="Sebastian Flute">Sebastian Flute</option>
+              <option value="Gillo">Gillo</option>
+              <option value="Samick">Samick</option>
+              <option value="KTA">KTA</option>
+              <option value="Border">Border</option>
+              <option value="Dryad">Dryad</option>
+              <option value="Bear">Bear</option>
+              <option value="Martin">Martin</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="riserModel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Riser Model</label>
+            <input type="text" id="riserModel" v-model="setupData.riser_model" class="form-input" placeholder="e.g., Satori, Formula Xi" />
+          </div>
+          <div>
+            <label for="limbBrand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Limb Brand</label>
+            <select id="limbBrand" v-model="setupData.limb_brand" class="form-select">
+              <option value="">Select Limb Brand</option>
+              <option value="Uukha">Uukha</option>
+              <option value="Win&Win">Win&Win</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="KTA">KTA</option>
+              <option value="SF Archery">SF Archery</option>
+              <option value="Border">Border</option>
+              <option value="Samick">Samick</option>
+              <option value="Bear">Bear</option>
+              <option value="Martin">Martin</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="limbModel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Limb Model</label>
+            <input type="text" id="limbModel" v-model="setupData.limb_model" class="form-input" placeholder="e.g., VX1000, Storm" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" v-if="setupData.bow_type === 'compound'">
+          <div>
+            <label for="compoundBrand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Compound Bow Brand</label>
+            <select id="compoundBrand" v-model="setupData.compound_brand" class="form-select">
+              <option value="">Select Compound Brand</option>
+              <option value="Mathews">Mathews</option>
+              <option value="Hoyt">Hoyt</option>
+              <option value="PSE">PSE</option>
+              <option value="Bowtech">Bowtech</option>
+              <option value="Bear">Bear</option>
+              <option value="Prime">Prime</option>
+              <option value="Elite">Elite</option>
+              <option value="Mission">Mission</option>
+              <option value="Diamond">Diamond</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="compoundModel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Compound Bow Model</label>
+            <input type="text" id="compoundModel" v-model="setupData.compound_model" class="form-input" placeholder="e.g., V3X 33, RX-7 Ultra" />
+          </div>
+        </div>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bow Usage</label>
           <div class="flex flex-wrap gap-2">
@@ -104,6 +171,12 @@ const setupData = ref({
   arrow_length: null,
   point_weight: 100,
   description: '',
+  riser_brand: '',
+  riser_model: '',
+  limb_brand: '',
+  limb_model: '',
+  compound_brand: '',
+  compound_model: '',
   bow_usage: [],
 });
 
