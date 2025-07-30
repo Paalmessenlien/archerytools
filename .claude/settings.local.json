@@ -71,7 +71,12 @@
       "WebFetch(domain:github.com)",
       "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh restart)",
       "Bash(node:*)",
-      "Bash(ln:*)"
+      "Bash(ln:*)",
+      "Bash(git fetch:*)",
+      "Bash(gh pr list:*)",
+      "Bash(test-bow-saving.py)",
+      "Bash(NODE_ENV=development npm run dev)",
+      "Bash(./start-fresh.sh:*)"
     ],
     "deny": []
   }

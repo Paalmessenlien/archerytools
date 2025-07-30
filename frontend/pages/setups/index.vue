@@ -1,33 +1,75 @@
 
 <template>
   <div class="container p-4 mx-auto">
-    <h1 class="mb-4 text-2xl font-bold">My Bow Setups</h1>
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div v-for="setup in setups" :key="setup.id" class="p-4 bg-white rounded-lg shadow-md">
-        <h2 class="text-xl font-bold">{{ setup.name }}</h2>
-        <p><strong>Bow Type:</strong> {{ setup.bow_type }}</p>
-        <p><strong>Draw Weight:</strong> {{ setup.draw_weight }}#</p>
-        <p><strong>Draw Length:</strong> {{ setup.draw_length }}"</p>
-        <div v-if="setup.bow_usage" class="mt-2">
-          <p class="text-sm text-gray-600 mb-1"><strong>Usage:</strong></p>
-          <div class="flex flex-wrap gap-1">
-            <span 
-              v-for="usage in getBowUsageArray(setup.bow_usage)" 
-              :key="usage"
-              class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-            >
-              {{ usage }}
-            </span>
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">My Bow Setups</h1>
+      <p class="text-gray-600 dark:text-gray-300">Manage your bow configurations and arrow setups</p>
+    </div>
+
+    <!-- Bow Setups Grid -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <md-elevated-card v-for="setup in setups" :key="setup.id" class="cursor-pointer light-surface light-elevation">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ setup.name }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 capitalize">{{ setup.bow_type }}</p>
+            </div>
+          </div>
+          
+          <!-- Bow Specifications -->
+          <div class="space-y-2 mb-4">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Draw Weight:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.draw_weight }}#</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Draw Length:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.draw_length }}"</span>
+            </div>
+            <div v-if="setup.arrow_length" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Arrow Length:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.arrow_length }}"</span>
+            </div>
+            <div v-if="setup.point_weight" class="flex justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-300">Point Weight:</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.point_weight }} gn ({{ setup.point_weight }} gr)</span>
+            </div>
+          </div>
+
+          <!-- Bow Usage Tags -->
+          <div v-if="setup.bow_usage" class="mb-4">
+            <div class="flex flex-wrap gap-1">
+              <span 
+                v-for="usage in getBowUsageArray(setup.bow_usage)" 
+                :key="usage"
+                class="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full"
+              >
+                {{ usage }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end space-x-2 mt-4">
+            <CustomButton @click="editSetup(setup)" variant="outlined" size="small">
+              Edit
+            </CustomButton>
+            <CustomButton @click="deleteSetup(setup.id)" variant="outlined" size="small" class="text-red-600 border-red-300 hover:bg-red-50">
+              Delete
+            </CustomButton>
           </div>
         </div>
-        <div class="flex justify-end mt-4">
-          <button @click="editSetup(setup)" class="px-4 py-2 mr-2 text-white bg-blue-500 rounded">Edit</button>
-          <button @click="deleteSetup(setup.id)" class="px-4 py-2 text-white bg-red-500 rounded">Delete</button>
-        </div>
-      </div>
+      </md-elevated-card>
     </div>
+
+    <!-- Create New Setup Button -->
     <div class="mt-8">
-      <button @click="showCreateForm = true" class="px-4 py-2 text-white bg-green-500 rounded">Create New Setup</button>
+      <CustomButton @click="showCreateForm = true" variant="filled" class="bg-green-600 text-white hover:bg-green-700">
+        <i class="fas fa-plus mr-2"></i>
+        Create New Setup
+      </CustomButton>
     </div>
 
     <div v-if="showCreateForm || editingSetup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
