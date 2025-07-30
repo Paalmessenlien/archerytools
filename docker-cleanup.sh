@@ -42,7 +42,7 @@ COMPOSE_FILES=(
 for compose_file in "${COMPOSE_FILES[@]}"; do
     if [ -f "$compose_file" ]; then
         echo "   📁 Cleaning up with $compose_file"
-        docker-compose -f "$compose_file" down --remove-orphans --volumes 2>/dev/null || true
+        docker-compose -f "$compose_file" down --remove-orphans 2>/dev/null || true
     fi
 done
 

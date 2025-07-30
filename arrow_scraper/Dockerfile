@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directory for runtime files
-RUN mkdir -p /app/data/processed /app/data/raw
+# Create data directory for runtime files and user data directory for persistent storage
+RUN mkdir -p /app/data/processed /app/data/raw /app/user_data
 
 # Set proper permissions
 RUN chmod +x /app/api.py /app/build-database.py /app/start-api.sh
@@ -47,8 +47,10 @@ RUN python build-database-robust.py && \
     echo "Setting ownership and permissions..." && \
     chown -R appuser:appgroup /app && \
     chmod 664 /app/arrow*.db && \
+    chmod 775 /app/user_data && \
     echo "Final file check after ownership change:" && \
-    ls -la /app/arrow*.db
+    ls -la /app/arrow*.db && \
+    ls -la /app/user_data/
 
 USER appuser
 
