@@ -33,6 +33,7 @@ This is a comprehensive Arrow Database & Tuning Calculator project that scrapes 
 - ✅ **Enhanced Production Infrastructure**: Comprehensive Docker deployment with verification and health checks
 - ✅ **Interactive Tuning Guides**: Complete guided tuning system with step-by-step walkthroughs
 - ✅ **Bow Saving Fix**: Resolved production database persistence issues with enhanced infrastructure
+- ✅ **GitHub Issue #16 Completion**: Complete bow configuration system fixes including 0.5 draw weight increments, point weight validation (40+ gn), arrow length fields, and enhanced form persistence
 
 ## Development Commands
 
@@ -955,6 +956,16 @@ The Arrow Tuning Platform provides:
 ### Recent Fixes & Enhancements (July 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**GitHub Issue #16 - Bow Configuration Form Fixes:**
+- **Issue**: Draw weight increments not set to 0.5 steps, missing arrow length and point weight fields in add modal, bow setup editing not persisting changes properly.
+- **Solution**: 
+  - Fixed draw weight increments to 0.5 steps in both `AddBowSetupModal.vue` and `setups/index.vue`
+  - Added missing arrow length and point weight fields to `AddBowSetupModal.vue` with proper validation (point weight min: 40, step: 0.5)
+  - Enhanced numeric field conversion in save/edit functions with `parseFloat()` for proper database storage
+  - Improved error handling with detailed API response logging
+- **Files**: `frontend/components/AddBowSetupModal.vue`, `frontend/pages/setups/index.vue`
+- **Status**: ✅ **COMPLETED** - All bow setup form issues resolved
 
 **Frontend `localStorage` Access on Server:**
 - **Issue**: `localStorage is not defined` errors during Server-Side Rendering (SSR).
