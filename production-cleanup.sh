@@ -60,13 +60,16 @@ print_status "Services stopped"
 # Navigate to arrow_scraper directory
 cd "$ARROW_SCRAPER_DIR"
 
-# Activate virtual environment if it exists
+# Setup Python virtual environment
 if [ -d "venv" ]; then
-    echo -e "${BLUE}🐍 Activating Python virtual environment...${NC}"
+    echo -e "${BLUE}🐍 Activating existing Python virtual environment...${NC}"
     source venv/bin/activate
     print_status "Virtual environment activated"
 else
-    print_warning "No virtual environment found, using system Python"
+    echo -e "${BLUE}🐍 Creating new Python virtual environment...${NC}"
+    python3 -m venv venv
+    source venv/bin/activate
+    print_status "New virtual environment created and activated"
 fi
 
 # Wipe existing databases
@@ -90,9 +93,31 @@ mkdir -p logs
 print_status "Log files cleaned"
 
 # Update scraper dependencies
-echo -e "${BLUE}📦 Updating scraper dependencies...${NC}"
+echo -e "${BLUE}📦 Installing/updating scraper dependencies...${NC}"
+pip install --upgrade pip
 pip install --upgrade -r requirements.txt
 print_status "Dependencies updated"
+
+# Verify key dependencies are installed
+echo -e "${BLUE}🔍 Verifying key dependencies...${NC}"
+python -c "
+import sys
+required_packages = ['requests', 'sqlite3', 'json', 'asyncio']
+missing = []
+for pkg in required_packages:
+    try:
+        __import__(pkg)
+        print(f'✅ {pkg} available')
+    except ImportError:
+        missing.append(pkg)
+        print(f'❌ {pkg} missing')
+
+if missing:
+    print(f'Missing packages: {missing}')
+    sys.exit(1)
+else:
+    print('✅ All core dependencies verified')
+"
 
 # Check if DeepSeek API key is configured
 if [ -f "../.env" ]; then

@@ -74,6 +74,24 @@ elif [ "$CLEANUP_FLAG" = "auto" ]; then
     fi
 fi
 
+# Ensure virtual environment is set up
+echo -e "${BLUE}🐍 Ensuring Python virtual environment is ready...${NC}"
+if [ -f "./setup-venv.sh" ]; then
+    ./setup-venv.sh
+    print_status "Virtual environment verified"
+else
+    print_warning "Virtual environment setup script not found - attempting manual setup"
+    cd arrow_scraper
+    if [ ! -d "venv" ]; then
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        print_status "Virtual environment created manually"
+    fi
+    cd ..
+fi
+
 # Run cleanup if needed
 if [ "$NEED_CLEANUP" = "true" ]; then
     echo -e "${BLUE}🚀 Running production cleanup first...${NC}"
