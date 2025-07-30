@@ -26,6 +26,14 @@
             <label for="drawLength" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Draw Length (inches)</label>
             <input type="number" id="drawLength" v-model.number="setupData.draw_length" class="form-input" required step="0.1" />
           </div>
+          <div class="mb-4">
+            <label for="arrowLength" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Arrow Length (inches)</label>
+            <input type="number" id="arrowLength" v-model.number="setupData.arrow_length" class="form-input" required step="0.1" />
+          </div>
+          <div class="mb-4">
+            <label for="pointWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Point Weight (gn)</label>
+            <input type="number" id="pointWeight" v-model.number="setupData.point_weight" class="form-input" required step="0.5" min="40" />
+          </div>
         </div>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bow Usage</label>
@@ -93,6 +101,8 @@ const setupData = ref({
   bow_type: '',
   draw_weight: null,
   draw_length: null,
+  arrow_length: null,
+  point_weight: 100,
   description: '',
   bow_usage: [],
 });

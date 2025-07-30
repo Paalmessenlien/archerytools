@@ -91,7 +91,7 @@
           </div>
           <div class="mb-4">
             <label class="block mb-1">Draw Weight</label>
-            <input v-model="form.draw_weight" type="number" class="w-full p-2 border rounded" required>
+            <input v-model="form.draw_weight" type="number" step="0.5" class="w-full p-2 border rounded" required>
           </div>
           <div class="mb-4">
             <label class="block mb-1">Draw Length</label>
@@ -122,7 +122,7 @@
           </div>
           <div class="mb-4">
             <label class="block mb-1">Point Weight</label>
-            <input v-model="form.point_weight" type="number" class="w-full p-2 border rounded" required>
+            <input v-model="form.point_weight" type="number" step="0.5" min="40" class="w-full p-2 border rounded" required>
           </div>
           <div class="flex justify-end">
             <button type="button" @click="cancelForm" class="px-4 py-2 mr-2 text-gray-700 bg-gray-200 rounded">Cancel</button>
@@ -178,6 +178,11 @@ const editSetup = (setup) => {
   editingSetup.value = setup;
   form.value = { 
     ...setup,
+    // Ensure numeric fields are properly converted
+    draw_weight: parseFloat(setup.draw_weight) || 70,
+    draw_length: parseFloat(setup.draw_length) || 29,
+    arrow_length: parseFloat(setup.arrow_length) || 28.5,
+    point_weight: parseFloat(setup.point_weight) || 100,
     bow_usage: setup.bow_usage ? JSON.parse(setup.bow_usage) : []
   };
 };
@@ -209,6 +214,11 @@ const saveSetup = async () => {
   try {
     const setupData = {
       ...form.value,
+      // Convert numeric fields to proper numbers
+      draw_weight: parseFloat(form.value.draw_weight),
+      draw_length: parseFloat(form.value.draw_length),
+      arrow_length: parseFloat(form.value.arrow_length),
+      point_weight: parseFloat(form.value.point_weight),
       bow_usage: JSON.stringify(form.value.bow_usage)
     };
     
@@ -225,7 +235,8 @@ const saveSetup = async () => {
       fetchSetups();
       cancelForm();
     } else {
-      console.error('Failed to save setup');
+      const errorText = await res.text();
+      console.error('Failed to save setup:', errorText);
     }
   } catch (err) {
     console.error('Failed to save setup:', err);
