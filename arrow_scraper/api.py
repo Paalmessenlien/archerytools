@@ -194,6 +194,12 @@ def get_compatibility_engine():
 def handle_error(error):
     """Global error handler"""
     import traceback
+    # If it's a 404, return 404 status code
+    if hasattr(error, 'code') and error.code == 404:
+        return jsonify({
+            'error': str(error),
+            'type': type(error).__name__
+        }), 404
     return jsonify({
         'error': str(error),
         'type': type(error).__name__
@@ -1174,6 +1180,46 @@ def get_setup_arrows(current_user, setup_id):
             arrows.append(arrow_info)
         
         return jsonify({'arrows': arrows})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/setup-arrows/<int:arrow_setup_id>', methods=['DELETE'])
+@token_required
+def remove_arrow_from_setup(current_user, arrow_setup_id):
+    """Remove an arrow from a bow setup"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get the arrow setup to verify ownership
+        cursor.execute('''
+            SELECT sa.*, bs.user_id 
+            FROM setup_arrows sa
+            JOIN bow_setups bs ON sa.setup_id = bs.id
+            WHERE sa.id = ?
+        ''', (arrow_setup_id,))
+        
+        arrow_setup = cursor.fetchone()
+        
+        if not arrow_setup:
+            return jsonify({'error': 'Arrow setup not found'}), 404
+        
+        if arrow_setup['user_id'] != current_user['id']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Delete the arrow setup
+        cursor.execute('DELETE FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Arrow removed from setup successfully'})
         
     except Exception as e:
         if conn:
@@ -2230,42 +2276,3 @@ def debug_database():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/setup-arrows/<int:arrow_setup_id>', methods=['DELETE'])
-@token_required
-def remove_arrow_from_setup(current_user, arrow_setup_id):
-    """Remove an arrow from a bow setup"""
-    conn = None
-    try:
-        # Get user database connection
-        from user_database import UserDatabase
-        user_db = UserDatabase()
-        conn = user_db.get_connection()
-        cursor = conn.cursor()
-        
-        # Get the arrow setup to verify ownership
-        cursor.execute('''
-            SELECT sa.*, bs.user_id 
-            FROM setup_arrows sa
-            JOIN bow_setups bs ON sa.setup_id = bs.id
-            WHERE sa.id = ?
-        ''', (arrow_setup_id,))
-        
-        arrow_setup = cursor.fetchone()
-        
-        if not arrow_setup:
-            return jsonify({'error': 'Arrow setup not found'}), 404
-        
-        if arrow_setup['user_id'] != current_user['id']:
-            return jsonify({'error': 'Access denied'}), 403
-        
-        # Delete the arrow setup
-        cursor.execute('DELETE FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Arrow removed from setup successfully'})
-        
-    except Exception as e:
-        if conn:
-            conn.close()
-        return jsonify({'error': str(e)}), 500
