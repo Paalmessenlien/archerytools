@@ -21,9 +21,13 @@ export const useApi = () => {
   ): Promise<T> => {
     const url = `${baseURL}${endpoint}`
     
+    // Get token from localStorage for authentication
+    const token = process.client ? localStorage.getItem('token') : null
+    
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
       },
     }

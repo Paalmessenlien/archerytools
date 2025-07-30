@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CDN Image Uploader for Arrow Tuning Platform
+CDN Image Uploader for Archery Tools
 Uploads scraped images to CDN services for better performance and storage optimization
 """
 

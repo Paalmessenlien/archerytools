@@ -199,36 +199,43 @@ const currentSession = ref(null)
 const activeSession = ref(null)
 
 // API composable
-const { $fetch } = useApi()
+const { apiRequest } = useApi()
 
 // Methods
 const loadAvailableGuides = async () => {
   try {
-    const response = await $fetch('/api/guides')
+    const response = await apiRequest('/guides')
     availableGuides.value = response.guides
   } catch (error) {
     console.error('Error loading guides:', error)
+    // Provide fallback data for development
+    availableGuides.value = []
   }
 }
 
 const loadBowSetups = async () => {
   try {
-    const response = await $fetch('/api/bow-setups')
-    bowSetups.value = response.bow_setups
+    const response = await apiRequest('/bow-setups')
+    bowSetups.value = response.bow_setups || []
   } catch (error) {
     console.error('Error loading bow setups:', error)
+    // Provide fallback data
+    bowSetups.value = []
   }
 }
 
 const loadSessionHistory = async () => {
   try {
-    const response = await $fetch('/api/guide-sessions')
-    sessionHistory.value = response.sessions
+    const response = await apiRequest('/guide-sessions')
+    sessionHistory.value = response.sessions || []
     
     // Check for active session
     activeSession.value = sessionHistory.value.find(s => s.status === 'in_progress')
   } catch (error) {
     console.error('Error loading session history:', error)
+    // Provide fallback data
+    sessionHistory.value = []
+    activeSession.value = null
   }
 }
 
@@ -241,14 +248,14 @@ const startGuideSession = async () => {
   if (!selectedGuide.value || !selectedBowSetup.value) return
   
   try {
-    const response = await $fetch('/api/guide-sessions', {
+    const response = await apiRequest('/guide-sessions', {
       method: 'POST',
-      body: {
+      body: JSON.stringify({
         guide_name: selectedGuide.value.name,
         guide_type: selectedGuide.value.type,
         bow_setup_id: selectedBowSetup.value.id,
         total_steps: selectedGuide.value.total_steps
-      }
+      })
     })
     
     currentSession.value = {

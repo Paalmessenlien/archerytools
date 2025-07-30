@@ -7,7 +7,7 @@
           <i class="fas fa-crosshairs text-white text-2xl"></i>
         </div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Arrow Tuning Platform
+          Archery Tools
         </h1>
         <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 mb-4">
           <i class="fas fa-flask mr-2"></i>

@@ -14,18 +14,81 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Arrow Tuning Platform</h1>
-      <p class="text-gray-600 dark:text-gray-300">Manage your bow setups and arrow configurations for personalized recommendations</p>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome to ArcheryTool Beta</h1>
+      <div class="prose dark:prose-invert max-w-none">
+        <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+          Professional archery tools designed for enthusiasts who demand precision and performance.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
+              <i class="fas fa-database mr-2"></i>
+              Comprehensive Database
+            </h3>
+            <p class="text-blue-800 dark:text-blue-300">
+              Access specifications for 1,100+ arrow models from 13 leading manufacturers including Easton, Gold Tip, Victory, and more.
+            </p>
+          </div>
+          
+          <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+            <h3 class="text-lg font-semibold text-green-900 dark:text-green-200 mb-3">
+              <i class="fas fa-calculator mr-2"></i>
+              Professional Calculations
+            </h3>
+            <p class="text-green-800 dark:text-green-300">
+              Industry-standard spine calculations, FOC optimization, and intelligent arrow matching for your specific bow setup.
+            </p>
+          </div>
+          
+          <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
+            <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-200 mb-3">
+              <i class="fas fa-user-cog mr-2"></i>
+              Personal Setup Management
+            </h3>
+            <p class="text-purple-800 dark:text-purple-300">
+              Save your bow configurations, track tuning sessions, and maintain your archery equipment profiles.
+            </p>
+          </div>
+          
+          <div class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+            <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-200 mb-3">
+              <i class="fas fa-book-open mr-2"></i>
+              Interactive Guides
+            </h3>
+            <p class="text-orange-800 dark:text-orange-300">
+              Step-by-step tuning guides for paper tuning, bare shaft testing, and advanced optimization techniques.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+            <i class="fas fa-rocket mr-2"></i>
+            Beta Features Available Now
+          </h3>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+            <li>Real-time arrow recommendations with compatibility scoring</li>
+            <li>Advanced filtering by manufacturer, spine range, and diameter categories</li>
+            <li>Multi-language support for international manufacturers</li>
+            <li>Professional spine calculation engine with adjustable parameters</li>
+            <li>Dark mode support and responsive design for all devices</li>
+            <li>Secure Google OAuth authentication and personal data management</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    <!-- Page Title for Quick Tuning -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-        <i class="fas fa-crosshairs mr-2 text-indigo-600"></i>
-        Quick Arrow Tuning
+    <!-- Arrow Calculator Section -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center mb-4">
+        <i class="fas fa-crosshairs mr-3 text-indigo-600 dark:text-purple-400"></i>
+        Arrow Calculator
       </h2>
-      <p class="text-gray-600 dark:text-gray-300 mt-1">Get instant arrow recommendations based on your bow configuration</p>
+      <p class="text-gray-600 dark:text-gray-300 mb-6">
+        Get instant arrow recommendations based on your bow configuration and shooting requirements.
+      </p>
     </div>
 
     <!-- Quick Tuning Section -->
@@ -288,9 +351,9 @@ onMounted(() => {
 
 // Set page title
 useHead({
-  title: 'Arrow Tuning Platform - Beta',
+  title: 'ArcheryTool Beta - Professional Archery Tools',
   meta: [
-    { name: 'description', content: 'Professional arrow tuning platform for archery enthusiasts (Beta)' }
+    { name: 'description', content: 'Beta access to professional archery tools with comprehensive arrow database, spine calculations, and personalized recommendations for archery enthusiasts.' }
   ]
 })
 

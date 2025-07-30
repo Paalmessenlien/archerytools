@@ -235,9 +235,11 @@
                     <!-- Brand Information Display -->
                     <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                       <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
+                      <span v-if="setup.riser_length" class="ml-1">({{ setup.riser_length }}")</span>
                     </div>
                     <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400">
                       <span class="font-medium">Limbs:</span> {{ setup.limb_brand }} {{ setup.limb_model }}
+                      <span v-if="setup.limb_length" class="ml-1">({{ setup.limb_length }})</span>
                     </div>
                     <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                       <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
@@ -490,9 +492,6 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
-    draw_length: user.value?.draw_length || 28.0,
-    arrow_length: user.value?.draw_length ? user.value.draw_length - 1 : 27.0,
-    point_weight: 100,
     description: '',
     bow_usage: [],
   };
@@ -516,9 +515,6 @@ const openEditBowSetupModal = (setup) => {
     name: setup.name || '',
     bow_type: setup.bow_type || '',
     draw_weight: setup.draw_weight || 45,
-    draw_length: setup.draw_length || user.value?.draw_length || 28.0,
-    arrow_length: setup.arrow_length || (user.value?.draw_length ? user.value.draw_length - 1 : 27.0),
-    point_weight: setup.point_weight || 100,
     description: setup.description || '',
     bow_usage: setup.bow_usage ? JSON.parse(setup.bow_usage) : [],
     // Pass existing brand data for the modal to handle
@@ -526,8 +522,10 @@ const openEditBowSetupModal = (setup) => {
     compound_model: setup.compound_model || '',
     riser_brand: setup.riser_brand || '',
     riser_model: setup.riser_model || '',
+    riser_length: setup.riser_length || '',
     limb_brand: setup.limb_brand || '',
     limb_model: setup.limb_model || '',
+    limb_length: setup.limb_length || '',
   };
   
   isAddingSetup.value = true;
@@ -538,12 +536,20 @@ const handleSaveBowSetup = async (setupData) => {
   isSavingSetup.value = true;
   addSetupError.value = null;
   try {
+    // Add draw_length from user profile and default arrow fields for compatibility
+    const completeSetupData = {
+      ...setupData,
+      draw_length: user.value?.draw_length || 28.0,
+      arrow_length: user.value?.draw_length ? user.value.draw_length - 1 : 27.0,
+      point_weight: 100, // Default point weight for API compatibility
+    };
+
     if (isEditMode.value && editingSetupId.value) {
       // Update existing setup
-      await updateBowSetup(editingSetupId.value, setupData);
+      await updateBowSetup(editingSetupId.value, completeSetupData);
     } else {
       // Create new setup
-      await addBowSetup(setupData);
+      await addBowSetup(completeSetupData);
     }
     
     closeAddSetupModal();

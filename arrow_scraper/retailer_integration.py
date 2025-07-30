@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Retailer Integration System for Arrow Tuning Platform
+Retailer Integration System for Archery Tools
 Coordinates scraping, matching, and data enhancement from multiple retailers
 """
 

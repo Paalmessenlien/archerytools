@@ -82,7 +82,7 @@
             @click="closeMobileMenu"
             class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            Bow Setup
+            Home
           </NuxtLink>
           <NuxtLink 
             to="/database" 
@@ -163,7 +163,7 @@
         <aside class="flex-shrink-0 lg:w-64">
           <nav class="card">
             <div class="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-x-visible">
-              <!-- Bow Setup - Always accessible for logged-in users -->
+              <!-- Home - Always accessible for logged-in users -->
               <template v-if="user">
                 <NuxtLink 
                   to="/"
@@ -171,14 +171,9 @@
                   :class="{ active: $route.path === '/' }"
                 >
                   <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v6m0 6v6"/>
-                    <path d="m15.14 8.86 4.24-4.24"/>
-                    <path d="m4.86 19.14 4.24-4.24"/>
-                    <path d="m8.86 8.86-4.24-4.24"/>
-                    <path d="m19.14 19.14-4.24-4.24"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                   </svg>
-                  <span class="hidden sm:block">Bow Setup</span>
+                  <span class="hidden sm:block">Home</span>
                 </NuxtLink>
                 
                 <NuxtLink
@@ -258,10 +253,10 @@
                 <div 
                   @click="redirectToLogin"
                   class="nav-tab cursor-not-allowed opacity-60"
-                  title="Login required to access Bow Setup"
+                  title="Login required to access full features"
                 >
                   <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
-                  <span class="hidden sm:block">Bow Setup</span>
+                  <span class="hidden sm:block">Home</span>
                   <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
                 </div>
                 

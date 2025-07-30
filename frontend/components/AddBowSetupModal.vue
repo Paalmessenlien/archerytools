@@ -5,14 +5,17 @@
         {{ props.modelValue?.id ? 'Edit Bow Setup' : 'Add New Bow Setup' }}
       </h3>
       <form @submit.prevent="saveBowSetup">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div class="mb-4">
+        <div class="space-y-6">
+          <!-- Setup Name -->
+          <div>
             <label for="setupName" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Setup Name</label>
-            <input type="text" id="setupName" v-model="setupData.name" class="form-input" required />
+            <input type="text" id="setupName" v-model="setupData.name" class="w-full form-input" required />
           </div>
-          <div class="mb-4">
+          
+          <!-- Bow Type -->
+          <div>
             <label for="bowType" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Type</label>
-            <select id="bowType" v-model="setupData.bow_type" class="form-select" required>
+            <select id="bowType" v-model="setupData.bow_type" class="w-full form-select" required>
               <option value="">Select Bow Type</option>
               <option value="compound">Compound</option>
               <option value="recurve">Recurve</option>
@@ -20,26 +23,29 @@
               <option value="traditional">Traditional</option>
             </select>
           </div>
-          <div class="mb-4">
-            <label for="drawWeight" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Draw Weight (lbs)</label>
-            <input type="number" id="drawWeight" v-model.number="setupData.draw_weight" class="form-input" required step="0.5" />
-          </div>
-          <div class="mb-4">
-            <label for="drawLength" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Draw Length (inches)</label>
-            <input type="number" id="drawLength" v-model.number="setupData.draw_length" class="form-input" required step="0.1" />
-          </div>
-          <div class="mb-4">
-            <label for="arrowLength" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Arrow Length (inches)</label>
-            <input type="number" id="arrowLength" v-model.number="setupData.arrow_length" class="form-input" required step="0.1" />
-          </div>
-          <div class="mb-4">
-            <label for="pointWeight" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Point Weight (gn)</label>
-            <input type="number" id="pointWeight" v-model.number="setupData.point_weight" class="form-input" required step="0.5" min="40" />
+          
+          <!-- Draw Weight Slider -->
+          <div>
+            <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_weight || 45 }} lbs</span>
+            </label>
+            <input 
+              type="range" 
+              min="20" 
+              max="80" 
+              step="0.5" 
+              v-model.number="setupData.draw_weight"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+            />
+            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>20 lbs</span>
+              <span>80 lbs</span>
+            </div>
           </div>
         </div>
         
         <!-- Bow Type Specific Configuration -->
-        <div v-if="setupData.bow_type" class="p-4 mb-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-700/50 dark:border-gray-600">
+        <div v-if="setupData.bow_type" class="p-4 mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600">
           <h4 class="flex items-center mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
             <i class="mr-2 text-blue-600 fas fa-cog"></i>
             {{ setupData.bow_type.charAt(0).toUpperCase() + setupData.bow_type.slice(1) }} Specific Configuration
@@ -145,6 +151,32 @@
                   class="w-full mt-2 form-input"
                   placeholder="e.g., Formula X, Prodigy, Epic..."
                 />
+                
+                <!-- Riser Length -->
+                <div v-if="setupData.riser_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
+                  <select v-model="setupData.riser_length" class="w-full form-select">
+                    <option value="">Select Riser Length</option>
+                      <option value="17">17"</option>
+                      <option value="19">19"</option>
+                      <option value="21">21"</option>
+                      <option value="23">23"</option>
+                      <option value="25">25"</option>
+                      <option value="27">27"</option>
+                      <option value="Other">Other (custom length)</option>
+                  </select>
+                  
+                  <!-- Custom riser length input -->
+                  <input 
+                    v-if="setupData.riser_length === 'Other'"
+                    type="text"
+                    v-model="setupData.riser_length"
+                    @focus="clearOtherValue('riser_length')"
+                    class="w-full mt-2 form-input"
+                    placeholder="Enter custom riser length (e.g., 24 inches)"
+                    required
+                  />
+                </div>
               </div>
               
               <!-- Limb Brand Selection -->
@@ -186,6 +218,29 @@
                   class="w-full mt-2 form-input"
                   placeholder="e.g., Quattro, Inno Max, Veloce..."
                 />
+                
+                <!-- Limb Length -->
+                <div v-if="setupData.limb_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
+                  <select v-model="setupData.limb_length" class="w-full form-select">
+                    <option value="">Select Limb Length</option>
+                    <option value="Short">Short</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Long">Long</option>
+                    <option value="Other">Other (custom length)</option>
+                  </select>
+                  
+                  <!-- Custom limb length input -->
+                  <input 
+                    v-if="setupData.limb_length === 'Other'"
+                    type="text"
+                    v-model="setupData.limb_length"
+                    @focus="clearOtherValue('limb_length')"
+                    class="w-full mt-2 form-input"
+                    placeholder="Enter custom limb length (e.g., Extra Long)"
+                    required
+                  />
+                </div>
               </div>
             </div>
             
@@ -239,6 +294,32 @@
                     placeholder="Enter riser brand name..."
                     required
                   />
+                  
+                  <!-- Traditional Riser Length -->
+                  <div v-if="setupData.riser_brand" class="mt-2">
+                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
+                    <select v-model="setupData.riser_length" class="w-full form-select">
+                      <option value="">Select Riser Length</option>
+                      <option value="17">17"</option>
+                      <option value="19">19"</option>
+                      <option value="21">21"</option>
+                      <option value="23">23"</option>
+                      <option value="25">25"</option>
+                      <option value="27">27"</option>
+                      <option value="Other">Other (custom length)</option>
+                    </select>
+                    
+                    <!-- Custom traditional riser length input -->
+                    <input 
+                      v-if="setupData.riser_length === 'Other'"
+                      type="text"
+                      v-model="setupData.riser_length"
+                      @focus="clearOtherValue('riser_length')"
+                      class="w-full mt-2 form-input"
+                      placeholder="Enter custom riser length (e.g., 20 inches)"
+                      required
+                    />
+                  </div>
                 </div>
                 
                 <!-- Traditional Limb Brand -->
@@ -269,6 +350,29 @@
                     placeholder="Enter limb brand name..."
                     required
                   />
+                  
+                  <!-- Traditional Limb Length -->
+                  <div v-if="setupData.limb_brand" class="mt-2">
+                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
+                    <select v-model="setupData.limb_length" class="w-full form-select">
+                      <option value="">Select Limb Length</option>
+                      <option value="Short">Short</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Long">Long</option>
+                      <option value="Other">Other (custom length)</option>
+                    </select>
+                    
+                    <!-- Custom traditional limb length input -->
+                    <input 
+                      v-if="setupData.limb_length === 'Other'"
+                      type="text"
+                      v-model="setupData.limb_length"
+                      @focus="clearOtherValue('limb_length')"
+                      class="w-full mt-2 form-input"
+                      placeholder="Enter custom limb length (e.g., Extra Short)"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -380,15 +484,14 @@ const emit = defineEmits(['update:modelValue', 'save', 'close']);
 const setupData = ref({
   name: '',
   bow_type: '',
-  draw_weight: null,
-  draw_length: null,
-  arrow_length: null,
-  point_weight: 100,
+  draw_weight: 45,
   description: '',
   riser_brand: '',
   riser_model: '',
+  riser_length: '', // New field for recurve/traditional
   limb_brand: '',
   limb_model: '',
+  limb_length: '', // New field for recurve/traditional
   compound_brand: '',
   compound_model: '',
   bow_usage: [],
@@ -433,8 +536,11 @@ watch(() => props.modelValue, (newValue) => {
       limb_brand: newValue.limb_brand || '',
       riser_model: newValue.riser_model || '',
       limb_model: newValue.limb_model || '',
+      riser_length: newValue.riser_length || '',
+      limb_length: newValue.limb_length || '',
       compound_model: newValue.compound_model || '',
-      bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : []
+      bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : [],
+      draw_weight: newValue.draw_weight || 45 // Ensure draw weight is set
     };
   }
 }, { immediate: true });
@@ -474,15 +580,18 @@ const getBrandValue = (brandField, customField) => {
   return selectedBrand || null;
 };
 
+const clearOtherValue = (fieldName) => {
+  if (setupData.value[fieldName] === 'Other') {
+    setupData.value[fieldName] = '';
+  }
+};
+
 const saveBowSetup = () => {
   // Transform the data to match API expectations
   const transformedData = {
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
-    draw_length: setupData.value.draw_length,
-    arrow_length: setupData.value.arrow_length,
-    point_weight: Number(setupData.value.point_weight),
     description: setupData.value.description,
     bow_usage: JSON.stringify(setupData.value.bow_usage), // Convert to JSON array
     // Map brand fields correctly to database schema
@@ -494,12 +603,16 @@ const saveBowSetup = () => {
         : getBrandValue('riser_brand', 'custom_riser_brand')) : '',
     riser_model: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.riser_model || '' : '',
+    riser_length: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
+      ? setupData.value.riser_length || '' : '',
     limb_brand: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional')
       ? (setupData.value.bow_type === 'traditional'
         ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
         : getBrandValue('limb_brand', 'custom_limb_brand')) : '',
     limb_model: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.limb_model || '' : '',
+    limb_length: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
+      ? setupData.value.limb_length || '' : '',
   };
   
   emit('save', transformedData);
@@ -514,5 +627,53 @@ const saveBowSetup = () => {
 }
 .form-textarea {
   @apply w-full h-24 resize-y;
+}
+
+/* Slider Styling */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #3b82f6 0%, #3b82f6 50%, #d1d5db 50%, #d1d5db 100%);
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark .slider {
+  background: linear-gradient(to right, #8b5cf6 0%, #8b5cf6 50%, #4b5563 50%, #4b5563 100%);
+}
+
+.dark .slider::-webkit-slider-thumb {
+  background: #8b5cf6;
+}
+
+.dark .slider::-moz-range-thumb {
+  background: #8b5cf6;
 }
 </style>

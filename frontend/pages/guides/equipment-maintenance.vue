@@ -688,7 +688,7 @@
 <script setup>
 // Set page title and meta
 useHead({
-  title: 'Equipment Maintenance Guide - Arrow Tuning Platform',
+  title: 'Equipment Maintenance Guide - Archery Tools',
   meta: [
     { name: 'description', content: 'Comprehensive guide to maintaining archery equipment including bows, strings, arrows, and accessories for optimal performance and safety.' },
     { name: 'keywords', content: 'archery equipment maintenance, bow care, string maintenance, arrow inspection, equipment service, archery safety' }

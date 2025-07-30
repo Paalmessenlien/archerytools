@@ -33,9 +33,9 @@ export default defineNuxtConfig({
   // App Configuration
   app: {
     head: {
-      title: 'ArrowTune - Professional Arrow Selection',
+      title: 'ArcheryTool - Professional Archery Tools',
       meta: [
-        { name: 'description', content: 'Professional arrow tuning and selection platform' },
+        { name: 'description', content: 'Professional archery tools for arrow selection and tuning' },
         { name: 'keywords', content: 'archery, arrows, tuning, spine calculator, bow setup' }
       ],
       link: [
