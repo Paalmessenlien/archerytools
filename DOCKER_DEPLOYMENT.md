@@ -103,6 +103,10 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ### 4. Production (HTTPS)
 
 ```bash
+# Option A: Automatic SSL detection and deployment (RECOMMENDED)
+./check-ssl-and-deploy.sh docker-compose.enhanced-ssl.yml
+
+# Option B: Manual SSL setup
 # Prepare data and SSL certificates
 ./production-import-only.sh
 sudo certbot certonly --standalone -d yourdomain.com

@@ -81,10 +81,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./deploy/nginx/nginx.ssl.conf:/etc/nginx/nginx.conf:ro
-      - ./deploy/ssl:/etc/nginx/ssl:ro
+      - ./deploy/nginx/nginx.http-only.conf:/etc/nginx/nginx.conf:ro
       - arrowtuner-logs:/var/log/nginx  # Persist nginx logs
     depends_on:
       api:
@@ -94,11 +92,11 @@ services:
     networks:
       - arrowtuner-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/health && curl -f https://localhost/api/health -k || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
       interval: 30s
       timeout: 15s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     deploy:
       resources:
         limits:
