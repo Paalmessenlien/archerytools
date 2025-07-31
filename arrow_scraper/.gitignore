@@ -96,7 +96,7 @@ app.log
 
 # Data directories
 data/raw/
-data/processed/
+# data/processed/  # Allow JSON files for production
 data/backups/
 scraped_images/
 images/
