@@ -394,98 +394,106 @@ python test_admin_api.py
 
 ### Production Deployment (PRODUCTION READY)
 
+**📚 Complete Documentation:**
+- **Docker Deployment Guide**: See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive Docker deployment instructions
+- **Production Server Guide**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for full production server setup, SSL, monitoring, and maintenance
+
 **Quick Start Production Deployment**
 ```bash
 # Step 1: Clone and configure
 git clone https://github.com/Paalmessenlien/archerytools.git
 cd archerytools
 
-# Step 2: Configure environment
+# Step 2: Import arrow data (NO server-side scraping)
+./production-import-only.sh
+
+# Step 3: Configure environment
 cp .env.example .env
 # Edit .env with your settings
 
-# Step 3: Deploy with HTTP
-./deploy-production.sh
+# Step 4: Deploy with enhanced Docker configuration
+./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
 
-# Step 4: Configure DNS
-# Add A record: yourdomain.com -> your-server-ip
+# Step 5: Configure DNS (add A record: yourdomain.com -> your-server-ip)
 
-# Step 5: Set up SSL certificates
+# Step 6: Set up SSL certificates
 sudo certbot certonly --standalone -d yourdomain.com
-./enable-https.sh
 
-# Step 6: Deploy with HTTPS
-sudo docker-compose -f docker-compose.ssl.yml up -d --build
+# Step 7: Production deployment with HTTPS
+sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 ```
 
 **Production Features:**
-- ✅ Nginx reverse proxy with SSL termination
-- ✅ Automatic HTTP to HTTPS redirects
-- ✅ Docker containerization with health checks
-- ✅ Embedded database (no external dependencies)
-- ✅ Material Design 3 UI with dark mode
-- ✅ Professional arrow tuning calculations
-- ✅ Modern security headers and TLS configuration
+- ✅ Enhanced Docker infrastructure with verification and health checks
+- ✅ Import-only data system (NO server-side web scraping)
+- ✅ Nginx reverse proxy with SSL termination and security headers
+- ✅ Automatic HTTP to HTTPS redirects with rate limiting
+- ✅ Docker containerization with extended health checks and resource limits
+- ✅ Persistent user database with Docker volumes
+- ✅ Material Design 3 UI with dark mode support
+- ✅ Professional arrow tuning calculations and recommendations
+- ✅ Comprehensive backup and monitoring systems
 
-**Deployment Scripts:**
-- `deploy-production.sh` - Automated production deployment
-- `enable-https.sh` - SSL certificate setup and HTTPS enablement
-- `fix-mixed-content.sh` - Fix HTTP/HTTPS mixed content issues
-- `diagnose-domain-access.sh` - Domain and networking diagnostics
+**Key Deployment Scripts:**
+- `production-import-only.sh` - Import arrow data from JSON files (NO scraping)
+- `deploy-enhanced.sh` - Enhanced production deployment with verification
+- `docker-production-setup.sh` - Automated Docker setup with health checks
+- `test-bow-saving.py` - Production functionality testing utility
 
-### Deploying Scraper Updates to Production
+**⚠️ Important: Production systems only import existing JSON data files and do NOT perform web scraping on the server.**
+
+### Deploying Updates to Production
 
 **🚀 Quick Production Update (Latest Changes)**
 ```bash
 # On your production server
-cd /path/to/your/arrowtuner/project
+cd /path/to/your/archerytools/project
 
 # Pull latest changes
 git pull
 
+# Import updated arrow data (NO scraping on server)
+./production-import-only.sh
+
 # Rebuild and restart containers with latest code
-sudo docker-compose -f docker-compose.ssl.yml down
-sudo docker-compose -f docker-compose.ssl.yml up -d --build
+sudo docker-compose -f docker-compose.enhanced-ssl.yml down
+sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 
 # Verify deployment
 curl https://yourdomain.com/api/health
+python3 test-bow-saving.py
 ```
 
 **🏹 Deploying Fresh Arrow Data**
 ```bash
-# Method 1: Local scraping then production deploy
-# 1. Run scraper locally
+# Method 1: Local development then production deploy (RECOMMENDED)
+# 1. Run scraper locally to update JSON files
 cd arrow_scraper
 source venv/bin/activate
-python main.py easton goldtip victory
-python arrow_database.py
+python main.py easton goldtip victory  # Updates data/processed/*.json files
+# DO NOT run python arrow_database.py locally
 
-# 2. Commit and push changes
-git add .
-git commit -m "Update arrow database with latest scraped data"
+# 2. Commit and push JSON changes
+git add data/processed/
+git commit -m "Update arrow database JSON files with latest scraped data"
 git push
 
-# 3. Deploy to production
+# 3. Deploy to production (imports from JSON files only)
 # On production server:
 git pull
-sudo docker-compose -f docker-compose.ssl.yml up -d --build
-
-# Method 2: Direct production scraping (advanced)
-# Run scraper in production Docker container
-sudo docker exec -it arrowtuner-api bash
-cd /app
-python main.py easton goldtip victory
-python arrow_database.py
-exit
-sudo docker-compose restart api
+./production-import-only.sh  # Imports from JSON files only
+sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 ```
 
-**⚠️ Production Deployment Notes:**
-- **Database Persistence**: Arrow database persists through container rebuilds
-- **HTTPS Required**: Always use `docker-compose.ssl.yml` for production
-- **Backup Recommended**: Backup database before major scraper updates
-- **Verification**: Always test API health endpoint after deployment
-- **Zero Downtime**: Rebuild process maintains service availability
+**⚠️ Critical Production Deployment Notes:**
+- **NO Server Scraping**: Production servers NEVER perform web scraping
+- **JSON Import Only**: Production only imports from existing JSON files in data/processed/
+- **Local Development**: All scraping is done in development environments only
+- **Database Persistence**: User database persists through container rebuilds using Docker volumes
+- **Enhanced Infrastructure**: Always use `docker-compose.enhanced-ssl.yml` for production
+- **Backup Recommended**: Automated backup system included in enhanced deployment
+- **Verification**: Use `test-bow-saving.py` to verify production functionality
+- **Health Checks**: Extended health monitoring with 120s startup periods
 
 ### Environment Configuration
 **Development:** Create `.env` file in `arrow_scraper/` directory:
