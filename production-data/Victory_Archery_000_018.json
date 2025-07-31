@@ -1,0 +1,958 @@
+{
+  "extraction_timestamp": "2025-07-22T08:57:57.512565",
+  "manufacturer": "Victory Archery",
+  "extraction_mode": "full",
+  "extraction_range": {
+    "start_index": 0,
+    "end_index": 18,
+    "total_urls_available": 18,
+    "urls_processed": 18,
+    "new_urls_only": false
+  },
+  "statistics": {
+    "processed": 18,
+    "successful": 17,
+    "arrows": 17
+  },
+  "success_rate": 94.44444444444444,
+  "total_arrows": 17,
+  "total_spine_specs": 80,
+  "arrows": [
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery VAP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.166,
+          "gpi_weight": 12.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.166,
+          "gpi_weight": 11.0,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.166,
+          "gpi_weight": 9.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.166,
+          "gpi_weight": 8.8,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VAP_SS.jpg?fit=851%2C555&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.232\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-hunting/vap-ss/",
+      "scraped_at": "2025-07-22T08:49:55.644439",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery RIP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.204,
+          "gpi_weight": 12.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.204,
+          "gpi_weight": 11.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.204,
+          "gpi_weight": 10.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.204,
+          "gpi_weight": 9.9,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/RIP_SS.jpg?fit=860%2C566&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.263\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip-ss/",
+      "scraped_at": "2025-07-22T08:50:14.730821",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery VAP",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.166,
+          "gpi_weight": 13.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.166,
+          "gpi_weight": 11.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.166,
+          "gpi_weight": 9.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.166,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VAP_TKO.jpg?fit=848%2C604&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.231\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-hunting/vap-tko/",
+      "scraped_at": "2025-07-22T08:50:45.795063",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery RIP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.204,
+          "gpi_weight": 10.6,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/RIP_TKO.jpg?fit=864%2C564&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.266\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/rip-tko/",
+      "scraped_at": "2025-07-22T08:51:08.626246",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 9.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.301,
+          "gpi_weight": 9.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.245,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.302,
+          "gpi_weight": 8.1,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VF_TKO.jpg?fit=852%2C508&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.295\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vf-tko/",
+      "scraped_at": "2025-07-22T08:51:35.930965",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery VAP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.166,
+          "gpi_weight": 11.3,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.166,
+          "gpi_weight": 9.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.166,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.22,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.166,
+          "gpi_weight": 6.6,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.166,
+          "gpi_weight": 6.1,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VAP.jpg?fit=857%2C721&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.214\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vap/",
+      "scraped_at": "2025-07-22T08:52:00.301127",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.204,
+          "gpi_weight": 9.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.204,
+          "gpi_weight": 7.3,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.204,
+          "gpi_weight": 6.9,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/HLR_new.jpg?fit=851%2C548&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.251\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/hlr/",
+      "scraped_at": "2025-07-22T08:52:19.134377",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery RIP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.204,
+          "gpi_weight": 9.3,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.204,
+          "gpi_weight": 7.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.204,
+          "gpi_weight": 6.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.9,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/RIP_xtreme_velocity.jpg?fit=851%2C609&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.242\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip-xv/",
+      "scraped_at": "2025-07-22T08:52:36.796235",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery RIP",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.204,
+          "gpi_weight": 9.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.273,
+          "gpi_weight": 8.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.204,
+          "gpi_weight": 8.2,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.265,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.204,
+          "gpi_weight": 7.0,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/RIP.jpg?fit=851%2C552&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.255\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip/",
+      "scraped_at": "2025-07-22T08:53:21.565129",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 10.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.309,
+          "gpi_weight": 9.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.245,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.304,
+          "gpi_weight": 8.2,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.245,
+          "gpi_weight": 6.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.298,
+          "gpi_weight": 6.6,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VFORCE.jpg?fit=867%2C618&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.287\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vforce/",
+      "scraped_at": "2025-07-22T08:53:41.165777",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.245,
+          "gpi_weight": 8.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.293,
+          "gpi_weight": 8.2,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.245,
+          "gpi_weight": 7.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.22,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/Bamboo_Trad_new.jpg?fit=853%2C510&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.283\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/bamboo-trad/",
+      "scraped_at": "2025-07-22T08:54:02.858907",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.345,
+          "gpi_weight": 8.1,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/Vtac-25.jpg?fit=852%2C443&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.006\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-target/v-tac25/",
+      "scraped_at": "2025-07-22T08:55:13.082551",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "V Tac27",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5,
+          "inner_diameter": 0.204,
+          "length_options": [
+            28.0,
+            29.0,
+            30.0,
+            31.0,
+            32.0
+          ]
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8,
+          "inner_diameter": 0.204,
+          "length_options": [
+            28.0,
+            29.0,
+            30.0,
+            31.0,
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": "100%",
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Technical data from DeepSeek knowledge base. The V Tac27 is a high-performance hunting arrow designed for accuracy and durability. Features include a micro-diameter design for reduced wind drift and increased penetration, with a reinforced carbon construction for consistent performance.",
+      "primary_image_url": null,
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.003",
+      "weight_tolerance": "\u00b11.0 grain",
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-target/v-tac27/",
+      "scraped_at": "2025-07-22T08:56:18.225451",
+      "scraper_version": "deepseek-knowledge-1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.1,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VXT.jpg?fit=858%2C619&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.209\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-target/vxt/",
+      "scraped_at": "2025-07-22T08:56:35.324981",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery VAP",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.166,
+          "gpi_weight": 7.8,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.232,
+          "gpi_weight": 7.2,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.166,
+          "gpi_weight": 6.6,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.227,
+          "gpi_weight": 6.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.166,
+          "gpi_weight": 5.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.223,
+          "gpi_weight": 5.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.166,
+          "gpi_weight": 5.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.218,
+          "gpi_weight": 5.0,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.166,
+          "gpi_weight": 4.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.214,
+          "gpi_weight": 4.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 1200,
+          "outer_diameter": 0.166,
+          "gpi_weight": 4.6,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VAP-target.jpg?fit=858%2C697&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.206\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-target/vap/",
+      "scraped_at": "2025-07-22T08:57:11.081007",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery 3DHV",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.204,
+          "gpi_weight": 7.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.255,
+          "gpi_weight": 6.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.251,
+          "gpi_weight": 5.1,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.5,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.247,
+          "gpi_weight": 5.4,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.0,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/3DHV.jpg?fit=851%2C664&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.240\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://victoryarchery.com/arrows-target/3dhv/",
+      "scraped_at": "2025-07-22T08:57:30.537337",
+      "scraper_version": "1.0"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Victory Archery",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.245,
+          "gpi_weight": 8.7,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.298,
+          "gpi_weight": 8.2,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.245,
+          "gpi_weight": 6.9,
+          "inner_diameter": null,
+          "length_options": null
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.295,
+          "gpi_weight": 6.6,
+          "inner_diameter": null,
+          "length_options": null
+        }
+      ],
+      "material": "Carbon",
+      "carbon_content": null,
+      "arrow_type": "hunting",
+      "recommended_use": null,
+      "description": "Extracted from Carbon Express specification image using EasyOCR",
+      "primary_image_url": "https://i0.wp.com/www.victoryarchery.com/wp-content/uploads/2025/01/VFT.jpg?fit=854%2C552&amp;ssl=1",
+      "gallery_images": null,
+      "saved_images": null,
+      "straightness_tolerance": "\u00b10.287\"",
+      "weight_tolerance": null,
+      "price_range": null,
+      "availability": null,
+      "source_url": "https://www.victoryarchery.com/arrows-target/vft/",
+      "scraped_at": "2025-07-22T08:57:49.656791",
+      "scraper_version": "1.0"
+    }
+  ],
+  "failed_urls": [
+    {
+      "url": "https://victoryarchery.com/v-tac23/",
+      "manufacturer": "Victory Archery",
+      "reason": "No data extracted"
+    }
+  ]
+}
