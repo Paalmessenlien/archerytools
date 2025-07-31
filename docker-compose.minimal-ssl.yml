@@ -1,0 +1,73 @@
+# Minimal Docker Compose with SSL Support - Fast, reliable deployment with HTTPS
+# Uses standard Dockerfiles and SSL certificates for production
+
+version: '3.8'
+
+services:
+  # Flask API Backend - Minimal Configuration
+  api:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: Dockerfile  # Use standard Dockerfile, not enhanced
+    container_name: archerytools-api-ssl
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-not-set}
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://archerytool.online}
+    volumes:
+      - archerytools-userdata:/app/user_data
+      - archerytools-logs:/app/logs
+    networks:
+      - archerytools-network
+
+  # Nuxt 3 Frontend - Minimal Configuration with HTTPS API
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile  # Use standard Dockerfile, not enhanced
+    container_name: archerytools-frontend-ssl
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NUXT_PUBLIC_API_BASE=https://archerytool.online/api
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+    depends_on:
+      - api
+    networks:
+      - archerytools-network
+
+  # Nginx with SSL Support
+  nginx:
+    image: nginx:alpine
+    container_name: archerytools-nginx-ssl
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.ssl.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+      - archerytools-logs:/var/log/nginx
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - archerytools-network
+
+volumes:
+  archerytools-userdata:
+    driver: local
+  archerytools-logs:
+    driver: local
+
+networks:
+  archerytools-network:
+    driver: bridge

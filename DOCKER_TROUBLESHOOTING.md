@@ -50,6 +50,12 @@ docker-compose -f docker-compose.minimal.yml up -d --build
 - Features: Basic services, standard Dockerfiles, no complex verification
 - Use: `./quick-deploy.sh`
 
+### 🔒 Production SSL Deploy (Recommended for Production)
+- File: `docker-compose.minimal-ssl.yml`
+- Features: Fast deployment with SSL certificates and HTTPS
+- Use: `./deploy-production-ssl.sh yourdomain.com`
+- Alternative: `./quick-deploy.sh ssl yourdomain.com`
+
 ### 🔧 Fixed Deploy (Reliable)
 - File: `docker-compose.fixed.yml`
 - Features: Simplified enhanced features, better compatibility
