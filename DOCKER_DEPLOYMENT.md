@@ -25,12 +25,16 @@ docker-compose up -d --build
 
 ### Production Deployment
 
+**⚠️ CRITICAL: Always import data BEFORE Docker build**
+
 ```bash
-# Import data and deploy (NO scraping on server)
+# Step 1: Import data FIRST (NO scraping on server)
 ./production-import-only.sh
+
+# Step 2: Then deploy with enhanced verification
 ./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
 
-# Or use the integrated production setup
+# Alternative: Use integrated setup (handles import automatically)
 ./docker-production-setup.sh docker-compose.enhanced-ssl.yml auto
 ```
 

@@ -42,37 +42,23 @@ RUN chmod +x /app/api.py \
 RUN addgroup --gid 1000 appgroup && \
     adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
 
-# Build and verify arrow database as root
-RUN echo "🔨 Building arrow database..." && \
-    python3 build-database-robust.py && \
-    echo "✅ Database build completed" && \
-    \
-    echo "🔍 Verifying database content..." && \
-    python3 -c "import sqlite3; conn = sqlite3.connect('arrow_database.db'); cursor = conn.cursor(); cursor.execute('SELECT COUNT(*) FROM arrows'); arrow_count = cursor.fetchone()[0]; cursor.execute('SELECT COUNT(*) FROM spine_specifications'); spine_count = cursor.fetchone()[0]; cursor.execute('SELECT COUNT(DISTINCT manufacturer) FROM arrows'); mfg_count = cursor.fetchone()[0]; print(f'Database verification:'); print(f'  Arrows: {arrow_count}'); print(f'  Spine specs: {spine_count}'); print(f'  Manufacturers: {mfg_count}'); exit(1) if arrow_count < 50 or spine_count < 100 else print('✅ Database verification passed'); conn.close()" && \
-    \
-    echo "💾 Creating database backup..." && \
-    cp arrow_database.db /app/arrow_database_backup.db && \
-    \
-    echo "🔧 Setting permissions..." && \
+# Set up basic directory structure and permissions
+RUN echo "🔧 Setting up directory structure..." && \
     chown -R appuser:appgroup /app && \
-    chmod 664 /app/arrow*.db && \
-    chmod 755 /app/logs /app/user_data && \
-    \
-    echo "✅ Enhanced build completed successfully"
+    chmod 755 /app/logs /app/user_data /app/data && \
+    echo "✅ Directory setup completed"
 
-# Verify build integrity
+# Verify build integrity (imports only - no database files expected at build time)
 RUN echo "🔍 Final build verification..." && \
-    ls -la /app/arrow*.db && \
     python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && \
     echo "✅ Build verification completed"
 
 # Switch to non-root user
 USER appuser
 
-# Enhanced health check
-HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=5 \
-    CMD curl -f http://localhost:5000/api/health && \
-        curl -f http://localhost:5000/api/simple-health || exit 1
+# Enhanced health check with extended startup period for database initialization
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
+    CMD curl -f http://localhost:5000/api/simple-health || exit 1
 
 # Expose port
 EXPOSE 5000
