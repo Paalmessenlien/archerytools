@@ -8,16 +8,29 @@ If your Docker build is hanging on the verification step:
 Step 15/19 : RUN echo "🔍 Final build verification..." && python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && echo "✅ Build
 ```
 
-## Quick Solutions
+## Quick Solutions for ContainerConfig Error
 
-### Solution 1: Use Quick Deploy (Recommended)
+### Solution 1: Fresh Deploy (Recommended for ContainerConfig errors)
+```bash
+# Uses completely new container names to bypass cache issues
+./deploy-fresh.sh
+```
+
+### Solution 2: Nuclear Reset (If other solutions fail)
+```bash
+# Complete Docker reset - removes EVERYTHING
+./nuclear-docker-reset.sh
+# Then: ./quick-deploy.sh
+```
+
+### Solution 3: Use Quick Deploy
 ```bash
 # Stop current build (Ctrl+C if needed)
 # Use minimal configuration for fast deployment
 ./quick-deploy.sh
 ```
 
-### Solution 2: Use Minimal Docker Compose
+### Solution 4: Manual Cleanup and Deploy
 ```bash
 # Clean up first
 docker-compose down --remove-orphans
@@ -28,12 +41,6 @@ docker system prune -f
 
 # Deploy with minimal config
 docker-compose -f docker-compose.minimal.yml up -d --build
-```
-
-### Solution 3: Skip Enhanced Features
-```bash
-# Use fixed configuration without complex verification
-./deploy-with-cleanup.sh docker-compose.fixed.yml
 ```
 
 ## Root Causes
