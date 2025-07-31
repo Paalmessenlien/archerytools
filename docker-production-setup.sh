@@ -92,18 +92,18 @@ else
     cd ..
 fi
 
-# Run cleanup if needed
+# Run import-only setup if needed
 if [ "$NEED_CLEANUP" = "true" ]; then
-    echo -e "${BLUE}🚀 Running production cleanup first...${NC}"
-    if [ -f "./production-cleanup.sh" ]; then
-        ./production-cleanup.sh
-        print_status "Production cleanup completed"
+    echo -e "${BLUE}🚀 Running production import-only setup first...${NC}"
+    if [ -f "./production-import-only.sh" ]; then
+        ./production-import-only.sh
+        print_status "Production import-only setup completed"
     else
-        print_error "Production cleanup script not found"
+        print_error "Production import-only script not found"
         exit 1
     fi
 else
-    print_status "Skipping cleanup - databases appear to be ready"
+    print_status "Skipping import - databases appear to be ready"
 fi
 
 # Stop any existing containers
