@@ -38,6 +38,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **Navigation Update**: Replaced "Bow Setup" with "Home" in navigation menu
 - ✅ **API Authentication**: Added JWT token authentication to all API requests
 - ✅ **Custom Length Fields**: Simplified bow setup form to use single field for custom lengths
+- ✅ **Multiple Concurrent Tuning Sessions**: Complete support for running multiple tuning sessions simultaneously with pause/resume functionality
 
 ## Development Commands
 
@@ -324,6 +325,43 @@ python arrow_matching_engine.py
 # Complete tuning system
 python arrow_tuning_system.py
 ```
+
+### Multiple Concurrent Tuning Sessions
+
+**🎯 Advanced Session Management (2025 Update):**
+
+The tuning system now supports multiple concurrent sessions with full pause/resume functionality:
+
+**Key Features:**
+- **Multiple Active Sessions**: Run several tuning guides simultaneously with different bow setups
+- **Session Pause/Resume**: Pause any active session and resume later with full state preservation
+- **Visual Progress Tracking**: Each session displays current step and completion percentage
+- **Organized Session History**: Sessions organized by status (active, paused, completed)
+- **Enhanced UX**: Intuitive session management with resume buttons and status indicators
+
+**API Endpoints:**
+```bash
+# Session Management
+POST /api/guide-sessions                    # Start new session
+POST /api/guide-sessions/<id>/pause         # Pause active session
+POST /api/guide-sessions/<id>/resume        # Resume paused session
+POST /api/guide-sessions/<id>/complete      # Complete session
+GET  /api/guide-sessions                    # Get all user sessions
+GET  /api/guide-sessions/<id>               # Get session details
+```
+
+**User Workflow:**
+1. **Start Multiple Sessions**: Create tuning sessions for different bow setups
+2. **Switch Between Sessions**: Use resume buttons to switch between active sessions
+3. **Pause/Resume**: Pause sessions to work on others, resume anytime
+4. **Track Progress**: Visual indicators show completion status for each session
+5. **Manage History**: View all sessions organized by status with action buttons
+
+**Frontend Implementation** (`/frontend/pages/tuning.vue`):
+- Enhanced session state management with array-based `activeSessions`
+- Visual session cards with progress indicators and resume buttons
+- Organized session history with status-based filtering
+- Real-time session updates and state synchronization
 
 ### Frontend Development & Testing
 ```bash
@@ -893,14 +931,15 @@ The Archery Tools platform provides:
 3. **Advanced tuning optimization** including FOC, kinetic energy, and momentum calculations
 4. **Comprehensive database search** with filtering by manufacturer, spine, diameter, and GPI
 5. **Visual arrow comparison** with detailed specification analysis
-6. **Session tracking** for tuning progress and recommendation history
-7. **Modern web interface** with Material Design 3 components and dark mode
-8. **Responsive design** optimized for desktop, tablet, and mobile devices
-9. **API endpoints** for integration with other archery tools
-10. **Real-time database statistics** with manufacturer and arrow count metrics
-11. **Complete admin system** with automatic privilege assignment and user management
-12. **User authentication** with Google OAuth integration and profile management
-13. **Bow setup management** with persistent storage and configuration tracking
+6. **Multiple concurrent tuning sessions** with pause/resume functionality and progress tracking
+7. **Advanced session management** for tuning progress and recommendation history
+8. **Modern web interface** with Material Design 3 components and dark mode
+9. **Responsive design** optimized for desktop, tablet, and mobile devices
+10. **API endpoints** for integration with other archery tools
+11. **Real-time database statistics** with manufacturer and arrow count metrics
+12. **Complete admin system** with automatic privilege assignment and user management
+13. **User authentication** with Google OAuth integration and profile management
+14. **Bow setup management** with persistent storage and configuration tracking
 
 ## Troubleshooting & Development Notes
 
