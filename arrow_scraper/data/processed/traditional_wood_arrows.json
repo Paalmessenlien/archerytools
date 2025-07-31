@@ -1,0 +1,187 @@
+{
+  "manufacturer": "Traditional Wood Arrows",
+  "arrows_found": 6,
+  "scraping_date": "2025-07-31T08:12:44.472094",
+  "status": "traditional_data",
+  "arrows": [
+    {
+      "model_name": "Cedar Shaft",
+      "material": "Cedar Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Instinctive, Historical",
+      "description": "Traditional cedar wood arrow shaft",
+      "spine_specifications": [
+        {
+          "spine": 40,
+          "outer_diameter": 0.312,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.315,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.318,
+          "gpi_weight": 9.1
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.321,
+          "gpi_weight": 9.4
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.324,
+          "gpi_weight": 9.7
+        }
+      ]
+    },
+    {
+      "model_name": "Pine Shaft",
+      "material": "Pine Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Beginner",
+      "description": "Traditional pine wood arrow shaft",
+      "spine_specifications": [
+        {
+          "spine": 35,
+          "outer_diameter": 0.315,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 40,
+          "outer_diameter": 0.318,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.321,
+          "gpi_weight": 8.4
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.324,
+          "gpi_weight": 8.7
+        }
+      ]
+    },
+    {
+      "model_name": "Bamboo Shaft",
+      "material": "Bamboo Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Historical",
+      "description": "Traditional bamboo arrow shaft",
+      "spine_specifications": [
+        {
+          "spine": 35,
+          "outer_diameter": 0.295,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 40,
+          "outer_diameter": 0.298,
+          "gpi_weight": 6.8
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.301,
+          "gpi_weight": 7.1
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.304,
+          "gpi_weight": 7.4
+        }
+      ]
+    },
+    {
+      "model_name": "Ash Shaft",
+      "material": "Ash Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Heavy Draw",
+      "description": "Traditional ash wood arrow shaft for heavy bows",
+      "spine_specifications": [
+        {
+          "spine": 40,
+          "outer_diameter": 0.33,
+          "gpi_weight": 11.5
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.333,
+          "gpi_weight": 11.8
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.336,
+          "gpi_weight": 12.1
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.339,
+          "gpi_weight": 12.4
+        }
+      ]
+    },
+    {
+      "model_name": "Birch Shaft",
+      "material": "Birch Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Medium Draw",
+      "description": "Traditional birch wood arrow shaft",
+      "spine_specifications": [
+        {
+          "spine": 45,
+          "outer_diameter": 0.325,
+          "gpi_weight": 10.2
+        },
+        {
+          "spine": 50,
+          "outer_diameter": 0.328,
+          "gpi_weight": 10.5
+        },
+        {
+          "spine": 55,
+          "outer_diameter": 0.331,
+          "gpi_weight": 10.8
+        },
+        {
+          "spine": 60,
+          "outer_diameter": 0.334,
+          "gpi_weight": 11.1
+        }
+      ]
+    },
+    {
+      "model_name": "Fir Shaft",
+      "material": "Fir Wood",
+      "arrow_type": "Traditional",
+      "recommended_use": "Traditional, Light Draw",
+      "description": "Traditional fir wood arrow shaft",
+      "spine_specifications": [
+        {
+          "spine": 30,
+          "outer_diameter": 0.318,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 35,
+          "outer_diameter": 0.321,
+          "gpi_weight": 9.5
+        },
+        {
+          "spine": 40,
+          "outer_diameter": 0.324,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 45,
+          "outer_diameter": 0.327,
+          "gpi_weight": 10.1
+        }
+      ]
+    }
+  ]
+}

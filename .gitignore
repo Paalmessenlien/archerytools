@@ -58,6 +58,7 @@ Thumbs.db
 # Project specific
 /data/raw/
 /data/processed/
+!/arrow_scraper/data/processed/*.json
 /data/backups/
 /scraped_images/
 /logs/
