@@ -85,7 +85,15 @@
       "Bash(grep -c \"<div\" /home/paal/arrowtuner2/frontend/pages/my-page.vue)",
       "Bash(grep -c \"</div>\" /home/paal/arrowtuner2/frontend/pages/my-page.vue)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(./production-import-only.sh)",
+      "Bash(./test-arrow-data.sh:*)",
+      "Bash(pacman:*)",
+      "Bash(systemctl:*)",
+      "Bash(usermod:*)",
+      "Bash(groups:*)",
+      "Bash(sudo usermod:*)",
+      "Bash(ss:*)"
     ],
     "deny": []
   }

@@ -9,7 +9,7 @@ export interface UserProfile {
   is_admin: boolean
   draw_length: number
   skill_level: 'beginner' | 'intermediate' | 'advanced'
-  shooting_style: 'target' | 'hunting' | 'traditional' | '3d'
+  shooting_style: ('target' | 'hunting' | 'traditional' | '3d')[]
   preferred_manufacturers: string[]
   notes?: string
   created_at: string

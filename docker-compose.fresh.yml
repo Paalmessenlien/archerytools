@@ -37,7 +37,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NUXT_PUBLIC_API_BASE: http://localhost:5000
+      NUXT_PUBLIC_API_BASE: http://localhost:5000/api
       NUXT_PUBLIC_GOOGLE_CLIENT_ID: ${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
     depends_on:
       - archery-api

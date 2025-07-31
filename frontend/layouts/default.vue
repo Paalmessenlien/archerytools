@@ -321,9 +321,8 @@ const handleLogin = async () => {
     const result = await loginWithGoogle()
     if (result && result.needsProfileCompletion) {
       router.push('/register')
-    } else {
-      await fetchUser(); // Fetch user data only if not redirecting to register
     }
+    // User data is now automatically fetched inside loginWithGoogle()
   } catch (error) {
     console.error('Login failed:', error)
     // Optionally show an error message to the user

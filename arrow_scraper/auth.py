@@ -128,8 +128,9 @@ def get_user_from_google_token(authorization_code):
                 user['is_admin'] = True
                 print(f"✅ Restored admin access to {email}")
         
-        # Check if user needs profile completion (True for all new users)
-        needs_profile_completion = is_new_user
+        # Check if user needs profile completion
+        # Only new users need profile completion, existing users don't
+        needs_profile_completion = is_new_user and not user.get('name')
 
         return user, needs_profile_completion
     except ValueError as e:

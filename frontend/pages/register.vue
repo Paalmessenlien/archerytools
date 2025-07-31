@@ -66,25 +66,23 @@
           </div>
         </div>
 
-        <!-- Shooting Style -->
+        <!-- Shooting Styles (Multiple Selection) -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Primary Shooting Style
+            Shooting Styles (select all that apply)
           </label>
-          <md-filled-select :value="profileData.shooting_style" @change="profileData.shooting_style = $event.target.value" label="Shooting Style" class="w-full">
-            <md-select-option value="target">
-              <div slot="headline">Target Archery</div>
-            </md-select-option>
-            <md-select-option value="hunting">
-              <div slot="headline">Hunting</div>
-            </md-select-option>
-            <md-select-option value="3d">
-              <div slot="headline">3D Archery</div>
-            </md-select-option>
-            <md-select-option value="traditional">
-              <div slot="headline">Traditional</div>
-            </md-select-option>
-          </md-filled-select>
+          <div class="grid grid-cols-2 gap-2">
+            <label v-for="style in shootingStyleOptions" :key="style.value" 
+                   class="flex items-center space-x-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+              <input 
+                type="checkbox" 
+                :value="style.value"
+                v-model="profileData.shooting_style"
+                class="text-blue-600 focus:ring-blue-500 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ style.label }}</span>
+            </label>
+          </div>
         </div>
 
         <!-- Preferred Manufacturers -->
@@ -161,12 +159,20 @@ const popularManufacturers = [
   'Bear Archery', 'Fivics', 'Skylon', 'Cross-X'
 ];
 
+// Shooting style options
+const shootingStyleOptions = [
+  { value: 'target', label: 'Target Archery' },
+  { value: 'hunting', label: 'Hunting' },
+  { value: 'traditional', label: 'Traditional' },
+  { value: '3d', label: '3D Archery' }
+];
+
 // Comprehensive profile data
 const profileData = ref({
   name: '',
   draw_length: 28.0,
   skill_level: 'intermediate',
-  shooting_style: 'target',
+  shooting_style: ['target'],
   preferred_manufacturers: [],
   notes: ''
 });
@@ -181,7 +187,7 @@ const initializeForm = () => {
       name: user.value.name || '',
       draw_length: user.value.draw_length || 28.0,
       skill_level: user.value.skill_level || 'intermediate',
-      shooting_style: user.value.shooting_style || 'target',
+      shooting_style: user.value.shooting_style || ['target'],
       preferred_manufacturers: user.value.preferred_manufacturers || [],
       notes: user.value.notes || ''
     };

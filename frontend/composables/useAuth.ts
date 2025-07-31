@@ -62,6 +62,8 @@ export const useAuth = () => {
                   const data = await res.json();
                   if (data.token) {
                     setToken(data.token);
+                    // Immediately fetch user data after setting token
+                    await fetchUser();
                     resolve({ token: data.token, needsProfileCompletion: data.needs_profile_completion });
                   } else {
                     reject(new Error(data.error || 'Failed to get token'));

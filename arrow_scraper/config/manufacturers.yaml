@@ -247,6 +247,8 @@ manufacturers:
         - "http://aurel-archery.de/pfeilschaefte/aurel-oryx-pfeilschaft/"
         - "http://aurel-archery.de/pfeilschaefte/aurel-uhyre-pfeilschaft/"
 
+  
+
 # Global settings
 settings:
   rate_limit_delay: 2.0  # seconds between requests

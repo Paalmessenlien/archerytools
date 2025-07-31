@@ -577,8 +577,14 @@ class ArrowDatabase:
             params.append(arrow_type)
             
         if material:
-            query += ' AND a.material = ?'
-            params.append(material)
+            # For broad categories like "Wood", match any material containing that term
+            if material in ['Wood', 'Carbon', 'Aluminum']:
+                query += ' AND a.material LIKE ?'
+                params.append(f'%{material}%')
+            else:
+                # For specific materials, use exact match
+                query += ' AND a.material = ?'
+                params.append(material)
             
         if model_search:
             query += ' AND a.model_name LIKE ?'

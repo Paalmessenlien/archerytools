@@ -6,24 +6,39 @@
       <p class="text-gray-600 dark:text-gray-300">Follow step-by-step interactive guides with your bow setup and track your progress.</p>
     </div>
 
-    <!-- Active Session Alert -->
-    <div v-if="activeSession" class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <i class="fas fa-play-circle text-blue-600 dark:text-blue-400 mr-3"></i>
-          <div>
-            <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Active Session</h4>
-            <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              {{ activeSession.guide_name }} - Step {{ activeSession.current_step }} of {{ activeSession.total_steps }}
-            </p>
+    <!-- Active Sessions -->
+    <div v-if="activeSessions.length > 0" class="mb-6 space-y-3">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+        <i class="fas fa-play-circle mr-2"></i>
+        Active Sessions ({{ activeSessions.length }})
+      </h2>
+      <div 
+        v-for="session in activeSessions" 
+        :key="session.id"
+        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-play-circle text-blue-600 dark:text-blue-400 mr-3"></i>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">{{ session.guide_name }}</h4>
+              <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                {{ session.bow_name || 'Unknown bow' }} • Step {{ session.current_step || 1 }} of {{ session.total_steps }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-blue-600 dark:text-blue-400">
+              {{ Math.round(((session.current_step || 1) / session.total_steps) * 100) }}% complete
+            </span>
+            <button 
+              @click="resumeSession(session)"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Resume
+            </button>
           </div>
         </div>
-        <button 
-          @click="resumeSession"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          Resume Session
-        </button>
       </div>
     </div>
 
@@ -128,42 +143,90 @@
     <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
         <i class="fas fa-history mr-2"></i>
-        Session History
+        All Sessions
       </h2>
+      
       <div v-if="sessionHistory.length === 0" class="text-center py-8">
         <i class="fas fa-clock text-gray-400 text-4xl mb-4"></i>
-        <p class="text-gray-500 dark:text-gray-400">No guide sessions completed yet.</p>
+        <p class="text-gray-500 dark:text-gray-400">No guide sessions yet. Start your first guide above!</p>
       </div>
-      <div v-else class="space-y-3">
-        <div 
-          v-for="session in sessionHistory" 
-          :key="session.id"
-          class="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ session.guide_name }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ session.bow_name || 'No bow setup' }} • 
-                {{ session.completed_steps }}/{{ session.total_steps }} steps completed •
-                {{ formatDate(session.started_at) }}
-              </p>
+      
+      <div v-else class="space-y-6">
+        <!-- Paused Sessions -->
+        <div v-if="organizedSessions.paused.length > 0">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+            <i class="fas fa-pause text-yellow-500 mr-2"></i>
+            Paused Sessions ({{ organizedSessions.paused.length }})
+          </h3>
+          <div class="space-y-2">
+            <div 
+              v-for="session in organizedSessions.paused" 
+              :key="session.id"
+              class="border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg p-3"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ session.guide_name }}</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ session.bow_name || 'No bow setup' }} • 
+                    {{ session.completed_steps || 0 }}/{{ session.total_steps }} steps • 
+                    {{ formatDate(session.started_at) }}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button 
+                    @click="resumeSession(session)"
+                    class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                  >
+                    <i class="fas fa-play mr-1"></i>
+                    Resume
+                  </button>
+                  <button 
+                    @click="viewSessionDetails(session)"
+                    class="text-blue-600 dark:text-blue-400 hover:text-blue-700"
+                    title="View details"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center space-x-2">
-              <span :class="[
-                'px-2 py-1 text-xs font-medium rounded-full',
-                session.status === 'completed' 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-              ]">
-                {{ session.status }}
-              </span>
-              <button 
-                @click="viewSessionDetails(session)"
-                class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-              >
-                <i class="fas fa-eye"></i>
-              </button>
+          </div>
+        </div>
+
+        <!-- Completed Sessions -->
+        <div v-if="organizedSessions.completed.length > 0">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            Completed Sessions ({{ organizedSessions.completed.length }})
+          </h3>
+          <div class="space-y-2">
+            <div 
+              v-for="session in organizedSessions.completed" 
+              :key="session.id"
+              class="border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 rounded-lg p-3"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ session.guide_name }}</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ session.bow_name || 'No bow setup' }} • 
+                    Completed {{ formatDate(session.completed_at || session.started_at) }}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                    ✓ Complete
+                  </span>
+                  <button 
+                    @click="viewSessionDetails(session)"
+                    class="text-blue-600 dark:text-blue-400 hover:text-blue-700"
+                    title="View details"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -173,7 +236,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useApi } from '~/composables/useApi'
 
 // Set page title and meta
@@ -196,10 +259,21 @@ const sessionHistory = ref([])
 const selectedGuide = ref(null)
 const selectedBowSetup = ref(null)
 const currentSession = ref(null)
-const activeSession = ref(null)
+const activeSessions = ref([])
 
 // API composable
 const { apiRequest } = useApi()
+
+// Computed properties
+const organizedSessions = computed(() => {
+  const sessions = sessionHistory.value || []
+  return {
+    active: sessions.filter(s => s.status === 'in_progress'),
+    completed: sessions.filter(s => s.status === 'completed'),
+    paused: sessions.filter(s => s.status === 'paused'),
+    other: sessions.filter(s => !['in_progress', 'completed', 'paused'].includes(s.status))
+  }
+})
 
 // Methods
 const loadAvailableGuides = async () => {
@@ -216,7 +290,8 @@ const loadAvailableGuides = async () => {
 const loadBowSetups = async () => {
   try {
     const response = await apiRequest('/bow-setups')
-    bowSetups.value = response.bow_setups || []
+    // API returns bow setups directly as an array, not wrapped in bow_setups property
+    bowSetups.value = Array.isArray(response) ? response : (response.bow_setups || [])
   } catch (error) {
     console.error('Error loading bow setups:', error)
     // Provide fallback data
@@ -229,13 +304,13 @@ const loadSessionHistory = async () => {
     const response = await apiRequest('/guide-sessions')
     sessionHistory.value = response.sessions || []
     
-    // Check for active session
-    activeSession.value = sessionHistory.value.find(s => s.status === 'in_progress')
+    // Get all active sessions (multiple sessions support)
+    activeSessions.value = sessionHistory.value.filter(s => s.status === 'in_progress')
   } catch (error) {
     console.error('Error loading session history:', error)
     // Provide fallback data
     sessionHistory.value = []
-    activeSession.value = null
+    activeSessions.value = []
   }
 }
 
@@ -276,10 +351,10 @@ const startGuideSession = async () => {
   }
 }
 
-const resumeSession = () => {
-  if (activeSession.value) {
-    currentSession.value = activeSession.value
-    selectedGuide.value = availableGuides.value.find(g => g.name === activeSession.value.guide_name)
+const resumeSession = (session) => {
+  if (session) {
+    currentSession.value = session
+    selectedGuide.value = availableGuides.value.find(g => g.name === session.guide_name)
   }
 }
 
@@ -294,9 +369,23 @@ const onSessionCompleted = () => {
   loadSessionHistory() // Refresh history
 }
 
-const exitSession = () => {
+const exitSession = async () => {
+  // Update session status to paused on server
+  if (currentSession.value) {
+    try {
+      await apiRequest(`/guide-sessions/${currentSession.value.id}/pause`, {
+        method: 'POST'
+      })
+    } catch (error) {
+      console.error('Error pausing session:', error)
+    }
+  }
+  
   currentSession.value = null
   selectedGuide.value = null
+  
+  // Refresh session history to show updated status
+  loadSessionHistory()
 }
 
 const viewSessionDetails = (session) => {

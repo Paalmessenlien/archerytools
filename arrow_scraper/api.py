@@ -813,6 +813,19 @@ def get_user(current_user):
     else:
         user_dict['preferred_manufacturers'] = []
     
+    # Convert shooting_style JSON string to list if it exists
+    if user_dict.get('shooting_style'):
+        try:
+            if user_dict['shooting_style'].startswith('['):
+                user_dict['shooting_style'] = json.loads(user_dict['shooting_style'])
+            else:
+                # Legacy single value, convert to array
+                user_dict['shooting_style'] = [user_dict['shooting_style']]
+        except (json.JSONDecodeError, TypeError):
+            user_dict['shooting_style'] = ['target']
+    else:
+        user_dict['shooting_style'] = ['target']
+    
     return jsonify(user_dict)
 
 @app.route('/api/user/profile', methods=['PUT'])
@@ -835,8 +848,34 @@ def update_user_profile(current_user):
     if skill_level and skill_level not in ['beginner', 'intermediate', 'advanced']:
         return jsonify({'error': 'Invalid skill level. Must be beginner, intermediate, or advanced'}), 400
     
-    if shooting_style and shooting_style not in ['target', 'hunting', 'traditional', '3d']:
-        return jsonify({'error': 'Invalid shooting style. Must be target, hunting, traditional, or 3d'}), 400
+    # Validate shooting styles (can be array or single value)
+    valid_styles = ['target', 'hunting', 'traditional', '3d']
+    if shooting_style:
+        if isinstance(shooting_style, list):
+            # Multiple shooting styles
+            for style in shooting_style:
+                if style not in valid_styles:
+                    return jsonify({'error': f'Invalid shooting style: {style}. Must be one of: {", ".join(valid_styles)}'}), 400
+            # Convert to JSON string for storage
+            shooting_style = json.dumps(shooting_style)
+        elif isinstance(shooting_style, str):
+            # Single shooting style - check if it's already JSON
+            if shooting_style.startswith('['):
+                # Already JSON, validate the parsed content
+                try:
+                    parsed_styles = json.loads(shooting_style)
+                    for style in parsed_styles:
+                        if style not in valid_styles:
+                            return jsonify({'error': f'Invalid shooting style: {style}. Must be one of: {", ".join(valid_styles)}'}), 400
+                except:
+                    return jsonify({'error': 'Invalid shooting style format'}), 400
+            else:
+                # Single value, validate and convert to array
+                if shooting_style not in valid_styles:
+                    return jsonify({'error': f'Invalid shooting style: {shooting_style}. Must be one of: {", ".join(valid_styles)}'}), 400
+                shooting_style = json.dumps([shooting_style])
+        else:
+            return jsonify({'error': 'Shooting style must be a string or array'}), 400
     
     if draw_length and (draw_length < 20 or draw_length > 36):
         return jsonify({'error': 'Draw length must be between 20 and 36 inches'}), 400
@@ -1870,6 +1909,87 @@ def complete_guide_session(current_user, session_id):
         conn.close()
         
         return jsonify({'message': 'Guide session completed successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions/<int:session_id>/pause', methods=['POST'])
+@token_required
+def pause_guide_session(current_user, session_id):
+    """Pause a guide session"""
+    conn = None
+    try:
+        data = request.get_json() or {}
+        notes = data.get('notes', '')
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify session belongs to user and is in progress
+        cursor.execute('SELECT id, status FROM guide_sessions WHERE id = ? AND user_id = ?', 
+                     (session_id, current_user['id']))
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        if session['status'] != 'in_progress':
+            return jsonify({'error': 'Can only pause sessions that are in progress'}), 400
+        
+        # Mark session as paused
+        cursor.execute('''
+            UPDATE guide_sessions 
+            SET status = 'paused', notes = ?
+            WHERE id = ?
+        ''', (notes, session_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Guide session paused successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/guide-sessions/<int:session_id>/resume', methods=['POST'])
+@token_required
+def resume_guide_session(current_user, session_id):
+    """Resume a paused guide session"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify session belongs to user and is paused
+        cursor.execute('SELECT id, status FROM guide_sessions WHERE id = ? AND user_id = ?', 
+                     (session_id, current_user['id']))
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        if session['status'] != 'paused':
+            return jsonify({'error': 'Can only resume sessions that are paused'}), 400
+        
+        # Mark session as in progress again
+        cursor.execute('''
+            UPDATE guide_sessions 
+            SET status = 'in_progress'
+            WHERE id = ?
+        ''', (session_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Guide session resumed successfully'})
         
     except Exception as e:
         if conn:

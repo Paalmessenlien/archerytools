@@ -72,7 +72,7 @@
                 <span class="text-sm text-gray-600 dark:text-gray-400">Primary Style:</span>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                       :class="getShootingStyleClass(user.shooting_style)">
-                  {{ formatShootingStyle(user.shooting_style) }}
+                  {{ formatShootingStyles(user.shooting_style) }}
                 </span>
               </div>
               <div v-if="user.preferred_manufacturers && user.preferred_manufacturers.length > 0">
@@ -94,126 +94,14 @@
       </div>
 
       <!-- Edit Profile Modal -->
-      <div v-if="isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-screen overflow-y-auto">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Edit Archer Profile</h3>
-          <form @submit.prevent="saveProfile">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Basic Information -->
-                <div class="mb-4">
-                  <label for="editedName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="editedName"
-                    v-model="editedName"
-                    class="form-input w-full"
-                    required
-                  />
-                </div>
-
-                <!-- Skill Level -->
-                <div class="mb-4">
-                  <label for="skillLevel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Skill Level
-                  </label>
-                  <select id="skillLevel" v-model="editedSkillLevel" class="form-select w-full" required>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </select>
-                </div>
-
-                <!-- Draw Length -->
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editedDrawLength }}"</span>
-                  </label>
-                  <md-slider
-                    min="20"
-                    max="36"
-                    step="0.25"
-                    :value="editedDrawLength"
-                    @input="editedDrawLength = parseFloat($event.target.value)"
-                    labeled
-                    ticks
-                    class="w-full"
-                  ></md-slider>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>20"</span>
-                    <span>36"</span>
-                  </div>
-                </div>
-
-                <!-- Shooting Style -->
-                <div class="mb-4">
-                  <label for="shootingStyle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Primary Shooting Style
-                  </label>
-                  <select id="shootingStyle" v-model="editedShootingStyle" class="form-select w-full" required>
-                    <option value="target">Target</option>
-                    <option value="hunting">Hunting</option>
-                    <option value="traditional">Traditional</option>
-                    <option value="3d">3D</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Preferred Manufacturers -->
-              <div class="mb-4">
-                <label for="preferredManufacturers" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Preferred Arrow Manufacturers (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  id="preferredManufacturers"
-                  v-model="editedPreferredManufacturers"
-                  class="form-input w-full"
-                  placeholder="e.g., Easton, Gold Tip, Victory"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Enter manufacturer names separated by commas
-                </p>
-              </div>
-
-              <!-- Notes -->
-              <div class="mb-6">
-                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  id="notes"
-                  v-model="editedNotes"
-                  class="form-textarea w-full"
-                  rows="3"
-                  placeholder="Additional notes about your archery preferences, goals, etc."
-                ></textarea>
-              </div>
-
-              <div class="flex justify-end space-x-3">
-                <CustomButton
-                  type="button"
-                  @click="closeEditModal"
-                  variant="outlined"
-                  class="text-gray-700 dark:text-gray-200"
-                >
-                  Cancel
-                </CustomButton>
-                <CustomButton
-                  type="submit"
-                  variant="filled"
-                  :disabled="isSaving"
-                  class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-                >
-                  <span v-if="isSaving">Saving...</span>
-                  <span v-else>Save Changes</span>
-                </CustomButton>
-              </div>
-              <p v-if="editError" class="text-red-500 text-sm mt-3">{{ editError }}</p>
-            </form>
-        </div>
-      </div>
+      <EditArcherProfileModal
+        :is-open="isEditing"
+        :user="user"
+        :isSaving="isSaving"
+        :error="editError"
+        @close="closeEditModal"
+        @save="saveProfile"
+      />
 
       <!-- Bow Setups Section -->
       <div class="mt-8">
@@ -230,22 +118,66 @@
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_type || 'Unknown' }})</h4>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Draw Weight: {{ setup.draw_weight || 'N/A' }} lbs</p>
+                    
+                    <!-- Bow Specifications Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 text-sm">
+                      <!-- Draw Weight & Length -->
+                      <div class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Draw Weight:</span> {{ setup.draw_weight || 'N/A' }} lbs
+                      </div>
+                      <div v-if="setup.draw_length" class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Draw Length:</span> {{ setup.draw_length }}"
+                      </div>
+                      
+                      <!-- Arrow Specifications -->
+                      <div v-if="setup.arrow_length" class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Arrow Length:</span> {{ setup.arrow_length }}"
+                      </div>
+                      <div v-if="setup.point_weight" class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Point Weight:</span> {{ setup.point_weight }} gr
+                      </div>
+                    </div>
                     
                     <!-- Brand Information Display -->
-                    <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
                       <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
-                      <span v-if="setup.riser_length" class="ml-1">({{ setup.riser_length }}")</span>
+                      <span v-if="setup.riser_length" class="ml-1">({{ setup.riser_length }})</span>
                     </div>
-                    <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-xs text-gray-600 dark:text-gray-400">
+                    <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-sm text-gray-600 dark:text-gray-400">
                       <span class="font-medium">Limbs:</span> {{ setup.limb_brand }} {{ setup.limb_model }}
                       <span v-if="setup.limb_length" class="ml-1">({{ setup.limb_length }})</span>
                     </div>
-                    <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
                       <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
                     </div>
                     
-                    <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ setup.description }}</p>
+                    <!-- Additional Component Weights (if specified) -->
+                    <div v-if="setup.nock_weight || setup.fletching_weight || setup.insert_weight" class="mt-2">
+                      <div class="text-xs text-gray-500 dark:text-gray-500 font-medium mb-1">Component Weights:</div>
+                      <div class="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div v-if="setup.nock_weight">
+                          <span class="font-medium">Nock:</span> {{ setup.nock_weight }} gr
+                        </div>
+                        <div v-if="setup.fletching_weight">
+                          <span class="font-medium">Fletching:</span> {{ setup.fletching_weight }} gr
+                        </div>
+                        <div v-if="setup.insert_weight">
+                          <span class="font-medium">Insert:</span> {{ setup.insert_weight }} gr
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Bow Usage Tags -->
+                    <div v-if="setup.bow_usage" class="mt-2">
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
+                              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          {{ formatBowUsage(usage) }}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ setup.description }}</p>
                   </div>
                   <div class="flex space-x-2 ml-4">
                     <CustomButton
@@ -368,17 +300,12 @@ import { useAuth } from '~/composables/useAuth';
 import ArrowSearchModal from '~/components/ArrowSearchModal.vue';
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
+import EditArcherProfileModal from '~/components/EditArcherProfileModal.vue';
 
 const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup } = useAuth();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
-const editedName = ref('');
-const editedDrawLength = ref(28.0);
-const editedSkillLevel = ref('intermediate');
-const editedShootingStyle = ref('target');
-const editedPreferredManufacturers = ref('');
-const editedNotes = ref('');
 const isSaving = ref(false);
 const editError = ref(null);
 
@@ -409,12 +336,6 @@ const newSetup = ref({
 });
 
 const openEditModal = () => {
-  editedName.value = user.value?.name || '';
-  editedDrawLength.value = user.value?.draw_length || 28.0;
-  editedSkillLevel.value = user.value?.skill_level || 'intermediate';
-  editedShootingStyle.value = user.value?.shooting_style || 'target';
-  editedPreferredManufacturers.value = (user.value?.preferred_manufacturers || []).join(', ');
-  editedNotes.value = user.value?.notes || '';
   isEditing.value = true;
   editError.value = null;
 };
@@ -423,24 +344,11 @@ const closeEditModal = () => {
   isEditing.value = false;
 };
 
-const saveProfile = async () => {
+const saveProfile = async (profileData) => {
   isSaving.value = true;
   editError.value = null;
   try {
-    // Parse preferred manufacturers from comma-separated string
-    const preferredManufacturers = editedPreferredManufacturers.value
-      .split(',')
-      .map(brand => brand.trim())
-      .filter(brand => brand.length > 0);
-    
-    await updateUserProfile({
-      name: editedName.value,
-      draw_length: editedDrawLength.value,
-      skill_level: editedSkillLevel.value,
-      shooting_style: editedShootingStyle.value,
-      preferred_manufacturers: preferredManufacturers,
-      notes: editedNotes.value
-    });
+    await updateUserProfile(profileData);
     closeEditModal();
   } catch (err) {
     console.error('Error saving profile:', err);
@@ -688,14 +596,19 @@ const formatSkillLevel = (level) => {
   return levels[level] || level;
 };
 
-const formatShootingStyle = (style) => {
-  const styles = {
+const formatShootingStyles = (styles) => {
+  const styleLabels = {
     'target': 'Target',
     'hunting': 'Hunting',
     'traditional': 'Traditional',
     '3d': '3D'
   };
-  return styles[style] || style;
+  
+  if (!styles || !Array.isArray(styles)) {
+    return 'Target'; // Default fallback
+  }
+  
+  return styles.map(style => styleLabels[style] || style).join(', ');
 };
 
 const getSkillLevelClass = (level) => {
@@ -707,14 +620,50 @@ const getSkillLevelClass = (level) => {
   return classes[level] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
 };
 
-const getShootingStyleClass = (style) => {
+const getShootingStyleClass = (styles) => {
+  // For multiple styles, use a neutral color
+  if (!styles || !Array.isArray(styles) || styles.length === 0) {
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  }
+  
+  if (styles.length > 1) {
+    return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+  }
+  
+  // Single style, use specific color
   const classes = {
     'target': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     'hunting': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     'traditional': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
     '3d': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
   };
-  return classes[style] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  return classes[styles[0]] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+};
+
+// Helper function to parse bow usage from JSON string
+const getBowUsageArray = (bowUsage) => {
+  if (!bowUsage) return [];
+  try {
+    return Array.isArray(bowUsage) ? bowUsage : JSON.parse(bowUsage);
+  } catch {
+    return [bowUsage]; // If not JSON, treat as single string
+  }
+};
+
+// Helper function to format bow usage for display
+const formatBowUsage = (usage) => {
+  const usageMap = {
+    'target': 'Target',
+    'hunting': 'Hunting',
+    'field': 'Field',
+    '3d': '3D',
+    'traditional': 'Traditional',
+    'competition': 'Competition',
+    'recreational': 'Recreational',
+    'indoor': 'Indoor',
+    'outdoor': 'Outdoor'
+  };
+  return usageMap[usage] || usage;
 };
 
 onMounted(async () => {
@@ -730,10 +679,9 @@ onMounted(async () => {
   }
 });
 
-// Watch for changes in the user object and update editedName accordingly
+// Watch for changes in the user object and reload bow setups
 watch(user, async (newUser) => {
   if (newUser) {
-    editedName.value = newUser.name || '';
     // If user just logged in or user object changed, reload bow setups
     await loadBowSetups();
   }
