@@ -4,14 +4,17 @@
 # Core dependencies
 requests>=2.25.0
 python-dotenv>=0.19.0
+validators>=0.18.2
 
 # Data handling
 pydantic>=1.8.0
 
+# Web scraping basics
+beautifulsoup4>=4.9.0
+lxml>=4.6.0
+
 # Optional dependencies (may fail on some systems)
 # crawl4ai>=0.2.0
-# beautifulsoup4>=4.9.0
-# lxml>=4.6.0
 
 # Development dependencies
 # pytest>=6.0.0
