@@ -1,0 +1,152 @@
+# Arrow Component Configuration
+# This file contains component suppliers and their product URLs for scraping
+
+component_suppliers:
+  "Tophat Archery":
+    base_url: "https://tophatarchery.com/"
+    language: "german"
+    extraction_method: "table_extraction"
+    
+    # Component categories from URL structure analysis
+    categories:
+      inserts:
+        path_pattern: "combo-einschraubspitzen-inserts/inserts"
+        german_name: "Inserts"
+        english_name: "Inserts"
+        description: "Threaded inserts for carbon arrows"
+        
+      glue_points:
+        path_pattern: "klebespitzen"
+        german_name: "Klebespitzen"
+        english_name: "Glue-on Points"
+        description: "Glue-on arrow points and tips"
+        subcategories:
+          target: "target-einklebespitzen"
+          hunting: "jagd-einklebespitzen"
+          
+      nocks:
+        path_pattern: "nocken-bushings"
+        german_name: "Nocken"
+        english_name: "Nocks"
+        description: "Arrow nocks and bushings"
+        subcategories:
+          pins: "nockpins-bushings"
+          standard: "nocken"
+          
+      outserts:
+        path_pattern: "outserts"
+        german_name: "Outserts"
+        english_name: "Outserts"
+        description: "External mounting components"
+        
+      adapters:
+        path_pattern: "adapter"
+        german_name: "Adapter"
+        english_name: "Adapters"
+        description: "Threading adapters and connectors"
+
+    # Translation mappings for German product specifications
+    field_translations:
+      "Typ": "type"
+      "Material": "material"
+      "Material 1": "material"
+      "Gewicht": "weight"
+      "Gewicht 1": "weight"
+      "Innendurchmesser": "inner_diameter"
+      "Außendurchmesser": "outer_diameter"
+      "Außendurchmesser ": "outer_diameter"  # Note the trailing space
+      "Groeße": "size"
+      "Größe": "size"
+      "Form": "form"
+      "Farbe": "color"
+      "Länge": "length"
+      "Durchmesser": "diameter"
+      "Gewinde": "thread"
+      "Spitze": "point_type"
+      "Verwendung": "usage"
+      
+    # Material translations
+    material_translations:
+      "Alu": "Aluminum"
+      "Aluminium": "Aluminum"
+      "Stahl": "Steel"
+      "Edelstahl": "Stainless Steel"
+      "Carbon": "Carbon Fiber"
+      "Titan": "Titanium"
+      "Messing": "Brass"
+      "Kunststoff": "Plastic"
+      
+    # Color translations
+    color_translations:
+      "Silber": "Silver"
+      "Gold": "Gold"
+      "Schwarz": "Black"
+      "Weiß": "White"
+      "Rot": "Red"
+      "Blau": "Blue"
+      "Grün": "Green"
+      "Gelb": "Yellow"
+      "Orange": "Orange"
+      "Lila": "Purple"
+      "Violett": "Purple"
+      
+    # Size/measurement processing
+    measurement_patterns:
+      diameter_pattern: '(\d+\.?\d*)"?\s*,?\s*(\d+\.?\d*)\s*mm'  # Matches: .360", 9,14mm
+      weight_pattern: '(\d+(?:\.\d+)?)\s*(?:gn|gr|grain|g)'      # Matches: 30 gn, 50 gr
+      thread_pattern: '(\d+/\d+|\d+-\d+|#\d+)'                  # Matches: 23/64, 8-32, #6
+
+# Component data model schema
+component_schema:
+  required_fields:
+    - component_id
+    - supplier
+    - name
+    - category
+    - type
+    
+  optional_fields:
+    - subcategory
+    - material
+    - weight_grain
+    - weight_options
+    - inner_diameter_inch
+    - inner_diameter_mm
+    - outer_diameter_inch  
+    - outer_diameter_mm
+    - length_mm
+    - length_inch
+    - thread_specification
+    - color
+    - finish
+    - compatibility
+    - usage_type
+    - price
+    - availability
+    - description
+    - image_url
+    - source_url
+    
+  # Derived fields from URL analysis
+  url_derived_fields:
+    category_from_path: true
+    subcategory_from_path: true
+    usage_type_from_path: true
+
+# Scraping settings
+settings:
+  batch_size: 5
+  rate_limit_delay: 3.0
+  timeout: 45
+  max_retries: 3
+  
+  output:
+    directory: "data/processed/components"
+    save_images: true
+    image_directory: "data/images/components"
+    
+  processing:
+    extract_measurements: true
+    translate_fields: true
+    validate_schema: true
+    normalize_units: true

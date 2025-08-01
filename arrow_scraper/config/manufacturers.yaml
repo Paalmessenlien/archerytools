@@ -137,7 +137,7 @@ manufacturers:
     base_url: https://nijora.com/
     extraction_method: text
     language: german
-    last_updated: '2025-08-01T21:16:39.720554'
+    last_updated: '2025-08-01T21:18:28.314185'
     product_urls:
     - https://nijora.com/product/3d-fly/
     - https://nijora.com/product/3k-pro/

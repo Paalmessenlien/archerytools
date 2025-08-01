@@ -1,0 +1,100 @@
+{
+  "supplier": "Tophat Archery",
+  "extracted_at": "2025-08-01T21:32:27.539739",
+  "total_components": 3,
+  "categories": {
+    "glue_points": 3
+  },
+  "components": [
+    {
+      "component_id": "tophat_ll_apex_full_bore_100_gn",
+      "supplier": "Tophat Archery",
+      "name": "LL Apex Full Bore 100 gn",
+      "category": "glue_points",
+      "type": "Einklebespitze",
+      "subcategory": "target",
+      "material": "Stainless Steel",
+      "weight_grain": 100.0,
+      "weight_options": null,
+      "inner_diameter_inch": 0.386,
+      "inner_diameter_mm": 9.8,
+      "outer_diameter_inch": 0.421,
+      "outer_diameter_mm": 10.7,
+      "length_mm": null,
+      "length_inch": null,
+      "thread_specification": null,
+      "color": "Silver",
+      "finish": null,
+      "compatibility": [
+        "Full Bore (9.8/10.7)"
+      ],
+      "usage_type": "target",
+      "price": null,
+      "availability": null,
+      "description": "Artikel Nr.: 11496",
+      "image_url": null,
+      "source_url": "https://tophatarchery.com/produkte/komponenten-fuer-carbonpfeile/klebespitzen/target-einklebespitzen/target-einklebespitzen-info/83/ll-apex-full-bore-100-gn",
+      "extracted_at": "2025-08-01T21:32:16.030848"
+    },
+    {
+      "component_id": "tophat_ll_convex_x_ringer_100_gn",
+      "supplier": "Tophat Archery",
+      "name": "LL Convex X-Ringer 100 gn",
+      "category": "glue_points",
+      "type": "Einklebespitze",
+      "subcategory": "target",
+      "material": "Stainless Steel",
+      "weight_grain": 100.0,
+      "weight_options": null,
+      "inner_diameter_inch": 0.344,
+      "inner_diameter_mm": 8.75,
+      "outer_diameter_inch": 0.37,
+      "outer_diameter_mm": 9.4,
+      "length_mm": null,
+      "length_inch": null,
+      "thread_specification": null,
+      "color": "Silver",
+      "finish": null,
+      "compatibility": [
+        "X-RInger (8.75/9.4)"
+      ],
+      "usage_type": "target",
+      "price": null,
+      "availability": null,
+      "description": "Artikel Nr.: 11290",
+      "image_url": null,
+      "source_url": "https://tophatarchery.com/produkte/komponenten-fuer-carbonpfeile/klebespitzen/target-einklebespitzen/target-einklebespitzen-info/112/ll-convex-x-ringer-100-gn",
+      "extracted_at": "2025-08-01T21:32:20.082056"
+    },
+    {
+      "component_id": "tophat_ll_convex_cxl_120_gn",
+      "supplier": "Tophat Archery",
+      "name": "LL Convex CXL 120 gn",
+      "category": "glue_points",
+      "type": "Einklebespitze",
+      "subcategory": "target",
+      "material": "Stainless Steel",
+      "weight_grain": 120.0,
+      "weight_options": null,
+      "inner_diameter_inch": 0.317,
+      "inner_diameter_mm": 8.06,
+      "outer_diameter_inch": 0.35,
+      "outer_diameter_mm": 8.9,
+      "length_mm": null,
+      "length_inch": null,
+      "thread_specification": null,
+      "color": "Silver",
+      "finish": null,
+      "compatibility": [
+        "CXL (8.06/8.9)"
+      ],
+      "usage_type": "target",
+      "price": null,
+      "availability": null,
+      "description": "Artikel Nr.: 11279",
+      "image_url": null,
+      "source_url": "https://tophatarchery.com/produkte/komponenten-fuer-carbonpfeile/klebespitzen/target-einklebespitzen/target-einklebespitzen-info/102/ll-convex-cxl-120-gn",
+      "extracted_at": "2025-08-01T21:32:24.498513"
+    }
+  ]
+}
