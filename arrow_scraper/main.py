@@ -153,40 +153,133 @@ async def scrape_manufacturer(manufacturer: str, deepseek_api_key: str):
         print("Error: DEEPSEEK_API_KEY not set. Please check your .env file.")
         return False
     
-    if manufacturer.lower() == "easton":
-        scraper = EastonScraper(deepseek_api_key)
+    # Try to use the new config-based method for any manufacturer
+    try:
+        from config_loader import ConfigLoader
+        config = ConfigLoader()
+        manufacturer_names = config.get_manufacturer_names()
         
-        print(f"Starting Easton arrow scraping...")
-        print(f"Session ID: {scraper.session_id}")
+        # Find matching manufacturer in config
+        matching_manufacturer = None
+        for name in manufacturer_names:
+            if manufacturer.lower() in name.lower() or name.lower() in manufacturer.lower():
+                matching_manufacturer = name
+                break
         
-        try:
-            # Scrape all Easton categories
-            results = await scraper.scrape_all_easton_categories()
+        if matching_manufacturer:
+            print(f"🚀 Using optimized extraction for {matching_manufacturer}")
+            print(f"💡 Recommendation: Use 'python main.py --update-all --force' for better performance")
             
-            # Save session data
-            scraper.save_session_data()
+            # Use the new fast method for single manufacturer
+            from run_comprehensive_extraction_fast import FastDirectLLMExtractor
+            from deepseek_knowledge_extractor import DeepSeekKnowledgeExtractor
+            from deepseek_translator import DeepSeekTranslator
+            from easyocr_carbon_express_extractor import EasyOCRCarbonExpressExtractor
+            from arrow_database import ArrowDatabase
+            from crawl4ai import AsyncWebCrawler
             
-            # Print summary
-            total_arrows = sum(r.arrows_found for r in results)
-            successful_scrapes = sum(1 for r in results if r.success)
+            # Get URLs for this manufacturer
+            all_urls = config.get_manufacturer_urls(matching_manufacturer)
+            if not all_urls:
+                print(f"⚠️  No URLs found for {matching_manufacturer}")
+                return False
             
-            print(f"\nScraping Summary:")
-            print(f"  Manufacturer: {manufacturer}")
-            print(f"  URLs processed: {len(results)}")
-            print(f"  Successful scrapes: {successful_scrapes}/{len(results)}")
-            print(f"  Total arrows found: {total_arrows}")
-            print(f"  Success rate: {(successful_scrapes/len(results)*100):.1f}%")
+            print(f"📊 Found {len(all_urls)} URLs to process")
             
-            return True
+            # Initialize extractors with consistent manufacturer name
+            is_vision_based = config.is_vision_extraction(matching_manufacturer)
+            text_extractor = FastDirectLLMExtractor(
+                deepseek_api_key, 
+                manufacturer_name=matching_manufacturer,
+                skip_images=not is_vision_based
+            )
             
-        except Exception as e:
-            print(f"Error during scraping: {e}")
+            if is_vision_based:
+                print(f"🤖 Vision extraction enabled - images WILL be downloaded")
+            else:
+                print(f"⚡ Text extraction only - images will NOT be downloaded")
+            
+            database = ArrowDatabase()
+            manufacturer_arrows = []
+            failed_urls = []
+            
+            # Process URLs
+            async with AsyncWebCrawler(verbose=False) as crawler:
+                for j, url in enumerate(all_urls, 1):
+                    print(f"   📎 [{j}/{len(all_urls)}] Processing URL...", end="")
+                    
+                    try:
+                        result = await crawler.arun(url=url, bypass_cache=True)
+                        
+                        if not result.success:
+                            print(" ❌ Crawl failed")
+                            failed_urls.append(url)
+                            continue
+                        
+                        print(f" ✓ Crawled", end="")
+                        
+                        # Extract arrows with consistent manufacturer name
+                        arrows = text_extractor.extract_arrow_data(result.markdown, url)
+                        
+                        if arrows:
+                            # Ensure all arrows have consistent manufacturer name
+                            for arrow in arrows:
+                                arrow.manufacturer = matching_manufacturer
+                            
+                            manufacturer_arrows.extend(arrows)
+                            print(f" → ✅ {len(arrows)} arrows")
+                        else:
+                            print(" → ❌ No data")
+                            failed_urls.append(url)
+                        
+                        # Rate limiting
+                        await asyncio.sleep(2)
+                        
+                    except Exception as e:
+                        print(f" → 💥 Error: {str(e)[:30]}...")
+                        failed_urls.append(url)
+                        continue
+            
+            # Update database
+            if manufacturer_arrows:
+                added_count = 0
+                for arrow in manufacturer_arrows:
+                    try:
+                        database.add_arrow(arrow)
+                        added_count += 1
+                    except Exception as e:
+                        print(f"⚠️  Database error for {arrow.model_name}: {e}")
+                
+                print(f"\n✅ {matching_manufacturer}: {len(manufacturer_arrows)} arrows extracted, {added_count} added to database")
+                return True
+            else:
+                print(f"❌ {matching_manufacturer}: No arrows found")
+                return False
+                
+        else:
+            print(f"❌ Manufacturer '{manufacturer}' not found in config")
             return False
+            
+    except Exception as e:
+        print(f"❌ Error using optimized extraction: {e}")
+        print(f"💡 Please use: python main.py --update-all --force")
+        return False
     
     else:
-        print(f"Manufacturer '{manufacturer}' not yet implemented for individual scraping")
-        print(f"Available for individual scraping: ['easton']")
-        print(f"Use --update-all to scrape all {len(MANUFACTURERS)} configured manufacturers with translation support")
+        print(f"⚠️  Individual manufacturer scraping is deprecated")
+        print(f"🚀 Use the new optimized method instead:")
+        print(f"   python main.py --update-all --force")
+        print(f"")
+        print(f"💡 For single manufacturer (recommended):")
+        print(f"   # Edit manufacturers.yaml to temporarily disable other manufacturers")
+        print(f"   # Then run: python main.py --update-all --force")
+        print(f"")
+        print(f"✨ Benefits of --update-all:")
+        print(f"   • Uses optimized fast extraction")
+        print(f"   • Consistent manufacturer naming")
+        print(f"   • Skips image downloads for better speed")
+        print(f"   • Supports all {len(MANUFACTURERS)} manufacturers")
+        print(f"   • Includes automatic translation")
         return False
 
 async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = False, enable_translation: bool = True):
