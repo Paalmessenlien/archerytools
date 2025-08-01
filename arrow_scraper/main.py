@@ -166,6 +166,7 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
     """Update all manufacturers in the database using the working architecture"""
     
     print("🚀 Starting comprehensive manufacturer update...")
+    print("⚡ FAST MODE: Skipping image downloads for non-vision manufacturers")
     print("=" * 60)
     
     # Initialize systems using the working architecture
@@ -212,14 +213,27 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                 
             print(f"📊 Found {len(all_urls)} URLs to process")
             
-            # Initialize extractors (same as working script)
-            text_extractor = DirectLLMExtractor(deepseek_api_key)
+            # Check if vision extraction is needed
+            is_vision_based = config.is_vision_extraction(manufacturer_name)
+            
+            # Initialize extractors with fast mode
+            from run_comprehensive_extraction_fast import FastDirectLLMExtractor
+            text_extractor = FastDirectLLMExtractor(
+                deepseek_api_key, 
+                manufacturer_name=manufacturer_name,
+                skip_images=not is_vision_based  # Only download images for vision extraction
+            )
             vision_extractor = None
             knowledge_extractor = DeepSeekKnowledgeExtractor(deepseek_api_key)
             translator = DeepSeekTranslator(deepseek_api_key)
             
+            if is_vision_based:
+                print(f"🤖 Vision extraction enabled - images WILL be downloaded")
+            else:
+                print(f"⚡ Text extraction only - images will NOT be downloaded")
+            
             # Initialize vision extractor if needed
-            if config.is_vision_extraction(manufacturer_name):
+            if is_vision_based:
                 print(f"🤖 Initializing vision extractor for {manufacturer_name}...")
                 vision_extractor = EasyOCRCarbonExpressExtractor()
                 if vision_extractor.reader:
@@ -259,6 +273,9 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                             arrows = vision_extractor.extract_vision_based_data(
                                 result.html, result.markdown, url
                             )
+                            # Override manufacturer name for vision-extracted arrows
+                            for arrow in arrows:
+                                arrow.manufacturer = manufacturer_name
                         
                         # Tier 3: Knowledge base fallback
                         if not arrows:
@@ -266,6 +283,9 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                             arrows = knowledge_extractor.extract_from_failed_url(url, manufacturer_name)
                         
                         if arrows:
+                            # Ensure all arrows have consistent manufacturer name
+                            for arrow in arrows:
+                                arrow.manufacturer = manufacturer_name
                             # Translate arrows if not in English and translation enabled
                             manufacturer_language = config.get_manufacturer_language(manufacturer_name)
                             if enable_translation and manufacturer_language and manufacturer_language != 'english':
@@ -273,6 +293,8 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                                 translated_arrows = []
                                 for arrow in arrows:
                                     translated_arrow = translator.translate_arrow_data(arrow, manufacturer_language)
+                                    # Ensure manufacturer name stays consistent after translation
+                                    translated_arrow.manufacturer = manufacturer_name
                                     translated_arrows.append(translated_arrow)
                                 arrows = translated_arrows
                                 print(" ✅")
