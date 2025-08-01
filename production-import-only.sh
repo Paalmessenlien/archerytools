@@ -106,4 +106,3 @@ echo "Next steps:"
 echo "1. Deploy application (database will be included)"
 echo "2. Server startup will automatically check for newer JSON files"
 echo "3. Regular updates: commit new JSON files and redeploy"
-EOF < /dev/null
