@@ -5,6 +5,7 @@
   "status": "traditional_data",
   "arrows": [
     {
+      "manufacturer": "Traditional Wood Arrows",
       "model_name": "Cedar Shaft",
       "material": "Cedar Wood",
       "arrow_type": "Traditional",
@@ -39,6 +40,7 @@
       ]
     },
     {
+      "manufacturer": "Traditional Wood Arrows",
       "model_name": "Pine Shaft",
       "material": "Pine Wood",
       "arrow_type": "Traditional",
@@ -97,6 +99,7 @@
       ]
     },
     {
+      "manufacturer": "Traditional Wood Arrows",
       "model_name": "Ash Shaft",
       "material": "Ash Wood",
       "arrow_type": "Traditional",
@@ -126,6 +129,7 @@
       ]
     },
     {
+      "manufacturer": "Traditional Wood Arrows",
       "model_name": "Birch Shaft",
       "material": "Birch Wood",
       "arrow_type": "Traditional",
@@ -155,6 +159,7 @@
       ]
     },
     {
+      "manufacturer": "Traditional Wood Arrows",
       "model_name": "Fir Shaft",
       "material": "Fir Wood",
       "arrow_type": "Traditional",
