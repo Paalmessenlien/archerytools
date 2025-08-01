@@ -342,15 +342,32 @@ def build_database_robust():
                     
                     if 'components' in data:
                         components = data['components']
-                        component_type = data.get('component_type', 'unknown')
                         
                         for component in components:
                             try:
+                                # Build specifications dict from component fields
+                                specifications = {}
+                                spec_fields = [
+                                    'type', 'subcategory', 'material', 'weight_grain', 'weight_options',
+                                    'inner_diameter_inch', 'inner_diameter_mm', 'outer_diameter_inch', 'outer_diameter_mm',
+                                    'length_mm', 'length_inch', 'thread_specification', 'color', 'finish',
+                                    'compatibility', 'usage_type', 'price', 'availability'
+                                ]
+                                
+                                for field in spec_fields:
+                                    if field in component and component[field] is not None:
+                                        specifications[field] = component[field]
+                                
+                                # Get category from component or fall back to file-level component_type
+                                category = component.get('category', data.get('component_type', 'unknown'))
+                                manufacturer = component.get('manufacturer', component.get('supplier', data.get('supplier', 'Unknown')))
+                                model_name = component.get('model_name', component.get('name', 'Unknown Model'))
+                                
                                 comp_db.add_component(
-                                    category_name=component_type,
-                                    manufacturer=component.get('manufacturer', 'Unknown'),
-                                    model_name=component.get('model_name', 'Unknown Model'),
-                                    specifications=component.get('specifications', {}),
+                                    category_name=category,
+                                    manufacturer=manufacturer,
+                                    model_name=model_name,
+                                    specifications=specifications,
                                     image_url=component.get('image_url'),
                                     local_image_path=component.get('local_image_path'),
                                     price_range=component.get('price_range'),
@@ -360,10 +377,10 @@ def build_database_robust():
                                 )
                                 components_imported += 1
                             except Exception as e:
-                                print(f"    ⚠️  Error importing component: {e}")
+                                print(f"    ⚠️  Error importing component {component.get('name', 'Unknown')}: {e}")
                                 continue
                         
-                        print(f"    ✅ Imported {len(components)} {component_type}")
+                        print(f"    ✅ Imported {len(components)} components from {json_file.name}")
                         
                 except Exception as e:
                     print(f"    ❌ Error processing {json_file.name}: {e}")
