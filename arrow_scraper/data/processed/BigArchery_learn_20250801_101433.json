@@ -1,0 +1,67 @@
+{
+  "manufacturer": "BigArchery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T10:14:33.238221",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "BigArchery",
+      "model_name": "CROSS-X SHAFT AMBITION+POINT",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2307,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2224,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2185,
+          "gpi_weight": 6.3
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2134,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.2106,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.2098,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.2071,
+          "gpi_weight": 4.9
+        },
+        {
+          "spine": 1300,
+          "outer_diameter": 0.2035,
+          "gpi_weight": 4.7
+        },
+        {
+          "spine": 1500,
+          "outer_diameter": 0.2008,
+          "gpi_weight": 4.2
+        },
+        {
+          "spine": 1800,
+          "outer_diameter": 0.1992,
+          "gpi_weight": 3.9
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Ambition is a shaft that over the years has enjoyed considerable success and a wide audience of admirers in various fields of use from target shooting to 3D. The shaft comes complete with nock, pin and uninstalled tip, to be cut to the required size and then glued. The wide availability of pins and components, typical of top level arrows, make it the ideal shaft for first competitions and for those looking for an excellent product at an unbeatable price."
+    }
+  ]
+}

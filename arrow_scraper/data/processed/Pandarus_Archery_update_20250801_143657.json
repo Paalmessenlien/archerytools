@@ -1,0 +1,583 @@
+{
+  "manufacturer": "Pandarus Archery",
+  "total_arrows": 10,
+  "scraped_at": "2025-08-01T14:36:57.917422",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "VERSUS",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.87
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.226,
+          "gpi_weight": 6.75
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.241,
+          "gpi_weight": 5.75
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.244,
+          "gpi_weight": 5.31
+        }
+      ],
+      "material": "High-strength carbon fiber",
+      "arrow_type": "target",
+      "description": "Fat arrow shaft with 0.315” Inner Diameter, World Archery Maximum Compliant Diameter carbon arrow for compound shooters, ideal for indoor compound competition.",
+      "source_url": "https://www.pandarusarchery.com/versus"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "ALPHA X",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.35
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.77
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.3
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.86
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.278,
+          "gpi_weight": 5.3
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.274,
+          "gpi_weight": 4.73
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.272,
+          "gpi_weight": 4.4
+        }
+      ],
+      "material": "High-strength carbon fibres",
+      "arrow_type": "target",
+      "description": "The ALPHA X is built with 100% carbon construction in standard-diameter with 0.006” straightness, which makes it has the accuracy and extreme durability, it’s ideal for compound bow or tradition bow for target shooting practice or hunting!",
+      "source_url": "https://www.pandarusarchery.com/alpha-x"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "Elite CA320",
+      "spine_specifications": [
+        {
+          "spine": 325,
+          "outer_diameter": 0.229,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.225,
+          "gpi_weight": 8.9
+        },
+        {
+          "spine": 380,
+          "outer_diameter": 0.219,
+          "gpi_weight": 8.68
+        },
+        {
+          "spine": 410,
+          "outer_diameter": 0.216,
+          "gpi_weight": 8.6
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.209,
+          "gpi_weight": 8.12
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.207,
+          "gpi_weight": 7.81
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.206,
+          "gpi_weight": 7.62
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.201,
+          "gpi_weight": 7.06
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.197,
+          "gpi_weight": 6.8
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.194,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 750,
+          "outer_diameter": 0.193,
+          "gpi_weight": 6.44
+        },
+        {
+          "spine": 830,
+          "outer_diameter": 0.192,
+          "gpi_weight": 6.2
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.185,
+          "gpi_weight": 6.06
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.184,
+          "gpi_weight": 5.5
+        }
+      ],
+      "material": "High module Carbon and 7075 aluminum composited",
+      "arrow_type": "target",
+      "description": "CA320 is an evolutional version of ELITE XT designed for Olympic target shooting, spindled shape based on CAC construction Offering the competitive shooter exceptional speed and accuracy with little worry of wind drift, it’s almost an unfair advantage compare with any other pure carbon arrows, taper tail providing the incredible clearance and release forgiveness, it can provide the strong and stable output, it’s the ulitmate arrow for Long distance targeting shoot.",
+      "source_url": "https://www.pandarusarchery.com/elite_ca320"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "Elite XT",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.219,
+          "gpi_weight": 10.5
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.214,
+          "gpi_weight": 9.69
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.209,
+          "gpi_weight": 8.96
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.205,
+          "gpi_weight": 8.62
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.201,
+          "gpi_weight": 8.15
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.198,
+          "gpi_weight": 7.76
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.195,
+          "gpi_weight": 7.47
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.192,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 750,
+          "outer_diameter": 0.191,
+          "gpi_weight": 6.96
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.189,
+          "gpi_weight": 6.57
+        },
+        {
+          "spine": 850,
+          "outer_diameter": 0.188,
+          "gpi_weight": 6.53
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.186,
+          "gpi_weight": 6.42
+        },
+        {
+          "spine": 950,
+          "outer_diameter": 0.184,
+          "gpi_weight": 6.14
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.183,
+          "gpi_weight": 5.89
+        }
+      ],
+      "material": "High module Carbon and 7075 aluminum composited",
+      "arrow_type": "target",
+      "description": "Parallel shaped CAC structure arrows, Alloy core covered by high modules carbon fiber make the shaft more durable and easier tuning, the CAC construction can greatly reduces ineffective twisting and maintains an excellent attitude during flight, super slim shaft maximum speed and accuracy with extremely less wind deflection, that is a true all-round performer for Indoor or outdoor target shooting, recommended for compound bow.",
+      "source_url": "https://www.pandarusarchery.com/elite-xt"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "Elite CA320 PRO",
+      "spine_specifications": [
+        {
+          "spine": 340,
+          "outer_diameter": 0.224,
+          "gpi_weight": 11.2
+        },
+        {
+          "spine": 380,
+          "outer_diameter": 0.219,
+          "gpi_weight": 10.5
+        },
+        {
+          "spine": 420,
+          "outer_diameter": 0.214,
+          "gpi_weight": 9.69
+        },
+        {
+          "spine": 470,
+          "outer_diameter": 0.209,
+          "gpi_weight": 8.96
+        },
+        {
+          "spine": 520,
+          "outer_diameter": 0.205,
+          "gpi_weight": 8.62
+        },
+        {
+          "spine": 570,
+          "outer_diameter": 0.201,
+          "gpi_weight": 8.15
+        },
+        {
+          "spine": 620,
+          "outer_diameter": 0.198,
+          "gpi_weight": 7.76
+        },
+        {
+          "spine": 670,
+          "outer_diameter": 0.195,
+          "gpi_weight": 7.47
+        },
+        {
+          "spine": 720,
+          "outer_diameter": 0.192,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 770,
+          "outer_diameter": 0.19,
+          "gpi_weight": 6.96
+        }
+      ],
+      "material": "High module Carbon and 7075 aluminum composited",
+      "arrow_type": "target",
+      "description": "CA320 PRO is designed for Compound bow target shooting specially, taper front design based on CAC construction Offering the competitive shooter exceptional speed and accuracy with little worry of wind drift, parallel tail enhances the durability with compound bow, it can provide the strong and stable output, it’s a true all-round performer for compound bow target shoot at any range!",
+      "source_url": "https://www.pandarusarchery.com/elite-ca320-pro"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "CA390",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.357,
+          "gpi_weight": 10.87
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.231,
+          "gpi_weight": 9.81
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.227,
+          "gpi_weight": 9.13
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.224,
+          "gpi_weight": 8.66
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.221,
+          "gpi_weight": 8.28
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.217,
+          "gpi_weight": 7.81
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.215,
+          "gpi_weight": 7.56
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.213,
+          "gpi_weight": 7.1
+        },
+        {
+          "spine": 750,
+          "outer_diameter": 0.212,
+          "gpi_weight": 6.93
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.209,
+          "gpi_weight": 6.75
+        },
+        {
+          "spine": 850,
+          "outer_diameter": 0.209,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.206,
+          "gpi_weight": 6.19
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.94
+        }
+      ],
+      "material": "High strength Carbon and 7075 aluminum composited",
+      "arrow_type": "target",
+      "description": "Entry-level ACA arrow, suitable for all types of archery shooting, whether long distance or shorter distance, recurve bow or compound bow. The CAC construction greatly reduces ineffective twisting and maintains an excellent attitude during flight.",
+      "source_url": "https://www.pandarusarchery.com/elite-ca390"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "ICEPOINT",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.215,
+          "gpi_weight": 9.15
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.213,
+          "gpi_weight": 9.0
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.209,
+          "gpi_weight": 8.56
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.205,
+          "gpi_weight": 7.93
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.2,
+          "gpi_weight": 7.31
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.196,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.193,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.19,
+          "gpi_weight": 6.16
+        },
+        {
+          "spine": 750,
+          "outer_diameter": 0.187,
+          "gpi_weight": 5.85
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.185,
+          "gpi_weight": 5.56
+        },
+        {
+          "spine": 850,
+          "outer_diameter": 0.183,
+          "gpi_weight": 5.12
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.181,
+          "gpi_weight": 5.12
+        },
+        {
+          "spine": 950,
+          "outer_diameter": 0.179,
+          "gpi_weight": 4.93
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.175,
+          "gpi_weight": 4.68
+        }
+      ],
+      "material": "High modual 40T carbon material",
+      "arrow_type": "target",
+      "description": "The ICEPOINT 100% high modual carbon arrow was designed for long-range target accuracy, super slim shaft maximum speed and accuracy with extremely less wind deflection. The high modual carbon is customized specially, fully considered the GPI and also the balance between rigidity & toughness of the shaft, which make the arrow has unmatched durability and straightness retention.",
+      "source_url": "https://www.pandarusarchery.com/ice-pointee77bb06"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "PRECISION",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.35
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.77
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.3
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.86
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.278,
+          "gpi_weight": 5.3
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.274,
+          "gpi_weight": 4.73
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.272,
+          "gpi_weight": 4.4
+        }
+      ],
+      "material": "High-strength carbon fibres",
+      "arrow_type": "target",
+      "description": "The PRECISION is built with 100% carbon construction in standard-diameter, light weight design selectively engineered to maximize speed and flatten trajectory, every arrow is digitally spine aligned and Straightness tolerances are held to a standard of .003 for increased accuracy and each shoot consistency, it’s ideal for Field, target and 3D shooting.",
+      "source_url": "https://www.pandarusarchery.com/precision"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "ALPHA XT",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.244,
+          "gpi_weight": 10.1
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.241,
+          "gpi_weight": 9.5
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.233,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.226,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.219,
+          "gpi_weight": 6.15
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.217,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.48
+        }
+      ],
+      "material": "High-strength carbon fibres",
+      "arrow_type": "target",
+      "description": "The ALPHA XT is an economical arrow, built with 100% carbon construction in Micro-diameter, which keeps it durable and more wind resistant for long-range accuracy, making it optimal for Entry-level/Youth archers target shooting as well as recreational use, the low spine with special adapter also great for hunting.",
+      "source_url": "https://www.pandarusarchery.com/alpha-xt"
+    },
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "VERSUS",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.87
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.226,
+          "gpi_weight": 6.75
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.241,
+          "gpi_weight": 5.75
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.244,
+          "gpi_weight": 5.31
+        }
+      ],
+      "material": "High-strength carbon fiber",
+      "arrow_type": "target",
+      "description": "Fat arrow shaft with 0.315” Inner Diameter, World Archery Maximum Compliant Diameter carbon arrow for compound shooters, ideal for indoor compound competition.",
+      "source_url": "https://www.pandarusarchery.com/versus"
+    }
+  ]
+}

@@ -188,10 +188,25 @@ class BaseScraper:
         arrows = []
         
         try:
+            if extracted_data is None:
+                self.logger.warning("No extracted data provided")
+                return arrows
+                
             if isinstance(extracted_data, str):
+                if not extracted_data.strip():
+                    self.logger.warning("Empty extracted data string")
+                    return arrows
                 data = json.loads(extracted_data)
             else:
                 data = extracted_data
+            
+            if data is None:
+                self.logger.warning("Extracted data is None after processing")
+                return arrows
+                
+            if not isinstance(data, dict):
+                self.logger.warning(f"Expected dict, got {type(data)}: {data}")
+                return arrows
             
             for arrow_data in data.get("arrows", []):
                 try:

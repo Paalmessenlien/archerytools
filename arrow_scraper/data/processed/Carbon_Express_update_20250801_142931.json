@@ -1,0 +1,255 @@
+{
+  "manufacturer": "Carbon Express",
+  "total_arrows": 9,
+  "scraped_at": "2025-08-01T14:29:31.070641",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Maxima Sable Rz",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Maxima Sable Rz features a reinforced zone (Rz) technology for increased durability and accuracy. It has a micro-diameter design for better penetration and reduced wind drift.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/maxima-sable-rz/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Maxima Sable Rz Select",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Features Carbon Express's Rz technology for reduced vibration and noise, with a precision-machined insert for improved accuracy and penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/maxima-sable-rz-select/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Maxima Photon Sd",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrow with SD (small diameter) technology for improved accuracy and penetration. Features a reinforced carbon weave for durability and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/maxima-photon-sd/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Maxima Triad",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Triple-layer carbon construction for durability and accuracy, designed for hunting with high FOC potential.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/maxima-triad/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "D Stroyer",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Carbon Express D Stroyer is a high-performance hunting arrow designed for accuracy and penetration. Features include a precision carbon construction, tight straightness tolerance, and optimized weight for consistent flight.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/d-stroyer/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "D Stroyer Mx Hunter",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The D Stroyer Mx Hunter is designed for maximum penetration and accuracy, featuring a high-carbon construction for durability and precision. Its micro-diameter design reduces wind drift and increases speed.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/d-stroyer-mx-hunter/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "CX Adrenaline",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The CX Adrenaline is a high-performance hunting arrow featuring a precision carbon construction for speed and accuracy. It includes a reinforced core for durability and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/cx-adrenaline/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Thunder Express",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Thunder Express is a high-performance hunting arrow featuring a durable carbon construction, tight straightness tolerance, and consistent weight for precision shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/thunder-express/"
+    },
+    {
+      "manufacturer": "Carbon Express",
+      "model_name": "Nano SSP",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Nano SSP features a micro-diameter design for deep penetration and accuracy, with a reinforced forward impact zone for durability.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.feradyne.com/product/nano-ssp/"
+    }
+  ]
+}

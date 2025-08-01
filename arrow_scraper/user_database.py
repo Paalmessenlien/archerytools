@@ -182,6 +182,10 @@ class UserDatabase:
             cursor.execute("PRAGMA table_info(users)")
             columns = [column[1] for column in cursor.fetchall()]
             
+            if 'profile_picture_url' not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN profile_picture_url TEXT")
+                print("✅ Added profile_picture_url column to users table")
+
             if 'draw_length' not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN draw_length REAL DEFAULT 28.0")
                 print("✅ Added draw_length column to users table")

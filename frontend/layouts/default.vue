@@ -308,7 +308,7 @@ import { useAuth } from '~/composables/useAuth'
 const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)
 
-const { user, logout, loginWithGoogle, fetchUser } = useAuth()
+const { user, logout, loginWithGoogle, fetchUser, initializeGoogleAuth } = useAuth()
 const router = useRouter()
 
 // Check if user is admin
@@ -316,18 +316,9 @@ const isAdmin = computed(() => {
   return user.value?.email === 'messenlien@gmail.com'
 })
 
-const handleLogin = async () => {
-  try {
-    const result = await loginWithGoogle()
-    if (result && result.needsProfileCompletion) {
-      router.push('/register')
-    }
-    // User data is now automatically fetched inside loginWithGoogle()
-  } catch (error) {
-    console.error('Login failed:', error)
-    // Optionally show an error message to the user
-  }
-}
+const handleLogin = () => {
+  loginWithGoogle();
+};
 
 const redirectToLogin = () => {
   router.push('/login')
@@ -335,8 +326,9 @@ const redirectToLogin = () => {
 
 // Fetch user on mount if token exists
 onMounted(() => {
-  fetchUser()
-})
+  initializeGoogleAuth();
+  fetchUser();
+});
 
 // Dark mode
 const { initializeTheme } = useDarkMode()

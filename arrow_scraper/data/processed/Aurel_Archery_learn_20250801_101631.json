@@ -1,0 +1,62 @@
+{
+  "manufacturer": "Aurel Archery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T10:16:31.710602",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "AGNIS™",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.344,
+          "gpi_weight": 11.6
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.328,
+          "gpi_weight": 10.8
+        },
+        {
+          "spine": 520,
+          "outer_diameter": 0.313,
+          "gpi_weight": 10.3
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.297,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 730,
+          "outer_diameter": 0.281,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 870,
+          "outer_diameter": 0.266,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 1040,
+          "outer_diameter": 0.25,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 1310,
+          "outer_diameter": 0.234,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 1650,
+          "outer_diameter": 0.219,
+          "gpi_weight": 7.3
+        }
+      ],
+      "material": "ENAW 7001-T6 Aluminium",
+      "arrow_type": "target",
+      "description": "Gezogener Aluminium Pfeilschaft mit engen Tolleranzen und guten Flugeigenschaften. Bushings sind bereits werkseitig vormontiert."
+    }
+  ]
+}

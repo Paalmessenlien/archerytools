@@ -587,16 +587,25 @@ const clearOtherValue = (fieldName) => {
 };
 
 const saveBowSetup = () => {
-  // Transform the data to match API expectations
-  const transformedData = {
+  // Explicitly define the payload to ensure only correct fields are sent
+  const payload = {
+    id: props.modelValue?.id, // Include ID for updates
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
-    description: setupData.value.description,
-    bow_usage: JSON.stringify(setupData.value.bow_usage), // Convert to JSON array
-    // Map brand fields correctly to database schema
+    draw_length: Number(setupData.value.draw_length) || 0, // Ensure draw_length is a number
+    arrow_length: Number(setupData.value.arrow_length) || null,
+    point_weight: Number(setupData.value.point_weight) || null,
+    insert_weight: Number(setupData.value.insert_weight) || null,
+    fletching_weight: Number(setupData.value.fletching_weight) || null,
+    description: setupData.value.description || '',
+    bow_usage: JSON.stringify(setupData.value.bow_usage || []),
+    
+    // Compound-specific fields
     compound_brand: setupData.value.bow_type === 'compound' ? getBrandValue('brand', 'custom_brand') : '',
     compound_model: setupData.value.bow_type === 'compound' ? setupData.value.compound_model || '' : '',
+    
+    // Recurve/Traditional-specific fields
     riser_brand: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? (setupData.value.bow_type === 'traditional' 
         ? getBrandValue('riser_brand', 'custom_trad_riser_brand')
@@ -615,7 +624,8 @@ const saveBowSetup = () => {
       ? setupData.value.limb_length || '' : '',
   };
   
-  emit('save', transformedData);
+  // This will ensure nock_weight and other extraneous fields are not sent
+  emit('save', payload);
 };
 </script>
 

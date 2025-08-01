@@ -1,0 +1,42 @@
+{
+  "manufacturer": "Nijora Archery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T10:12:42.963970",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Songan 500-1000",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2886,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2862,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2827,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2803,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.2756,
+          "gpi_weight": 4.9
+        }
+      ],
+      "material": "Top Carbonschaft Material",
+      "arrow_type": "target",
+      "description": "Extrem stabiler, preiswerter Schaft, ideal für den Anfänger und Hobbybogensportler."
+    }
+  ]
+}

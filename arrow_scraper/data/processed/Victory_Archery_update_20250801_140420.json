@@ -1,0 +1,524 @@
+{
+  "manufacturer": "Victory Archery",
+  "total_arrows": 17,
+  "scraped_at": "2025-08-01T14:04:20.020131",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VAP SS",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The VAP SS is a high-performance hunting arrow featuring a small diameter design for improved speed and penetration. It includes Victory's proprietary SS (Super Stainless) technology for enhanced durability and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-hunting/vap-ss/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Rip Ss",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Rip Ss is a high-performance hunting arrow designed for speed and accuracy. Features a micro-diameter design for reduced wind drift and increased penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip-ss/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VAP TKO",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The VAP TKO is a high-performance hunting arrow featuring Victory's TKO (Total Kinetic Optimization) technology for maximum penetration and kinetic energy transfer. It has a micro-diameter design for reduced wind drift and enhanced accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-hunting/vap-tko/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Rip Tko",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Rip Tko is a high-performance hunting arrow designed for accuracy and penetration. Features a micro-diameter design for reduced wind drift and increased speed, with a high carbon content for durability and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/rip-tko/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VF TKO",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The VF TKO is a high-performance hunting arrow featuring Victory's TKO (Total Kinetic Optimization) technology for maximum penetration and kinetic energy transfer.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vf-tko/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VAP",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Victory VAP arrows feature a micro-diameter design for superior penetration, high-strength carbon construction, and precision tolerances for consistent performance in hunting applications.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vap/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "HLR",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The HLR arrow features a high-performance carbon construction with a micro-diameter design for deep penetration and accuracy. It includes a reinforced HIT insert system for durability and consistent performance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/hlr/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Rip Xv",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Rip Xv is a high-performance hunting arrow featuring Victory's proprietary carbon blend for durability and speed. It includes a reinforced forward impact zone for penetration and a precision-machined insert system.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip-xv/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "RIP TKO",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.3
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The RIP TKO arrow features Victory's proprietary TKO (Total Kinetic Optimization) technology for maximum penetration and kinetic energy transfer. Built with a reinforced forward section for durability and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/rip/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "Vforce",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Vforce is a high-performance hunting arrow designed for accuracy and penetration. Features include a precision carbon construction, tight tolerances, and a micro-diameter design for reduced wind drift and increased speed.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-hunting/vforce/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "V Tac23",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The V Tac23 is a high-performance hunting arrow featuring Victory's proprietary carbon blend for durability and precision. Designed for accuracy and penetration, it includes a reinforced core for increased strength and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/v-tac23/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "V Tac25",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The V Tac25 is a high-performance hunting arrow featuring Victory's proprietary carbon blend for durability and precision. Designed for speed and accuracy, it includes a reinforced core for consistent spine alignment and impact resistance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-target/v-tac25/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "V Tac27",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The V Tac27 is a high-performance hunting arrow designed for accuracy and durability. It features a micro-diameter design for reduced wind drift and increased penetration, with a reinforced core for strength and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-target/v-tac27/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VXT",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The VXT is a high-performance target arrow designed for precision and consistency. Features include ultra-tight tolerances, 100% carbon construction, and a micro-diameter design for reduced wind drift.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-target/vxt/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VAP Target",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. Victory VAP Target arrows are precision-engineered for competitive archery, featuring high-strength carbon construction, tight tolerances, and micro-diameter design for reduced wind drift and improved accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-target/vap/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "3Dhv",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The 3Dhv is a high-performance target arrow featuring Victory's proprietary HV (High Velocity) technology for reduced wind drift and improved consistency. It has a micro-diameter design for enhanced speed and penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://victoryarchery.com/arrows-target/3dhv/"
+    },
+    {
+      "manufacturer": "Victory Archery",
+      "model_name": "VFT",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. Victory VFT arrows feature high-performance carbon construction with precision straightness and weight tolerances for competitive target archery.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.victoryarchery.com/arrows-target/vft/"
+    }
+  ]
+}

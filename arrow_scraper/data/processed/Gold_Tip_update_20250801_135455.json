@@ -1,0 +1,876 @@
+{
+  "manufacturer": "Gold Tip",
+  "total_arrows": 32,
+  "scraped_at": "2025-08-01T13:54:55.303876",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "X-Cutter Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.38,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Gold Tip X-Cutter Pro is the most popular shaft in 3D archery, look to the winner's podium and you'll see why. Large diameter and lightweight construction give it an almost unfair advantage. Components are sold separately.",
+      "source_url": "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-pro-target-arrows/GT-XCPROSN.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Pierce Tour Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrows designed for competitive archery, featuring precision straightness and weight consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/pierce-series/kinetic-pierce-tour-target-arrows/PG3399578.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "GT 22 PRO SN",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrows with reinforced nock end for durability and consistent flight. Designed for competitive archery.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/22-series/22-series-pro-target-arrows/GT-22PROSN.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Triple X Pro Target Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with precision straightness and weight tolerances, designed for competitive archery.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/triple-x-series/triple-x-pro-target-arrows/GT-TXPROSN.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Nine.3 Max Pro Target",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with micro-diameter design for reduced wind drift and improved accuracy. Features reinforced nock end for durability and consistent performance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-pro-target-arrows/GT-93MAXPROSN.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "X-Cutter Plus",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The X-Cutter Plus target arrows feature a high-performance carbon construction with precision straightness and weight tolerances. Designed for competitive target archery, they offer consistent flight and durability.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-plus-target-arrows/GT-XCSPLUS.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Triple-X Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The Gold Tip Triple-X Plus Target Arrows are designed for competitive target archery, featuring high-strength carbon construction, tight straightness tolerances, and consistent weight distribution for optimal accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/triple-x-series/triple-x--plus-target-arrows/GT-TXSPLUS.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "GT 30X Plus",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The GT 30X Plus is a high-performance target arrow designed for competitive archers. It features a micro-diameter design for reduced wind drift and improved accuracy, with a reinforced core for durability and consistent performance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/30x-series/30x-plus-target-arrows/GT-30XSPLUS.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Nine.3 Max Plus",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrows with reinforced construction for maximum durability and consistency. Features Gold Tip's proprietary carbon blend for optimal stiffness-to-weight ratio.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-plus-target-arrows/GT-93MAXSPLUS.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "GT 22SPLUS",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The GT 22SPLUS is a high-performance target arrow featuring Gold Tip's precision carbon construction, optimized spine consistency, and micro-diameter design for competitive accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/22-series/22-series-plus-target-arrows/GT-22SPLUS.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "GT 30X PRO",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrows with reinforced construction for durability and consistency. Features a micro-diameter design for reduced wind drift and improved accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/target-arrows/30x-series/30x-pro-target-arrows/GT-30XPROSN.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter XT",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Hunter XT is a high-performance hunting arrow featuring Gold Tip's proprietary carbon construction for durability and accuracy. Designed with a micro-diameter profile for deep penetration and reduced wind drift.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-xt-hunting-arrows/P01272.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Gold Tip Hunter arrow is designed for hunting applications, featuring a durable carbon construction and precision tolerances for consistent performance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-hunting-arrows/P01268.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Ted Nugent Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows designed in collaboration with Ted Nugent, featuring Gold Tip's precision carbon construction for durability and accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/specialty-series/ted-nugent-hunting-arrows/P01279.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter Pro",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Hunter Pro features Gold Tip's proprietary carbon weave technology for maximum durability and accuracy. Designed for hunting applications with a focus on penetration and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-pro-hunting-arrows/P01271.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Airstrike Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Airstrike Hunting Arrows feature a micro-diameter design for reduced wind drift and deeper penetration. Built with 100% carbon construction for durability and speed.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/airstrike-series/airstrike-hunting-arrows/PG3398796.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Twister Flu-Flu Hunting Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Specialty flu-flu hunting arrow with helical fletching for short-range accuracy and high visibility. Designed for small game and bird hunting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/specialty-series/twister-flu-flu-hunting-arrow/P01283.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Kaos Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Kinetic Kaos arrows feature a high-performance carbon construction with a micro-diameter design for speed and penetration. Includes a reinforced nock collar for durability and a precision-matched spine for consistent accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-kaos-hunting-arrows/P01276.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Pierce",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrow with Kinetic Pierce technology for maximum penetration and accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-hunting-arrows/P01275.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce Platinum",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.3
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrow with Platinum finish for durability and accuracy. Features a micro-diameter design for improved penetration and speed.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-platinum-hunting-arrows/PG4342808.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "FORCE F.O.C. Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows with enhanced front-of-center (F.O.C.) for improved accuracy and penetration. Features Gold Tip's proprietary carbon construction for durability and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/force-foc-high-front-of-center/force-f.o.c.-hunting-arrows/PG3398798.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows featuring a micro-diameter design for speed and penetration, with a durable carbon construction and precision tolerances.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-xt-hunting-arrows/P01286.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows designed for speed and accuracy, featuring a micro-diameter design for reduced wind drift and deeper penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-hunting-arrows/P01284.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrow with precision straightness and weight consistency. Features a durable carbon construction for maximum penetration and accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-hunting-arrows/PG4392856.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity Pro Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows with a micro-diameter design for speed and penetration. Features a reinforced core for durability and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-pro-hunting-arrows/P01285.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Hunting Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Traditional-style carbon hunting arrows with high FOC design, durability, and precision straightness for traditional archery setups.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-hunting-arrows/P01281.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Classic Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Traditional-style carbon hunting arrows with classic wood grain finish, designed for durability and performance in traditional archery setups.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-hunting-arrows/P01368.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Designed for traditional bowhunters, the Traditional XT Hunting Arrows feature a durable carbon construction with a classic wood-grain finish. Optimized for accuracy and penetration with standard insert compatibility.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-xt-hunting-arrows/P01282.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Classic XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. Designed for traditional bowhunters, these arrows feature a durable carbon construction with a classic wood-grain finish. The XT technology provides enhanced straightness and consistency for improved accuracy.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-xt-hunting-arrows/P01369.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce LRT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows featuring Low Resistance Technology (LRT) for improved penetration and accuracy. Built with a durable carbon construction and precision tolerances.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-lrt-hunting-arrows/PG3997784.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Black Label Quantum Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows featuring Gold Tip's proprietary carbon blend for durability and precision. Designed for maximum penetration and accuracy in hunting scenarios.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-quantum-hunting-arrows/PG3398799.html"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Black Label Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. High-performance hunting arrows with a durable carbon construction, designed for accuracy and penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-hunting-arrows/PG3398797.html"
+    }
+  ]
+}

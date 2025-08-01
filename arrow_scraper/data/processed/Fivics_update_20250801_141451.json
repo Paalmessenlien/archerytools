@@ -1,0 +1,64 @@
+{
+  "manufacturer": "Fivics",
+  "total_arrows": 2,
+  "scraped_at": "2025-08-01T14:14:51.208538",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Fivics",
+      "model_name": "Tenpro Carbon Arrow Shaft",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance carbon arrow shaft designed for target archery, featuring excellent straightness and weight consistency for precision shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://fivics-usa.com/products/tenpro-carbon-arrow-shaft"
+    },
+    {
+      "manufacturer": "Fivics",
+      "model_name": "Zeilo Carbon Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance carbon target arrow with excellent straightness and weight consistency. Designed for competitive archery with optimized spine options for various draw weights.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://fivics-usa.com/products/zeilo-carbon-arrow"
+    }
+  ]
+}

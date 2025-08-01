@@ -1,0 +1,36 @@
+{
+  "manufacturer": "Skylon Archery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T13:40:21.997873",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Skylon Archery",
+      "model_name": "Stratos",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Stratos is a high-performance hunting arrow featuring precision carbon construction, tight tolerances, and optimized weight-forward design for superior accuracy and penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://skylonarchery.com/arrows/stratos"
+    }
+  ]
+}

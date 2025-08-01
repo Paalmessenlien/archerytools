@@ -4,90 +4,94 @@ import { ref } from 'vue';
 // Global state - shared across all useAuth() calls
 const token = ref(process.client ? localStorage.getItem('token') : null);
 const user = ref(null);
+let googleAuthClient = null; // Singleton for the Google Auth client
 
 export const useAuth = () => {
   const config = useRuntimeConfig();
 
+  const initializeGoogleAuth = () => {
+    if (googleAuthClient || !process.client) {
+      return;
+    }
+
+    const clientId = config.public.googleClientId || '1039369917961-dq95hj3ip0krmhjajgo0h9qjdchq5pca.apps.googleusercontent.com';
+    
+    const checkGoogle = () => {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+        console.log('✅ Google Identity Services available, initializing client.');
+        googleAuthClient = window.google.accounts.oauth2.initCodeClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (response) => {
+            console.log('Google callback response:', response);
+            if (response.code) {
+              try {
+                const res = await fetch(`${config.public.apiBase}/auth/google`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: response.code }),
+                });
+
+                if (!res.ok) {
+                  const errorData = await res.json();
+                  console.error('Google auth API call failed:', errorData.error || `API error: ${res.status}`);
+                  return;
+                }
+
+                const data = await res.json();
+                if (data.token) {
+                  setToken(data.token);
+                  await fetchUser();
+                  // Handle redirection if needed
+                  if (data.needs_profile_completion) {
+                    const router = useRouter();
+                    router.push('/register');
+                  }
+                } else {
+                  console.error('Failed to get token from backend:', data.error);
+                }
+              } catch (err) {
+                console.error('Error during Google auth API call:', err);
+              }
+            } else {
+              console.error('No code in Google auth response');
+            }
+          },
+        });
+        console.log('✅ Google OAuth client initialized.');
+      } else {
+        console.log('⏳ Waiting for Google Identity Services to load...');
+        setTimeout(checkGoogle, 100);
+      }
+    };
+    checkGoogle();
+  };
+
   const setToken = (newToken) => {
     token.value = newToken;
-    if (process.client) { // Add check here
+    if (process.client) {
       localStorage.setItem('token', newToken);
     }
   };
 
   const removeToken = () => {
     token.value = null;
-    if (process.client) { // Add check here
+    if (process.client) {
       localStorage.removeItem('token');
     }
   };
 
-  const loginWithGoogle = async () => {
-    console.log('loginWithGoogle called');
-    console.log('Runtime config in useAuth:', config.public);
-    console.log('Google Client ID in useAuth:', config.public.googleClientId);
-    
-    const clientId = config.public.googleClientId || '1039369917961-dq95hj3ip0krmhjajgo0h9qjdchq5pca.apps.googleusercontent.com';
-    console.log('Using client_id for OAuth:', clientId);
-    
-    return new Promise((resolve, reject) => {
-      // Wait for Google Identity Services to be available
-      const checkGoogle = () => {
-        if (window.google && window.google.accounts && window.google.accounts.oauth2) {
-          console.log('✅ Google Identity Services available');
-          console.log('About to call initCodeClient with client_id:', clientId);
-          
-          const client = window.google.accounts.oauth2.initCodeClient({
-            client_id: clientId,
-            scope: 'email profile openid',
-            callback: async (response) => {
-              console.log('Google callback response:', response);
-              if (response.code) {
-                console.log('API Base URL:', config.public.apiBase);
-                try {
-                  const res = await fetch(`${config.public.apiBase}/auth/google`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token: response.code }),
-                  });
-                  
-                  if (!res.ok) {
-                    const errorData = await res.json();
-                    reject(new Error(errorData.error || `API error: ${res.status}`));
-                    return;
-                  }
-                  
-                  const data = await res.json();
-                  if (data.token) {
-                    setToken(data.token);
-                    // Immediately fetch user data after setting token
-                    await fetchUser();
-                    resolve({ token: data.token, needsProfileCompletion: data.needs_profile_completion });
-                  } else {
-                    reject(new Error(data.error || 'Failed to get token'));
-                  }
-                } catch (err) {
-                  console.error('Error during Google auth API call:', err);
-                  reject(err);
-                }
-              } else {
-                reject(new Error('No code in response'));
-              }
-            },
-          });
-          
-          console.log('✅ Google OAuth client initialized, requesting code...');
-          client.requestCode();
-        } else {
-          console.log('⏳ Waiting for Google Identity Services to load...');
-          setTimeout(checkGoogle, 100);
-        }
-      };
-      
-      checkGoogle();
-    });
+  const loginWithGoogle = () => {
+    if (googleAuthClient) {
+      console.log('Requesting code from Google...');
+      googleAuthClient.requestCode();
+    } else {
+      console.error('Google Auth client not initialized. Make sure to call initializeGoogleAuth().');
+      // As a fallback, try to initialize now.
+      initializeGoogleAuth();
+      // Ask user to click again
+      alert("Login service is initializing. Please click the login button again.");
+    }
   };
 
   const logout = () => {
@@ -114,7 +118,7 @@ export const useAuth = () => {
     }
   };
 
-  const updateUserProfile = async (profileData: any) => {
+  const updateUserProfile = async (profileData) => {
     if (!token.value) throw new Error('No authentication token found.');
 
     try {
@@ -388,6 +392,7 @@ export const useAuth = () => {
   return {
     token,
     user,
+    initializeGoogleAuth,
     loginWithGoogle,
     logout,
     fetchUser,

@@ -1,0 +1,971 @@
+{
+  "manufacturer": "Easton Archery",
+  "total_arrows": 32,
+  "scraped_at": "2025-08-01T13:38:07.471594",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X10 Parallel Pro",
+      "spine_specifications": [
+        {
+          "spine": 1000,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 1150,
+          "outer_diameter": 0.208,
+          "gpi_weight": 5.5
+        }
+      ],
+      "material": "High-strength carbon fiber bonded to a 7075 alloy core",
+      "arrow_type": "hunting",
+      "description": "Renowned as the arrow of choice for Olympic champions, the X10 sets the standard for precision and quality in archery. The new Parallel Pro carries this legacy forward as a lightweight, easy-tuning 4mm shaft crafted with the highest tolerances and high-modulus carbon fiber.",
+      "source_url": "https://eastonarchery.com/arrows_/x10-parallel-pro/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X10",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 470,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.3
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.246,
+          "gpi_weight": 5.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The X10 is Easton's flagship target arrow, featuring a high-performance carbon construction with a micro-diameter design for reduced wind drift and improved accuracy. Used by elite archers worldwide.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/x10/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X10 Protour",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with micro-diameter design for reduced wind drift and enhanced accuracy. Features high-strength carbon construction and precision tolerances for competitive shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/x10-protour/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Superdrive Micro",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Superdrive Micro features a micro-diameter design for reduced wind drift and increased penetration, with high-strength carbon construction for durability and performance in hunting applications.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/superdrive-micro/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Superdrive 23",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Superdrive 23 is a high-performance hunting arrow featuring Easton's 4D Technology for superior accuracy and penetration. The 23 refers to the 0.246-inch outer diameter, optimized for deep penetration while maintaining excellent flight characteristics.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/superdrive-23/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Superdrive 25",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.3
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Superdrive 25 is a high-performance hunting arrow featuring Easton's patented Superdrive technology for improved accuracy and penetration. It has a micro-diameter design for reduced wind drift and increased speed.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/superdrive-25/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Superdrive 27",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Superdrive 27 is a high-performance hunting arrow featuring Easton's advanced carbon construction for durability and precision. Designed for speed and accuracy, it offers consistent spine alignment and tight tolerances.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/superdrive-27/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "4Mm Axis Pro",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 4Mm Axis Pro is a high-performance hunting arrow featuring a micro-diameter design for improved speed and penetration. It utilizes Easton's Advanced Bonding Technology for durability and straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/4mm-axis-pro/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "4Mm Axis",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 4Mm Axis arrows from Easton Archery are designed for hunting, featuring a durable carbon construction with high straightness and weight tolerances for consistent performance.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/4mm-axis/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "4Mm Axis Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with 4mm micro-diameter design for reduced wind drift and improved accuracy. Features Match Grade construction for consistent spine alignment and weight distribution.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/4mm-axis-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "4MM FMJ",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.3
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 4MM FMJ features a full metal jacket design with a carbon core for durability and penetration. It combines the weight-forward momentum of a traditional FMJ with the speed of a 4mm diameter shaft.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/4mm-fmj/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "4Mm Fmj Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with Full Metal Jacket (FMJ) technology for maximum durability and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/4mm-fmj-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "5MM FMJ",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.1
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 5MM FMJ features a full metal jacket design with a carbon core for maximum penetration and durability. The arrow is designed for hunting with high weight-forward balance and extreme straightness.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/5mm-fmj/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "5mm FMJ Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The 5mm FMJ Match Grade arrows feature a full metal jacket design for maximum durability and consistency. The high-carbon construction provides excellent stiffness-to-weight ratio for competitive target shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/5mm-fmj-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "5Mm Axis",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Easton 5Mm Axis is a high-performance hunting arrow featuring a micro-diameter design for improved accuracy and penetration. It utilizes Easton's Advanced Tubing Technology for durability and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/5mm-axis/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "5Mm Axis Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with match-grade consistency, designed for competitive archery with exceptional straightness and weight tolerances.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/5mm-axis-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "5MM FMJ 5MM Axis",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 10.3
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 5MM FMJ 5MM Axis is a high-performance hunting arrow featuring a carbon core with a metal jacket for durability and penetration. It offers excellent weight-forward balance and straightness for precision shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/5mm-fmj-5mm-axis/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "6.5mm Axis",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 6.5mm Axis arrows feature a micro-diameter design for reduced wind drift and increased penetration. Built with high-modulus carbon for durability and precision, they are optimized for hunting applications.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/6-5mm-axis/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "6.5mm Axis Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.256,
+          "gpi_weight": 9.3
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.256,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.256,
+          "gpi_weight": 8.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. High-performance target arrow with 6.5mm diameter for reduced wind drift and improved accuracy. Features Match Grade construction for exceptional consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.0025",
+      "weight_tolerance": "±0.5 grain",
+      "source_url": "https://eastonarchery.com/arrows_/6-5mm-axis-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "6.5mm FMJ",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.256,
+          "gpi_weight": 10.3
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.256,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.256,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.256,
+          "gpi_weight": 8.6
+        }
+      ],
+      "material": "Carbon with aluminum jacket",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The 6.5mm FMJ features a full metal jacket design with a carbon core for durability and penetration. The aluminum jacket provides strength while maintaining a slim diameter for reduced wind drift.",
+      "carbon_content": "100% carbon core",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/6-5mm-fmj/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "6.5mm FMJ Match Grade",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.256,
+          "gpi_weight": 10.3
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.256,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.256,
+          "gpi_weight": 9.2
+        }
+      ],
+      "material": "Carbon/Aluminum Hybrid",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The 6.5mm FMJ Match Grade arrow features a carbon outer layer with an aluminum core for superior stiffness and durability. Designed for competitive target archery, it offers exceptional straightness and consistency.",
+      "carbon_content": "Carbon with Aluminum Core",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/6-5mm-fmj-match-grade/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Bloodline",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Bloodline arrow features a high-strength carbon construction with a micro-diameter design for deep penetration and accuracy. It includes a reinforced nock collar for durability and is optimized for hunting applications.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/bloodline/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Deep Six",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.246,
+          "gpi_weight": 9.3
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.9
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Deep Six arrow features a micro-diameter design for superior penetration and accuracy, with a high-strength carbon construction for durability in hunting applications.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/deep-six/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X7 Eclipse",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Aluminum-Carbon Composite",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The X7 Eclipse is a high-performance target arrow featuring a durable aluminum-carbon composite construction for consistent accuracy and tight groupings.",
+      "carbon_content": "Not specified",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/x7-eclipse/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X27",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The X27 is a high-performance hunting arrow featuring Easton's patented Carbon Core Technology for durability and precision. Designed for maximum penetration and accuracy in hunting scenarios.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/x27/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Rx7 The Ultimate Indoor Recurve Arrow Shaft",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The Rx7 is designed for indoor recurve archery, featuring ultra-tight tolerances and a micro-diameter design for superior accuracy and consistency.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/rx7-the-ultimate-indoor-recurve-arrow-shaft/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "A C E",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.3
+        },
+        {
+          "spine": 470,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.8
+        },
+        {
+          "spine": 520,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.4
+        },
+        {
+          "spine": 620,
+          "outer_diameter": 0.246,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 720,
+          "outer_diameter": 0.246,
+          "gpi_weight": 5.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The Easton A/C/E is a high-performance target arrow featuring 100% carbon construction, exceptional straightness, and tight weight tolerances for competitive archery.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/a-c-e/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Avance Sport",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The Avance Sport is a high-performance target arrow designed for competitive archers. It features a micro-diameter carbon construction for speed and accuracy, with consistent spine alignment and weight distribution.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/avance-avance-sport/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "XX75 Jazz",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Aluminum",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The XX75 Jazz is a durable and affordable aluminum target arrow, known for its consistent performance and straightness. It features a smooth finish and is designed for target archery.",
+      "carbon_content": "0%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/xx75-jazz/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X7 Eclipse",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Technical data from DeepSeek knowledge base. The X7 Eclipse is a high-performance target arrow featuring Easton's proprietary carbon construction for exceptional straightness and consistency. Designed for competitive archers seeking tight groupings and durability.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/x7-eclipse/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Venture",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.246,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Venture is a durable and affordable carbon hunting arrow designed for reliability and performance. Features a precision straightness tolerance and consistent weight for accurate shooting.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/venture/"
+    },
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "Vector Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Technical data from DeepSeek knowledge base. The Vector Arrow is designed for hunters seeking a balance of speed and accuracy. Features a micro-diameter design for reduced wind drift and enhanced penetration.",
+      "carbon_content": "100%",
+      "straightness_tolerance": "±0.003",
+      "weight_tolerance": "±1.0 grain",
+      "source_url": "https://eastonarchery.com/arrows_/vector-arrow/"
+    }
+  ]
+}

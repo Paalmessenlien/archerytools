@@ -1,0 +1,37 @@
+{
+  "manufacturer": "Pandarus Archery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T10:15:50.139811",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "Pandarus Archery",
+      "model_name": "VERSUS",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.87
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.226,
+          "gpi_weight": 6.75
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.241,
+          "gpi_weight": 5.75
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.244,
+          "gpi_weight": 5.31
+        }
+      ],
+      "material": "High-strength carbon fiber",
+      "arrow_type": "target",
+      "description": "Fat arrow shaft with 0.315” Inner Diameter, World Archery Maximum Compliant Diameter carbon arrow for compound shooters, ideal for indoor compound competition."
+    }
+  ]
+}

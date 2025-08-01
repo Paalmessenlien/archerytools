@@ -130,27 +130,14 @@ const { user, loginWithGoogle } = useAuth()
 const isLoggingIn = ref(false)
 const betaVersion = ref('1.0.0-beta')
 
-const handleLogin = async () => {
+const handleLogin = () => {
   console.log('🚀 handleLogin called in login.vue');
-  isLoggingIn.value = true
-  try {
-    console.log('🔍 About to call loginWithGoogle()');
-    const result = await loginWithGoogle()
-    console.log('📥 loginWithGoogle result:', result);
-    if (result.success) {
-      // User logged in successfully, the template will automatically update
-      // and show the "Enter Platform" button
-    } else {
-      // Handle login failure - could be due to invitation-only access
-      alert('Access denied. This platform is invitation-only. Please contact the development team if you believe you should have access.')
-    }
-  } catch (error) {
-    console.error('Login error:', error)
-    alert('Login failed. Please try again or contact support if the problem persists.')
-  } finally {
-    isLoggingIn.value = false
-  }
-}
+  isLoggingIn.value = true;
+  loginWithGoogle();
+  // No longer need to handle result here, as the callback will redirect.
+  // The isLoggingIn state might not be reset if the user closes the popup,
+  // but that's a minor UX issue for now.
+};
 
 const enterPlatform = () => {
   navigateTo('/')

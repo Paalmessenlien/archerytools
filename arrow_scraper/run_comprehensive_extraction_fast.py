@@ -23,20 +23,60 @@ sys.path.append(str(Path(__file__).parent))
 from crawl4ai import AsyncWebCrawler
 from models import ArrowSpecification, SpineSpecification, ManufacturerData, ScrapingSession, ScrapingResult
 from run_comprehensive_extraction import DirectLLMExtractor as OriginalExtractor
+from content_pattern_learner import ContentPatternLearner
 
 class FastDirectLLMExtractor(OriginalExtractor):
-    """Optimized extractor that only downloads images for vision-based extraction"""
+    """Optimized extractor with pattern learning for faster content extraction"""
     
-    def __init__(self, api_key: str, manufacturer_name: str = None, skip_images: bool = True):
+    def __init__(self, api_key: str, manufacturer_name: str = None, skip_images: bool = True, enable_learning: bool = True, use_api: bool = True):
         super().__init__(api_key)
         self.manufacturer_name = manufacturer_name  # Use consistent name from config
         self.skip_images = skip_images  # Skip image downloads by default
+        self.enable_learning = enable_learning
+        self.use_api = use_api  # Whether to use DeepSeek API or not
+        
+        # Initialize pattern learner
+        if enable_learning:
+            self.pattern_learner = ContentPatternLearner()
+        else:
+            self.pattern_learner = None
         
     def extract_arrow_data(self, content: str, url: str) -> List[ArrowSpecification]:
-        """Extract arrow data with consistent manufacturer naming"""
+        """Extract arrow data with pattern learning and consistent manufacturer naming"""
         
-        # Get arrows from parent implementation
-        arrows = super().extract_arrow_data(content, url)
+        # Use pattern learning to optimize content slice if available
+        optimized_content = content
+        if self.pattern_learner and self.manufacturer_name:
+            optimization = self.pattern_learner.get_optimized_content_slice(url, content, self.manufacturer_name)
+            if optimization:
+                pattern_type, slice_start, slice_end = optimization
+                optimized_content = content[slice_start:slice_end]
+                print(f"🎯 Using learned {pattern_type} pattern: {len(optimized_content)} chars (vs {len(content)} original)")
+        
+        # Extract arrows based on mode
+        arrows = []
+        if self.use_api:
+            # Use DeepSeek API for extraction
+            arrows = super().extract_arrow_data(optimized_content, url)
+        else:
+            # Fast mode - no API calls, just return empty list for pattern learning
+            print(f"⚡ FAST MODE: Skipping API extraction, analyzing content structure only")
+            # We still want to learn patterns from the content structure
+            arrows = []
+        
+        # Learn from content structure (even if no arrows extracted in fast mode)
+        if self.pattern_learner and self.manufacturer_name:
+            try:
+                # In fast mode, we learn from content structure even without extracted data
+                self.pattern_learner.learn_successful_pattern(
+                    url=url,
+                    content=content,
+                    manufacturer=self.manufacturer_name,
+                    extraction_method="text",
+                    extracted_data=arrows  # Empty list in fast mode, but still learns content patterns
+                )
+            except Exception as e:
+                print(f"⚠️  Pattern learning error: {e}")
         
         # Override manufacturer name with config value if provided
         if self.manufacturer_name and arrows:
@@ -54,6 +94,28 @@ class FastDirectLLMExtractor(OriginalExtractor):
             
         # Original download logic
         return super().download_image(image_url, manufacturer, model_name, image_type)
+    
+    def finalize_learning(self):
+        """Save learned patterns and show statistics"""
+        if self.pattern_learner:
+            try:
+                self.pattern_learner.save_patterns()
+                stats = self.pattern_learner.get_pattern_statistics()
+                
+                if stats.get('total_patterns', 0) > 0:
+                    print(f"\n🧠 Pattern Learning Summary:")
+                    print(f"   • Total patterns learned: {stats['total_patterns']}")
+                    print(f"   • Domains covered: {len(stats.get('by_domain', {}))}")
+                    print(f"   • Manufacturers: {len(stats.get('by_manufacturer', {}))}")
+                    
+                    # Show most successful patterns
+                    if stats.get('most_successful'):
+                        print(f"   • Top patterns:")
+                        for pattern in stats['most_successful'][:3]:
+                            print(f"     - {pattern['domain']} ({pattern['pattern_type']}): {pattern['success_count']} uses")
+                
+            except Exception as e:
+                print(f"⚠️  Error finalizing pattern learning: {e}")
 
 
 # Update the main.py update_all_manufacturers function

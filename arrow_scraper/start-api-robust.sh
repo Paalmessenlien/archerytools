@@ -122,6 +122,34 @@ run_migrations() {
     fi
 }
 
+# Function to run database import from JSON files
+run_database_import() {
+    echo "📥 Running database import from JSON files..."
+    
+    # Check for database import manager
+    local import_script=""
+    if [ -f "/app/database_import_manager.py" ]; then
+        import_script="/app/database_import_manager.py"
+    elif [ -f "database_import_manager.py" ]; then
+        import_script="database_import_manager.py"
+    fi
+    
+    if [ -n "$import_script" ]; then
+        echo "🔄 Running database import manager..."
+        python3 "$import_script" --database="$ARROW_DB" --data-dir="data/processed"
+        local import_result=$?
+        
+        if [ $import_result -eq 0 ]; then
+            echo "✅ Database import completed successfully"
+        else
+            echo "⚠️  Database import completed with warnings or errors"
+        fi
+    else
+        echo "⚠️  Database import manager not found, skipping JSON import"
+        echo "    Arrow data will use existing database content"
+    fi
+}
+
 # Main verification and startup process
 echo "🔍 Step 1: Database Verification"
 echo "================================"
@@ -200,9 +228,15 @@ echo "🔍 Step 3: Database Migrations"
 echo "============================"
 run_migrations
 
+# Run database import from JSON files
+echo ""
+echo "🔍 Step 4: Database Import from JSON Files"
+echo "=========================================="
+run_database_import
+
 # Environment validation
 echo ""
-echo "🔍 Step 4: Environment Validation"
+echo "🔍 Step 5: Environment Validation"
 echo "================================"
 
 # Check critical environment variables
@@ -231,7 +265,7 @@ fi
 
 # Final health check
 echo ""
-echo "🔍 Step 5: Pre-startup Health Check"
+echo "🔍 Step 6: Pre-startup Health Check"
 echo "=================================="
 
 # Check Python imports
@@ -262,7 +296,7 @@ fi
 
 # Start the application
 echo ""
-echo "🚀 Step 6: Starting Flask API Server"
+echo "🚀 Step 7: Starting Flask API Server"
 echo "=================================="
 echo "🌐 All checks passed, starting Flask API server..."
 echo "📊 Arrow database: $ARROW_DB"

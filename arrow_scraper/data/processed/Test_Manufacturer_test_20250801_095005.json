@@ -1,0 +1,36 @@
+{
+  "manufacturer": "Test Manufacturer",
+  "total_arrows": 2,
+  "scraped_at": "2025-08-01T09:50:05.834144",
+  "extraction_method": "test",
+  "arrows": [
+    {
+      "manufacturer": "Test Manufacturer",
+      "model_name": "Test Arrow 1",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.246,
+          "gpi_weight": 8.2
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "Target",
+      "description": "Test arrow"
+    },
+    {
+      "manufacturer": "Test Manufacturer",
+      "model_name": "Test Arrow 2",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.246,
+          "gpi_weight": 7.8
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "Target",
+      "description": "Test arrow"
+    }
+  ]
+}

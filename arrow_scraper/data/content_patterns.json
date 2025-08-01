@@ -1,0 +1,18 @@
+{
+  "aa4d29eaf8c4e554": {
+    "domain": "eastonarchery.com",
+    "manufacturer": "Easton Archery",
+    "pattern_type": "easton_table",
+    "start_marker": "spine",
+    "end_marker": "gpi",
+    "content_slice": [
+      17043,
+      18068
+    ],
+    "extraction_method": "text",
+    "success_count": 7,
+    "last_used": "2025-08-01T13:24:04.808754",
+    "confidence_score": 1.0,
+    "sample_content": "\n1000 | 5.5 | .204 | 29 | #1 | #1 | NA | #1  \n1150 | 5.5 | .208 | 28.5 | #1 | #1 | NA | #1  \n###### ABOUT THE PRODUCT\nExperience the World’s Finest Arrow with the X10 4mm Parallel Pro.  \nRenowned as t"
+  }
+}

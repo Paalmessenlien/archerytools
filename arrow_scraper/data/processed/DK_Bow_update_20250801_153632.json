@@ -1,0 +1,187 @@
+{
+  "manufacturer": "DK Bow",
+  "total_arrows": 4,
+  "scraped_at": "2025-08-01T15:36:32.809002",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "DK Bow",
+      "model_name": "DK Cougar Carbon Arrow - ID 4.2",
+      "spine_specifications": [
+        {
+          "spine": 600,
+          "outer_diameter": 0.226,
+          "gpi_weight": 7.14
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.44
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.217,
+          "gpi_weight": 5.95
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 1200,
+          "outer_diameter": 0.205,
+          "gpi_weight": 4.6
+        },
+        {
+          "spine": 1300,
+          "outer_diameter": 0.205,
+          "gpi_weight": 4.6
+        },
+        {
+          "spine": 1500,
+          "outer_diameter": 0.199,
+          "gpi_weight": 3.9
+        },
+        {
+          "spine": 1800,
+          "outer_diameter": 0.197,
+          "gpi_weight": 3.4
+        }
+      ],
+      "material": "hochmodulares Carbon",
+      "arrow_type": "target",
+      "description": "Der Cougar Schaft gehört mit seinem geringen Gewicht und der trotzdem hohen Stabilität zu den schnellsten Pfeilen seiner Art.",
+      "source_url": "https://dkbow.de/DK-Cougar-Carbon-Arrow-ID-4.2/36721",
+      "primary_image_url": "https://dkbow.de/media/76/fc/89/1708436415/25_Cougar2.jpg?ts=1708436415"
+    },
+    {
+      "manufacturer": "DK Bow",
+      "model_name": "DK Panther Carbon Arrow - ID 6.2",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.25
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 4.8
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.278,
+          "gpi_weight": 4.5
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.276,
+          "gpi_weight": 4.3
+        }
+      ],
+      "material": "hochmodulares Carbon",
+      "arrow_type": "target",
+      "description": "Der Panther Schaft gehört zu den leichtesten und schnellsten Pfeilen in diesem Durchmesserbereich. Exzellentes GPI Verhältnis und geringste Toleranzen der Rundlaufgenauigkeit.",
+      "source_url": "https://dkbow.de/DK-Panther-Carbon-Arrow-ID-6.2/SW10007",
+      "primary_image_url": "https://dkbow.de/media/0d/4f/b7/1708436426/26_Panther2.jpg"
+    },
+    {
+      "manufacturer": "DK Bow",
+      "model_name": "DK Tyrfing Carbon Arrow - ID 5.2",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.252,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.244,
+          "gpi_weight": 5.4
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.241,
+          "gpi_weight": 4.95
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.237,
+          "gpi_weight": 4.48
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.233,
+          "gpi_weight": 3.9
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.233,
+          "gpi_weight": 3.78
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.234,
+          "gpi_weight": 3.79
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.229,
+          "gpi_weight": 3.49
+        }
+      ],
+      "material": "ultrahochmodulares gewickeltes Carbon",
+      "arrow_type": "target",
+      "description": "Der Tyrfing ist in der Größe 5,2mm Innendurchmesser (0.204 inch) einer der interessantesten Wettkampfpfeile auf dem Markt. Mit einer Spinepalette von 400 bis 1100 (!) und einer Länge von 33 Zoll, lässt er jeden Auszug und Zuggewichtsstärke für Wettkämpfer freie Auswahl.",
+      "source_url": "https://dkbow.de/DK-Tyrfing-Carbon-Arrow-ID-5.2/418",
+      "primary_image_url": "https://dkbow.de/media/2e/c7/e9/1707485475/1320.jpg"
+    },
+    {
+      "manufacturer": "DK Bow",
+      "model_name": "DK Gungnir Carbon Arrow - ID 4.2",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2126,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2087,
+          "gpi_weight": 4.7
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2028,
+          "gpi_weight": 4.15
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2008,
+          "gpi_weight": 3.75
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.1969,
+          "gpi_weight": 3.5
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.1949,
+          "gpi_weight": 3.25
+        }
+      ],
+      "material": "ultrahochmodulares Carbon",
+      "arrow_type": "target",
+      "description": "Der Gungnir Schaft besteht aus reinem ultrahochmodularem Carbon. Aufgrund seines hohen E-Moduls stabilisiert er schneller als gewöhnliche Schäfte. Unsere Pfeile erreichen eine sehr gestreckte Flugbahn und gute Gruppierungen bei jeder Witterung.",
+      "source_url": "https://dkbow.de/DK-Gungnir-Carbon-Arrow-ID-4.2/SW10006",
+      "primary_image_url": "https://dkbow.de/media/fa/b5/31/1708435008/20210721_185136.jpg?ts=1708435008"
+    }
+  ]
+}

@@ -165,9 +165,9 @@ manufacturers:
     extraction_method: "text"
     language: "german"
     product_urls:
-      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Panther-ID6.2/SW10007"
-      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Cougar-ID4.2/36721"
-      - "https://dkbow.de/Pfeile/DK-Carbon-Arrows/DK-Tyrfing-ID5.2/418"
+      - "https://dkbow.de/DK-Cougar-Carbon-Arrow-ID-4.2/36721"
+      - "https://dkbow.de/DK-Panther-Carbon-Arrow-ID-6.2/SW10007"
+      - "https://dkbow.de/DK-Tyrfing-Carbon-Arrow-ID-5.2/418"
       - "https://dkbow.de/DK-Gungnir-Carbon-Arrow-ID-4.2/SW10006"
 
   "Fivics":

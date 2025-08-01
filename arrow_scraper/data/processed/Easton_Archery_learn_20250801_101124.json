@@ -1,0 +1,27 @@
+{
+  "manufacturer": "Easton Archery",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-01T10:11:24.222562",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "Easton Archery",
+      "model_name": "X10 Parallel Pro",
+      "spine_specifications": [
+        {
+          "spine": 1000,
+          "outer_diameter": 0.204,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 1150,
+          "outer_diameter": 0.208,
+          "gpi_weight": 5.5
+        }
+      ],
+      "material": "High-strength carbon fiber bonded to a 7075 alloy core",
+      "arrow_type": "hunting",
+      "description": "Renowned as the arrow of choice for Olympic champions, the X10 sets the standard for precision and quality in archery. The new Parallel Pro carries this legacy forward as a lightweight, easy-tuning 4mm shaft crafted with the highest tolerances and high-modulus carbon fiber."
+    }
+  ]
+}

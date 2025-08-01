@@ -47,94 +47,75 @@ def token_required(f):
 
     return decorated
 
+from google.auth.transport import requests as google_requests
+import requests as req
+
 def get_user_from_google_token(authorization_code):
     try:
-        print(f"DEBUG: Received authorization code: {authorization_code[:20]}..." if authorization_code else "None")
-        
-        # Exchange authorization code for access token and ID token
-        client_id = os.environ.get("NUXT_PUBLIC_GOOGLE_CLIENT_ID") # Use NUXT_PUBLIC_GOOGLE_CLIENT_ID from frontend
+        client_id = os.environ.get("NUXT_PUBLIC_GOOGLE_CLIENT_ID")
         client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
         
-        # The redirect_uri must match what you configured in Google Cloud Console
-        # For the initCodeClient flow with popup, it should be 'postmessage'
-        redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'postmessage')
+        print(f"DEBUG: Using Client ID (first 10 chars): {client_id[:10] if client_id else 'Not Loaded'}")
+        print(f"DEBUG: Using Client Secret (first 5 chars): {client_secret[:5] if client_secret else 'Not Loaded'}")
+
+        redirect_uri = 'postmessage'
 
         if not client_id or not client_secret:
-            print(f"Missing client credentials: client_id={bool(client_id)}, client_secret={bool(client_secret)}")
+            print("ERROR: Missing Google Client ID or Secret in environment variables.")
             return None, False
 
-        # Build the request to Google's token endpoint
         token_url = "https://oauth2.googleapis.com/token"
-        data = {
+        payload = {
             "code": authorization_code,
             "client_id": client_id,
             "client_secret": client_secret,
             "redirect_uri": redirect_uri,
             "grant_type": "authorization_code",
         }
-
-        import urllib.parse
-        encoded_data = urllib.parse.urlencode(data)
         
-        http = httplib2.Http()
-        resp, content = http.request(
-            token_url,
-            "POST",
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            body=encoded_data
-        )
-        
-        token_data = json.loads(content.decode("utf-8"))
+        response = req.post(token_url, data=payload)
+        token_data = response.json()
 
-        if "error" in token_data:
-            print(f"DEBUG: Google OAuth error response: {token_data}")
-            print(f"DEBUG: Request data sent: client_id={client_id[:10]}..., redirect_uri={redirect_uri}")
+        if not response.ok:
+            print(f"ERROR: Google OAuth request failed with status {response.status_code}.")
+            print(f"ERROR: Response from Google: {token_data}")
             return None, False
 
         id_token_jwt = token_data.get("id_token")
         if not id_token_jwt:
-            print(f"No ID token in response: {token_data}")
+            print(f"ERROR: No 'id_token' in Google's response: {token_data}")
             return None, False
 
-        # Verify the ID token
-        idinfo = id_token.verify_oauth2_token(id_token_jwt, requests.Request(), client_id)
+        request_session = google_requests.Request()
+        idinfo = id_token.verify_oauth2_token(id_token_jwt, request_session, client_id)
 
-        # ID token is valid. Get the user's Google Account ID from the decoded token.
         google_id = idinfo["sub"]
         email = idinfo["email"]
         name = idinfo.get("name")
         profile_picture_url = idinfo.get("picture")
 
         user_db = UserDatabase()
-
-        # Check if user already exists
         user = user_db.get_user_by_google_id(google_id)
         is_new_user = False
 
         if not user:
-            # Create new user
             user = user_db.create_user(google_id, email, name, profile_picture_url)
             is_new_user = True
-            
-            # Automatically grant admin access to messenlien@gmail.com
             if email == "messenlien@gmail.com":
                 user_db.set_admin_status(user['id'], True)
                 user['is_admin'] = True
                 print(f"✅ Automatically granted admin access to {email}")
         else:
-            # For existing users, check if they should be admin (in case database was reset)
             if email == "messenlien@gmail.com" and not user.get('is_admin'):
                 user_db.set_admin_status(user['id'], True)
                 user['is_admin'] = True
                 print(f"✅ Restored admin access to {email}")
         
-        # Check if user needs profile completion
-        # Only new users need profile completion, existing users don't
         needs_profile_completion = is_new_user and not user.get('name')
 
         return user, needs_profile_completion
-    except ValueError as e:
-        return None, False
     except Exception as e:
         import traceback
+        print(f"ERROR in get_user_from_google_token: {e}")
+        traceback.print_exc()
         return None, False

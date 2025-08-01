@@ -444,24 +444,20 @@ const handleSaveBowSetup = async (setupData) => {
   isSavingSetup.value = true;
   addSetupError.value = null;
   try {
-    // Add draw_length from user profile and default arrow fields for compatibility
-    const completeSetupData = {
-      ...setupData,
-      draw_length: user.value?.draw_length || 28.0,
-      arrow_length: user.value?.draw_length ? user.value.draw_length - 1 : 27.0,
-      point_weight: 100, // Default point weight for API compatibility
-    };
+    // The setupData from the modal is already correctly formatted.
+    // We just need to ensure draw_length is present if it's a new setup.
+    if (!setupData.draw_length) {
+      setupData.draw_length = user.value?.draw_length || 28.0;
+    }
 
     if (isEditMode.value && editingSetupId.value) {
-      // Update existing setup
-      await updateBowSetup(editingSetupId.value, completeSetupData);
+      await updateBowSetup(editingSetupId.value, setupData);
     } else {
-      // Create new setup
-      await addBowSetup(completeSetupData);
+      await addBowSetup(setupData);
     }
     
     closeAddSetupModal();
-    await loadBowSetups(); // Reload setups after saving
+    await loadBowSetups();
   } catch (err) {
     console.error('Error saving bow setup:', err);
     addSetupError.value = err.message || `Failed to ${isEditMode.value ? 'update' : 'add'} bow setup.`;
