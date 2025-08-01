@@ -24,6 +24,15 @@ component_suppliers:
           target: "target-einklebespitzen"
           hunting: "jagd-einklebespitzen"
           
+      screw_points:
+        path_pattern: "einschraubspitzen"
+        german_name: "Einschraubspitzen"
+        english_name: "Screw-in Points"
+        description: "Threaded screw-in arrow points"
+        subcategories:
+          combo: "combo-einschraubspitzen"
+          standard: "einschraubspitzen"
+          
       nocks:
         path_pattern: "nocken-bushings"
         german_name: "Nocken"

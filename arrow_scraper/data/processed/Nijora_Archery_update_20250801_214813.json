@@ -1,0 +1,1095 @@
+{
+  "manufacturer": "Nijora Archery",
+  "total_arrows": 32,
+  "scraped_at": "2025-08-01T21:48:13.544717",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "3D Fly 500-800",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.276,
+          "gpi_weight": 5.3
+        }
+      ],
+      "material": "Multilayer Wickeltechnik (60-90 Grad)",
+      "arrow_type": "target",
+      "description": "Schneller, leichter Premium Universal Carbonschaft für den Wettkampfschützen in Multilayer Wickeltechnik (60-90 Grad). Der Schaft ist realisiert einen superschnellen Pfeilflug mit höchster Präzision im Rundlauf und einem optimalen Schaftgewicht (Grain/Inch).",
+      "source_url": "https://nijora.com/product/3d-fly/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/3d-fly-500-600-700-800-800x800.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "3K Pro 500-800",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.4
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.287,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.2
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.2
+        }
+      ],
+      "material": "3K Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonshaft – nicht nur für das traditionelle Bogenschießen. In Edel 3 K Carbon mit hohem Pressdruck gefertigt. Extra robust gebaut und mit Schutzlack überzogen.",
+      "source_url": "https://nijora.com/product/3k-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/3-k-pro-500-600-700-800-e1612917661737.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Bark Heavy 500-600",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.303,
+          "gpi_weight": 11.7
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.301,
+          "gpi_weight": 11.0
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Edel Carbonschaft mit Rindenholz Optik der extrem schwer-robust gebaut ist. Universal Carbon Schaft für das traditionelles Bogenschießen speziell auch für für Bogen die gerne etwas mehr an Pfeilgewicht benötigen!",
+      "source_url": "https://nijora.com/product/bark-heavy/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/bark-heavy-500-2.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Bark M 500-600-700",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2866,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2815,
+          "gpi_weight": 5.7
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2776,
+          "gpi_weight": 5.2
+        }
+      ],
+      "material": "kreuzgewickeltes Carbon (6 Layer)",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für das traditionelle Bogenschießen aus kreuzgewickeltem Carbon (6 Layer). Wunderschöner Schaft mit Zedernholz Maserung (Rinden-Optik).",
+      "source_url": "https://nijora.com/product/bark-m/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Bark-M-500-600-700.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Bark Pro 400-500-600",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.303,
+          "gpi_weight": 10.0
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.7
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Universal Carbon Schaft für das traditionelle Bogenschießen speziell für Bogen die etwas mehr an Pfeilgewicht benötigen!",
+      "source_url": "https://nijora.com/product/bark-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Bark-pro-400-500-600.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Bark Small 700-1300",
+      "spine_specifications": [
+        {
+          "spine": 700,
+          "outer_diameter": 0.228,
+          "gpi_weight": 7.6
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.215,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.4
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.211,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 1300,
+          "outer_diameter": 0.207,
+          "gpi_weight": 4.6
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Dünner Carbonschaft ID 0.166 inch / 4.20 mm, extrem stabil, in schöner, dunkler Holzoptik. Jeder Schaft ist ein Unikat.",
+      "source_url": "https://nijora.com/product/bark-small/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Bark-small-1300-1100-900-700.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Bark 400-1000",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.278,
+          "gpi_weight": 5.4
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.276,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.276,
+          "gpi_weight": 4.8
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für das traditionelle Bogenschießen in Edel-Carbon mit Rindenholz-Optik.",
+      "source_url": "https://nijora.com/product/bark/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Bark-400-500-600-700-800-e1612917543219.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Big 9 – 9.2 Spine 250-600",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.362,
+          "gpi_weight": 9.4
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.362,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.354,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.358,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.354,
+          "gpi_weight": 6.7
+        }
+      ],
+      "material": "Edel-Carbon, 3-K Optik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für das Bogenschießen (Halle und Outdoor) in Edel-Carbon, 3-K Optik. Ideal für die Halle, aber auch im Außenbereich geeignet für 3D Sport, Lammelscheiben und Stramitscheiben, sehr robust unter den 9 mm Schäften!",
+      "source_url": "https://nijora.com/product/big-9-9-2/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Big-9-250-350-400-500-600.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Elsu Golden Edition 500-600-700",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2567,
+          "gpi_weight": 7.5
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2539,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.25,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für das Fita, Feld, Wald, Compound, 3D Bogenschießen in Edel-Carbon, Sicht Optik. Enorm stabil. Der Schaft ist aus 100 % Carbon in Kreuzwickeltechnik hergestellt, realisiert einen super schnellen Pfeilflug mit höchster Präzision im Rundlauf, und einem optimalen Schaft Gewicht an Grain/Inch.",
+      "source_url": "https://nijora.com/product/elsu-golden-edition/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Elsu-Gold-Edition-500-600-700.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Elsu pro",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.2638,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.2618,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.2598,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.2559,
+          "gpi_weight": 7.8
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.248,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2441,
+          "gpi_weight": 5.7
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2441,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2421,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.2362,
+          "gpi_weight": 4.4
+        }
+      ],
+      "material": "8 Lagen Kreuzwickeltechnik Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft (linear, plain Sicht-Optik) mit höchster Performance und 5,2 mm Innendurchmesser.",
+      "source_url": "https://nijora.com/product/elsu-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/elsu-250-900.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Ilyan Pro 350 -1000",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.298,
+          "gpi_weight": 8.85
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.293,
+          "gpi_weight": 7.95
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.5
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.287,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.55
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.282,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.281,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.278,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.275,
+          "gpi_weight": 4.8
+        }
+      ],
+      "material": "8-layered 25-ton special carbon fibers",
+      "arrow_type": "target",
+      "description": "Premium Universal linear two sides, Carbon Schaft, Linear Gewebe, with a nice white print. The newly developed Nijora Ilyan-pro Premium Edition carbon shaft has a special 3K cross winding 90-60 consisting of 8 layers of carbon fabric. The construction of the shaft is naturally designed for all types of bows.",
+      "source_url": "https://nijora.com/product/ilyan-pro-1000-350/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/ilyan-650-700-800-1000.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Mammut Schaft -400-39 inch",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.361,
+          "gpi_weight": 9.2
+        }
+      ],
+      "material": "Edel-3 K-Carbon 10.0 Multilayer Technik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbon Schaft für das Bogenschießen Recurve, Compound, Halle, und Atlatl. Höchste Präzision im Rundlauf, realisiert einen super schnellen Pfeilflug und einem optimalen Schaft Gewicht an Grain/Inch.",
+      "source_url": "https://nijora.com/product/mammut-schaft-39-inch/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Mamut-long-400-e1612917610180.png"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Nigan Pro 350-900",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.55
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.287,
+          "gpi_weight": 6.7
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.276,
+          "gpi_weight": 4.9
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Universal Carbonschaft für den gesamten Bogensport – 3D, Fita, Feld/Wald. Der Schaft ist aus 100% Carbon in Kreuzwickeltechnik hergestellt. Der Innendurchmesser ist die Normgröße 0,245 Zoll / 6,20 mm – dadurch passen die auf dem Markt am meisten benötigten und verfügbaren 5/16″ bzw. 9/32″ Komponenten (Spitzen, Inserts und Nocken).",
+      "source_url": "https://nijora.com/product/nigan-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Nigan-pro-350-400-500-600-700-900.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Nijora Linawa",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.3425,
+          "gpi_weight": 7.7
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.3366,
+          "gpi_weight": 7.1
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.3346,
+          "gpi_weight": 6.7
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.3339,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "30 Tonnen 3K Twin Carbon Fasern",
+      "arrow_type": "target",
+      "description": "Premium Universal linear two sides, Carbonshaft, 3K / Twill Gewebe, mit schönem bunten orange gehaltenem 4 Farben Druck. Der neu entwickelte Nijora Linawa (starker Büffel) 33 inch Premium Edition Carbonschaft hat eine spezielle 3K Kreuz Wicklung 90-60 bestehend aus 8 lagigem Carbon Layer Geweben.",
+      "source_url": "https://nijora.com/product/nijora-linawa/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/linawa-500.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Nijora Taperon 330 Hunter",
+      "spine_specifications": [
+        {
+          "spine": 330,
+          "outer_diameter": 0.307,
+          "gpi_weight": 14.2
+        }
+      ],
+      "material": "3K Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal konical Carbon Schaft, Sicht Optik mit Schutzlack, höchste Performance.",
+      "source_url": "https://nijora.com/product/nijora-taperon-330-hunter/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/nijora-taperon-hunter-330.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Nijora Yona Premium 400-800",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.297,
+          "gpi_weight": 8.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.3
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.289,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.7
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.283,
+          "gpi_weight": 6.3
+        }
+      ],
+      "material": "30 Tonnen 3K Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal linear two sides, Carbon Schaft, 3 K / Twill Gewebe, mit schönem bunten 4 Farben Druck. Der neu entwickelte Nijora Yona Premium Edition Carbonschaft hat eine spezielle 3 K Kreuz Wicklung 90-60 bestehend aus 8 lagigen Carbon Layer Geweben.",
+      "source_url": "https://nijora.com/product/nijora-yona/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/nijora-yona-800-400.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Onawa Fly 600-1200 Spine",
+      "spine_specifications": [
+        {
+          "spine": 600,
+          "outer_diameter": 0.224,
+          "gpi_weight": 7.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.22,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.217,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.211,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.209,
+          "gpi_weight": 4.7
+        },
+        {
+          "spine": 1200,
+          "outer_diameter": 0.208,
+          "gpi_weight": 4.55
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "target",
+      "description": "Universal Carbon Schaft für den gesamten Bogensport (Fita, Feld/Wald, 3D). Extrem stabiler Schaft für Anfänger und Fortgeschrittene.",
+      "source_url": "https://nijora.com/product/onawa-fly/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Onawa-fly-1200-1100-1000-900-800-700.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Onawa Pro X",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.23,
+          "gpi_weight": 8.2
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.23,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.222,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.217,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.215,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.5
+        }
+      ],
+      "material": "100% kreuzgewickeltes Carbon",
+      "arrow_type": "target",
+      "description": "Premium High Class Carbonschaft in 10 Layer light weight MS Carbon. Der Onawa Pro X aus 100 % Carbon ist in Kreuzwickeltechnik hergestellt.",
+      "source_url": "https://nijora.com/product/onawa-pro-x/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Onawa-pro-X-350-400-500-600-700-800-e1612917773779.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Onawa Pro XT 3.2",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.1949,
+          "gpi_weight": 6.8
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.187,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.1811,
+          "gpi_weight": 5.4
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.1791,
+          "gpi_weight": 5.0
+        }
+      ],
+      "material": "10 Layer light weight MS Carbon",
+      "arrow_type": "target",
+      "description": "Premium High Class Carbonschaft aus 10 Layer light weight MS Carbon in Kreuzwickeltechnik. Neuestes Weltmarkt Carbon mit 40 Tonnen Wickel-Pressdruck.",
+      "source_url": "https://nijora.com/product/onawa-pro-xt-3-2/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/onawa-pro-xt-3.2-700-1.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Onawa Pro-XT40",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.226,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.22,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.209,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.203,
+          "gpi_weight": 4.2
+        }
+      ],
+      "material": "light weight MS Carbon",
+      "arrow_type": "target",
+      "description": "Premium High Class Carbonschaft aus 10 Layer light weight MS Carbon in Kreuzwickeltechnik. Neuestes Weltmarkt Carbon mit 40 Tonnen Wickel-Pressdruck.",
+      "source_url": "https://nijora.com/product/onawa-pro-xt-40/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/onawa-pro-xt-40-400.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Onawa Pro 400-1200 Spine",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.234,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.23,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.225,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.22,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.215,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.215,
+          "gpi_weight": 5.5
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.211,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.209,
+          "gpi_weight": 4.8
+        },
+        {
+          "spine": 1200,
+          "outer_diameter": 0.207,
+          "gpi_weight": 4.6
+        }
+      ],
+      "material": "100% kreuzgewickeltes Carbon",
+      "arrow_type": "target",
+      "description": "Universal Carbon Schaft für das traditionelle Bogenschießen. Der dünne 100 % Carbon Schaft ist in Kreuzwickeltechnik hergestellt. Er hat einen Außendurchmesser von 5,30 mm bis max. 6.02 mm je nach Spinewert. Der Innendurchmesser ist die Normgröße 0,166 Zoll = 4,22 mm. Dadurch passen die auf dem Markt am meisten benötigten und verfügbaren 4,22 mm Komponenten.",
+      "source_url": "https://nijora.com/product/onawa-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Onawa-pro-1-1200-400-e1612917725861.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Oxx pro 400-700",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.305,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.293,
+          "gpi_weight": 7.6
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.0
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbon Schaft für das traditionelle Bogenschießen in Edel-Carbon, Sichtoptik mit Schutzlack, höchste Performance. Sehr robust gebaut – etwas mehr Gewicht als ein Standardschaft. Somit ideal für Bogen die etwas mehr an Pfeilgewicht benötigen.",
+      "source_url": "https://nijora.com/product/oxx-pro/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Oxx-Pro-400-500-600-700-e1612917627808.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Payat Premium 400-600",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.2913,
+          "gpi_weight": 7.4
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.2835,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2795,
+          "gpi_weight": 5.8
+        }
+      ],
+      "material": "Edel-Carbon in 3 K Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für das Bogenschießen mit dem Compound, Blankbogen und anderen Bögen, die leichte Schäfte mögen. Enorm stabiler Schaft aus Edel-Carbon mit geringen Gewichtstoleranzen: max. 2 grain bei 12 Schäften.",
+      "source_url": "https://nijora.com/product/payat/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Payat-400-500-600-e1612917649540.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Songan 500-1000",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.2886,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.2862,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.2827,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.2803,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.2756,
+          "gpi_weight": 4.9
+        }
+      ],
+      "material": "Top Carbonschaft Material",
+      "arrow_type": "target",
+      "description": "Extrem stabiler, preiswerter Schaft, ideal für den Anfänger und Hobbybogensportler.",
+      "source_url": "https://nijora.com/product/songan/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/songan-500-600-700-800.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Taperon Crust 600 turned white",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.283,
+          "gpi_weight": 7.7
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 6.8
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal conical / tapered Carbonshaft with special winding, thinner at nock end than insert side. Features dual lacquering with white 2K lacquer at front and wood grain decor. Optimized for flat trajectory and precision.",
+      "source_url": "https://nijora.com/product/taperon-crust-600-turned-white/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/taperon-crust-600-vorne-weiss-1.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Taperon Crust",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.283,
+          "gpi_weight": 7.7
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 6.8
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal conical/tapered Carbonschaft, Sicht-Optik, höchste Performance. Der Nijora Taperon Crust Carbonschaft hat eine Spezialwicklung – er ist am Nockende dünner als an der Insert-Seite. Innen ist er jedoch linear 0.245 inch / 6,20 mm. Das ist somit eine getaperte, konische Form.",
+      "source_url": "https://nijora.com/product/taperon-crust/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/taperon-crust-600.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Taperon SX+Hunter SX 350-600",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.244,
+          "gpi_weight": 8.4
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.234,
+          "gpi_weight": 7.5
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.232,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.228,
+          "gpi_weight": 6.5
+        }
+      ],
+      "material": "Multilayer Carbon",
+      "arrow_type": "hunting",
+      "description": "Der Nijora Taperon SX (Pro) Carbon Schaft hat eine spezielle konische Wicklung, er ist am Nockende und and der Spitze dünner, als in der Mitte. Durch diesen neu entwickelten Aufbau mit spezial Carbonfasern stabilisiert der Taperon SX (Pro) Schaft schneller. Dadurch hat er eine noch flachere Flugbahn gegenüber einem normalem zylindrischen Schaft mit gleichen Gewichts und Spine Werten.",
+      "source_url": "https://nijora.com/product/taperon-sx/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Taperon-SX-350-400-500-600.jpg.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Taperon 400-600",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.285,
+          "gpi_weight": 9.0
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.282,
+          "gpi_weight": 7.5
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.282,
+          "gpi_weight": 6.7
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal conical Carbonschaft mit Sicht-Optik und höchster Performance. Durch spezielle konische Wicklung stabilisiert der Taperon Schaft schneller und hat dadurch eine noch flachere Flugbahn.",
+      "source_url": "https://nijora.com/product/taperon/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Taperon-400-500-600-1-e1612917638528.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Tokala Long 36 inch",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.303,
+          "gpi_weight": 9.7
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.0
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.1
+        }
+      ],
+      "material": "3 k Edel-Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbon Schaft für das traditionelle Bogenschießen in 3 k Edel-Carbon, Sicht Optik, bzw. mit dunkler Holz Sicht Optik.",
+      "source_url": "https://nijora.com/product/tokala-long-36-inch/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/Tokala-long-26-inch-600-500-400-400-wooden-e1612917687332.png.webp"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Tokala M 500-800",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.289,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.279,
+          "gpi_weight": 5.6
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Der Tokala M Carbonschaft ist beschichtet mit einer Micron Schutzschicht: feine Silizium Kristalle schließen die feine Carbonstruktur von den Carbon Layern und härten aus. Dadurch ergibt sich eine glattere und härtere Oberfläche des Carbonschafts.",
+      "source_url": "https://nijora.com/product/tokala-m/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/tokala-m-800-700-600-500.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Tokala Premium 200-800 Spine",
+      "spine_specifications": [
+        {
+          "spine": 200,
+          "outer_diameter": 0.311,
+          "gpi_weight": 11.7
+        },
+        {
+          "spine": 250,
+          "outer_diameter": 0.327,
+          "gpi_weight": 14.5
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.305,
+          "gpi_weight": 10.0
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.302,
+          "gpi_weight": 8.4
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.297,
+          "gpi_weight": 8.45
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.287,
+          "gpi_weight": 7.1
+        },
+        {
+          "spine": 570,
+          "outer_diameter": 0.287,
+          "gpi_weight": 6.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.2
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.281,
+          "gpi_weight": 5.8
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.28,
+          "gpi_weight": 5.4
+        }
+      ],
+      "material": "100% Carbon in Kreuzwickeltechnik",
+      "arrow_type": "target",
+      "description": "Premium Universal Carbonschaft für traditionelles Bogenschießen, Compound und Fita mit superschnellem Pfeilflug und höchster Präzision.",
+      "source_url": "https://nijora.com/product/tokala/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/carbonschaefte/tokala-350-400-500-500-570-600-700-800.jpg"
+    },
+    {
+      "manufacturer": "Nijora Archery",
+      "model_name": "Zitkala 400-1000 Spine",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.252,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.248,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.244,
+          "gpi_weight": 5.3
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.243,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.24,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.234,
+          "gpi_weight": 4.3
+        }
+      ],
+      "material": "40-TON 8-layer Carbon",
+      "arrow_type": "target",
+      "description": "Premium Universal linear two sides, Carbon Schaft, plain Sicht Optik, mit schönem bunt Druck für höchste Performance. Der neu entwickelte Nijora Zitkala Carbon Schaft hat eine spezielle Linear Wicklung bestehend aus 8 lagigem Carbon Layer Geweben.",
+      "source_url": "https://nijora.com/product/zitkala/",
+      "primary_image_url": "https://nijora.com/wp-content/uploads/zitkala-gesamt-400-500-600-700-800-1000.jpg"
+    }
+  ]
+}

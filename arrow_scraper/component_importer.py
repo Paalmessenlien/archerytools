@@ -58,11 +58,24 @@ class ComponentImporter:
             imported_count = 0
             for component in components:
                 try:
+                    # Build specifications dict from component fields
+                    specifications = {}
+                    spec_fields = [
+                        'type', 'subcategory', 'material', 'weight_grain', 'weight_options',
+                        'inner_diameter_inch', 'inner_diameter_mm', 'outer_diameter_inch', 'outer_diameter_mm',
+                        'length_mm', 'length_inch', 'thread_specification', 'color', 'finish',
+                        'compatibility', 'usage_type', 'price', 'availability'
+                    ]
+                    
+                    for field in spec_fields:
+                        if field in component and component[field] is not None:
+                            specifications[field] = component[field]
+                    
                     component_id = self.component_db.add_component(
-                        category_name=component_type,
-                        manufacturer=component.get('manufacturer', manufacturer),
-                        model_name=component.get('model_name', 'Unknown Model'),
-                        specifications=component.get('specifications', {}),
+                        category_name=component.get('category', component_type),
+                        manufacturer=component.get('manufacturer', component.get('supplier', manufacturer)),
+                        model_name=component.get('model_name', component.get('name', 'Unknown Model')),
+                        specifications=specifications,
                         image_url=component.get('image_url'),
                         local_image_path=component.get('local_image_path'),
                         price_range=component.get('price_range'),

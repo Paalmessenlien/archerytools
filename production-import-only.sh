@@ -49,18 +49,18 @@ echo ""
 echo "🚀 Starting JSON import process..."
 echo "================================="
 
-# Run the import
+# Run the arrow import
 if python3 database_import_manager.py --import-all --force; then
     echo ""
-    echo "✅ Import completed successfully\!"
+    echo "✅ Arrow import completed successfully\!"
     
-    # Check final count
+    # Check arrow database status
     if [ -f "arrow_database.db" ]; then
         FINAL_COUNT=$(sqlite3 arrow_database.db "SELECT COUNT(*) FROM arrows" 2>/dev/null || echo "0")
         MANUFACTURER_COUNT=$(sqlite3 arrow_database.db "SELECT COUNT(DISTINCT manufacturer) FROM arrows" 2>/dev/null || echo "0")
         
         echo ""
-        echo "📊 Final Database Statistics:"
+        echo "📊 Arrow Database Statistics:"
         echo "   Total Arrows: $FINAL_COUNT"
         echo "   Manufacturers: $MANUFACTURER_COUNT"
         
@@ -71,7 +71,7 @@ if python3 database_import_manager.py --import-all --force; then
         fi
         
         echo ""
-        echo "🏭 Top Manufacturers:"
+        echo "🏭 Top Arrow Manufacturers:"
         sqlite3 arrow_database.db "
             SELECT manufacturer || ': ' || COUNT(*) || ' arrows' 
             FROM arrows 
@@ -83,6 +83,62 @@ if python3 database_import_manager.py --import-all --force; then
     else
         echo "❌ Database file not found after import"
         exit 1
+    fi
+    
+    # Import components if component files exist
+    echo ""
+    echo "🔍 Checking for component data files..."
+    COMPONENT_COUNT=$(find data/processed/components -name "*.json" 2>/dev/null | wc -l || echo "0")
+    echo "   Found $COMPONENT_COUNT component JSON files to import"
+    
+    if [ "$COMPONENT_COUNT" -gt 0 ]; then
+        echo "📋 Component Files Available:"
+        find data/processed/components -name "*.json" 2>/dev/null | sort | sed 's/^/   /' || true
+        
+        echo ""
+        echo "🧩 Starting component import process..."
+        if python3 component_importer.py --force; then
+            echo "✅ Component import completed successfully\!"
+            
+            # Check component statistics
+            COMPONENT_TOTAL=$(sqlite3 arrow_database.db "SELECT COUNT(*) FROM components" 2>/dev/null || echo "0")
+            COMPONENT_CATEGORIES=$(sqlite3 arrow_database.db "SELECT COUNT(DISTINCT cc.name) FROM component_categories cc JOIN components c ON cc.id = c.category_id" 2>/dev/null || echo "0")
+            COMPONENT_MANUFACTURERS=$(sqlite3 arrow_database.db "SELECT COUNT(DISTINCT manufacturer) FROM components" 2>/dev/null || echo "0")
+            
+            echo ""
+            echo "🧩 Component Database Statistics:"
+            echo "   Total Components: $COMPONENT_TOTAL"
+            echo "   Categories: $COMPONENT_CATEGORIES"
+            echo "   Component Manufacturers: $COMPONENT_MANUFACTURERS"
+            
+            if [ "$COMPONENT_TOTAL" -gt 0 ]; then
+                echo ""
+                echo "📦 Component Categories:"
+                sqlite3 arrow_database.db "
+                    SELECT cc.name || ': ' || COUNT(c.id) || ' components'
+                    FROM component_categories cc 
+                    LEFT JOIN components c ON cc.id = c.category_id
+                    GROUP BY cc.name
+                    ORDER BY COUNT(c.id) DESC
+                " | sed 's/^/   /' 2>/dev/null || echo "   Unable to retrieve category statistics"
+                
+                echo ""
+                echo "🏭 Component Manufacturers:"
+                sqlite3 arrow_database.db "
+                    SELECT manufacturer || ': ' || COUNT(*) || ' components' 
+                    FROM components 
+                    GROUP BY manufacturer 
+                    ORDER BY COUNT(*) DESC 
+                    LIMIT 3
+                " | sed 's/^/   /' 2>/dev/null || echo "   Unable to retrieve manufacturer statistics"
+            fi
+        else
+            echo "⚠️  Component import failed - continuing with arrow database only"
+            echo "   This is not critical - arrow functionality will work normally"
+        fi
+    else
+        echo "   No component files found - skipping component import"
+        echo "   This is normal if components haven't been scraped yet"
     fi
 else
     echo ""
@@ -99,6 +155,7 @@ echo ""
 echo "🎯 Production Import Complete\!"
 echo "============================="
 echo "✅ Arrow database ready for production deployment"
+echo "✅ Component database ready (if component files were found)"
 echo "✅ NO web scraping performed (production-safe)"
 echo "✅ Data imported from existing JSON files only"
 echo ""
@@ -106,3 +163,4 @@ echo "Next steps:"
 echo "1. Deploy application (database will be included)"
 echo "2. Server startup will automatically check for newer JSON files"
 echo "3. Regular updates: commit new JSON files and redeploy"
+echo "4. Component functionality available in frontend /components page"

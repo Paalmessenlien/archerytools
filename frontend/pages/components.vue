@@ -37,7 +37,7 @@
     <div class="card mb-6">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filters</h2>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Category Filter -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -82,10 +82,35 @@
             @change="sortComponents"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           >
-            <option value="manufacturer">Manufacturer</option>
-            <option value="model_name">Model Name</option>
-            <option value="category">Category</option>
-            <option value="created_at">Date Added</option>
+            <optgroup label="Basic">
+              <option value="manufacturer">Manufacturer</option>
+              <option value="model_name">Model Name</option>
+              <option value="category">Category</option>
+              <option value="created_at">Date Added</option>
+            </optgroup>
+            <optgroup label="Specifications">
+              <option value="weight">Weight (Grain)</option>
+              <option value="material">Material</option>
+              <option value="type">Component Type</option>
+              <option value="inner_diameter">Inner Diameter</option>
+              <option value="outer_diameter">Outer Diameter</option>
+              <option value="usage_type">Usage Type</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Sort Direction -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Sort Order
+          </label>
+          <select 
+            v-model="sortDirection" 
+            @change="sortComponents"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          >
+            <option value="asc">Ascending (A-Z, Low-High)</option>
+            <option value="desc">Descending (Z-A, High-Low)</option>
           </select>
         </div>
       </div>
@@ -305,6 +330,7 @@ const filters = ref({
 })
 const searchQuery = ref('')
 const sortBy = ref('manufacturer')
+const sortDirection = ref('asc')
 const limit = ref(50)
 
 // Pagination
@@ -354,14 +380,36 @@ const filteredComponents = computed(() => {
 
   // Apply sorting
   filtered.sort((a, b) => {
-    let aVal = a[sortBy.value] || ''
-    let bVal = b[sortBy.value] || ''
+    let aVal, bVal
     
-    if (sortBy.value === 'created_at') {
-      return new Date(bVal) - new Date(aVal) // Newest first
+    // Handle specification-based sorting
+    if (['weight', 'material', 'type', 'inner_diameter', 'outer_diameter', 'usage_type'].includes(sortBy.value)) {
+      aVal = a.specifications?.[sortBy.value] || ''
+      bVal = b.specifications?.[sortBy.value] || ''
+      
+      // Handle numeric sorting for weight and diameter fields
+      if (sortBy.value === 'weight' || sortBy.value.includes('diameter')) {
+        // Extract numeric values from strings like "100gr" or "9.14mm"
+        const aNum = parseFloat(String(aVal).replace(/[^\d.]/g, '')) || 0
+        const bNum = parseFloat(String(bVal).replace(/[^\d.]/g, '')) || 0
+        
+        const comparison = aNum - bNum
+        return sortDirection.value === 'asc' ? comparison : -comparison
+      }
+    } else {
+      // Handle standard field sorting
+      aVal = a[sortBy.value] || ''
+      bVal = b[sortBy.value] || ''
+      
+      if (sortBy.value === 'created_at') {
+        const comparison = new Date(bVal) - new Date(aVal) // Newest first by default
+        return sortDirection.value === 'asc' ? -comparison : comparison
+      }
     }
     
-    return aVal.toString().localeCompare(bVal.toString())
+    // String comparison with direction
+    const comparison = aVal.toString().localeCompare(bVal.toString())
+    return sortDirection.value === 'asc' ? comparison : -comparison
   })
 
   return filtered
@@ -504,7 +552,7 @@ const viewCompatibleArrows = (component) => {
 }
 
 // Watch for filter changes to reset pagination
-watch([filters, searchQuery, sortBy], () => {
+watch([filters, searchQuery, sortBy, sortDirection], () => {
   currentPage.value = 1
 }, { deep: true })
 
