@@ -1,10 +1,24 @@
 # ArcheryTool - Professional Archery Tools
 
-**Version:** 2.0.0-beta  
-**Status:** Ready for Beta Testing  
+**Version:** 2.1.0  
+**Status:** Production Ready  
 **Architecture:** Modern SPA with API Backend
 
 ArcheryTool is a comprehensive web application that provides professional archery tools including arrow selection, tuning calculations, equipment guides, and component databases. Built with modern web technologies, it offers professional-grade spine calculations, intelligent arrow recommendations, and a comprehensive database of archery equipment specifications.
+
+## 🚀 Latest Updates (August 2025)
+
+### Enhanced Scraping System
+- **Pattern Learning**: 46%+ faster scraping with intelligent content extraction
+- **Multi-Language Support**: Automatic translation for German, Italian content
+- **Flexible Commands**: New `--learn`, `--learn-all`, `--limit` flags
+- **Optional API Usage**: Choose between fast mode or DeepSeek extraction
+
+### Database Import System  
+- **JSON-First Architecture**: JSON files serve as authoritative data source
+- **Automatic Import**: Database updates from JSON files during server startup
+- **Smart Detection**: Only imports when JSON files are newer than database
+- **Production Ready**: No server-side scraping in production environments
 
 ## 🎯 Features
 
@@ -160,6 +174,45 @@ The system includes comprehensive data for 400+ arrows:
 - DK Bow (German traditional/modern)
 - Plus 7 additional manufacturers
 
+## 🕷️ Arrow Data Scraping
+
+### Quick Start
+```bash
+cd arrow_scraper
+source venv/bin/activate
+
+# Update all manufacturers with translation
+python main.py --update-all
+
+# Learn patterns from first URL of each manufacturer
+python main.py --learn-all --limit 1
+
+# Update specific manufacturer
+python main.py --update-all --manufacturer dkbow
+
+# Fast mode without API calls
+python main.py --learn --manufacturer easton --limit 3
+```
+
+### Scraping Modes
+- **Pattern Learning** (`--learn`): Learns extraction patterns for 46%+ faster scraping
+- **Full Update** (`--update-all`): Complete scraping with DeepSeek API
+- **Fast Mode**: Use learned patterns without API calls
+- **Limited Scraping** (`--limit N`): Process only first N URLs
+
+### Database Import
+The system automatically imports JSON data during server startup:
+- Scans `data/processed/` for new JSON files
+- Compares timestamps with database
+- Updates only when JSON files are newer
+- No manual database operations needed
+
+### Production Workflow
+1. **Local Development**: Run scraper to update JSON files
+2. **Commit Changes**: Push JSON files to repository
+3. **Deploy**: Server automatically imports on startup
+4. **No Server Scraping**: Production never scrapes websites
+
 ## 🔧 Development
 
 ### Frontend Development
@@ -192,10 +245,28 @@ cd arrow_scraper && python test_diameter_categories.py
 
 ## 🏭 Production Deployment
 
-### Docker Deployment (Recommended)
+### Enhanced Docker Deployment (Recommended)
 ```bash
+# Standard deployment
 docker-compose up -d
+
+# Enhanced deployment with verification
+./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
+
+# The enhanced deployment includes:
+# - Automatic database import from JSON files
+# - Health checks and verification
+# - User database persistence
+# - Build integrity checking
 ```
+
+### Database Import on Startup
+The server automatically:
+1. Checks `data/processed/` for JSON files
+2. Compares with existing database
+3. Imports new data if needed
+4. Logs all operations
+5. Continues startup regardless of import status
 
 ### Manual Ubuntu Deployment
 See `deploy/` directory for comprehensive production scripts:
