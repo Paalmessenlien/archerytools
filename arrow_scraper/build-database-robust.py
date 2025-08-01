@@ -35,6 +35,30 @@ def find_data_directory():
     
     return None
 
+def find_components_directory():
+    """Find the data/processed/components directory in various locations"""
+    potential_paths = [
+        Path("data/processed/components"),
+        Path("./data/processed/components"),
+        Path("/app/data/processed/components"),
+        Path("arrow_scraper/data/processed/components"),
+    ]
+    
+    print("🔍 Searching for components directory...")
+    for path in potential_paths:
+        print(f"  📦 Checking: {path}")
+        if path.exists() and path.is_dir():
+            json_files = list(path.glob("*.json"))
+            if json_files:
+                print(f"  ✅ Found components directory with {len(json_files)} JSON files: {path}")
+                return path
+            else:
+                print(f"  ⚠️  Directory exists but no JSON files: {path}")
+        else:
+            print(f"  ❌ Directory not found: {path}")
+    
+    return None
+
 def create_minimal_database():
     """Create a minimal database with some basic data if processed files are missing"""
     print("🆘 Creating minimal database with basic arrow data...")
@@ -293,11 +317,70 @@ def build_database_robust():
     
     conn.close()
     
+    # Import components if available
+    print("\n📦 Importing components from JSON files...")
+    components_imported = 0
+    try:
+        components_dir = find_components_directory()
+        if components_dir:
+            # Import components using internal logic to avoid import issues
+            print(f"📦 Processing components from: {components_dir}")
+            
+            # Create component database instance
+            from component_database import ComponentDatabase
+            comp_db = ComponentDatabase(db_path)
+            comp_db.create_component_tables()
+            
+            # Process component JSON files
+            json_files = list(components_dir.glob("*.json"))
+            for json_file in json_files:
+                try:
+                    print(f"  📦 Processing: {json_file.name}")
+                    
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    if 'components' in data:
+                        components = data['components']
+                        component_type = data.get('component_type', 'unknown')
+                        
+                        for component in components:
+                            try:
+                                comp_db.add_component(
+                                    category_name=component_type,
+                                    manufacturer=component.get('manufacturer', 'Unknown'),
+                                    model_name=component.get('model_name', 'Unknown Model'),
+                                    specifications=component.get('specifications', {}),
+                                    image_url=component.get('image_url'),
+                                    local_image_path=component.get('local_image_path'),
+                                    price_range=component.get('price_range'),
+                                    description=component.get('description'),
+                                    source_url=component.get('source_url'),
+                                    scraped_at=component.get('scraped_at')
+                                )
+                                components_imported += 1
+                            except Exception as e:
+                                print(f"    ⚠️  Error importing component: {e}")
+                                continue
+                        
+                        print(f"    ✅ Imported {len(components)} {component_type}")
+                        
+                except Exception as e:
+                    print(f"    ❌ Error processing {json_file.name}: {e}")
+                    continue
+            
+            print(f"✅ Total components imported: {components_imported}")
+        else:
+            print("ℹ️  No component data found to import")
+    except Exception as e:
+        print(f"⚠️  Error importing components: {e}")
+    
     # Display summary
     print("\n🎉 Database Build Summary:")
     print("=" * 30)
     print(f"✅ Total arrows: {final_arrow_count}")
     print(f"✅ Total spine specs: {final_spine_count}")
+    print(f"✅ Total components: {components_imported}")
     print(f"✅ Manufacturers: {manufacturer_count}")
     print(f"✅ Database file: {db_path}")
     

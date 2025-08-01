@@ -73,31 +73,58 @@ async def extract_components(url: str, component_type: str, manufacturer: str = 
                 print(f"⚠️  No {component_type} found on the page")
                 return False
             
-            # Initialize component database
-            component_db = ComponentDatabase()
-            
-            # Save components to database
-            saved_count = 0
-            for component in components:
-                # Override manufacturer if provided
-                if manufacturer:
-                    component['manufacturer'] = manufacturer
+            # Save components to JSON file (same pattern as arrows)
+            if components:
+                # Prepare data for JSON export
+                manufacturer_name = manufacturer or components[0].get('manufacturer', 'Unknown')
+                safe_manufacturer = "".join(c for c in manufacturer_name if c.isalnum() or c in (' ', '-', '_')).replace(' ', '_')
                 
-                component_id = component_db.add_component(
-                    category_name=component_type,
-                    manufacturer=component['manufacturer'],
-                    model_name=component['model_name'],
-                    specifications=component['specifications'],
-                    image_url=component.get('image_url'),
-                    local_image_path=component.get('local_image_path'),
-                    price_range=component.get('price_range'),
-                    description=component.get('description'),
-                    source_url=component.get('source_url', url),
-                    scraped_at=datetime.now().isoformat()
-                )
+                # Create JSON data structure (similar to arrows)
+                json_data = {
+                    "manufacturer": manufacturer_name,
+                    "component_type": component_type,
+                    "total_components": len(components),
+                    "scraped_at": datetime.now().isoformat(),
+                    "source_url": url,
+                    "components": []
+                }
                 
-                if component_id:
+                # Process each component
+                saved_count = 0
+                for component in components:
+                    # Override manufacturer if provided
+                    if manufacturer:
+                        component['manufacturer'] = manufacturer
+                    
+                    # Add to JSON data
+                    json_data["components"].append({
+                        "manufacturer": component['manufacturer'],
+                        "model_name": component['model_name'],
+                        "component_type": component_type,
+                        "specifications": component['specifications'],
+                        "image_url": component.get('image_url'),
+                        "local_image_path": component.get('local_image_path'),
+                        "price_range": component.get('price_range'),
+                        "description": component.get('description'),
+                        "source_url": component.get('source_url', url),
+                        "scraped_at": datetime.now().isoformat()
+                    })
                     saved_count += 1
+                
+                # Save to JSON file
+                components_dir = Path("data/processed/components")
+                components_dir.mkdir(parents=True, exist_ok=True)
+                
+                json_filename = f"{safe_manufacturer}_{component_type}.json"
+                json_path = components_dir / json_filename
+                
+                with open(json_path, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, indent=2, ensure_ascii=False)
+                
+                print(f"💾 Saved component data to: {json_path}")
+                
+            else:
+                saved_count = 0
             
             print(f"✅ Extracted and saved {saved_count}/{len(components)} {component_type}")
             
