@@ -42,6 +42,9 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **Enhanced Scraper Arguments**: Added `--learn`, `--learn-all`, `--limit`, and improved `--manufacturer` support for efficient pattern learning
 - ✅ **Pattern Learning System**: Intelligent content extraction that learns from successful scraping to speed up future operations by 46%+
 - ✅ **Enhanced JSON Export**: `--learn-all` now saves both pattern data and extracted arrow specifications to `data/processed/` for immediate use
+- ✅ **JSON-Based Database Import System**: Automatic database import from JSON files during server startup with smart update detection
+- ✅ **Traditional Wood Arrows Support**: Complete database support for traditional wooden arrow shafts including Cedar, Pine, Poplar, Birch, and Fir
+- ✅ **German Decimal Conversion**: Automatic conversion of German decimal format (5,40 → 5.40) for European manufacturers
 
 ## Development Commands
 
@@ -205,7 +208,7 @@ pip install -r requirements.txt
 - **European (German)**: Nijora, DK Bow, Aurel 
 - **European (Italian)**: BigArchery/Cross-X  
 - **International**: Fivics, Pandarus, Skylon
-- **Traditional**: Wood arrow manufacturers
+- **Traditional**: Traditional Wood Arrows (Cedar, Pine, Poplar, Birch, Fir, Sitka Spruce)
 
 ### 🌍 Automatic Translation System
 
@@ -296,17 +299,35 @@ arrow_scraper/
 - Always verify scraped data before production deployment
 
 ### Database Management
+
+**🔄 JSON-Based Database Import System (2025 Update):**
 ```bash
-# Initialize or rebuild database from JSON files
+# Automatic import during server startup (via start-api-robust.sh)
+# JSON files serve as authoritative data source with smart update detection
+
+# Manual database import operations
 cd arrow_scraper
-python arrow_database.py
 
-# Show database statistics
-python show_available_data.py
+# Check if database needs updating from JSON files
+python database_import_manager.py --check
 
-# Migrate existing database to include diameter categories
-python migrate_diameter_categories.py
+# Force import all JSON files to database
+python database_import_manager.py --import-all --force
+
+# Standard database operations
+python arrow_database.py                    # Initialize or rebuild database
+python show_available_data.py               # Show database statistics
+python migrate_diameter_categories.py       # Migrate to include diameter categories
 ```
+
+**Database Import Features:**
+- **Automatic Import**: Runs during server startup via `start-api-robust.sh`
+- **JSON-First Architecture**: JSON files in `data/processed/` are the authoritative data source
+- **Smart Updates**: Only imports when JSON files are newer than database
+- **Manufacturer-Level Replacement**: Updates data per manufacturer, preserving other data
+- **Traditional Wood Arrows**: Full support for traditional wooden arrow shafts
+- **Error Handling**: Continues processing if individual manufacturers fail
+- **Production Ready**: No server-side scraping needed in production environments
 
 ### CDN Image Management
 ```bash
@@ -823,6 +844,16 @@ The system supports 13 manufacturers with comprehensive URL patterns and scrapin
 - ✅ Google OAuth integration with secure JWT token authentication
 - ✅ Bow setup management with user-specific configuration tracking
 - ✅ Enhanced user database with admin functionality and relationship management
+
+**Phase 10 (Complete - August 2025):** Enhanced Data Infrastructure & Traditional Arrow Support
+- ✅ JSON-based database import system with automatic server startup integration
+- ✅ Pattern learning system for 46%+ faster scraping operations
+- ✅ Traditional wood arrow support (Cedar, Pine, Poplar, Birch, Fir, Sitka Spruce)
+- ✅ German decimal conversion system for European manufacturers
+- ✅ Enhanced scraper arguments with `--learn`, `--learn-all`, `--limit` support
+- ✅ Smart update detection based on file timestamps
+- ✅ Manufacturer-level data replacement strategy
+- ✅ Production-ready import system with comprehensive error handling
 
 ## Important Notes
 
