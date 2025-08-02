@@ -1,7 +1,7 @@
 {
   "scraping_metadata": {
     "source": "TopHat Archery",
-    "scrape_date": "2025-08-03T00:21:57.012742",
+    "scrape_date": "2025-08-03T00:25:23.710250",
     "total_products_found": 5,
     "total_arrows_extracted": 2,
     "scraper_version": "1.0.0"
@@ -50,8 +50,8 @@
       ],
       "material": "Carbon",
       "arrow_type": "3D, Allzweck, Feld, Target",
-      "description": "Many archers prefer the thin diameters for Field and Target. Now the ABSOLUTE.Series also offers a slim shaft in its lineup. The spine values cover a wide range of applications. Available in spine 350, 400, 500, and 600. The matching point is the SL Convex III made of tool steel, extremely durable. Shaft bending is nearly eliminated as a result. Break-Off elements in 10-grain increments make tuning easy—one point for weights from 90 to 140 grain. Components are available separately.",
-      "image_url": null,
+      "description": "Von vielen Schützen werden die dünnen Durchmesser für Field und Target bevorzugt. Nun hat auch die ABSOLUTE.Serie einen schlanken Schaft im Programm. Die Spinewerte decken einen breiten Einsatzbereich ab. Erhältlich in Spine 350, 400, 500 und 600.Die passende Spitze ist die SL Convex III aus Werkzeugstahl, extrem haltbar. Verbiegen im Schaft ist dadurch nahezu ausgeschlossen. Break-Off Elemente in 10 Grain Schritten machen das Tuning einfach - eine Spitze für Gewichte von 90 bis 140 Grain. Komponenten sind separat erhältlich.",
+      "image_url": "https://tophatarchery.com/media/image/59/f0/e3/Absolute-15_1280x1280.png",
       "price_range": "133,35",
       "straightness_tolerance": "±.001”",
       "weight_tolerance": null
@@ -72,8 +72,8 @@
       ],
       "material": "Carbon",
       "arrow_type": "3D, Allzweck, Feld, Target",
-      "description": "We skip the grand advertising promises and deliver top quality at a very attractive price. The spine values cover a wide range of applications. Available in spine 350, 400, 500, 600, 700, and 800. The matching point is the ML Apex in 70, 100, or 130 grain. Fine-tuning can be adjusted with brass screw-in weights in 10, 20, 30, or 40 grain. Components are available separately.",
-      "image_url": null,
+      "description": "We skip the grandiose advertising promises and deliver top quality at a very attractive price. The spine values cover a wide range of applications. Available in spine 350, 400, 500, 600, 700, and 800. The matching point is the ML Apex in 70, 100, or 130 grain. Fine-tuning can be adjusted with brass screw-in weights in 10, 20, 30, or 40 grain. Components are available separately.",
+      "image_url": "https://tophatarchery.com/media/image/a3/6f/0c/Absolute-19_1280x1280.png",
       "price_range": "101,55",
       "straightness_tolerance": "±.001”",
       "weight_tolerance": null

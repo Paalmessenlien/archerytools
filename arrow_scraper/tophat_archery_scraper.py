@@ -171,6 +171,11 @@ class TopHatManualExtractor:
                 if price_match:
                     data['price'] = price_match.group(1)
             
+            # Extract image URL
+            image_url = self._extract_image_url(soup)
+            if image_url:
+                data['image_url'] = image_url
+            
             return data if data else None
             
         except Exception as e:
@@ -234,6 +239,52 @@ class TopHatManualExtractor:
         if num_match:
             return float(num_match.group(1))
         return None
+    
+    def _extract_image_url(self, soup) -> Optional[str]:
+        """Extract product image URL from various sources"""
+        try:
+            # Method 1: Look for span.image--element with data attributes (highest quality)
+            image_span = soup.find('span', class_='image--element')
+            if image_span:
+                # Try data-img-large first (highest quality)
+                if image_span.get('data-img-large'):
+                    return image_span.get('data-img-large')
+                # Fallback to data-img-original
+                if image_span.get('data-img-original'):
+                    return image_span.get('data-img-original')
+                # Fallback to data-img-small
+                if image_span.get('data-img-small'):
+                    return image_span.get('data-img-small')
+            
+            # Method 2: Look for img tag with itemprop="image"
+            main_img = soup.find('img', {'itemprop': 'image'})
+            if main_img and main_img.get('src'):
+                src = main_img.get('src')
+                # Convert relative URLs to absolute
+                if src.startswith('/'):
+                    src = 'https://tophatarchery.com' + src
+                return src
+            
+            # Method 3: Look for any img in image container
+            image_container = soup.find('div', class_='product--image-container')
+            if image_container:
+                img_tag = image_container.find('img')
+                if img_tag and img_tag.get('src'):
+                    src = img_tag.get('src')
+                    # Convert relative URLs to absolute
+                    if src.startswith('/'):
+                        src = 'https://tophatarchery.com' + src
+                    return src
+            
+            # Method 4: Look for meta property og:image
+            og_image = soup.find('meta', {'property': 'og:image'})
+            if og_image and og_image.get('content'):
+                return og_image.get('content')
+            
+            return None
+            
+        except Exception as e:
+            return None
 
 @dataclass
 class TopHatProduct:

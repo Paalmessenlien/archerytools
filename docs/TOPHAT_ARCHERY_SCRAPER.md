@@ -26,6 +26,7 @@ The TopHat Archery scraper is a comprehensive tool for extracting arrow specific
 - Materials, arrow types, length options
 - Pricing and tolerance information
 - Straightness and weight tolerances
+- **High-Quality Product Images**: 1280x1280 PNG images extracted from multiple sources
 
 ### 🔄 Smart Data Processing
 - Groups products by manufacturer and model
@@ -133,6 +134,7 @@ Results are saved to `data/processed/extra/tophat_archery_arrows.json` to avoid 
       "material": "Carbon",
       "arrow_type": "3D, All-Round, Field, Target",
       "description": "The AGIL™ follows the standard carbon shaft diameter and was designed as an ultra-light shaft...",
+      "image_url": "https://tophatarchery.com/media/image/89/a7/8d/Agil_1280x1280.png",
       "price_range": "133,35",
       "straightness_tolerance": "±.001\""
     }
@@ -165,6 +167,17 @@ field_mapping = {
 Handles both imperial and metric measurements:
 - Extracts inches directly: `.246"`
 - Converts mm to inches: `6,25mm` → `0.246"`
+
+### Image URL Extraction
+
+Multi-source image extraction with quality prioritization:
+
+1. **Primary**: `<span class="image--element" data-img-large="...">` (1280x1280 quality)
+2. **Secondary**: `data-img-original` attribute for original resolution
+3. **Fallback**: `<img itemprop="image">` tags in product containers
+4. **Metadata**: OpenGraph `og:image` meta properties
+
+Image URLs are automatically converted to absolute URLs and verified for accessibility.
 
 ### Error Handling
 
