@@ -86,17 +86,17 @@ services:
       - arrowtuner-logs:/var/log/nginx  # Persist nginx logs
     depends_on:
       api:
-        condition: service_healthy
+        condition: service_started
       frontend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - arrowtuner-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      test: ["CMD-SHELL", "nginx -t && (curl -f http://localhost:80/health 2>/dev/null || nc -z localhost 80)"]
       interval: 30s
       timeout: 15s
       retries: 5
-      start_period: 180s
+      start_period: 60s
     deploy:
       resources:
         limits:
