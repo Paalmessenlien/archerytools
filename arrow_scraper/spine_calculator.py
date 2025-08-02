@@ -29,6 +29,9 @@ class BowConfiguration:
     cam_type: str = "medium"  # soft, medium, hard (for compounds)
     center_shot: float = 13.0/16.0  # inches from center
     arrow_rest_type: str = "drop_away"  # drop_away, blade, whisker_biscuit
+    ibo_speed: float = 310.0  # IBO speed rating in FPS (default to Easton baseline)
+    release_type: str = "mechanical"  # mechanical, finger (for spine adjustments)
+    manufacturer_preference: str = "easton"  # easton, victory, goldtip, generic
     
 class SpineCalculator:
     """Calculate required arrow spine based on bow configuration and shooting setup"""
@@ -156,18 +159,37 @@ class SpineCalculator:
         # NOTE: draw_length is NOT used in spine calculations - only for archer information
         base_spine = self._get_base_spine_from_chart(bow_config.draw_weight, arrow_length)
         
-        # Adjustments for compound bows
+        # Adjustments for compound bows per Easton standards
         adjustments = {}
         total_adjustment = 0
         
         # Note: Draw length is NOT used in spine calculations per traditional spine charts
         # Only arrow length and draw weight matter for spine selection
         
-        # Point weight adjustment (per 25 grains from 100gr)
+        # IBO Speed adjustment per Easton chart (effective bow weight modification)
+        effective_bow_weight = bow_config.draw_weight + self._get_speed_adjustment(bow_config.ibo_speed)
+        speed_adjustment = self._get_speed_adjustment(bow_config.ibo_speed)
+        adjustments["bow_speed"] = speed_adjustment
+        
+        # Recalculate base spine with speed-adjusted weight
+        base_spine = self._get_base_spine_from_chart(effective_bow_weight, arrow_length)
+        
+        # Point weight adjustment: ±3 lbs bow weight per 25 grains over/under 100gr
         point_weight_diff = point_weight - 100.0
-        point_adjustment = (point_weight_diff / 25.0) * 15  # ~15 spine per 25gr
-        adjustments["point_weight"] = point_adjustment
-        total_adjustment += point_adjustment
+        point_weight_adjustment = (point_weight_diff / 25.0) * 3
+        bow_weight_adjustment = point_weight_adjustment
+        adjustments["point_weight"] = bow_weight_adjustment
+        
+        # Release type adjustment per Easton standards
+        release_adjustment = self._get_release_type_adjustment(bow_config.release_type)
+        adjustments["release_type"] = release_adjustment
+        
+        # Apply all adjustments and recalculate spine
+        final_effective_weight = effective_bow_weight + bow_weight_adjustment + release_adjustment
+        final_spine = self._get_base_spine_from_chart(final_effective_weight, arrow_length)
+        
+        # Calculate total adjustment from baseline
+        total_adjustment = speed_adjustment + bow_weight_adjustment + release_adjustment
         
         # Cam timing adjustment
         cam_adjustments = {"soft": -10, "medium": 0, "hard": +10}
@@ -192,8 +214,8 @@ class SpineCalculator:
         adjustments["center_shot"] = center_shot_adjustment
         total_adjustment += center_shot_adjustment
         
-        # Calculate final spine
-        calculated_spine = base_spine - total_adjustment
+        # Use final calculated spine with all adjustments
+        calculated_spine = final_spine
         
         # Provide spine range (±25 spine tolerance)
         spine_range = {
@@ -202,57 +224,85 @@ class SpineCalculator:
             "maximum": calculated_spine + 25
         }
         
+        # Calculate dynamic spine for real-world conditions
+        dynamic_spine_result = self._calculate_dynamic_spine(
+            bow_config, arrow_length, point_weight, nock_weight, fletching_weight, calculated_spine
+        )
+        
         return {
             "bow_type": "compound",
             "calculated_spine": round(calculated_spine),
+            "dynamic_spine": dynamic_spine_result,
             "spine_range": {k: round(v) for k, v in spine_range.items()},
             "adjustments": adjustments,
             "total_adjustment": round(total_adjustment),
             "base_spine": base_spine,
+            "effective_bow_weight": round(final_effective_weight, 1),
+            "ibo_speed": bow_config.ibo_speed,
             "confidence": "high",
-            "notes": self._get_spine_notes(bow_config, calculated_spine)
+            "spine_units": "carbon",
+            "notes": self._get_spine_notes(bow_config, calculated_spine) + [
+                f"IBO speed: {bow_config.ibo_speed} FPS (adjustment: {speed_adjustment:+.1f} lbs)",
+                f"Effective bow weight: {final_effective_weight:.1f} lbs",
+                "Based on Easton compound bow speed adjustments",
+                "Dynamic spine calculated for real-world conditions"
+            ]
         }
     
     def _calculate_recurve_spine(self, bow_config: BowConfiguration,
                                arrow_length: float, point_weight: float,
                                nock_weight: float, fletching_weight: float) -> Dict[str, Any]:
-        """Calculate spine for recurve bows"""
+        """Calculate spine for recurve bows using official Easton recurve chart methodology"""
         
-        # Base spine from recurve-specific chart using bow's marked draw weight
-        # NOTE: draw_length is NOT used in spine calculations - only for archer information
-        base_spine = self._get_recurve_base_spine(bow_config.draw_weight, arrow_length)
+        # Use official Easton recurve chart data (finger release, carbon limbs)
+        # Based on Easton Target Arrow Selection Chart for Recurve Bow
+        base_spine = self._get_recurve_spine_from_easton_chart(bow_config.draw_weight, arrow_length)
         
-        # Adjustments for recurve
+        # Apply Easton's recurve-specific adjustments
         adjustments = {}
         total_adjustment = 0
         
-        # Point weight adjustment (more sensitive than compound)
-        point_weight_diff = point_weight - 100.0
-        point_adjustment = (point_weight_diff / 25.0) * 20  # ~20 spine per 25gr
-        adjustments["point_weight"] = point_adjustment
-        total_adjustment += point_adjustment
+        # Point weight adjustment per Easton chart: ±3 lbs bow weight per 25 grains over/under 100gr
+        point_weight_diff = point_weight - 100
+        bow_weight_adjustment = (point_weight_diff / 25) * 3
+        adjustments["point_weight"] = bow_weight_adjustment
+        total_adjustment += bow_weight_adjustment
         
-        # String material adjustment
-        # Note: This could be expanded to include string type parameter
-        # For now, assume modern string materials
+        # Recurve bow limb type adjustment (Easton standard)
+        # Carbon competition limb = no adjustment (default)
+        # Wood/glass beginner limb = -5 lbs bow weight
+        limb_adjustment = 0  # Assume carbon competition limbs by default
+        adjustments["limb_type"] = limb_adjustment
+        total_adjustment += limb_adjustment
         
-        calculated_spine = base_spine - total_adjustment
+        # Apply total bow weight adjustment to spine selection
+        effective_bow_weight = bow_config.draw_weight + total_adjustment
+        final_spine = self._get_recurve_spine_from_easton_chart(effective_bow_weight, arrow_length)
         
+        # Provide spine range based on Easton recommendations
+        # For recurve, recommend weaker side when multiple options available
         spine_range = {
-            "minimum": calculated_spine - 30,
-            "optimal": calculated_spine,
-            "maximum": calculated_spine + 30
+            "minimum": final_spine - 50,  # Wider tolerance for finger release
+            "optimal": final_spine,
+            "maximum": final_spine + 25
         }
         
         return {
             "bow_type": "recurve",
-            "calculated_spine": round(calculated_spine),
+            "calculated_spine": round(final_spine),
             "spine_range": {k: round(v) for k, v in spine_range.items()},
             "adjustments": adjustments,
             "total_adjustment": round(total_adjustment),
             "base_spine": base_spine,
-            "confidence": "medium",
-            "notes": self._get_spine_notes(bow_config, calculated_spine)
+            "effective_bow_weight": round(effective_bow_weight, 1),
+            "confidence": "high",  # High confidence with Easton chart
+            "spine_units": "carbon",
+            "notes": self._get_spine_notes(bow_config, final_spine) + [
+                "Based on Easton recurve chart (finger release, carbon limbs)",
+                "Weaker spine recommended for better forgiveness",
+                "Point weight adjustment applied per Easton guidelines",
+                "Bare shaft tuning recommended for final verification"
+            ]
         }
     
     def _calculate_traditional_spine(self, bow_config: BowConfiguration,
@@ -407,6 +457,181 @@ class SpineCalculator:
                     base_spine = upper_spine + (lower_spine - upper_spine) * ratio
         
         return base_spine
+    
+    def _get_recurve_spine_from_easton_chart(self, draw_weight: float, arrow_length: float) -> float:
+        """Get spine from official Easton recurve chart (finger release, carbon limbs)"""
+        
+        # Official Easton Recurve Chart Data (Carbon Limbs, Finger Release)
+        # Based on Easton Target Arrow Selection Chart
+        # Format: draw_weight: {arrow_length: spine_value}
+        easton_recurve_chart = {
+            # Under 17 lbs
+            16: {21: 2000, 22: 2000, 23: 2000, 24: 1800, 25: 1750, 26: 1450, 27: 1250, 28: 1080, 29: 900, 30: 800, 31: 720, 32: 675, 33: 640, 34: 575},
+            # 17-23 lbs  
+            20: {21: 2000, 22: 2000, 23: 1800, 24: 1700, 25: 1400, 26: 1200, 27: 1050, 28: 880, 29: 750, 30: 700, 31: 625, 32: 600, 33: 570, 34: 500},
+            # 24-28 lbs
+            26: {21: 2000, 22: 1800, 23: 1700, 24: 1400, 25: 1200, 26: 1050, 27: 880, 28: 750, 29: 700, 30: 625, 31: 600, 32: 570, 33: 500, 34: 450},
+            # 29-34 lbs
+            31: {21: 1800, 22: 1700, 23: 1450, 24: 1200, 25: 1050, 26: 880, 27: 750, 28: 700, 29: 625, 30: 600, 31: 570, 32: 500, 33: 450, 34: 400},
+            # 35-39 lbs
+            37: {21: 1750, 22: 1400, 23: 1250, 24: 1050, 25: 880, 26: 750, 27: 625, 28: 575, 29: 500, 30: 450, 31: 400, 32: 370, 33: 340, 34: 300},
+            # 40-44 lbs
+            42: {21: 1450, 22: 1200, 23: 1050, 24: 880, 25: 750, 26: 625, 27: 575, 28: 500, 29: 450, 30: 400, 31: 370, 32: 340, 33: 300, 34: 250},
+            # 45-49 lbs
+            47: {21: 1250, 22: 1050, 23: 880, 24: 750, 25: 625, 26: 575, 27: 500, 28: 450, 29: 400, 30: 370, 31: 340, 32: 300, 33: 250, 34: 200},
+            # 50-54 lbs
+            52: {21: 1080, 22: 880, 23: 750, 24: 625, 25: 575, 26: 500, 27: 450, 28: 400, 29: 370, 30: 340, 31: 300, 32: 250, 33: 200, 34: 150},
+            # 55-59 lbs
+            57: {21: 900, 22: 750, 23: 625, 24: 575, 25: 500, 26: 450, 27: 400, 28: 370, 29: 340, 30: 300, 31: 250, 32: 200, 33: 150, 34: 150},
+            # 60-64 lbs
+            62: {21: 800, 22: 700, 23: 575, 24: 500, 25: 450, 26: 400, 27: 370, 28: 340, 29: 300, 30: 250, 31: 200, 32: 150, 33: 150, 34: 150},
+            # 65-69 lbs
+            67: {21: 720, 22: 625, 23: 500, 24: 450, 25: 400, 26: 370, 27: 340, 28: 300, 29: 250, 30: 200, 31: 150, 32: 150, 33: 150, 34: 150},
+            # 70-76 lbs
+            73: {21: 675, 22: 600, 23: 450, 24: 400, 25: 370, 26: 340, 27: 300, 28: 250, 29: 200, 30: 150, 31: 150, 32: 150, 33: 150, 34: 150}
+        }
+        
+        # Find closest draw weight
+        available_weights = list(easton_recurve_chart.keys())
+        closest_weight = min(available_weights, key=lambda x: abs(x - draw_weight))
+        
+        # Find closest arrow length
+        weight_data = easton_recurve_chart[closest_weight]
+        available_lengths = list(weight_data.keys())
+        closest_length = min(available_lengths, key=lambda x: abs(x - arrow_length))
+        
+        # Get base spine value
+        base_spine = weight_data[closest_length]
+        
+        # Interpolate between draw weights if we're not exactly on a chart value
+        if abs(draw_weight - closest_weight) > 1:
+            if draw_weight > closest_weight:
+                next_weight = min([w for w in available_weights if w > closest_weight], default=closest_weight)
+                if next_weight != closest_weight:
+                    lower_spine = easton_recurve_chart[closest_weight][closest_length]
+                    upper_spine = easton_recurve_chart[next_weight].get(closest_length, lower_spine)
+                    ratio = (draw_weight - closest_weight) / (next_weight - closest_weight)
+                    base_spine = lower_spine + (upper_spine - lower_spine) * ratio
+            else:
+                prev_weight = max([w for w in available_weights if w < closest_weight], default=closest_weight)
+                if prev_weight != closest_weight:
+                    upper_spine = easton_recurve_chart[closest_weight][closest_length]
+                    lower_spine = easton_recurve_chart[prev_weight].get(closest_length, upper_spine)
+                    ratio = (closest_weight - draw_weight) / (closest_weight - prev_weight)
+                    base_spine = upper_spine + (lower_spine - upper_spine) * ratio
+        
+        return base_spine
+    
+    def _get_speed_adjustment(self, ibo_speed: float) -> float:
+        """Get bow weight adjustment based on IBO speed rating per Easton standards"""
+        
+        # Easton compound bow speed adjustments (bow weight modifications)
+        # Based on bow speed rating with 301-320 FPS as baseline
+        if ibo_speed <= 275:
+            return -10.0
+        elif ibo_speed <= 300:
+            return -5.0
+        elif ibo_speed <= 320:
+            return 0.0  # Baseline range
+        elif ibo_speed <= 340:
+            return +5.0
+        elif ibo_speed <= 350:
+            return +10.0
+        else:  # 351+ FPS
+            return +15.0
+    
+    def _get_release_type_adjustment(self, release_type: str) -> float:
+        """Get bow weight adjustment based on release type per Easton standards"""
+        
+        # Easton release type adjustments
+        if release_type.lower() == "finger":
+            return +5.0  # Add 5 lbs bow weight for finger release
+        else:  # mechanical release (default)
+            return 0.0   # No adjustment for mechanical release
+    
+    def _calculate_dynamic_spine(self, bow_config: BowConfiguration, arrow_length: float,
+                               point_weight: float, nock_weight: float, fletching_weight: float,
+                               static_spine: float) -> Dict[str, Any]:
+        """Calculate dynamic spine based on real-world arrow flex during shot"""
+        
+        # Calculate total arrow weight
+        shaft_weight = static_spine * 0.5  # Approximate GPI conversion
+        total_arrow_weight = shaft_weight * arrow_length + point_weight + nock_weight + fletching_weight
+        
+        # Calculate kinetic energy
+        arrow_speed_estimate = self._estimate_arrow_speed(bow_config, total_arrow_weight)
+        kinetic_energy = (total_arrow_weight * arrow_speed_estimate * arrow_speed_estimate) / 450240
+        
+        # Calculate FOC (Front of Center)
+        foc = self._calculate_foc(arrow_length, point_weight, shaft_weight * arrow_length, 
+                                nock_weight, fletching_weight)
+        
+        # Dynamic spine adjustment factors
+        # Heavy points increase effective spine stiffness
+        foc_adjustment = (foc - 10) * 2  # 10% FOC is baseline
+        
+        # Speed affects dynamic flex
+        speed_flex_factor = (arrow_speed_estimate - 250) * 0.1  # 250 fps baseline
+        
+        # Calculate dynamic spine
+        dynamic_spine = static_spine + foc_adjustment - speed_flex_factor
+        
+        return {
+            "dynamic_spine": round(dynamic_spine),
+            "static_spine": round(static_spine),
+            "foc_percentage": round(foc, 1),
+            "estimated_speed": round(arrow_speed_estimate),
+            "kinetic_energy": round(kinetic_energy, 1),
+            "total_arrow_weight": round(total_arrow_weight),
+            "foc_adjustment": round(foc_adjustment),
+            "speed_adjustment": round(speed_flex_factor),
+            "notes": [
+                f"FOC: {foc:.1f}% (optimal: 10-15%)",
+                f"Estimated speed: {arrow_speed_estimate} fps",
+                "Dynamic spine accounts for real-world arrow flex"
+            ]
+        }
+    
+    def _estimate_arrow_speed(self, bow_config: BowConfiguration, arrow_weight: float) -> float:
+        """Estimate arrow speed based on bow IBO and arrow weight"""
+        
+        # Basic IBO to actual speed conversion
+        # Assumes 5 gr per pound of draw weight, 30" draw
+        standard_arrow_weight = 5 * bow_config.draw_weight
+        
+        # Speed reduction per grain over standard
+        weight_factor = (arrow_weight - standard_arrow_weight) / standard_arrow_weight
+        speed_reduction = weight_factor * 10  # Rough approximation
+        
+        # Adjust for actual draw length vs standard 30"
+        length_factor = bow_config.draw_length / 30.0
+        
+        estimated_speed = bow_config.ibo_speed * length_factor - speed_reduction
+        
+        return max(150, estimated_speed)  # Minimum realistic speed
+    
+    def _calculate_foc(self, arrow_length: float, point_weight: float, shaft_weight: float,
+                      nock_weight: float, fletching_weight: float) -> float:
+        """Calculate Front of Center percentage"""
+        
+        # Calculate balance point
+        total_weight = point_weight + shaft_weight + nock_weight + fletching_weight
+        
+        # Approximate shaft center (middle of shaft)
+        shaft_center = arrow_length / 2
+        
+        # Weighted center calculation
+        # Point at front (0"), shaft center at middle, nock/fletching at back
+        weighted_center = (
+            (point_weight * 0) + 
+            (shaft_weight * shaft_center) + 
+            ((nock_weight + fletching_weight) * arrow_length)
+        ) / total_weight
+        
+        # FOC = (Balance point - shaft center) / shaft length * 100
+        foc = ((shaft_center - weighted_center) / arrow_length) * 100
+        
+        return foc
     
     def _get_traditional_base_spine(self, draw_weight: float, arrow_length: float) -> float:
         """Get base spine for traditional bows using actual wood arrow spine chart"""
