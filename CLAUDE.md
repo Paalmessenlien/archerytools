@@ -33,6 +33,10 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **Enhanced Production Infrastructure**: Comprehensive Docker deployment with verification and health checks
 - ✅ **Interactive Tuning Guides**: Complete guided tuning system with step-by-step walkthroughs
 - ✅ **Bow Saving Fix**: Resolved production database persistence issues with enhanced infrastructure
+- ✅ **Manufacturer Filter Fix**: Resolved 0% match score issue when filtering by specific manufacturers
+- ✅ **Spine and Weight Display**: Fixed spine value and total arrow weight calculations in my setup page
+- ✅ **UI Accessibility Enhancement**: Filters remain accessible when no recommendations are found
+- ✅ **Calculator Navigation**: Added Calculator link to desktop and mobile navigation menus
 - ✅ **GitHub Issue #16 Completion**: Complete bow configuration system fixes including 0.5 draw weight increments, point weight validation (40+ gn), arrow length fields, and enhanced form persistence
 - ✅ **Rebranding**: Changed from "Arrow Tuning Platform" to "Archery Tools" throughout the system
 - ✅ **Navigation Update**: Replaced "Bow Setup" with "Home" in navigation menu
@@ -1097,9 +1101,45 @@ The Archery Tools platform provides:
   curl http://localhost:5000/api/simple-health
   ```
 
-### Recent Fixes & Enhancements (July 2025)
+### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Manufacturer Filter Match Scoring Fix (August 2025):**
+- **Issue**: Manufacturer dropdown filtering showing 0% match scores while "All Manufacturers" showed proper 90-95% scores
+- **Root Cause**: Two different API flows - manufacturer filtering was using database API instead of tuning API
+- **Solution**: 
+  - Fixed manufacturer name mapping in arrow matching engine (Easton → Easton Archery)
+  - Added `preferred_manufacturers` parameter to archer profile in API
+  - Unified all filtering to use tuning API with proper bow configuration matching
+  - Removed `loadArrowsFromManufacturer` function that was bypassing proper scoring
+- **Files**: `arrow_scraper/arrow_matching_engine.py`, `arrow_scraper/api.py`, `frontend/components/ArrowRecommendationsList.vue`
+- **Status**: ✅ **RESOLVED** - All manufacturer filtering now shows proper match scores
+
+**Spine and Weight Display Fix (August 2025):**
+- **Issue**: My setup page showing "Spine: N/A" and missing total arrow weight calculations
+- **Root Cause**: API not returning spine specifications needed for calculations
+- **Solution**:
+  - Enhanced setup arrows API to include spine specifications with GPI weights
+  - Added `getDisplaySpine()` function with proper fallback logic
+  - Improved `calculateTotalArrowWeight()` with better spine specification matching
+- **Files**: `arrow_scraper/api.py`, `frontend/components/BowSetupArrowsList.vue`
+- **Status**: ✅ **RESOLVED** - Spine values and total weights now display correctly
+
+**UI Accessibility Enhancement (August 2025):**
+- **Issue**: When no recommendations found, filters become inaccessible, creating UX dead ends
+- **Solution**: Restructured component to keep filters always visible with "No Recommendations" message below
+- **Benefits**: Users can adjust manufacturer, weight, search terms without clearing all filters
+- **Files**: `frontend/components/ArrowRecommendationsList.vue`
+- **Status**: ✅ **ENHANCED** - Better discoverability and user experience
+
+**Calculator Navigation Addition (August 2025):**
+- **Issue**: Calculator page missing from main navigation menus
+- **Solution**: Added Calculator links to both desktop and mobile navigation
+- **Files**: `frontend/layouts/default.vue`
+- **Status**: ✅ **ADDED** - Calculator now accessible from all pages
+
+### Legacy Fixes & Enhancements (July 2025)
 
 **GitHub Issue #16 - Bow Configuration Form Fixes:**
 - **Issue**: Draw weight increments not set to 0.5 steps, missing arrow length and point weight fields in add modal, bow setup editing not persisting changes properly.
