@@ -62,6 +62,38 @@ check_port() {
     fi
 }
 
+# Function to run database migrations
+run_migrations() {
+    log "Running database migrations..."
+    
+    cd arrow_scraper
+    
+    # Activate virtual environment if it exists
+    if [ -f "../venv/bin/activate" ]; then
+        source ../venv/bin/activate
+    fi
+    
+    # Run the migration script
+    if [ -f "run-migrations.py" ]; then
+        python run-migrations.py
+        if [ $? -eq 0 ]; then
+            success "Database migrations completed successfully"
+        else
+            error "Database migrations failed!"
+            cd ..
+            return 1
+        fi
+    else
+        warning "Migration runner not found, checking for individual migrations..."
+        # Try the legacy migration approach
+        if [ -f "migrate_bow_setups_schema.py" ]; then
+            python migrate_bow_setups_schema.py || true
+        fi
+    fi
+    
+    cd ..
+}
+
 # Function to start API backend
 start_api() {
     log "Starting Flask API backend on port $API_PORT..."
@@ -202,8 +234,15 @@ case "${1:-start}" in
         log "Starting ArrowTuner Dual Architecture..."
         
         # Save script's PID and PGID for robust stopping
-        echo $ > logs/script.pid
+        echo $$ > logs/script.pid
         python -c "import os; print(os.getpgrp())" > logs/script.pgid
+        
+        # Run migrations before starting services
+        run_migrations
+        if [ $? -ne 0 ]; then
+            error "Migration failed, aborting startup"
+            exit 1
+        fi
         
         start_api
         start_frontend
@@ -219,6 +258,14 @@ case "${1:-start}" in
     restart)
         stop_services
         sleep 2
+        
+        # Run migrations before starting services
+        run_migrations
+        if [ $? -ne 0 ]; then
+            error "Migration failed, aborting startup"
+            exit 1
+        fi
+        
         start_api
         start_frontend
         check_health

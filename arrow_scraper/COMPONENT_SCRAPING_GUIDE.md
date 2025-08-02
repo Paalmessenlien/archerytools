@@ -8,7 +8,7 @@ The component system consists of:
 
 1. **Component Configuration** (`config/components.yaml`) - Defines suppliers, categories, and translation mappings
 2. **Component Scraper** (`scrape_components.py`) - Scrapes German component pages and translates data
-3. **Component Database** (`component_database_manager.py`) - Stores and manages component data
+3. **Unified Database** (`arrow_database.db`) - Stores component data alongside arrow specifications
 
 ## Quick Start
 
@@ -29,14 +29,12 @@ python scrape_components.py --import-from-sitemap ../docs/sitemap_non_komponente
 ### 2. Import Components into Database
 
 ```bash
-# Import a specific JSON file
-python component_database_manager.py --import data/processed/components/tophat_archery_components_*.json
+# Import component JSON files into unified database
+python component_importer.py --force
 
-# Import all component JSON files from directory
-python component_database_manager.py --import-all data/processed/components/
-
-# Show database statistics
-python component_database_manager.py --stats
+# Component data is automatically integrated with arrow database
+# Components are stored in the same arrow_database.db file
+# View component data via API endpoints: /api/components
 ```
 
 ## Component Categories Detected
@@ -124,9 +122,9 @@ The system intelligently parses German measurements:
 ### Search Components by Specifications
 
 ```python
-from component_database_manager import ComponentDatabase
+from component_database import ComponentDatabase
 
-db = ComponentDatabase()
+db = ComponentDatabase("arrow_database.db")
 
 # Find 30-grain inserts
 inserts = db.search_components(category="inserts", weight_min=30, weight_max=30)
@@ -142,7 +140,7 @@ compatible = db.get_compatible_components(arrow_inner_diameter=0.246)
 python scrape_components.py --import-from-sitemap ../docs/sitemap_non_komponentensuche.json
 
 # Import everything into database
-python component_database_manager.py --import-all data/processed/components/
+python component_importer.py --force
 ```
 
 ## Integration with Arrow System

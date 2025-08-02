@@ -42,6 +42,7 @@
               <span>80 lbs</span>
             </div>
           </div>
+          
         </div>
         
         <!-- Bow Type Specific Configuration -->
@@ -495,6 +496,7 @@ const setupData = ref({
   compound_brand: '',
   compound_model: '',
   bow_usage: [],
+  insert_weight: null, // Optional insert weight
   // Additional fields for proper API compatibility
   brand: '', // For compound bow brand selection
   custom_brand: '',
@@ -539,8 +541,10 @@ watch(() => props.modelValue, (newValue) => {
       riser_length: newValue.riser_length || '',
       limb_length: newValue.limb_length || '',
       compound_model: newValue.compound_model || '',
+      ibo_speed: newValue.ibo_speed || '',
       bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : [],
-      draw_weight: newValue.draw_weight || 45 // Ensure draw weight is set
+      draw_weight: newValue.draw_weight || 45, // Ensure draw weight is set
+      insert_weight: newValue.insert_weight || null
     };
   }
 }, { immediate: true });
@@ -593,17 +597,14 @@ const saveBowSetup = () => {
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
-    draw_length: Number(setupData.value.draw_length) || 0, // Ensure draw_length is a number
-    arrow_length: Number(setupData.value.arrow_length) || null,
-    point_weight: Number(setupData.value.point_weight) || null,
     insert_weight: Number(setupData.value.insert_weight) || null,
-    fletching_weight: Number(setupData.value.fletching_weight) || null,
     description: setupData.value.description || '',
     bow_usage: JSON.stringify(setupData.value.bow_usage || []),
     
     // Compound-specific fields
     compound_brand: setupData.value.bow_type === 'compound' ? getBrandValue('brand', 'custom_brand') : '',
     compound_model: setupData.value.bow_type === 'compound' ? setupData.value.compound_model || '' : '',
+    ibo_speed: setupData.value.bow_type === 'compound' ? Number(setupData.value.ibo_speed) || null : null,
     
     // Recurve/Traditional-specific fields
     riser_brand: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 

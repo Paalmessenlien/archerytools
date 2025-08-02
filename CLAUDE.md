@@ -468,7 +468,29 @@ python test_admin_api.py
 - **Docker Deployment Guide**: See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive Docker deployment instructions
 - **Production Server Guide**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for full production server setup, SSL, monitoring, and maintenance
 
-**Quick Start Production Deployment**
+**Standard Production Deployment (Recommended)**
+```bash
+# Step 1: Clone and configure
+git clone https://github.com/Paalmessenlien/archerytools.git
+cd archerytools
+
+# Step 2: Import arrow data (NO server-side scraping)
+./production-import-only.sh
+
+# Step 3: Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Step 4: Deploy with standard Docker configuration
+./deploy-production.sh
+
+# Access URLs after deployment:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:5000/api/health
+# - Nginx: http://localhost
+```
+
+**Enhanced Production Deployment (SSL + Domain)**
 ```bash
 # Step 1: Clone and configure
 git clone https://github.com/Paalmessenlien/archerytools.git
@@ -496,16 +518,19 @@ sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 **Production Features:**
 - ✅ Enhanced Docker infrastructure with verification and health checks
 - ✅ Import-only data system (NO server-side web scraping)
+- ✅ Unified database architecture (arrow_database.db + user_data.db)
 - ✅ Nginx reverse proxy with SSL termination and security headers
 - ✅ Automatic HTTP to HTTPS redirects with rate limiting
 - ✅ Docker containerization with extended health checks and resource limits
 - ✅ Persistent user database with Docker volumes
 - ✅ Material Design 3 UI with dark mode support
 - ✅ Professional arrow tuning calculations and recommendations
+- ✅ Component integration (inserts, nocks, points) in unified database
 - ✅ Comprehensive backup and monitoring systems
 
 **Key Deployment Scripts:**
 - `production-import-only.sh` - Import arrow data from JSON files (NO scraping)
+- `deploy-production.sh` - Standard Docker deployment with Nginx reverse proxy
 - `deploy-enhanced.sh` - Enhanced production deployment with verification
 - `docker-production-setup.sh` - Automated Docker setup with health checks
 - `test-bow-saving.py` - Production functionality testing utility
@@ -564,6 +589,32 @@ sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 - **Backup Recommended**: Automated backup system included in enhanced deployment
 - **Verification**: Use `test-bow-saving.py` to verify production functionality
 - **Health Checks**: Extended health monitoring with 120s startup periods
+
+### Database Architecture
+
+**Unified Database System (2025 Update):**
+- ✅ **Arrow Database** (`arrow_database.db`): Arrow specifications, spine data, components, and component categories
+- ✅ **User Database** (`user_data.db`): User accounts, bow setups, guide sessions, and arrow assignments
+- ❌ **Legacy Removed**: `component_database.db` (merged into arrow_database.db)
+
+**Key Features:**
+- **Data Separation**: Arrow/component data separate from user data for clean rebuilds
+- **Docker Volumes**: User data persists through container rebuilds and updates
+- **Import System**: JSON files automatically imported to arrow database during startup
+- **Migration Support**: Automatic schema migrations for both databases
+- **Component Integration**: Components (inserts, nocks, points) stored with arrows in unified database
+
+**Production Database Files:**
+```
+arrow_scraper/
+├── arrow_database.db      # Arrow specs, spine data, components (rebuilt from JSON)
+├── user_data.db          # User accounts, bow setups (persistent)
+└── data/processed/       # Source JSON files for arrow data
+    ├── easton_arrows.json
+    ├── goldtip_arrows.json
+    └── components/
+        └── tophat_archery_components_*.json
+```
 
 ### Environment Configuration
 **Development:** Create `.env` file in `arrow_scraper/` directory:

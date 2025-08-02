@@ -1,0 +1,167 @@
+{
+  "manufacturer": "goldtip",
+  "component_type": "nocks",
+  "total_components": 8,
+  "scraped_at": "2025-08-02T10:47:33.632150",
+  "source_url": "https://www.goldtip.com/components/nocks/",
+  "components": [
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock - .166 GTO",
+      "component_type": "nocks",
+      "specifications": {
+        "fit_type": "pin",
+        "colors": [
+          "green",
+          "blue",
+          "orange",
+          "black",
+          "pink"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw1334ecaf/images/large/GT_Components/GT_GTO_NOCKS_GROUP_NEW.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$9.99-$59.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632177"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock - .204 Accu-Tough",
+      "component_type": "nocks",
+      "specifications": {
+        "fit_type": "pin",
+        "colors": [
+          "green",
+          "blue",
+          "orange",
+          "black",
+          "pink"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw4fc608bf/images/large/GT_Components/Accutough_Nocks_Group_New.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$9.99-$59.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632184"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock - .246 GT",
+      "component_type": "nocks",
+      "specifications": {
+        "nock_size": "0.246",
+        "fit_type": "pin",
+        "colors": [
+          "green",
+          "blue",
+          "orange",
+          "black",
+          "pink"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw8230166d/images/large/GT_Components/GT_246_Nocks.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$9.99-$59.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632188"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock -  .246 Accu-Lite",
+      "component_type": "nocks",
+      "specifications": {
+        "nock_size": "0.246",
+        "fit_type": "pin",
+        "colors": [
+          "green",
+          "blue",
+          "orange",
+          "black",
+          "pink"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwc45a5783/images/large/GT_Components/GT_Accu-Lite_Group_New.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$9.99-$59.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632191"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Pin Nock Mini HD",
+      "component_type": "nocks",
+      "specifications": {
+        "fit_type": "pin",
+        "colors": [
+          "yellow",
+          "green",
+          "blue",
+          "black"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw1d4aefd4/images/large/GT_Components/Pin_Nock_Mini_HD_Group_New.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$19.99-$69.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632194"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Pin Nock - HD",
+      "component_type": "nocks",
+      "specifications": {
+        "fit_type": "pin",
+        "colors": [
+          "green",
+          "blue",
+          "orange",
+          "black",
+          "pink"
+        ]
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw4a0e4f69/images/large/GT_Components/GT_HD_Pin_Nock_Group_New.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$19.99-$69.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632197"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock - Nitro",
+      "component_type": "nocks",
+      "specifications": {},
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$19.99-$109.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632199"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Nock - Ballistic & Swift",
+      "component_type": "nocks",
+      "specifications": {
+        "material": "aluminum",
+        "colors": [
+          "yellow",
+          "green",
+          "orange"
+        ]
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$9.99-$109.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/nocks/",
+      "scraped_at": "2025-08-02T10:47:33.632202"
+    }
+  ]
+}

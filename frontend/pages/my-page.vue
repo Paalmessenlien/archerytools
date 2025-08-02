@@ -149,6 +149,9 @@
                     </div>
                     <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
                       <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
+                      <span v-if="setup.ibo_speed" class="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                        {{ setup.ibo_speed }} fps IBO
+                      </span>
                     </div>
                     
                     <!-- Additional Component Weights (if specified) -->
@@ -428,6 +431,7 @@ const openEditBowSetupModal = (setup) => {
     // Pass existing brand data for the modal to handle
     compound_brand: setup.compound_brand || '',
     compound_model: setup.compound_model || '',
+    ibo_speed: setup.ibo_speed || '',
     riser_brand: setup.riser_brand || '',
     riser_model: setup.riser_model || '',
     riser_length: setup.riser_length || '',

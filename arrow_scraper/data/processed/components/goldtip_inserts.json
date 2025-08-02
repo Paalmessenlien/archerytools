@@ -1,0 +1,191 @@
+{
+  "manufacturer": "goldtip",
+  "component_type": "inserts",
+  "total_components": 13,
+  "scraped_at": "2025-08-02T10:54:45.570009",
+  "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+  "components": [
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - .204 - Airstrike",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwd54f9f1d/images/large/GT_Components/Airstrike_AL_Insert.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570024"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Ballistic Collar -.166",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw40e99740/images/large/GT_Components/GT_166_Ballistic_Collars.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570030"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - .246",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw526532d4/images/large/GT_Components/GT_Insert_246.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$9.99-$139.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570033"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - .166",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwc1fb1fff/images/large/GT_Components/GT_166_Insert.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99-$169.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570036"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - .204 - Kinetic Series",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwe4cc7fb7/images/large/GT_Components/GT_204_Insert_Kinetic_Series.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99-$159.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570039"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Ballistic Collar - .204 - Traditional Classic",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw4016eb62/images/large/GT_Components/GT_Traditional_Classic_Ballistic_Collar.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570042"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - Nitro",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$19.99-$139.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570044"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - Series 22",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$19.99-$89.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570047"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - X-Cutter",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570049"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - 30X",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570052"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert - . 204 - Traditional Classic",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570054"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Insert Swift & Ballistic",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$19.99-$139.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570056"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Ballistic Collar - .204 Airstrike",
+      "component_type": "inserts",
+      "specifications": {
+        "type": "insert"
+      },
+      "image_url": null,
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/inserts/?cgid=inserts&start=1&sz=13",
+      "scraped_at": "2025-08-02T10:54:45.570058"
+    }
+  ]
+}

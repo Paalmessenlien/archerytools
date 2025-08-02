@@ -59,7 +59,7 @@ class UserDatabase:
                 )
             """)
             
-            # Create bow_setups table
+            # Create bow_setups table (draw_length moved to users table)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS bow_setups (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,11 +67,6 @@ class UserDatabase:
                     name TEXT NOT NULL,
                     bow_type TEXT NOT NULL,
                     draw_weight REAL NOT NULL,
-                    draw_length REAL NOT NULL,
-                    arrow_length REAL,
-                    point_weight REAL,
-                    nock_weight REAL,
-                    fletching_weight REAL,
                     insert_weight REAL,
                     description TEXT,
                     bow_usage TEXT,
@@ -168,6 +163,13 @@ class UserDatabase:
             self._migrate_user_profile_fields(cursor)
             self._migrate_bow_setup_fields(cursor)
             
+            conn.close()
+            
+            # Run specialized migrations that need separate connections
+            self.migrate_draw_length_to_users()
+            self.remove_draw_length_from_bow_setups()
+            self.add_ibo_speed_to_bow_setups()
+            
             print(f"✅ User database initialized at {self.db_path}")
         except sqlite3.Error as e:
             print(f"❌ Error initializing user database at {self.db_path}: {e}")
@@ -216,13 +218,25 @@ class UserDatabase:
             cursor.execute("PRAGMA table_info(bow_setups)")
             columns = [column[1] for column in cursor.fetchall()]
             
-            if 'arrow_length' not in columns:
-                cursor.execute("ALTER TABLE bow_setups ADD COLUMN arrow_length REAL")
-                print("✅ Added arrow_length column to bow_setups table")
-                
-            if 'point_weight' not in columns:
-                cursor.execute("ALTER TABLE bow_setups ADD COLUMN point_weight REAL")
-                print("✅ Added point_weight column to bow_setups table")
+            # Add any missing bow-specific fields
+            fields_to_add = [
+                ('riser_brand', 'TEXT'),
+                ('riser_model', 'TEXT'),
+                ('riser_length', 'TEXT'),
+                ('limb_brand', 'TEXT'),
+                ('limb_model', 'TEXT'),
+                ('limb_length', 'TEXT'),
+                ('compound_brand', 'TEXT'),
+                ('compound_model', 'TEXT'),
+                ('insert_weight', 'REAL'),
+                ('bow_usage', 'TEXT'),
+                ('description', 'TEXT')
+            ]
+            
+            for field_name, field_type in fields_to_add:
+                if field_name not in columns:
+                    cursor.execute(f"ALTER TABLE bow_setups ADD COLUMN {field_name} {field_type}")
+                    print(f"✅ Added {field_name} column to bow_setups table")
                 
         except sqlite3.Error as e:
             print(f"⚠️ Warning during bow_setups migration: {e}")
@@ -277,6 +291,103 @@ class UserDatabase:
             
         except sqlite3.Error as e:
             print(f"❌ Error during draw_length migration: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+    def remove_draw_length_from_bow_setups(self):
+        """Migration: Remove draw_length column from bow_setups table"""
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Check if draw_length column exists in bow_setups
+            cursor.execute("PRAGMA table_info(bow_setups)")
+            columns = {col[1] for col in cursor.fetchall()}
+            
+            if 'draw_length' not in columns:
+                print("✅ draw_length column already removed from bow_setups")
+                return
+                
+            print("🔄 Removing draw_length column from bow_setups table...")
+            
+            # Create new table without draw_length
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS bow_setups_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    bow_type TEXT NOT NULL,
+                    draw_weight REAL NOT NULL,
+                    insert_weight REAL,
+                    description TEXT,
+                    bow_usage TEXT,
+                    riser_brand TEXT,
+                    riser_model TEXT,
+                    riser_length TEXT,
+                    limb_brand TEXT,
+                    limb_model TEXT,
+                    limb_length TEXT,
+                    compound_brand TEXT,
+                    compound_model TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Copy data without draw_length column
+            cursor.execute("""
+                INSERT INTO bow_setups_new (
+                    id, user_id, name, bow_type, draw_weight, insert_weight, description,
+                    bow_usage, riser_brand, riser_model, riser_length, limb_brand, limb_model, 
+                    limb_length, compound_brand, compound_model, created_at
+                )
+                SELECT 
+                    id, user_id, name, bow_type, draw_weight, insert_weight, description,
+                    bow_usage, riser_brand, riser_model, riser_length, limb_brand, limb_model, 
+                    limb_length, compound_brand, compound_model, created_at
+                FROM bow_setups
+            """)
+            
+            # Replace old table
+            cursor.execute("DROP TABLE bow_setups")
+            cursor.execute("ALTER TABLE bow_setups_new RENAME TO bow_setups")
+            
+            conn.commit()
+            print("✅ Successfully removed draw_length from bow_setups table")
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error removing draw_length from bow_setups: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+    def add_ibo_speed_to_bow_setups(self):
+        """Migration: Add ibo_speed column to bow_setups table for compound bows"""
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Check if ibo_speed column exists
+            cursor.execute("PRAGMA table_info(bow_setups)")
+            columns = {col[1] for col in cursor.fetchall()}
+            
+            if 'ibo_speed' in columns:
+                print("✅ ibo_speed column already exists in bow_setups")
+                return
+                
+            print("🔄 Adding ibo_speed column to bow_setups table...")
+            
+            # Add ibo_speed column for compound bow specifications
+            cursor.execute("ALTER TABLE bow_setups ADD COLUMN ibo_speed REAL")
+            
+            conn.commit()
+            print("✅ Successfully added ibo_speed column to bow_setups table")
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error adding ibo_speed to bow_setups: {e}")
         finally:
             if conn:
                 conn.close()
@@ -500,21 +611,15 @@ class UserDatabase:
             
             cursor.execute("""
                 INSERT INTO bow_setups (
-                    user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight,
-                    nock_weight, fletching_weight, insert_weight, description,
+                    user_id, name, bow_type, draw_weight, insert_weight, description,
                     bow_usage, riser_brand, riser_model, riser_length, limb_brand, limb_model, limb_length,
-                    compound_brand, compound_model
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    compound_brand, compound_model, ibo_speed
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id,
                 setup_data.get('name'),
                 setup_data.get('bow_type'),
                 setup_data.get('draw_weight'),
-                setup_data.get('draw_length'),
-                setup_data.get('arrow_length'),
-                setup_data.get('point_weight'),
-                setup_data.get('nock_weight'),
-                setup_data.get('fletching_weight'),
                 setup_data.get('insert_weight'),
                 setup_data.get('description'),
                 setup_data.get('bow_usage'),
@@ -525,7 +630,8 @@ class UserDatabase:
                 setup_data.get('limb_model'),
                 setup_data.get('limb_length'),
                 setup_data.get('compound_brand'),
-                setup_data.get('compound_model')
+                setup_data.get('compound_model'),
+                setup_data.get('ibo_speed')
             ))
             
             setup_id = cursor.lastrowid
@@ -554,10 +660,9 @@ class UserDatabase:
             update_fields = []
             params = []
             
-            for field in ['name', 'bow_type', 'draw_weight', 'draw_length', 
-                         'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
+            for field in ['name', 'bow_type', 'draw_weight', 
                          'insert_weight', 'description', 'bow_usage', 'riser_brand', 'riser_model', 
-                         'riser_length', 'limb_brand', 'limb_model', 'limb_length', 'compound_brand', 'compound_model']:
+                         'riser_length', 'limb_brand', 'limb_model', 'limb_length', 'compound_brand', 'compound_model', 'ibo_speed']:
                 if field in setup_data:
                     update_fields.append(f"{field} = ?")
                     params.append(setup_data[field])

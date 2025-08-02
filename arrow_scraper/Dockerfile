@@ -29,15 +29,16 @@ COPY . .
 RUN mkdir -p /app/data/processed /app/data/raw /app/user_data
 
 # Set proper permissions
-RUN chmod +x /app/api.py /app/build-database.py /app/start-api.sh
+RUN chmod +x /app/api.py /app/database_import_manager.py /app/start-api-robust.sh /app/start-api.sh
 
 # Create non-root user with specific UID/GID for consistency
 RUN addgroup --gid 1000 appgroup && \
     adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
 
-# Build database as root, then change ownership
-RUN python build-database-robust.py && \
-    echo "Database build completed, checking result:" && \
+# Import arrow database from JSON files using modern import system
+RUN echo "🏹 Building arrow database from JSON files..." && \
+    python database_import_manager.py --import-all --force && \
+    echo "Database import completed, checking result:" && \
     ls -la arrow_database.db && \
     python -c "import sqlite3; conn=sqlite3.connect('arrow_database.db'); print('Arrow count:', conn.execute('SELECT COUNT(*) FROM arrows').fetchone()[0]); conn.close()" && \
     echo "Copying database to backup location:" && \
@@ -61,5 +62,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 5000
 
-# Run the application with database initialization
-CMD ["./start-api.sh"]
+# Run the application with enhanced database initialization
+CMD ["./start-api-robust.sh"]

@@ -935,43 +935,16 @@ def create_bow_setup(current_user):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    user_db = UserDatabase()
-    conn = user_db.get_connection()
-    cursor = conn.cursor()
     try:
-        cursor.execute(
-            "INSERT INTO bow_setups (user_id, name, bow_type, draw_weight, draw_length, arrow_length, point_weight, nock_weight, fletching_weight, insert_weight, description, bow_usage, riser_brand, riser_model, riser_length, limb_brand, limb_model, limb_length, compound_brand, compound_model) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                current_user['id'],
-                data['name'],
-                data['bow_type'],
-                data['draw_weight'],
-                data['draw_length'],
-                data.get('arrow_length'),
-                data.get('point_weight'),
-                data.get('nock_weight'),
-                data.get('fletching_weight'),
-                data.get('insert_weight'),
-                data.get('description'),
-                data.get('bow_usage'),
-                data.get('riser_brand'),
-                data.get('riser_model'),
-                data.get('riser_length'),
-                data.get('limb_brand'),
-                data.get('limb_model'),
-                data.get('limb_length'),
-                data.get('compound_brand'),
-                data.get('compound_model'),
-            ),
-        )
-        conn.commit()
-        new_setup_id = cursor.lastrowid
-        cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (new_setup_id,))
-        new_setup = cursor.fetchone()
-        conn.close()
-        return jsonify(dict(new_setup)), 201
+        # Use the UserDatabase class method for creating bow setups
+        user_db = UserDatabase()
+        new_setup = user_db.create_bow_setup(current_user['id'], data)
+        
+        if not new_setup:
+            return jsonify({'error': 'Failed to create bow setup'}), 500
+        
+        return jsonify(new_setup), 201
     except Exception as e:
-        conn.close()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>', methods=['PUT'])

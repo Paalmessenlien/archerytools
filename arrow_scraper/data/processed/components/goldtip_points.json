@@ -1,0 +1,51 @@
+{
+  "manufacturer": "goldtip",
+  "component_type": "points",
+  "total_components": 3,
+  "scraped_at": "2025-08-02T10:52:34.693370",
+  "source_url": "https://www.goldtip.com/components/points/?cgid=points&start=12&sz=12&srule=undefined",
+  "components": [
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Glue In Point - Accu Point Triple X",
+      "component_type": "points",
+      "specifications": {
+        "point_type": "unknown"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw058d9a17/images/large/GT_Components/GT_Points_Vanes/GT_TripleX_accu_Point.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$39.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/points/?cgid=points&start=12&sz=12&srule=undefined",
+      "scraped_at": "2025-08-02T10:52:34.693391"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Glue In Point - Series 22",
+      "component_type": "points",
+      "specifications": {
+        "point_type": "unknown"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwc3e15936/images/large/GT_Components/GT_Points_Vanes/GT_Series22_Glue_In_Point_Group.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/points/?cgid=points&start=12&sz=12&srule=undefined",
+      "scraped_at": "2025-08-02T10:52:34.693396"
+    },
+    {
+      "manufacturer": "goldtip",
+      "model_name": "Glue In Point - Accu Point 166",
+      "component_type": "points",
+      "specifications": {
+        "point_type": "unknown"
+      },
+      "image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw36e2b462/images/large/GT_Components/GT_Points_Vanes/GT_166_Accu_Point_Group.jpg?sw=300&sh=300&sm=fit",
+      "local_image_path": null,
+      "price_range": "$29.99-$49.99",
+      "description": null,
+      "source_url": "https://www.goldtip.com/components/points/?cgid=points&start=12&sz=12&srule=undefined",
+      "scraped_at": "2025-08-02T10:52:34.693400"
+    }
+  ]
+}
