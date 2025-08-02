@@ -49,11 +49,11 @@
             <!-- Arrow Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-3">
               <h5 class="font-medium text-gray-900 dark:text-gray-100">
-                {{ arrowSetup.arrow.manufacturer }}
+                {{ arrowSetup.arrow?.manufacturer || 'Unknown Manufacturer' }}
               </h5>
               <span class="hidden sm:inline text-gray-400">•</span>
               <span class="text-sm text-gray-700 dark:text-gray-300">
-                {{ arrowSetup.arrow.model_name }}
+                {{ arrowSetup.arrow?.model_name || 'Unknown Model' }}
               </span>
             </div>
             
@@ -75,7 +75,7 @@
               </md-assist-chip>
               
               <!-- Material -->
-              <md-assist-chip :label="arrowSetup.arrow.material || 'Material N/A'">
+              <md-assist-chip :label="arrowSetup.arrow?.material || 'Material N/A'">
                 <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #7c2d12;"></i>
               </md-assist-chip>
             </md-chip-set>
@@ -141,7 +141,7 @@
         <div class="flex justify-between items-center">
           <div>
             <span class="font-medium text-gray-900 dark:text-gray-100 text-sm">
-              {{ arrowSetup.arrow.manufacturer }} {{ arrowSetup.arrow.model_name }}
+              {{ arrowSetup.arrow?.manufacturer || 'Unknown' }} {{ arrowSetup.arrow?.model_name || 'Unknown' }}
             </span>
             <div class="text-xs text-gray-600 dark:text-gray-400">
               {{ arrowSetup.arrow_length }}" • {{ arrowSetup.point_weight }}gr • 

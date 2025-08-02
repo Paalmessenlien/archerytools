@@ -1161,16 +1161,22 @@ def get_setup_arrows(current_user, setup_id):
         arrow_conn = get_arrow_db()
         arrow_details = {}
         if arrow_conn:
-            arrow_cursor = arrow_conn.cursor()
-            for row in rows:
-                arrow_cursor.execute('''
-                    SELECT manufacturer, model_name, material, description
-                    FROM arrows WHERE id = ?
-                ''', (row['arrow_id'],))
-                arrow_data = arrow_cursor.fetchone()
-                if arrow_data:
-                    arrow_details[row['arrow_id']] = arrow_data
-            arrow_conn.close()
+            try:
+                arrow_cursor = arrow_conn.cursor()
+                for row in rows:
+                    arrow_cursor.execute('''
+                        SELECT manufacturer, model_name, material, description
+                        FROM arrows WHERE id = ?
+                    ''', (row['arrow_id'],))
+                    arrow_data = arrow_cursor.fetchone()
+                    if arrow_data:
+                        arrow_details[row['arrow_id']] = arrow_data
+                arrow_conn.close()
+            except Exception as e:
+                print(f"Error fetching arrow details: {e}")
+                arrow_conn.close()
+        else:
+            print("Warning: Arrow database connection failed - arrow details will not be available")
         
         arrows = []
         for row in rows:
@@ -1194,6 +1200,14 @@ def get_setup_arrows(current_user, setup_id):
                     'model_name': arrow_data['model_name'],
                     'material': arrow_data['material'],
                     'description': arrow_data['description']
+                }
+            else:
+                # Provide fallback arrow info when details are not available
+                arrow_info['arrow'] = {
+                    'manufacturer': 'Unknown Manufacturer',
+                    'model_name': f'Arrow ID {row["arrow_id"]}',
+                    'material': 'Unknown Material',
+                    'description': 'Arrow details not available'
                 }
             
             arrows.append(arrow_info)
