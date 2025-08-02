@@ -32,12 +32,87 @@ except ImportError as e:
 try:
     from models import TranslationService, SpineSpecification
 except ImportError:
-    # Simple fallback translation service
+    # DeepSeek-based translation service
     class TranslationService:
         def __init__(self, api_key):
-            pass
+            self.api_key = api_key
+        
         async def translate_text(self, text, source_lang='de', target_lang='en'):
-            return text  # Return original text if translation fails
+            """Translate text using DeepSeek API"""
+            try:
+                import httpx
+                
+                # DeepSeek API endpoint
+                url = "https://api.deepseek.com/v1/chat/completions"
+                
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                # Create translation prompt
+                prompt = f"""Translate this German archery text to English. Return ONLY the translated text with no additional comments, notes, or formatting.
+
+RULES:
+- Preserve exact measurements and numbers (±.001", 8.4 GPI, spine 300, etc.)
+- Keep product names and brand names unchanged  
+- Keep archery terms accurate (Target, 3D, Field, etc.)
+- Return only the clean English translation
+
+German text: {text}
+
+English translation:"""
+
+                data = {
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {
+                            "role": "user", 
+                            "content": prompt
+                        }
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 1000
+                }
+                
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(url, headers=headers, json=data)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        if 'choices' in result and len(result['choices']) > 0:
+                            translated_text = result['choices'][0]['message']['content'].strip()
+                            
+                            # Clean up the response - remove common formatting artifacts
+                            # Remove quotes
+                            if translated_text.startswith('"') and translated_text.endswith('"'):
+                                translated_text = translated_text[1:-1]
+                            
+                            # Remove "English translation:" prefix if present
+                            if translated_text.lower().startswith('english translation:'):
+                                translated_text = translated_text[19:].strip()
+                            
+                            # Remove markdown formatting
+                            translated_text = translated_text.replace('**', '').replace('*', '')
+                            
+                            # Clean up multiple spaces and newlines
+                            translated_text = ' '.join(translated_text.split())
+                            
+                            # Remove any trailing notes or parenthetical comments
+                            import re
+                            # Remove content after "(Note:" or similar patterns
+                            translated_text = re.sub(r'\s*\(Note:.*$', '', translated_text, flags=re.IGNORECASE | re.DOTALL)
+                            translated_text = re.sub(r'\s*\*\*Key Notes.*$', '', translated_text, flags=re.IGNORECASE | re.DOTALL)
+                            translated_text = re.sub(r'\s*Let me know.*$', '', translated_text, flags=re.IGNORECASE | re.DOTALL)
+                            
+                            return translated_text.strip()
+                    else:
+                        print(f"Translation API error: {response.status_code}")
+                        return text  # Return original if translation fails
+                        
+            except Exception as e:
+                print(f"Translation error: {e}")
+                return text  # Return original text if translation fails
     
     # Simple spine specification for compatibility
     class SpineSpecification:
@@ -364,33 +439,73 @@ class TopHatArcheryScraper:
     async def _translate_product_content(self, product: TopHatProduct):
         """Translate German product content to English"""
         try:
+            translations_made = []
+            
             # Translate title if it contains German
             if product.title and self._is_german_text(product.title):
+                self.logger.info(f"Translating title: {product.title[:50]}...")
                 translated_title = await self.translation_service.translate_text(
                     product.title, source_lang='de', target_lang='en'
                 )
-                if translated_title:
+                if translated_title and translated_title != product.title:
                     product.title = translated_title
+                    translations_made.append("title")
             
             # Translate description if it contains German
             if product.description and self._is_german_text(product.description):
+                self.logger.info(f"Translating description: {product.description[:50]}...")
                 translated_desc = await self.translation_service.translate_text(
                     product.description, source_lang='de', target_lang='en'
                 )
-                if translated_desc:
+                if translated_desc and translated_desc != product.description:
                     product.description = translated_desc
+                    translations_made.append("description")
+            
+            # Translate arrow_type if it contains German
+            if product.arrow_type and self._is_german_text(product.arrow_type):
+                self.logger.info(f"Translating arrow type: {product.arrow_type}")
+                translated_type = await self.translation_service.translate_text(
+                    product.arrow_type, source_lang='de', target_lang='en'
+                )
+                if translated_type and translated_type != product.arrow_type:
+                    product.arrow_type = translated_type
+                    translations_made.append("arrow_type")
+            
+            if translations_made:
+                self.logger.info(f"Successfully translated: {', '.join(translations_made)}")
+            else:
+                self.logger.debug("No translation needed or no German text detected")
                     
         except Exception as e:
             self.logger.warning(f"Translation failed for product: {e}")
     
     def _is_german_text(self, text: str) -> bool:
-        """Simple check if text contains German indicators"""
+        """Enhanced check if text contains German indicators"""
+        if not text or len(text.strip()) < 10:
+            return False  # Too short to reliably detect language
+            
         german_indicators = [
-            'durchmesser', 'gewicht', 'länge', 'toleranz', 'preis', 'material',
-            'für', 'und', 'mit', 'von', 'der', 'die', 'das', 'ist', 'sind'
+            # Technical archery terms
+            'durchmesser', 'gewicht', 'länge', 'toleranz', 'preis', 'material', 'spinewert',
+            'geradheit', 'auslieferungslänge', 'einsatzweck', 'zuggewicht', 'bogenschießen',
+            'zielscheibe', 'pfeil', 'schaft', 'bogen', 'schützen', 'präzision',
+            
+            # Common German words
+            'für', 'und', 'mit', 'von', 'der', 'die', 'das', 'ist', 'sind', 'eine', 'einen',
+            'werden', 'wurde', 'haben', 'wird', 'durch', 'auch', 'sehr', 'oder', 'als',
+            'bei', 'auf', 'zu', 'einem', 'einer', 'kann', 'über', 'nach', 'im', 'am',
+            
+            # German-specific characters and patterns
+            'ä', 'ö', 'ü', 'ß', 'dass', 'sich', 'nicht', 'mehr', 'beim', 'zum', 'zur'
         ]
+        
         text_lower = text.lower()
-        return any(indicator in text_lower for indicator in german_indicators)
+        
+        # Count German indicators
+        german_count = sum(1 for indicator in german_indicators if indicator in text_lower)
+        
+        # Consider it German if we find multiple indicators
+        return german_count >= 2
     
     def convert_to_arrow_format(self, products: List[TopHatProduct]) -> Dict[str, Any]:
         """Convert TopHat products to standard arrow import format"""

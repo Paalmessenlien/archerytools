@@ -10,10 +10,14 @@ The TopHat Archery scraper is a comprehensive tool for extracting arrow specific
 - **Primary**: LLM extraction using DeepSeek API for intelligent content parsing
 - **Fallback**: Manual extraction using BeautifulSoup and regex patterns for reliability
 
-### 🌍 German Language Support
-- Handles German product pages with automatic translation capability
-- Processes German technical terms (Spinewert, Pfeildurchmesser, etc.)
-- Converts German decimal format (5,40 → 5.40)
+### 🌍 German Language Support with DeepSeek Translation
+- **Automatic Translation**: German descriptions, titles, and arrow types translated to English using DeepSeek API
+- **Technical Precision**: Preserves spine values, measurements, and archery terminology exactly
+- **Smart Detection**: Enhanced German text detection with 30+ indicators
+- **Clean Output**: Removes formatting artifacts and provides professional translations
+- **Error Handling**: Graceful fallback to original text if translation fails
+- **German Technical Terms**: Processes Spinewert, Pfeildurchmesser, Auslieferungslänge, etc.
+- **Decimal Conversion**: Converts German decimal format (5,40 → 5.40)
 
 ### 📊 Comprehensive Data Extraction
 - Product titles and descriptions
@@ -50,7 +54,7 @@ Sitemap URLs → Crawl4AI → LLM/Manual Extraction → Product Objects → Arro
 ### Prerequisites
 ```bash
 # Install required dependencies
-pip install crawl4ai beautifulsoup4 pydantic aiofiles
+pip install crawl4ai beautifulsoup4 pydantic aiofiles httpx
 pip install playwright  # For browser automation
 playwright install     # Install browser binaries
 ```
@@ -127,8 +131,8 @@ Results are saved to `data/processed/extra/tophat_archery_arrows.json` to avoid 
         }
       ],
       "material": "Carbon",
-      "arrow_type": "3D, Allzweck, Feld, Target",
-      "description": "German description...",
+      "arrow_type": "3D, All-Round, Field, Target",
+      "description": "The AGIL™ follows the standard carbon shaft diameter and was designed as an ultra-light shaft...",
       "price_range": "133,35",
       "straightness_tolerance": "±.001\""
     }
@@ -172,9 +176,10 @@ Handles both imperial and metric measurements:
 ## Performance
 
 ### Timing
-- **Test Mode (5 URLs)**: ~15 seconds
-- **Limited Mode (50 URLs)**: ~3-4 minutes
-- **Full Mode (1,352 URLs)**: ~45-60 minutes (estimated)
+- **Test Mode (5 URLs)**: ~60 seconds (with translation)
+- **Limited Mode (50 URLs)**: ~15-20 minutes (with translation)
+- **Full Mode (1,352 URLs)**: ~4-5 hours (estimated with translation)
+- **Without Translation**: Previous timing applies (~45-60 minutes for full mode)
 
 ### Resource Usage
 - Uses AsyncWebCrawler for efficient concurrent processing
