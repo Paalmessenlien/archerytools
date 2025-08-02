@@ -424,9 +424,16 @@ class DatabaseImportManager:
             "errors": []
         }
         
-        # Process each manufacturer (use latest file for each)
+        # Process each manufacturer (prefer update files over learn files)
         manufacturer_files = {}
         for json_file, mod_time, manufacturer in json_files:
+            file_type = "learn" if "_learn_" in json_file.name else "update"
+            
+            # Skip learn files - they're for pattern learning, not production data
+            if file_type == "learn":
+                self.logger.info(f"Skipping learn file: {json_file.name} (pattern learning data)")
+                continue
+            
             if manufacturer not in manufacturer_files or mod_time > manufacturer_files[manufacturer][1]:
                 manufacturer_files[manufacturer] = (json_file, mod_time)
         

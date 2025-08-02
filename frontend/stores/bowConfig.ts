@@ -2,10 +2,13 @@ import { defineStore } from 'pinia'
 import type { BowConfiguration, ArrowRecommendation } from '~/types/arrow'
 
 export const useBowConfigStore = defineStore('bowConfig', () => {
-  // State
+  // Get user data to initialize with profile draw_length
+  const { user } = useAuth()
+  
+  // State - initialize with user profile data when available
   const bowConfig = ref<BowConfiguration>({
     draw_weight: 45,
-    draw_length: 28,
+    draw_length: user.value?.draw_length || 28,
     bow_type: 'compound',
     arrow_length: 29,
     point_weight: 125,
@@ -14,7 +17,13 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     nock_type: 'pin',
     vane_type: 'plastic',
     vane_length: 4,
-    number_of_vanes: 3
+    number_of_vanes: 3,
+    // Arrow component weights with defaults set to 0 unless picked
+    insert_weight: 0,       // Grains - no insert by default
+    vane_weight_per: 5,     // Grains per vane - typical plastic vane
+    vane_weight_override: false, // Boolean - whether to use manual vane weight
+    bushing_weight: 0,      // Grains - no bushing by default
+    nock_weight: 10         // Grains - typical nock weight
   })
 
   const recommendedSpine = ref<number | string | null>(null)
@@ -26,40 +35,37 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
   const isCompoundBow = computed(() => bowConfig.value.bow_type === 'compound')
   const isTraditionalBow = computed(() => ['longbow', 'traditional'].includes(bowConfig.value.bow_type))
   const arrowSetupDescription = computed(() => {
-    return `${bowConfig.value.arrow_length}" arrow with ${bowConfig.value.point_weight}gn point`
+    const material = bowConfig.value.arrow_material
+    const materialText = material ? material : 'any material'
+    return `${bowConfig.value.arrow_length}" ${materialText} arrow with ${bowConfig.value.point_weight}gn point`
   })
 
   const configSummary = computed(() => {
-    return `${bowConfig.value.draw_weight}lbs @ ${bowConfig.value.draw_length}"`
+    const drawLength = bowConfig.value.draw_length || 28
+    return `${bowConfig.value.draw_weight}lbs bow, ${drawLength}" draw`
   })
 
   // Actions
   const updateBowConfig = (updates: Partial<BowConfiguration>) => {
-    // Apply the updates first
+    // Apply the updates directly - let users choose any material for any bow type
     const newConfig = { ...bowConfig.value, ...updates }
-    
-    // Auto-select appropriate arrow material based on bow type
-    if ('bow_type' in updates) {
-      if (updates.bow_type === 'longbow' || updates.bow_type === 'traditional') {
-        // Automatically set to Wood for traditional bows (unless material was explicitly set)
-        if (!('arrow_material' in updates)) {
-          newConfig.arrow_material = 'Wood'
-        }
-      } else if (updates.bow_type === 'compound' || updates.bow_type === 'recurve') {
-        // Automatically set to Carbon for modern bows (unless material was explicitly set)
-        if (!('arrow_material' in updates)) {
-          newConfig.arrow_material = 'Carbon'
-        }
-      }
-    }
-    
     bowConfig.value = newConfig
+  }
+
+  const syncWithUserProfile = () => {
+    // Update bow config with user profile draw_length if no specific bow setup is loaded
+    if (user.value?.draw_length && !bowConfig.value.draw_length) {
+      updateBowConfig({ draw_length: user.value.draw_length })
+    } else if (user.value?.draw_length && bowConfig.value.draw_length === 28) {
+      // Update if still using default value
+      updateBowConfig({ draw_length: user.value.draw_length })
+    }
   }
 
   const resetBowConfig = () => {
     bowConfig.value = {
       draw_weight: 45,
-      draw_length: 28,
+      draw_length: user.value?.draw_length || 28,
       bow_type: 'compound',
       arrow_length: 29,
       point_weight: 125,
@@ -68,7 +74,13 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       nock_type: 'pin',
       vane_type: 'plastic',
       vane_length: 4,
-      number_of_vanes: 3
+      number_of_vanes: 3,
+      // Arrow component weights with defaults set to 0 unless picked
+      insert_weight: 0,       // Grains - no insert by default
+      vane_weight_per: 5,     // Grains per vane - typical plastic vane
+      vane_weight_override: false, // Boolean - whether to use manual vane weight
+      bushing_weight: 0,      // Grains - no bushing by default
+      nock_weight: 10         // Grains - typical nock weight
     }
     recommendedSpine.value = null
     recommendations.value = []
@@ -86,9 +98,66 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       lastCalculation.value = new Date()
     } catch (error) {
       console.error('Error calculating spine:', error)
-      throw error
+      console.warn('API failed, falling back to client-side calculation')
+      
+      // Fallback to client-side calculation
+      recommendedSpine.value = calculateSpineClientSide()
+      lastCalculation.value = new Date()
     } finally {
       isLoading.value = false
+    }
+  }
+
+  // Client-side spine calculation fallback
+  const calculateSpineClientSide = () => {
+    const drawWeight = bowConfig.value.draw_weight || 45  // Bow's marked draw weight
+    const arrowLength = bowConfig.value.arrow_length || 29  // Physical arrow length
+    const pointWeight = bowConfig.value.point_weight || 125
+    const bowType = bowConfig.value.bow_type || 'compound'
+    const arrowMaterial = bowConfig.value.arrow_material || 'carbon'
+    // NOTE: draw_length is NOT used in spine calculations - only for archer information
+    
+    // Check if wood material is specifically selected - use wood calculation
+    if (arrowMaterial && arrowMaterial.toLowerCase() === 'wood') {
+      // Wood arrow calculation (returns spine in pounds)
+      let baseSpine = drawWeight
+      
+      // Adjust for arrow length - wood arrows are less sensitive to length
+      const lengthAdjustment = (arrowLength - 28) * 2
+      baseSpine += lengthAdjustment
+      
+      // Wood arrow point weight adjustment (much more sensitive)
+      // Point weight adjustment table: 30gn=1, 70gn=2, 100gn=3, 125gn=4
+      const pointWeightTable = { 30: 1, 70: 2, 100: 3, 125: 4 }
+      const closestWeight = Object.keys(pointWeightTable).reduce((prev, curr) => 
+        Math.abs(curr - pointWeight) < Math.abs(prev - pointWeight) ? curr : prev
+      )
+      const pointAdjustmentValue = pointWeightTable[closestWeight]
+      const baselineAdjustment = 3 // 100gn baseline
+      const pointAdjustment = (pointAdjustmentValue - baselineAdjustment) * 2.5
+      baseSpine += pointAdjustment
+      
+      return Math.round(baseSpine) + '#' // Wood spine notation
+    } else {
+      // Carbon/aluminum arrow calculation
+      let baseSpine = drawWeight * 12.5
+      
+      // Adjust for arrow length (longer = weaker/higher spine number)
+      const lengthAdjustment = (arrowLength - 28) * 25
+      baseSpine += lengthAdjustment
+      
+      // Adjust for point weight (heavier = weaker/higher spine number)
+      const pointAdjustment = (pointWeight - 125) * 0.5
+      baseSpine += pointAdjustment
+      
+      // Bow type adjustments
+      if (bowType === 'recurve') {
+        baseSpine += 50
+      } else if (bowType === 'traditional' || bowType === 'longbow') {
+        baseSpine += 100
+      }
+      
+      return Math.round(baseSpine)
     }
   }
 
@@ -140,6 +209,11 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     }, 500)
   }, { deep: true })
 
+  // Watch for user changes and sync bow config
+  watch(user, () => {
+    syncWithUserProfile()
+  }, { immediate: true })
+
   return {
     // State
     bowConfig: readonly(bowConfig),
@@ -156,6 +230,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
 
     // Actions
     updateBowConfig,
+    syncWithUserProfile,
     resetBowConfig,
     calculateRecommendedSpine,
     getArrowRecommendations,

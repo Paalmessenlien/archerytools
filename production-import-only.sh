@@ -21,8 +21,8 @@ fi
 cd arrow_scraper
 
 echo "📂 Checking for JSON data files..."
-JSON_COUNT=$(find data/processed -name "*.json" -not -path "*/archive/*" | wc -l)
-echo "   Found $JSON_COUNT JSON files to import"
+JSON_COUNT=$(find data/processed -name "*.json" -not -path "*/archive/*" -not -name "*learn*" | wc -l)
+echo "   Found $JSON_COUNT JSON files to import (excluding learn files)"
 
 if [ "$JSON_COUNT" -eq 0 ]; then
     echo "❌ No JSON files found in data/processed/"
@@ -32,8 +32,15 @@ if [ "$JSON_COUNT" -eq 0 ]; then
 fi
 
 echo ""
-echo "📋 JSON Files Available:"
-find data/processed -name "*.json" -not -path "*/archive/*" | sort | sed 's/^/   /'
+echo "📋 JSON Files Available for Import:"
+find data/processed -name "*.json" -not -path "*/archive/*" -not -name "*learn*" | sort | sed 's/^/   /'
+
+LEARN_COUNT=$(find data/processed -name "*learn*.json" -not -path "*/archive/*" | wc -l)
+if [ "$LEARN_COUNT" -gt 0 ]; then
+    echo ""
+    echo "📚 Pattern Learning Files (excluded from import):"
+    find data/processed -name "*learn*.json" -not -path "*/archive/*" | sort | sed 's/^/   /'
+fi
 
 echo ""
 echo "🔍 Checking current database status..."

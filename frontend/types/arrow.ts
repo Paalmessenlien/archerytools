@@ -55,9 +55,15 @@ export interface BaseBowConfiguration {
   arrow_material?: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
   arrow_rest_type?: 'drop-away' | 'whisker-biscuit' | 'blade'
   nock_type?: 'pin' | 'press-fit' | 'over-nock' | 'lighted' | 'half-moon'
-  vane_type?: 'plastic' | 'feather' | 'hybrid' | 'blazer' | 'helical'
+  vane_type?: 'plastic' | 'feather' | 'spin' | 'hybrid' | 'blazer' | 'helical'
   vane_length?: number
   number_of_vanes?: number
+  // Arrow component weights
+  insert_weight?: number  // Grains
+  vane_weight_per?: number // Grains per vane
+  vane_weight_override?: boolean // Whether to use manual vane weight
+  bushing_weight?: number // Grains
+  nock_weight?: number    // Grains
 }
 
 // Bow type specific configurations

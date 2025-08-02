@@ -311,6 +311,31 @@ export const useAuth = () => {
     }
   };
 
+  const updateArrowInSetup = async (arrowSetupId, updateData) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/setup-arrows/${arrowSetupId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update arrow in setup.');
+      }
+    } catch (err) {
+      console.error('Error updating arrow in setup:', err);
+      throw err;
+    }
+  };
+
   // Admin functionality
   const checkAdminStatus = async () => {
     console.log('checkAdminStatus called, token exists:', !!token.value);
@@ -404,6 +429,7 @@ export const useAuth = () => {
     addArrowToSetup,
     fetchSetupArrows,
     deleteArrowFromSetup,
+    updateArrowInSetup,
     checkAdminStatus,
     getAllUsers,
     setUserAdminStatus,

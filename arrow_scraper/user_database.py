@@ -169,6 +169,7 @@ class UserDatabase:
             self.migrate_draw_length_to_users()
             self.remove_draw_length_from_bow_setups()
             self.add_ibo_speed_to_bow_setups()
+            self.add_arrow_component_weights_to_setup_arrows()
             
             print(f"✅ User database initialized at {self.db_path}")
         except sqlite3.Error as e:
@@ -765,6 +766,44 @@ class UserDatabase:
         except sqlite3.Error as e:
             print(f"Error setting admin status: {e}")
             return False
+        finally:
+            if conn:
+                conn.close()
+
+    def add_arrow_component_weights_to_setup_arrows(self):
+        """Add arrow component weights columns to setup_arrows table if they don't exist"""
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Check if table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='setup_arrows'")
+            if not cursor.fetchone():
+                return  # Table doesn't exist yet
+            
+            # Check existing columns
+            cursor.execute("PRAGMA table_info(setup_arrows)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            # Add missing component weight columns
+            new_columns = [
+                ('nock_weight', 'REAL'),
+                ('fletching_weight', 'REAL'),
+                ('insert_weight', 'REAL'),
+                ('wrap_weight', 'REAL'),
+                ('bushing_weight', 'REAL')
+            ]
+            
+            for column_name, column_type in new_columns:
+                if column_name not in columns:
+                    cursor.execute(f"ALTER TABLE setup_arrows ADD COLUMN {column_name} {column_type}")
+                    print(f"Added {column_name} column to setup_arrows table")
+            
+            conn.commit()
+            
+        except sqlite3.Error as e:
+            print(f"Error adding arrow component weights columns: {e}")
         finally:
             if conn:
                 conn.close()

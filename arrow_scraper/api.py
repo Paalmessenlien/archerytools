@@ -533,6 +533,47 @@ def get_arrow_types():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type):
+    """Simple spine calculation fallback when tuning system is unavailable"""
+    # Basic spine calculation based on draw weight and arrow length
+    base_spine = draw_weight * 12.5
+    
+    # Adjust for arrow length (longer = weaker/higher spine number)
+    length_adjustment = (arrow_length - 28) * 25
+    base_spine += length_adjustment
+    
+    # Adjust for point weight (heavier = weaker/higher spine number)
+    point_adjustment = (point_weight - 125) * 0.5
+    base_spine += point_adjustment
+    
+    # Bow type adjustments
+    if bow_type == 'recurve':
+        base_spine += 50  # Recurve typically needs weaker arrows
+    elif bow_type == 'traditional':
+        base_spine += 100  # Traditional bows need even weaker arrows
+    
+    calculated_spine = round(base_spine)
+    
+    # Create spine range (±25 spine)
+    return {
+        'calculated_spine': calculated_spine,
+        'spine_range': {
+            'minimum': calculated_spine - 25,
+            'optimal': calculated_spine,
+            'maximum': calculated_spine + 25
+        },
+        'adjustments': {
+            'length_adjustment': length_adjustment,
+            'point_weight_adjustment': point_adjustment,
+            'bow_type': bow_type
+        },
+        'base_spine': base_spine - length_adjustment - point_adjustment,
+        'total_adjustment': length_adjustment + point_adjustment,
+        'bow_type': bow_type,
+        'confidence': 'medium',
+        'notes': ['Calculated using simplified spine formula']
+    }
+
 # Tuning Calculation API
 @app.route('/api/tuning/calculate-spine', methods=['POST'])
 def calculate_spine():
@@ -543,34 +584,83 @@ def calculate_spine():
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
-        # Create bow configuration
+        print(f"Received spine calculation request: {data}")  # Debug logging
+        
+        # Validate required fields with defaults
+        draw_weight = float(data.get('draw_weight', 45))
+        draw_length = float(data.get('draw_length', 28))
+        bow_type_str = data.get('bow_type', 'compound')
+        
         # Map longbow to traditional for backend compatibility
-        bow_type_str = data['bow_type']
         if bow_type_str == 'longbow':
             bow_type_str = 'traditional'
         
-        bow_config = BowConfiguration(
-            draw_weight=float(data['draw_weight']),
-            draw_length=float(data['draw_length']),
-            bow_type=BowType(bow_type_str),
-            cam_type=data.get('cam_type', 'medium'),
-            arrow_rest_type=data.get('arrow_rest_type', 'drop_away')
-        )
+        # Validate bow type
+        valid_bow_types = ['compound', 'recurve', 'traditional']
+        if bow_type_str not in valid_bow_types:
+            bow_type_str = 'compound'
         
-        # Calculate spine using tuning system
-        ts = get_tuning_system()
-        if not ts:
-            return jsonify({'error': 'Tuning system not available'}), 500
+        try:
+            bow_config = BowConfiguration(
+                draw_weight=draw_weight,
+                draw_length=draw_length,
+                bow_type=BowType(bow_type_str),
+                cam_type=data.get('cam_type', 'medium'),
+                arrow_rest_type=data.get('arrow_rest_type', 'drop_away')
+            )
+        except Exception as e:
+            # If BowConfiguration fails, use simple calculation directly
+            spine_result = calculate_simple_spine(
+                draw_weight=draw_weight,
+                arrow_length=data.get('arrow_length', 29.0),
+                point_weight=data.get('point_weight', 125.0),
+                bow_type=bow_type_str
+            )
             
-        # Use the spine calculator directly
-        spine_result = ts.spine_calculator.calculate_required_spine(
-            bow_config,
-            arrow_length=data.get('arrow_length', 29.0),
-            point_weight=data.get('point_weight', 100.0),
-            nock_weight=data.get('nock_weight', 10.0),
-            fletching_weight=data.get('fletching_weight', 15.0),
-            material_preference=data.get('arrow_material')
-        )
+            return jsonify({
+                'recommended_spine': spine_result['calculated_spine'],
+                'spine_range': {
+                    'min': spine_result['spine_range']['minimum'],
+                    'max': spine_result['spine_range']['maximum'],
+                    'optimal': spine_result['spine_range']['optimal']
+                },
+                'calculations': {
+                    'base_spine': spine_result['base_spine'],
+                    'adjustments': spine_result['adjustments'],
+                    'total_adjustment': spine_result['total_adjustment'],
+                    'bow_type': spine_result['bow_type'],
+                    'confidence': spine_result['confidence']
+                },
+                'notes': spine_result.get('notes', [])
+            })
+        
+        # Try to calculate spine using tuning system first
+        ts = get_tuning_system()
+        spine_result = None
+        
+        if ts:
+            try:
+                # Use the spine calculator directly
+                spine_result = ts.spine_calculator.calculate_required_spine(
+                    bow_config,
+                    arrow_length=data.get('arrow_length', 29.0),
+                    point_weight=data.get('point_weight', 100.0),
+                    nock_weight=data.get('nock_weight', 10.0),
+                    fletching_weight=data.get('fletching_weight', 15.0),
+                    material_preference=data.get('arrow_material')
+                )
+            except Exception as e:
+                print(f"Tuning system spine calculation failed: {e}")
+                spine_result = None
+        
+        # Fallback to simple spine calculation if tuning system unavailable
+        if not spine_result:
+            spine_result = calculate_simple_spine(
+                draw_weight=float(data['draw_weight']),
+                arrow_length=data.get('arrow_length', 29.0),
+                point_weight=data.get('point_weight', 100.0),
+                bow_type=bow_type_str
+            )
         
         return jsonify({
             'recommended_spine': spine_result['calculated_spine'],
@@ -1030,24 +1120,29 @@ def add_arrow_to_setup(current_user, setup_id):
         existing_record = cursor.fetchone()
         
         if existing_record:
-            # Update existing record
+            # Update existing record with component weights
             cursor.execute('''
                 UPDATE setup_arrows 
-                SET calculated_spine = ?, compatibility_score = ?, notes = ?
+                SET calculated_spine = ?, compatibility_score = ?, notes = ?,
+                    nock_weight = ?, insert_weight = ?, bushing_weight = ?
                 WHERE id = ?
             ''', (
                 data.get('calculated_spine'),
                 data.get('compatibility_score'),
                 data.get('notes'),
+                data.get('nock_weight', 10),
+                data.get('insert_weight', 0),
+                data.get('bushing_weight', 0),
                 existing_record[0]
             ))
             arrow_association_id = existing_record[0]
         else:
-            # Insert new record
+            # Insert new record with component weights
             cursor.execute('''
                 INSERT INTO setup_arrows 
-                (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes,
+                 nock_weight, insert_weight, bushing_weight)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 setup_id,
                 data['arrow_id'],
@@ -1055,7 +1150,10 @@ def add_arrow_to_setup(current_user, setup_id):
                 data['point_weight'],
                 data.get('calculated_spine'),
                 data.get('compatibility_score'),
-                data.get('notes')
+                data.get('notes'),
+                data.get('nock_weight', 10),
+                data.get('insert_weight', 0),
+                data.get('bushing_weight', 0)
             ))
             arrow_association_id = cursor.lastrowid
         
@@ -1253,6 +1351,87 @@ def remove_arrow_from_setup(current_user, arrow_setup_id):
         conn.close()
         
         return jsonify({'message': 'Arrow removed from setup successfully'})
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/setup-arrows/<int:arrow_setup_id>', methods=['PUT'])
+@token_required
+def update_arrow_in_setup(current_user, arrow_setup_id):
+    """Update an arrow configuration in a bow setup"""
+    conn = None
+    try:
+        data = request.get_json()
+        
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get the arrow setup to verify ownership
+        cursor.execute('''
+            SELECT sa.*, bs.user_id 
+            FROM setup_arrows sa
+            JOIN bow_setups bs ON sa.setup_id = bs.id
+            WHERE sa.id = ?
+        ''', (arrow_setup_id,))
+        
+        arrow_setup = cursor.fetchone()
+        
+        if not arrow_setup:
+            return jsonify({'error': 'Arrow setup not found'}), 404
+        
+        if arrow_setup['user_id'] != current_user['id']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Update the arrow setup with component weights
+        cursor.execute('''
+            UPDATE setup_arrows 
+            SET arrow_length = ?, point_weight = ?, calculated_spine = ?, notes = ?,
+                nock_weight = ?, insert_weight = ?, bushing_weight = ?, compatibility_score = ?
+            WHERE id = ?
+        ''', (
+            data.get('arrow_length', arrow_setup['arrow_length']),
+            data.get('point_weight', arrow_setup['point_weight']),
+            data.get('calculated_spine', arrow_setup['calculated_spine']),
+            data.get('notes', arrow_setup['notes']),
+            data.get('nock_weight', arrow_setup.get('nock_weight', 10)),
+            data.get('insert_weight', arrow_setup.get('insert_weight', 0)),
+            data.get('bushing_weight', arrow_setup.get('bushing_weight', 0)),
+            data.get('compatibility_score', arrow_setup.get('compatibility_score')),
+            arrow_setup_id
+        ))
+        
+        conn.commit()
+        
+        # Get the updated record
+        cursor.execute('SELECT * FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
+        updated_record = cursor.fetchone()
+        conn.close()
+        
+        # Convert to dict for JSON response
+        if hasattr(updated_record, 'keys'):  # sqlite3.Row object
+            response_data = dict(updated_record)
+        else:
+            response_data = {
+                'id': updated_record[0],
+                'setup_id': updated_record[1],
+                'arrow_id': updated_record[2],
+                'arrow_length': updated_record[3],
+                'point_weight': updated_record[4],
+                'calculated_spine': updated_record[5],
+                'compatibility_score': updated_record[6],
+                'notes': updated_record[7],
+                'created_at': updated_record[8]
+            }
+        
+        return jsonify({
+            'message': 'Arrow setup updated successfully',
+            'arrow_setup': response_data
+        })
         
     except Exception as e:
         if conn:

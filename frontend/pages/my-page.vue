@@ -184,13 +184,13 @@
                   </div>
                   <div class="flex space-x-2 ml-4">
                     <CustomButton
-                      @click="openArrowSearchModal(setup)"
+                      @click="navigateToArrowCalculator(setup)"
                       variant="filled"
                       size="small"
                       class="bg-green-600 text-white hover:bg-green-700"
                     >
-                      <i class="fas fa-search mr-1"></i>
-                      Add Arrow
+                      <i class="fas fa-calculator mr-1"></i>
+                      Find Arrows
                     </CustomButton>
                     <CustomButton
                       @click="openEditBowSetupModal(setup)"
@@ -217,6 +217,7 @@
                   :loading="setup.loadingArrows || false"
                   @remove-arrow="removeArrowFromSetup"
                   @view-details="viewArrowDetails"
+                  @edit-arrow="openEditArrowModal"
                 />
               </div>
             </div>
@@ -268,14 +269,14 @@
         </div>
         <!-- End of Confirm Delete Modal -->
 
-        <!-- Arrow Search Modal -->
-        <ArrowSearchModal
-          :is-open="isArrowSearchOpen"
-          :bow-setup="selectedBowSetup"
-          @close="closeArrowSearchModal"
-          @add-arrow="handleAddArrow"
+        <!-- Edit Arrow Modal -->
+        <EditArrowModal
+          :is-open="isEditArrowModalOpen"
+          :arrow-setup="editingArrowSetup"
+          @close="closeEditArrowModal"
+          @arrow-updated="handleArrowUpdated"
         />
-        <!-- End of Arrow Search Modal -->
+        <!-- End of Edit Arrow Modal -->
 
       </div>
       <!-- End of Bow Setups Section -->
@@ -300,12 +301,12 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import ArrowSearchModal from '~/components/ArrowSearchModal.vue';
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
 import EditArcherProfileModal from '~/components/EditArcherProfileModal.vue';
+import EditArrowModal from '~/components/EditArrowModal.vue';
 
-const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup } = useAuth();
+const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup, updateArrowInSetup } = useAuth();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
@@ -323,9 +324,9 @@ const deleteSetupError = ref(null);
 const isEditMode = ref(false);
 const editingSetupId = ref(null);
 
-// Arrow search modal state
-const isArrowSearchOpen = ref(false);
-const selectedBowSetup = ref(null);
+// Edit arrow modal state
+const isEditArrowModalOpen = ref(false);
+const editingArrowSetup = ref(null);
 
 const newSetup = ref({
   name: '',
@@ -498,52 +499,38 @@ const deleteSetup = async () => {
   }
 };
 
-// Arrow search modal methods
-const openArrowSearchModal = (setup) => {
-  selectedBowSetup.value = setup;
-  isArrowSearchOpen.value = true;
+// Navigation methods
+const navigateToArrowCalculator = (setup) => {
+  // Store the selected setup in localStorage for the calculator to pick up
+  localStorage.setItem('selectedBowSetup', JSON.stringify(setup));
+  
+  // Navigate to the arrow calculator page
+  navigateTo('/calculator');
 };
 
-const closeArrowSearchModal = () => {
-  isArrowSearchOpen.value = false;
-  selectedBowSetup.value = null;
+// Edit arrow modal methods
+const openEditArrowModal = (arrowSetup) => {
+  editingArrowSetup.value = arrowSetup;
+  isEditArrowModalOpen.value = true;
 };
 
-const handleAddArrow = async (arrowData) => {
-  try {
-    // Check if a bow setup is selected
-    if (!selectedBowSetup.value) {
-      alert('Please select a bow setup first before adding arrows.');
-      return;
-    }
-    
-    // Store the setup info before it gets cleared
-    const setupId = selectedBowSetup.value.id;
-    const setupName = selectedBowSetup.value.name;
-    
-    // Create the API payload
-    const apiData = {
-      arrow_id: arrowData.arrow.id,
-      arrow_length: arrowData.adjustments.arrow_length,
-      point_weight: arrowData.adjustments.point_weight,
-      calculated_spine: arrowData.calculatedSpine,
-      compatibility_score: arrowData.compatibility_score,
-      notes: `Added via arrow search - ${arrowData.compatibility_score}% match`
-    };
-    
-    // Call the API to add arrow to setup
-    await addArrowToSetup(setupId, apiData);
-    
-    // Show success message
-    alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${setupName}!`);
-    
-    // Reload arrows for the setup to show the new arrow
+const closeEditArrowModal = () => {
+  editingArrowSetup.value = null;
+  isEditArrowModalOpen.value = false;
+};
+
+const handleArrowUpdated = async (updatedArrowData) => {
+  // Reload arrows for the bow setup to show updated data
+  const setupId = editingArrowSetup.value?.setup_id;
+  if (setupId) {
     await loadArrowsForSetup(setupId);
-    
-  } catch (err) {
-    console.error('Error adding arrow to setup:', err);
-    alert('Failed to add arrow to setup. Please try again.');
   }
+  
+  // Close the modal
+  closeEditArrowModal();
+  
+  // Show success message
+  alert('Arrow settings updated successfully!');
 };
 
 const loadArrowsForSetup = async (setupId) => {

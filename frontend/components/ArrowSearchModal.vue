@@ -112,9 +112,9 @@
                 Point Weight: <span class="font-semibold text-blue-600">{{ adjustments.point_weight }} gr</span>
               </label>
               <md-slider
-                min="75"
-                max="200"
-                step="25"
+                min="40"
+                max="300"
+                step="5"
                 :value="adjustments.point_weight"
                 @input="updateAdjustment('point_weight', parseInt($event.target.value))"
                 labeled

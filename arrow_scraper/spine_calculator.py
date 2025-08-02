@@ -65,6 +65,13 @@ class SpineCalculator:
             Dict with calculated spine requirements and recommendations
         """
         
+        # Use wood calculation logic if wood material is selected, regardless of bow type
+        if material_preference and material_preference.lower() == 'wood':
+            return self._calculate_wood_spine(
+                bow_config, arrow_length, point_weight, nock_weight, fletching_weight
+            )
+        
+        # Otherwise use bow-type specific calculations for non-wood materials
         if bow_config.bow_type == BowType.COMPOUND:
             return self._calculate_compound_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight
@@ -73,17 +80,80 @@ class SpineCalculator:
             return self._calculate_recurve_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight
             )
-        else:
+        else:  # Traditional bow type
             return self._calculate_traditional_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight, material_preference
             )
+    
+    def _calculate_wood_spine(self, bow_config: BowConfiguration,
+                             arrow_length: float, point_weight: float,
+                             nock_weight: float, fletching_weight: float) -> Dict[str, Any]:
+        """Calculate spine for wood arrows using traditional wood arrow spine chart methodology"""
+        
+        # Get wood spine value directly from chart (in pounds) using bow's marked draw weight
+        # NOTE: draw_length is NOT used in spine calculations - only for archer information
+        wood_spine_value = self._get_wood_spine_from_chart(bow_config.draw_weight, arrow_length)
+        
+        # Point weight adjustments based on traditional wood arrow chart
+        adjustments = {}
+        total_adjustment = 0
+        
+        # Wood arrow point weight adjustment (from chart notes)
+        # 30 grains = 1, 70 grains = 2, 100 grains = 3, 125 grains = 4
+        # Chart is based on 100 grain points (value 3)
+        point_weight_adjustment_table = {
+            30: 1, 70: 2, 100: 3, 125: 4
+        }
+        
+        # Find closest point weight adjustment value
+        closest_point_weight = min(point_weight_adjustment_table.keys(), 
+                                 key=lambda x: abs(x - point_weight))
+        point_adjustment_value = point_weight_adjustment_table[closest_point_weight]
+        
+        # Baseline is 100gr (value 3), so calculate adjustment
+        baseline_adjustment = 3
+        point_adjustment_diff = point_adjustment_value - baseline_adjustment
+        
+        # Each adjustment point represents about 2.5 pounds in wood spine
+        point_adjustment = point_adjustment_diff * 2.5
+        adjustments["point_weight"] = point_adjustment
+        total_adjustment += point_adjustment
+        
+        # Apply adjustment to wood spine value (in pounds)
+        calculated_spine = wood_spine_value + total_adjustment
+        
+        # Wood arrow spine range is typically ±5 pounds
+        spine_range = {
+            "minimum": calculated_spine - 5,
+            "optimal": calculated_spine,
+            "maximum": calculated_spine + 5
+        }
+        
+        return {
+            "bow_type": bow_config.bow_type.value,
+            "calculated_spine": round(calculated_spine),
+            "spine_range": {k: round(v) for k, v in spine_range.items()},
+            "adjustments": adjustments,
+            "total_adjustment": round(total_adjustment),
+            "base_spine": wood_spine_value,
+            "confidence": "high",  # High confidence with proper wood chart
+            "spine_units": "pounds",  # Indicate this is in pounds, not carbon spine numbers
+            "material": "wood",
+            "notes": self._get_spine_notes(bow_config, calculated_spine) + [
+                "Based on traditional wood arrow spine chart",
+                "Spine values in pounds (wood arrow standard)",
+                "Point weight adjustment applied per chart guidelines",
+                "Consider testing with bare shaft tuning"
+            ]
+        }
     
     def _calculate_compound_spine(self, bow_config: BowConfiguration,
                                 arrow_length: float, point_weight: float,
                                 nock_weight: float, fletching_weight: float) -> Dict[str, Any]:
         """Calculate spine for compound bows using modified AMO formula"""
         
-        # Base spine calculation using draw weight and arrow length
+        # Base spine calculation using bow's marked draw weight and arrow length
+        # NOTE: draw_length is NOT used in spine calculations - only for archer information
         base_spine = self._get_base_spine_from_chart(bow_config.draw_weight, arrow_length)
         
         # Adjustments for compound bows
@@ -148,11 +218,9 @@ class SpineCalculator:
                                nock_weight: float, fletching_weight: float) -> Dict[str, Any]:
         """Calculate spine for recurve bows"""
         
-        # Recurve calculation uses actual draw weight at draw length
-        actual_draw_weight = bow_config.draw_weight
-        
-        # Base spine from recurve-specific chart
-        base_spine = self._get_recurve_base_spine(actual_draw_weight, arrow_length)
+        # Base spine from recurve-specific chart using bow's marked draw weight
+        # NOTE: draw_length is NOT used in spine calculations - only for archer information
+        base_spine = self._get_recurve_base_spine(bow_config.draw_weight, arrow_length)
         
         # Adjustments for recurve
         adjustments = {}
@@ -191,118 +259,47 @@ class SpineCalculator:
                                    arrow_length: float, point_weight: float,
                                    nock_weight: float, fletching_weight: float,
                                    material_preference: str = None) -> Dict[str, Any]:
-        """Calculate spine for traditional bows using wood arrow spine chart methodology"""
+        """Calculate spine for traditional bows using carbon equivalent method"""
         
-        # For wood arrows, use pound-based spine values directly from the chart
-        if material_preference and material_preference.lower() == 'wood':
-            # Get wood spine value directly from chart (in pounds)
-            wood_spine_value = self._get_wood_spine_from_chart(bow_config.draw_weight, arrow_length)
-            
-            # Point weight adjustments based on traditional wood arrow chart
-            adjustments = {}
-            total_adjustment = 0
-            
-            # Wood arrow point weight adjustment (from chart notes)
-            # 30 grains = 1, 70 grains = 2, 100 grains = 3, 125 grains = 4
-            # Chart is based on 100 grain points (value 3)
-            point_weight_adjustment_table = {
-                30: 1, 70: 2, 100: 3, 125: 4
-            }
-            
-            # Find closest point weight adjustment value
-            closest_point_weight = min(point_weight_adjustment_table.keys(), 
-                                     key=lambda x: abs(x - point_weight))
-            point_adjustment_value = point_weight_adjustment_table[closest_point_weight]
-            
-            # Baseline is 100gr (value 3), so calculate adjustment
-            baseline_adjustment = 3
-            point_adjustment_diff = point_adjustment_value - baseline_adjustment
-            
-            # Each adjustment point represents about 2.5 pounds in wood spine
-            point_adjustment = point_adjustment_diff * 2.5
-            adjustments["point_weight"] = point_adjustment
-            total_adjustment += point_adjustment
-            
-            # Apply adjustment to wood spine value (in pounds)
-            calculated_spine = wood_spine_value + total_adjustment
-            
-            # Wood arrow spine range is typically ±5 pounds
-            spine_range = {
-                "minimum": calculated_spine - 5,
-                "optimal": calculated_spine,
-                "maximum": calculated_spine + 5
-            }
-            
-            return {
-                "bow_type": "traditional",
-                "calculated_spine": round(calculated_spine),
-                "spine_range": {k: round(v) for k, v in spine_range.items()},
-                "adjustments": adjustments,
-                "total_adjustment": round(total_adjustment),
-                "base_spine": wood_spine_value,
-                "confidence": "high",  # High confidence with proper wood chart
-                "spine_units": "pounds",  # Indicate this is in pounds, not carbon spine numbers
-                "notes": self._get_spine_notes(bow_config, calculated_spine) + [
-                    "Based on traditional wood arrow spine chart",
-                    "Spine values in pounds (wood arrow standard)",
-                    "Point weight adjustment applied per chart guidelines",
-                    "Consider testing with bare shaft tuning"
-                ]
-            }
-        else:
-            # For non-wood arrows on traditional bows, use carbon equivalent method
-            # Get base spine from wood arrow chart
-            base_spine = self._get_traditional_base_spine(bow_config.draw_weight, arrow_length)
-            
-            # Point weight adjustments based on traditional wood arrow chart
-            adjustments = {}
-            total_adjustment = 0
-            
-            # Wood arrow point weight adjustment (from chart notes)
-            # 30 grains = 1, 70 grains = 2, 100 grains = 3, 125 grains = 4
-            # Chart is based on 100 grain points (value 3)
-            point_weight_adjustment_table = {
-                30: 1, 70: 2, 100: 3, 125: 4
-            }
-            
-            # Find closest point weight adjustment value
-            closest_point_weight = min(point_weight_adjustment_table.keys(), 
-                                     key=lambda x: abs(x - point_weight))
-            point_adjustment_value = point_weight_adjustment_table[closest_point_weight]
-            
-            # Baseline is 100gr (value 3), so calculate adjustment
-            baseline_adjustment = 3
-            point_adjustment_diff = point_adjustment_value - baseline_adjustment
-            
-            # Each adjustment point represents about 5 spine units in carbon arrows
-            point_adjustment = point_adjustment_diff * 5
-            adjustments["point_weight"] = point_adjustment
-            total_adjustment += point_adjustment
-            
-            # Apply adjustment to carbon equivalent spine
-            calculated_spine = base_spine - total_adjustment
-            
-            # Carbon arrow spine range is typically ±30 spine units
-            spine_range = {
-                "minimum": calculated_spine - 30,
-                "optimal": calculated_spine,
-                "maximum": calculated_spine + 30
-            }
-            
-            return {
-                "bow_type": "traditional",
-                "calculated_spine": round(calculated_spine),
-                "spine_range": {k: round(v) for k, v in spine_range.items()},
-                "adjustments": adjustments,
-                "total_adjustment": round(total_adjustment),
-                "base_spine": base_spine,
-                "confidence": "medium",  # Medium confidence with carbon equivalent
-                "notes": self._get_spine_notes(bow_config, calculated_spine) + [
-                    "Based on traditional wood arrow spine chart (carbon equivalent)",
-                    "Point weight adjustment applied per chart guidelines",
-                    "Consider testing with bare shaft tuning"
-                ]
-            }
+        # For non-wood arrows on traditional bows, use carbon equivalent method
+        # Get base spine from traditional bow chart using bow's marked draw weight
+        # NOTE: draw_length is NOT used in spine calculations - only for archer information
+        base_spine = self._get_traditional_base_spine(bow_config.draw_weight, arrow_length)
+        
+        # Point weight adjustments
+        adjustments = {}
+        total_adjustment = 0
+        
+        # Point weight adjustment for traditional bows (similar to recurve but more sensitive)
+        point_weight_diff = point_weight - 100.0
+        point_adjustment = (point_weight_diff / 25.0) * 25  # ~25 spine per 25gr for traditional
+        adjustments["point_weight"] = point_adjustment
+        total_adjustment += point_adjustment
+        
+        # Apply adjustment to carbon equivalent spine
+        calculated_spine = base_spine - total_adjustment
+        
+        # Carbon arrow spine range is typically ±30 spine units
+        spine_range = {
+            "minimum": calculated_spine - 30,
+            "optimal": calculated_spine,
+            "maximum": calculated_spine + 30
+        }
+        
+        return {
+            "bow_type": "traditional",
+            "calculated_spine": round(calculated_spine),
+            "spine_range": {k: round(v) for k, v in spine_range.items()},
+            "adjustments": adjustments,
+            "total_adjustment": round(total_adjustment),
+            "base_spine": base_spine,
+            "confidence": "medium",  # Medium confidence with carbon equivalent
+            "material": material_preference or "carbon",
+            "notes": self._get_spine_notes(bow_config, calculated_spine) + [
+                "Based on traditional bow requirements with carbon equivalent calculation",
+                "Consider testing with bare shaft tuning for traditional setups"
+            ]
+        }
     
     def _get_base_spine_from_chart(self, draw_weight: float, arrow_length: float) -> float:
         """Get base spine from standard compound bow chart"""

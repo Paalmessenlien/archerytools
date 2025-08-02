@@ -15,42 +15,9 @@
 
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Arrow Tools</h1>
-      <p class="text-gray-600 dark:text-gray-300">Database browsing and arrow tuning calculator</p>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Arrow Database</h1>
+      <p class="text-gray-600 dark:text-gray-300">Browse and search arrow specifications from leading manufacturers</p>
     </div>
-
-    <!-- Tab Navigation -->
-    <div class="mb-6">
-      <nav class="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-        <button
-          @click="activeTab = 'database'"
-          :class="[
-            'flex-1 py-2 px-4 text-sm font-medium text-center rounded-md transition-colors',
-            activeTab === 'database' 
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          ]"
-        >
-          <i class="fas fa-database mr-2"></i>
-          Arrow Database
-        </button>
-        <button
-          @click="activeTab = 'calculator'"
-          :class="[
-            'flex-1 py-2 px-4 text-sm font-medium text-center rounded-md transition-colors',
-            activeTab === 'calculator' 
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          ]"
-        >
-          <i class="fas fa-calculator mr-2"></i>
-          Arrow Calculator
-        </button>
-      </nav>
-    </div>
-
-    <!-- Tab Content -->
-    <div v-if="activeTab === 'database'">
       <!-- Database Stats -->
       <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <md-elevated-card class="text-center light-surface light-elevation">
@@ -403,141 +370,6 @@
         </md-outlined-button>
       </div>
     </div>
-    </div>
-
-    <!-- Calculator Tab -->
-    <div v-else-if="activeTab === 'calculator'">
-      <!-- Quick Tuning Section (from index.vue) -->
-      <div class="card card-interactive glass-card">
-        <!-- Bow Configuration Form -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Bow Type -->
-          <div>
-            <md-filled-select
-              ref="bowTypeSelect"
-              label="Bow Type"
-              :value="bowConfig.bow_type"
-              @change="updateBowConfig({ bow_type: $event.target.value })"
-              class="w-full"
-            >
-              <md-select-option value="compound">
-                <div slot="headline">Compound</div>
-              </md-select-option>
-              <md-select-option value="recurve">
-                <div slot="headline">Recurve</div>
-              </md-select-option>
-              <md-select-option value="longbow">
-                <div slot="headline">Longbow</div>
-              </md-select-option>
-              <md-select-option value="traditional">
-                <div slot="headline">Traditional</div>
-              </md-select-option>
-            </md-filled-select>
-          </div>
-
-          <!-- Point Weight -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gn ({{ (bowConfig.point_weight || 125) }} gr)</span>
-            </label>
-            <md-slider
-              ref="pointWeightSlider"
-              min="40"
-              max="200"
-              step="0.5"
-              :value="bowConfig.point_weight || 125"
-              @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
-              labeled
-              ticks
-              class="w-full"
-            ></md-slider>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>40 gn</span>
-              <span>200 gn</span>
-            </div>
-          </div>
-
-          <!-- Draw Weight -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Draw Weight: <span class="font-semibold text-primary">{{ bowConfig.draw_weight }} lbs</span>
-            </label>
-            <md-slider
-              ref="drawWeightSlider"
-              min="20"
-              max="80"
-              step="0.5"
-              :value="bowConfig.draw_weight"
-              @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
-              labeled
-              ticks
-              class="w-full"
-            ></md-slider>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>20 lbs</span>
-              <span>80 lbs</span>
-            </div>
-          </div>
-
-          <!-- Arrow Length -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Arrow Length: <span class="font-semibold text-primary">{{ bowConfig.arrow_length || 29 }}"</span>
-            </label>
-            <md-slider
-              ref="arrowLengthSlider"
-              min="24"
-              max="34"
-              step="0.5"
-              :value="bowConfig.arrow_length || 29"
-              @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
-              labeled
-              ticks
-              class="w-full"
-            ></md-slider>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>24"</span>
-              <span>34"</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Calculated Specifications -->
-        <md-elevated-card class="mt-8 light-surface light-elevation">
-          <div class="p-6">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-              <i class="fas fa-calculator" style="margin-right: 8px; color: #6366f1;"></i>
-              Calculated Specifications
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="flex flex-col">
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">
-                  <i class="fas fa-bullseye" style="margin-right: 6px; color: #6366f1;"></i>
-                  Recommended Spine:
-                </p>
-                <p class="font-semibold text-xl text-primary">{{ recommendedSpine || 'Calculating...' }}</p>
-              </div>
-              <div class="flex flex-col">
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">
-                  <i class="fas fa-crosshairs" style="margin-right: 6px; color: #7c3aed;"></i>
-                  Arrow Setup:
-                </p>
-                <p class="font-semibold text-gray-900 dark:text-gray-100">{{ arrowSetupDescription }}</p>
-              </div>
-            </div>
-          </div>
-        </md-elevated-card>
-
-        <!-- Arrow Recommendations -->
-        <div class="mt-8">
-          <ArrowRecommendationsList 
-            :bow-config="bowConfig"
-            :show-search-filters="false"
-            class="simplified-recommendations"
-          />
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -555,16 +387,6 @@ const error = ref(null)
 const searchPerformed = ref(false)
 const showAdvancedFilters = ref(false)
 
-// Tab navigation
-const activeTab = ref('database')
-
-// Calculator tab - Bow configuration store
-import { useBowConfigStore } from '~/stores/bowConfig'
-const bowConfigStore = useBowConfigStore()
-const bowConfig = computed(() => bowConfigStore.bowConfig)
-const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
-const arrowSetupDescription = computed(() => bowConfigStore.arrowSetupDescription)
-const { updateBowConfig } = bowConfigStore
 
 // Pagination
 const currentPage = ref(1)
@@ -822,9 +644,9 @@ onMounted(() => {
 
 // Set page title
 useHead({
-  title: 'Arrow Tools - Database & Calculator',
+  title: 'Arrow Database - Browse Arrow Specifications',
   meta: [
-    { name: 'description', content: 'Browse arrow database and calculate arrow recommendations with our tuning tool' }
+    { name: 'description', content: 'Browse comprehensive arrow database with specifications from leading manufacturers' }
   ]
 })
 

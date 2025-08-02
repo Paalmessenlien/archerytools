@@ -78,6 +78,29 @@
               <md-assist-chip :label="arrowSetup.arrow?.material || 'Material N/A'">
                 <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #7c2d12;"></i>
               </md-assist-chip>
+
+              <!-- Component Weights (when available) -->
+              <md-assist-chip v-if="arrowSetup.nock_weight" :label="`Nock: ${arrowSetup.nock_weight} gr`">
+                <i class="fas fa-circle fa-icon" slot="icon" style="color: #8b5cf6;"></i>
+              </md-assist-chip>
+              
+              <md-assist-chip v-if="arrowSetup.insert_weight && arrowSetup.insert_weight > 0" :label="`Insert: ${arrowSetup.insert_weight} gr`">
+                <i class="fas fa-circle-dot fa-icon" slot="icon" style="color: #f59e0b;"></i>
+              </md-assist-chip>
+              
+              <md-assist-chip v-if="arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0" :label="`Bushing: ${arrowSetup.bushing_weight} gr`">
+                <i class="fas fa-ring fa-icon" slot="icon" style="color: #10b981;"></i>
+              </md-assist-chip>
+
+              <!-- Total Component Weight -->
+              <md-assist-chip v-if="calculateTotalComponentWeight(arrowSetup)" :label="`Components: ${calculateTotalComponentWeight(arrowSetup)} gr`" class="bg-blue-100 dark:bg-blue-900">
+                <i class="fas fa-weight-hanging fa-icon" slot="icon" style="color: #3b82f6;"></i>
+              </md-assist-chip>
+
+              <!-- Total Arrow Weight -->
+              <md-assist-chip v-if="calculateTotalArrowWeight(arrowSetup)" :label="`Arrow: ${calculateTotalArrowWeight(arrowSetup)} gr`" class="bg-purple-100 dark:bg-purple-900">
+                <i class="fas fa-balance-scale fa-icon" slot="icon" style="color: #8b5cf6;"></i>
+              </md-assist-chip>
             </md-chip-set>
             
             <!-- Match Score & Notes -->
@@ -100,6 +123,15 @@
               
               <!-- Actions -->
               <div class="flex space-x-2">
+                <CustomButton
+                  @click="editArrow(arrowSetup)"
+                  variant="outlined"
+                  size="small"
+                  class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400"
+                >
+                  <i class="fas fa-edit mr-1"></i>
+                  Edit
+                </CustomButton>
                 <CustomButton
                   @click="viewArrowDetails(arrowSetup.arrow_id)"
                   variant="outlined"
@@ -146,6 +178,7 @@
             <div class="text-xs text-gray-600 dark:text-gray-400">
               {{ arrowSetup.arrow_length }}" • {{ arrowSetup.point_weight }}gr • 
               <span v-if="arrowSetup.calculated_spine">Spine: {{ arrowSetup.calculated_spine }}</span>
+              <span v-if="calculateTotalArrowWeight(arrowSetup)"> • Total: {{ calculateTotalArrowWeight(arrowSetup) }}gr</span>
             </div>
           </div>
           <div v-if="arrowSetup.compatibility_score" class="text-xs px-2 py-1 rounded-full" 
@@ -186,7 +219,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['remove-arrow', 'view-details'])
+const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow'])
 
 // State
 const isExpanded = ref(false)
@@ -226,12 +259,69 @@ const formatDate = (dateString: string) => {
   }
 }
 
+// Calculate total component weight for display
+const calculateTotalComponentWeight = (arrowSetup: any) => {
+  const pointWeight = arrowSetup.point_weight || 0
+  const insertWeight = arrowSetup.insert_weight || 0
+  const nockWeight = arrowSetup.nock_weight || 0
+  const bushingWeight = arrowSetup.bushing_weight || 0
+  // Note: Vane weights would need additional fields in database
+  
+  const totalWeight = pointWeight + insertWeight + nockWeight + bushingWeight
+  
+  return totalWeight > 0 ? Math.round(totalWeight * 10) / 10 : null
+}
+
+// Calculate total arrow weight based on GPI and arrow length
+const calculateTotalArrowWeight = (arrowSetup: any) => {
+  if (!arrowSetup.arrow || !arrowSetup.arrow.spine_specifications) return 0
+  
+  // Find the appropriate spine specification (use first one if no specific match)
+  const spineSpec = arrowSetup.arrow.spine_specifications[0]
+  if (!spineSpec || !spineSpec.gpi_weight) return 0
+  
+  // Use arrow length from setup or default to 32" if no length options available
+  let effectiveLength = arrowSetup.arrow_length || 32
+  
+  // If arrow has specific length options, use the closest one
+  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
+    // Find the closest available length
+    const targetLength = arrowSetup.arrow_length || 32
+    effectiveLength = spineSpec.length_options.reduce((prev: number, curr: number) => 
+      Math.abs(curr - targetLength) < Math.abs(prev - targetLength) ? curr : prev
+    )
+  }
+  
+  // Calculate shaft weight (GPI * length in inches)
+  const shaftWeight = spineSpec.gpi_weight * effectiveLength
+  
+  // Add component weights from the saved setup
+  const pointWeight = arrowSetup.point_weight || 0
+  const insertWeight = arrowSetup.insert_weight || 0
+  const nockWeight = arrowSetup.nock_weight || 0
+  const bushingWeight = arrowSetup.bushing_weight || 0
+  // Note: For now using default vane weight calculation since vane details aren't stored in setup_arrows
+  const vaneWeightPerVane = 5 // Default vane weight
+  const numberOfVanes = 3 // Default number of vanes
+  
+  const totalVaneWeight = vaneWeightPerVane * numberOfVanes
+  
+  // Total arrow weight = shaft + components
+  const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
+  
+  return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
+}
+
 const viewArrowDetails = (arrowId: number) => {
   emit('view-details', arrowId)
 }
 
 const removeArrow = (arrowSetupId: number) => {
   emit('remove-arrow', arrowSetupId)
+}
+
+const editArrow = (arrowSetup) => {
+  emit('edit-arrow', arrowSetup)
 }
 </script>
 
