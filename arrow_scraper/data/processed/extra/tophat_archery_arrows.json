@@ -1,0 +1,82 @@
+{
+  "scraping_metadata": {
+    "source": "TopHat Archery",
+    "scrape_date": "2025-08-03T00:15:26.056332",
+    "total_products_found": 5,
+    "total_arrows_extracted": 2,
+    "scraper_version": "1.0.0"
+  },
+  "arrows": [
+    {
+      "manufacturer": "OK",
+      "model_name": "Archery Absolute.15",
+      "spine_specifications": [
+        {
+          "spine": "350",
+          "outer_diameter": 0.234,
+          "inner_diameter": 0.166,
+          "gpi_weight": 9.0,
+          "length_options": [
+            "32\""
+          ]
+        },
+        {
+          "spine": "400",
+          "outer_diameter": 0.231,
+          "inner_diameter": 0.166,
+          "gpi_weight": 8.0,
+          "length_options": [
+            "32\""
+          ]
+        },
+        {
+          "spine": "500",
+          "outer_diameter": 0.227,
+          "inner_diameter": 0.166,
+          "gpi_weight": 7.1,
+          "length_options": [
+            "32\""
+          ]
+        },
+        {
+          "spine": "600",
+          "outer_diameter": 0.223,
+          "inner_diameter": 0.166,
+          "gpi_weight": 6.4,
+          "length_options": [
+            "32\""
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "3D, Allzweck, Feld, Target",
+      "description": "Von vielen Schützen werden die dünnen Durchmesser für Field und Target bevorzugt. Nun hat auch die ABSOLUTE.Serie einen schlanken Schaft im Programm. Die Spinewerte decken einen breiten Einsatzbereich ab. Erhältlich in Spine 350, 400, 500 und 600.Die passende Spitze ist die SL Convex III aus Werkzeugstahl, extrem haltbar. Verbiegen im Schaft ist dadurch nahezu ausgeschlossen. Break-Off Elemente in 10 Grain Schritten machen das Tuning einfach - eine Spitze für Gewichte von 90 bis 140 Grain. Komponenten sind separat erhältlich.",
+      "image_url": null,
+      "price_range": "133,35",
+      "straightness_tolerance": "±.001”",
+      "weight_tolerance": null
+    },
+    {
+      "manufacturer": "OK",
+      "model_name": "Archery Absolute.19",
+      "spine_specifications": [
+        {
+          "spine": "350",
+          "outer_diameter": 0.295,
+          "inner_diameter": 0.244,
+          "gpi_weight": 8.3,
+          "length_options": [
+            "32\""
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "3D, Allzweck, Feld, Target",
+      "description": "Wir sparen uns die vollmundigen Werbeversprechen und liefern beste Qualität zum einem sehr attraktiven Preis. Die Spinewerte decken einen breiten Einsatzbereich ab. Erhältlich in Spine 350, 400, 500, 600, 700 und 800 .Die passende Spitze ist die ML Apex in 70, 100 oder 130 Grain. Mit Einschraubgewichten aus Messing in den Gewichtungen 10, 20, 30 oder 40 Grain kann das Feintuning eingestellt werden. Komponenten sind separat erhältlich.",
+      "image_url": null,
+      "price_range": "101,55",
+      "straightness_tolerance": "±.001”",
+      "weight_tolerance": null
+    }
+  ]
+}
