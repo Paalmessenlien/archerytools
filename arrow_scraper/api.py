@@ -376,27 +376,45 @@ def get_arrows():
 def get_arrow_details(arrow_id):
     """Get detailed information about a specific arrow"""
     try:
+        # Add logging for debugging
+        print(f"API: Requesting arrow details for ID {arrow_id}")
+        
         db = get_database()
         if not db:
+            print(f"API: Database not available for arrow {arrow_id}")
             return jsonify({'error': 'Database not available'}), 500
-            
+        
+        print(f"API: Database available, calling get_arrow_details({arrow_id})")
         arrow_details = db.get_arrow_details(arrow_id)
+        print(f"API: get_arrow_details returned: {type(arrow_details)} - {arrow_details is not None}")
         
         if not arrow_details:
-            return jsonify({'error': 'Arrow not found'}), 404
+            print(f"API: Arrow {arrow_id} not found, returning 404")
+            return jsonify({'error': f'Arrow {arrow_id} not found'}), 404
         
+        print(f"API: Arrow {arrow_id} found, enhancing with image URL")
         # Enhance with proper image URL
-        arrow_details['primary_image_url'] = get_image_url(
-            arrow_id=arrow_details['id'],
-            image_url=arrow_details.get('image_url'),
-            saved_images=arrow_details.get('saved_images'),
-            local_image_path=arrow_details.get('local_image_path')
-        )
+        try:
+            arrow_details['primary_image_url'] = get_image_url(
+                arrow_id=arrow_details['id'],
+                image_url=arrow_details.get('image_url'),
+                saved_images=arrow_details.get('saved_images'),
+                local_image_path=arrow_details.get('local_image_path')
+            )
+            print(f"API: Image URL enhancement successful for arrow {arrow_id}")
+        except Exception as img_error:
+            print(f"API: Image URL enhancement failed for arrow {arrow_id}: {img_error}")
+            # Continue without image URL rather than failing
+            arrow_details['primary_image_url'] = None
         
+        print(f"API: Returning arrow details for {arrow_id}")
         return jsonify(arrow_details)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"API: Exception in get_arrow_details({arrow_id}): {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 # Manufacturers API
 @app.route('/api/manufacturers', methods=['GET'])
