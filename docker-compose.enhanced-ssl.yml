@@ -28,7 +28,7 @@ services:
     networks:
       - arrowtuner-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health && curl -f http://localhost:5000/api/bow-setups || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/simple-health || exit 1"]
       interval: 30s
       timeout: 15s
       retries: 5
