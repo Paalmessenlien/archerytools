@@ -577,12 +577,25 @@ class ArrowDatabase:
             params.append(arrow_type)
             
         if material:
-            # For broad categories like "Wood", match any material containing that term
-            if material in ['Wood', 'Carbon', 'Aluminum']:
+            # Handle material filtering with proper logic for hybrids
+            if material == 'Wood':
+                # Wood arrows: match any material containing "Wood"
                 query += ' AND a.material LIKE ?'
                 params.append(f'%{material}%')
+            elif material == 'Carbon':
+                # Pure carbon arrows: exclude hybrids with other materials
+                query += ' AND a.material = ?'
+                params.append('Carbon')
+            elif material == 'Aluminum':
+                # Pure aluminum arrows: exclude hybrids with other materials  
+                query += ' AND a.material = ?'
+                params.append('Aluminum')
+            elif material == 'Carbon / Aluminum':
+                # Carbon/Aluminum hybrid arrows: exact match
+                query += ' AND a.material = ?'
+                params.append('Carbon / Aluminum')
             else:
-                # For specific materials, use exact match
+                # For other materials, use exact match
                 query += ' AND a.material = ?'
                 params.append(material)
             

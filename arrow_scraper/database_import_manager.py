@@ -282,14 +282,15 @@ class DatabaseImportManager:
                             cursor.execute("""
                                 INSERT INTO spine_specifications (
                                     arrow_id, spine, outer_diameter, inner_diameter,
-                                    gpi_weight
-                                ) VALUES (?, ?, ?, ?, ?)
+                                    gpi_weight, length_options
+                                ) VALUES (?, ?, ?, ?, ?, ?)
                             """, (
                                 arrow_id,
                                 spec.get("spine"),
                                 spec.get("outer_diameter"),
                                 spec.get("inner_diameter"),
-                                spec.get("gpi_weight")
+                                spec.get("gpi_weight"),
+                                json.dumps(spec.get("length_options")) if spec.get("length_options") else None
                             ))
                     
                     arrows_imported += 1

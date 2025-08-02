@@ -92,6 +92,39 @@ if python3 database_import_manager.py --import-all --force; then
         exit 1
     fi
     
+    # Apply length fallback system to fill missing length_options
+    echo ""
+    echo "📏 Applying Length Fallback System..."
+    echo "====================================="
+    echo "🔍 Checking length_options coverage..."
+    
+    if python3 length_fallback_system.py --report --database arrow_database.db > /tmp/length_report.txt 2>&1; then
+        # Extract coverage percentage from report (handle decimal numbers properly)
+        COVERAGE=$(grep "Coverage:" /tmp/length_report.txt | head -1 | sed 's/.*Coverage: \([0-9]*\.[0-9]*\)%.*/\1/')
+        echo "   Current length coverage: ${COVERAGE}%"
+        
+        # Check if coverage is less than 95% (using awk for better compatibility)
+        if [ "$(echo "$COVERAGE 95" | awk '{print ($1 < $2)}')" = "1" ]; then
+            echo "   📝 Applying fallback lengths for missing data..."
+            if python3 length_fallback_system.py --apply --database arrow_database.db; then
+                echo "   ✅ Length fallback system applied successfully!"
+                
+                # Generate final report
+                echo ""
+                echo "📊 Final Length Coverage Report:"
+                python3 length_fallback_system.py --report --database arrow_database.db | grep -E "(Coverage:|Per-Manufacturer)" | sed 's/^/   /'
+            else
+                echo "   ⚠️  Length fallback system failed - continuing anyway"
+                echo "   This is not critical - arrows will still work for calculations"
+            fi
+        else
+            echo "   ✅ Length coverage already excellent (${COVERAGE}%) - no fallback needed"
+        fi
+    else
+        echo "   ⚠️  Unable to check length coverage - continuing anyway"
+        echo "   This is not critical - arrows will still work for calculations"
+    fi
+    
     # Import components if component files exist
     echo ""
     echo "🔍 Checking for component data files..."

@@ -144,8 +144,8 @@ class ArrowMatchingEngine:
         
         # Add material preference filter if specified
         if request.material_preference:
-            # Capitalize first letter to match database format
-            search_params['material'] = request.material_preference.title()
+            # Map frontend material values to database format
+            search_params['material'] = self._map_material_preference(request.material_preference)
         
         print(f"   Search parameters: spine {search_params['spine_min']}-{search_params['spine_max']}, manufacturer='{manufacturer_filter}', material='{search_params.get('material', 'None')}'")
         
@@ -514,6 +514,24 @@ class ArrowMatchingEngine:
             issues.append("Limited spine options available")
         
         return issues
+    
+    def _map_material_preference(self, material_preference: str) -> str:
+        """Map frontend material values to database format"""
+        
+        # Material mapping from frontend values to database values
+        material_mapping = {
+            'carbon': 'Carbon',
+            'aluminum': 'Aluminum', 
+            'carbon-aluminum': 'Carbon / Aluminum',  # Frontend sends carbon-aluminum, DB has "Carbon / Aluminum"
+            'wood': 'Wood',
+            'fiberglass': 'Fiberglass'
+        }
+        
+        # Normalize input to lowercase
+        normalized_preference = material_preference.lower().strip()
+        
+        # Return mapped value or fallback to title case
+        return material_mapping.get(normalized_preference, material_preference.title())
     
     def _format_manufacturer_filter(self, preferred_manufacturers: Optional[List[str]], 
                                    material_preference: Optional[str] = None) -> Optional[str]:
