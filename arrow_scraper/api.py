@@ -734,7 +734,8 @@ def get_arrow_recommendations():
                 shooting_style=data.get('shooting_style', 'target'),
                 experience_level=data.get('experience_level', 'intermediate'),
                 arrow_length=float(data.get('arrow_length', 29.0)),
-                point_weight_preference=float(data.get('point_weight', 100.0))
+                point_weight_preference=float(data.get('point_weight', 100.0)),
+                preferred_manufacturers=data.get('preferred_manufacturers', [])
             )
         except Exception as e:
             return jsonify({'error': f'Invalid archer profile: {str(e)}'}), 400
@@ -1280,13 +1281,26 @@ def get_setup_arrows(current_user, setup_id):
             try:
                 arrow_cursor = arrow_conn.cursor()
                 for row in rows:
+                    # Get basic arrow info
                     arrow_cursor.execute('''
                         SELECT manufacturer, model_name, material, description
                         FROM arrows WHERE id = ?
                     ''', (row['arrow_id'],))
                     arrow_data = arrow_cursor.fetchone()
+                    
+                    # Get spine specifications for this arrow
+                    arrow_cursor.execute('''
+                        SELECT spine, outer_diameter, inner_diameter, gpi_weight, length_options
+                        FROM spine_specifications WHERE arrow_id = ?
+                        ORDER BY spine ASC
+                    ''', (row['arrow_id'],))
+                    spine_specs = arrow_cursor.fetchall()
+                    
                     if arrow_data:
-                        arrow_details[row['arrow_id']] = arrow_data
+                        arrow_details[row['arrow_id']] = {
+                            'basic_info': arrow_data,
+                            'spine_specifications': [dict(spec) for spec in spine_specs] if spine_specs else []
+                        }
                 arrow_conn.close()
             except Exception as e:
                 print(f"Error fetching arrow details: {e}")
@@ -1310,20 +1324,31 @@ def get_setup_arrows(current_user, setup_id):
             
             # Add arrow details if available
             if row['arrow_id'] in arrow_details:
-                arrow_data = arrow_details[row['arrow_id']]
+                arrow_detail = arrow_details[row['arrow_id']]
+                basic_info = arrow_detail['basic_info']
+                spine_specifications = arrow_detail['spine_specifications']
+                
                 arrow_info['arrow'] = {
-                    'manufacturer': arrow_data['manufacturer'], 
-                    'model_name': arrow_data['model_name'],
-                    'material': arrow_data['material'],
-                    'description': arrow_data['description']
+                    'manufacturer': basic_info['manufacturer'], 
+                    'model_name': basic_info['model_name'],
+                    'material': basic_info['material'],
+                    'description': basic_info['description'],
+                    'spine_specifications': spine_specifications
                 }
+                
+                # Add component weights from setup_arrows table if available
+                for field in ['nock_weight', 'insert_weight', 'bushing_weight', 'fletching_weight']:
+                    if field in row and row[field] is not None:
+                        arrow_info[field] = row[field]
+                
             else:
                 # Provide fallback arrow info when details are not available
                 arrow_info['arrow'] = {
                     'manufacturer': 'Unknown Manufacturer',
                     'model_name': f'Arrow ID {row["arrow_id"]}',
                     'material': 'Unknown Material',
-                    'description': 'Arrow details not available'
+                    'description': 'Arrow details not available',
+                    'spine_specifications': []
                 }
             
             arrows.append(arrow_info)

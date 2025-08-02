@@ -86,28 +86,8 @@
       </div>
     </md-elevated-card>
 
-    <!-- No Recommendations -->
-    <md-elevated-card v-else-if="!pending && !filteredRecommendations.length" class="text-center">
-      <div class="p-12">
-        <div class="text-gray-400 mb-4">
-          <i class="fas fa-search-minus text-6xl"></i>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No Recommendations Found</h3>
-        <p class="text-gray-600 mb-4">
-          No arrows match your current bow configuration and filters.
-        </p>
-        <p class="text-sm text-gray-500 mb-6">
-          Try adjusting your bow settings, filters, or search terms.
-        </p>
-        <md-outlined-button @click="clearFilters">
-          <i class="fas fa-broom" style="margin-right: 8px;"></i>
-          Clear Filters
-        </md-outlined-button>
-      </div>
-    </md-elevated-card>
-
-    <!-- Recommendations with Filters -->
-    <div v-else>
+    <!-- Filters & Controls (Always Visible) -->
+    <div v-if="!pending">
       <!-- Filters & Controls -->
       <md-elevated-card class="mb-6">
         <div class="p-6">
@@ -241,9 +221,29 @@
           </div>
         </div>
       </md-elevated-card>
+      
+      <!-- No Recommendations Message (shown after filters) -->
+      <md-elevated-card v-if="!filteredRecommendations.length" class="text-center mb-6">
+        <div class="p-12">
+          <div class="text-gray-400 mb-4">
+            <i class="fas fa-search-minus text-6xl"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Recommendations Found</h3>
+          <p class="text-gray-600 dark:text-gray-400 mb-4">
+            No arrows match your current bow configuration and filters.
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Try adjusting your bow settings, filters, or search terms above.
+          </p>
+          <md-outlined-button @click="clearFilters">
+            <i class="fas fa-broom" style="margin-right: 8px;"></i>
+            Clear Filters
+          </md-outlined-button>
+        </div>
+      </md-elevated-card>
 
       <!-- Recommendations List -->
-      <div class="space-y-4">
+      <div v-else class="space-y-4">
         <md-elevated-card 
           v-for="recommendation in paginatedRecommendations" 
           :key="recommendation.arrow.id"
@@ -373,7 +373,7 @@
           <i class="fas fa-chevron-right" style="margin-left: 6px;"></i>
         </md-outlined-button>
       </div>
-    </div>
+    </div> <!-- End Filters & Controls (Always Visible) -->
 
     <!-- Arrow Comparison Modal -->
     <div v-if="showComparisonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -613,14 +613,32 @@ const filteredRecommendations = computed(() => {
     const beforeCount = filtered.length
     filtered = filtered.filter(rec => {
       if (!rec.arrow || !rec.arrow.manufacturer) {
+        console.log('Arrow missing manufacturer data', rec)
         return false
       }
       
       const arrowMfr = String(rec.arrow.manufacturer).trim()
       const filterMfr = String(filters.value.manufacturer).trim()
-      return arrowMfr === filterMfr
+      const matches = arrowMfr === filterMfr
+      
+      if (!matches) {
+        console.log(`Manufacturer mismatch: arrow="${arrowMfr}" vs filter="${filterMfr}"`)
+      }
+      
+      return matches
     })
     console.log(`Manufacturer filter: "${filters.value.manufacturer}" (${beforeCount} -> ${filtered.length} arrows)`)
+    
+    if (filtered.length === 0) {
+      console.log('No arrows after manufacturer filtering! Checking all available manufacturers in current data:')
+      const availableMfrs = new Set()
+      recommendations.value.forEach(rec => {
+        if (rec.arrow && rec.arrow.manufacturer) {
+          availableMfrs.add(String(rec.arrow.manufacturer).trim())
+        }
+      })
+      console.log('Available manufacturers in current recommendations:', Array.from(availableMfrs))
+    }
   }
   
   // Apply match quality filter
@@ -694,23 +712,58 @@ const filteredRecommendations = computed(() => {
       case 'manufacturer':
         const manufacturerA = a.arrow.manufacturer || 'ZZZ' // Put nulls at end
         const manufacturerB = b.arrow.manufacturer || 'ZZZ'
-        return manufacturerA.localeCompare(manufacturerB)
+        const mfgComparison = manufacturerA.localeCompare(manufacturerB)
+        // If manufacturers are the same, sort by match score (highest first)
+        if (mfgComparison === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return mfgComparison
       case 'diameter_asc':
-        return getNumericDiameter(a.arrow) - getNumericDiameter(b.arrow)
+        const diameterCompAsc = getNumericDiameter(a.arrow) - getNumericDiameter(b.arrow)
+        // Secondary sort by match score if diameters are equal
+        if (diameterCompAsc === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return diameterCompAsc
       case 'diameter_desc':
-        return getNumericDiameter(b.arrow) - getNumericDiameter(a.arrow)
+        const diameterCompDesc = getNumericDiameter(b.arrow) - getNumericDiameter(a.arrow)
+        // Secondary sort by match score if diameters are equal
+        if (diameterCompDesc === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return diameterCompDesc
       case 'weight_asc':
-        return getNumericWeight(a.arrow) - getNumericWeight(b.arrow)
+        const weightCompAsc = getNumericWeight(a.arrow) - getNumericWeight(b.arrow)
+        // Secondary sort by match score if weights are equal
+        if (weightCompAsc === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return weightCompAsc
       case 'weight_desc':
-        return getNumericWeight(b.arrow) - getNumericWeight(a.arrow)
+        const weightCompDesc = getNumericWeight(b.arrow) - getNumericWeight(a.arrow)
+        // Secondary sort by match score if weights are equal
+        if (weightCompDesc === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return weightCompDesc
       case 'material':
         const materialA = a.arrow.material || 'ZZZ' // Put nulls at end
         const materialB = b.arrow.material || 'ZZZ'
-        return materialA.localeCompare(materialB)
+        const materialComparison = materialA.localeCompare(materialB)
+        // Secondary sort by match score if materials are equal
+        if (materialComparison === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return materialComparison
       case 'price':
         const priceA = a.arrow.price_range || 'ZZZ' // Put nulls at end
         const priceB = b.arrow.price_range || 'ZZZ'
-        return priceA.localeCompare(priceB)
+        const priceComparison = priceA.localeCompare(priceB)
+        // Secondary sort by match score if prices are equal
+        if (priceComparison === 0) {
+          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
+        }
+        return priceComparison
       default:
         return 0
     }
@@ -962,36 +1015,9 @@ const loadManufacturers = async () => {
   }
 }
 
-const loadArrowsFromManufacturer = async (manufacturer) => {
-  try {
-    console.log(`Loading all arrows from ${manufacturer}...`)
-    const result = await api.getArrows({ 
-      manufacturer: manufacturer,
-      limit: 100
-    })
-    
-    if (result && result.arrows && result.arrows.length > 0) {
-      console.log(`Found ${result.arrows.length} arrows from ${manufacturer}`)
-      
-      // Convert arrows to recommendation format
-      const manufacturerRecommendations = result.arrows.map(arrow => ({
-        arrow: arrow,
-        compatibility_score: 0, // No tuning score for database arrows
-        reasons: [`All ${manufacturer} arrows`],
-        recommended_spine: null,
-        notes: `All arrows from ${manufacturer} (not tuned for current bow setup)`
-      }))
-      
-      // Replace recommendations with manufacturer arrows
-      recommendations.value = manufacturerRecommendations
-      console.log(`Loaded ${manufacturerRecommendations.length} arrows from ${manufacturer}`)
-    } else {
-      console.log(`No arrows found for ${manufacturer}`)
-    }
-  } catch (error) {
-    console.error(`Error loading arrows from ${manufacturer}:`, error)
-  }
-}
+// REMOVED: loadArrowsFromManufacturer function 
+// This function was causing 0% match scores by using the database API instead of tuning API
+// Now we always use loadRecommendations() which calls the tuning API with proper scoring
 
 const loadRecommendations = async () => {
   if (pending.value) return
@@ -1015,14 +1041,32 @@ const loadRecommendations = async () => {
         limit: 100  // Request more recommendations
       }
       
+      // Add manufacturer filter if selected
+      if (filters.value.manufacturer) {
+        console.log(`Adding manufacturer filter to API request: "${filters.value.manufacturer}"`)
+        requestData.preferred_manufacturers = [filters.value.manufacturer]
+      }
+      
     console.log('Sending recommendation request:', requestData)
     
     try {
       const result = await api.getArrowRecommendations(requestData)
       recommendations.value = result.recommended_arrows || []
       console.log('Loaded recommendations:', recommendations.value.length, 'arrows')
+      
+      // Debug: Check if we got proper match scores
+      if (recommendations.value.length > 0) {
+        const firstRec = recommendations.value[0]
+        console.log('First recommendation structure:', {
+          match_percentage: firstRec.match_percentage,
+          compatibility_score: firstRec.compatibility_score,
+          arrow_manufacturer: firstRec.arrow?.manufacturer,
+          spine_specs_count: firstRec.arrow?.spine_specifications?.length || 0
+        })
+      }
     } catch (tuningError) {
       console.warn('Tuning API failed, falling back to arrow search:', tuningError)
+      console.log('Tuning error details:', tuningError)
       
       // Fallback: Use arrow search with basic filtering - get more results
       const fallbackFilters = {
@@ -1157,20 +1201,10 @@ watch(recommendations, () => {
 watch(() => filters.value.manufacturer, async (newManufacturer, oldManufacturer) => {
   console.log(`Manufacturer filter changed: "${oldManufacturer}" -> "${newManufacturer}"`)
   
-  if (newManufacturer && newManufacturer !== oldManufacturer) {
-    // Check if we have arrows from this manufacturer in current recommendations
-    const hasManufacturerArrows = recommendations.value.some(rec => 
-      rec.arrow && rec.arrow.manufacturer && 
-      String(rec.arrow.manufacturer).trim() === String(newManufacturer).trim()
-    )
-    
-    if (!hasManufacturerArrows && recommendations.value.length > 0) {
-      console.log(`No ${newManufacturer} arrows in current recommendations, loading from database...`)
-      await loadArrowsFromManufacturer(newManufacturer)
-    }
-  } else if (!newManufacturer && oldManufacturer) {
-    // Manufacturer filter cleared, reload original recommendations
-    console.log('Manufacturer filter cleared, reloading original recommendations...')
+  if (newManufacturer !== oldManufacturer) {
+    // Always reload recommendations when manufacturer filter changes
+    // This ensures we get proper tuning scores from the API
+    console.log(`Manufacturer filter changed, reloading recommendations with tuning API...`)
     await loadRecommendations()
   }
   

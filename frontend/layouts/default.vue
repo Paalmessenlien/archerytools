@@ -30,8 +30,20 @@
           </div>
           
           <div class="flex items-center space-x-4">
-            <!-- Dark Mode Toggle (Desktop) -->
+            <!-- Desktop Navigation -->
             <div class="items-center hidden space-x-4 md:flex">
+                  <NuxtLink
+                    to="/database"
+                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
+                  >
+                    Arrows
+                  </NuxtLink>
+                  <NuxtLink
+                    to="/calculator"
+                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
+                  >
+                    Calculator
+                  </NuxtLink>
                   <NuxtLink
                     v-if="user"
                     to="/my-page"
@@ -90,6 +102,13 @@
             class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Arrows
+          </NuxtLink>
+          <NuxtLink 
+            to="/calculator" 
+            @click="closeMobileMenu"
+            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            Calculator
           </NuxtLink>
           <NuxtLink 
             to="/components" 

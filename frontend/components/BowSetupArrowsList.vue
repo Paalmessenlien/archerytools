@@ -60,7 +60,7 @@
             <!-- Arrow Specifications as Chips -->
             <md-chip-set class="mb-3 flex-wrap">
               <!-- Calculated Spine -->
-              <md-assist-chip :label="`Spine: ${arrowSetup.calculated_spine || 'N/A'}`">
+              <md-assist-chip :label="`Spine: ${getDisplaySpine(arrowSetup)}`">
                 <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
               </md-assist-chip>
               
@@ -177,7 +177,7 @@
             </span>
             <div class="text-xs text-gray-600 dark:text-gray-400">
               {{ arrowSetup.arrow_length }}" • {{ arrowSetup.point_weight }}gr • 
-              <span v-if="arrowSetup.calculated_spine">Spine: {{ arrowSetup.calculated_spine }}</span>
+              <span>Spine: {{ getDisplaySpine(arrowSetup) }}</span>
               <span v-if="calculateTotalArrowWeight(arrowSetup)"> • Total: {{ calculateTotalArrowWeight(arrowSetup) }}gr</span>
             </div>
           </div>
@@ -274,23 +274,29 @@ const calculateTotalComponentWeight = (arrowSetup: any) => {
 
 // Calculate total arrow weight based on GPI and arrow length
 const calculateTotalArrowWeight = (arrowSetup: any) => {
-  if (!arrowSetup.arrow || !arrowSetup.arrow.spine_specifications) return 0
+  if (!arrowSetup.arrow || !arrowSetup.arrow.spine_specifications || arrowSetup.arrow.spine_specifications.length === 0) {
+    return null
+  }
   
-  // Find the appropriate spine specification (use first one if no specific match)
-  const spineSpec = arrowSetup.arrow.spine_specifications[0]
-  if (!spineSpec || !spineSpec.gpi_weight) return 0
+  // Find the appropriate spine specification
+  let spineSpec = null
   
-  // Use arrow length from setup or default to 32" if no length options available
-  let effectiveLength = arrowSetup.arrow_length || 32
-  
-  // If arrow has specific length options, use the closest one
-  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
-    // Find the closest available length
-    const targetLength = arrowSetup.arrow_length || 32
-    effectiveLength = spineSpec.length_options.reduce((prev: number, curr: number) => 
-      Math.abs(curr - targetLength) < Math.abs(prev - targetLength) ? curr : prev
+  // Try to find spine spec that matches calculated_spine or first available
+  if (arrowSetup.calculated_spine && arrowSetup.calculated_spine !== 'N/A') {
+    spineSpec = arrowSetup.arrow.spine_specifications.find(spec => 
+      spec.spine && spec.spine.toString() === arrowSetup.calculated_spine.toString()
     )
   }
+  
+  // If no match found, use the first spine specification
+  if (!spineSpec) {
+    spineSpec = arrowSetup.arrow.spine_specifications[0]
+  }
+  
+  if (!spineSpec || !spineSpec.gpi_weight) return null
+  
+  // Use arrow length from setup or default to 32"
+  const effectiveLength = arrowSetup.arrow_length || 32
   
   // Calculate shaft weight (GPI * length in inches)
   const shaftWeight = spineSpec.gpi_weight * effectiveLength
@@ -300,14 +306,10 @@ const calculateTotalArrowWeight = (arrowSetup: any) => {
   const insertWeight = arrowSetup.insert_weight || 0
   const nockWeight = arrowSetup.nock_weight || 0
   const bushingWeight = arrowSetup.bushing_weight || 0
-  // Note: For now using default vane weight calculation since vane details aren't stored in setup_arrows
-  const vaneWeightPerVane = 5 // Default vane weight
-  const numberOfVanes = 3 // Default number of vanes
-  
-  const totalVaneWeight = vaneWeightPerVane * numberOfVanes
+  const fletchingWeight = arrowSetup.fletching_weight || 15 // Default fletching weight (3 vanes @ 5gr each)
   
   // Total arrow weight = shaft + components
-  const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
+  const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + fletchingWeight
   
   return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
 }
@@ -322,6 +324,22 @@ const removeArrow = (arrowSetupId: number) => {
 
 const editArrow = (arrowSetup) => {
   emit('edit-arrow', arrowSetup)
+}
+
+// Get display spine value - try calculated_spine first, then fall back to arrow specifications
+const getDisplaySpine = (arrowSetup: any) => {
+  // If we have a calculated spine and it's not null/empty
+  if (arrowSetup.calculated_spine && arrowSetup.calculated_spine !== 'N/A') {
+    return arrowSetup.calculated_spine
+  }
+  
+  // Fall back to spine specifications from arrow data
+  if (arrowSetup.arrow?.spine_specifications && arrowSetup.arrow.spine_specifications.length > 0) {
+    // Return the first spine specification as fallback
+    return arrowSetup.arrow.spine_specifications[0].spine
+  }
+  
+  return 'N/A'
 }
 </script>
 

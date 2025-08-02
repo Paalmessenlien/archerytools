@@ -519,6 +519,22 @@ class ArrowMatchingEngine:
                                    material_preference: Optional[str] = None) -> Optional[str]:
         """Format manufacturer list for database search, considering material preference"""
         
+        # Manufacturer name mapping for common frontend names to database names
+        manufacturer_mapping = {
+            'Easton': 'Easton Archery',
+            'Gold Tip': 'Gold Tip',
+            'Victory': 'Victory Archery',
+            'Carbon Express': 'Carbon Express',
+            'Traditional Wood': 'Traditional Wood Arrows',
+            'BigArchery': 'BigArchery',
+            'Nijora': 'Nijora Archery',
+            'DK Bow': 'DK Bow',
+            'Aurel': 'Aurel Archery',
+            'Fivics': 'Fivics',
+            'Pandarus': 'Pandarus Archery',
+            'Skylon': 'Skylon Archery'
+        }
+        
         # If wood material is requested, prioritize wood manufacturers
         if material_preference == 'wood':
             if preferred_manufacturers:
@@ -526,7 +542,7 @@ class ArrowMatchingEngine:
                 wood_manufacturers = ['Traditional Wood', 'Traditional Wood Arrows']
                 for pref in preferred_manufacturers:
                     if any(wood_mfr.lower() in pref.lower() for wood_mfr in wood_manufacturers):
-                        return pref
+                        return manufacturer_mapping.get(pref, pref)
                 # If no wood manufacturers in preferences, use first wood manufacturer
                 return 'Traditional Wood Arrows'
             else:
@@ -537,8 +553,9 @@ class ArrowMatchingEngine:
         if not preferred_manufacturers:
             return None
         
-        # Use the first preference for database search
-        return preferred_manufacturers[0]
+        # Map the first preference to database name
+        first_pref = preferred_manufacturers[0]
+        return manufacturer_mapping.get(first_pref, first_pref)
     
     def generate_recommendation_report(self, matches: List[ArrowMatch], request: MatchRequest) -> str:
         """Generate a detailed recommendation report"""
