@@ -1387,6 +1387,9 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
         if arrow_setup['user_id'] != current_user['id']:
             return jsonify({'error': 'Access denied'}), 403
         
+        # Convert sqlite3.Row to dict for easier access
+        arrow_setup_dict = dict(arrow_setup) if hasattr(arrow_setup, 'keys') else arrow_setup
+        
         # Update the arrow setup with component weights
         cursor.execute('''
             UPDATE setup_arrows 
@@ -1394,14 +1397,14 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
                 nock_weight = ?, insert_weight = ?, bushing_weight = ?, compatibility_score = ?
             WHERE id = ?
         ''', (
-            data.get('arrow_length', arrow_setup['arrow_length']),
-            data.get('point_weight', arrow_setup['point_weight']),
-            data.get('calculated_spine', arrow_setup['calculated_spine']),
-            data.get('notes', arrow_setup['notes']),
-            data.get('nock_weight', arrow_setup.get('nock_weight', 10)),
-            data.get('insert_weight', arrow_setup.get('insert_weight', 0)),
-            data.get('bushing_weight', arrow_setup.get('bushing_weight', 0)),
-            data.get('compatibility_score', arrow_setup.get('compatibility_score')),
+            data.get('arrow_length', arrow_setup_dict['arrow_length']),
+            data.get('point_weight', arrow_setup_dict['point_weight']),
+            data.get('calculated_spine', arrow_setup_dict['calculated_spine']),
+            data.get('notes', arrow_setup_dict['notes']),
+            data.get('nock_weight', arrow_setup_dict.get('nock_weight', 10)),
+            data.get('insert_weight', arrow_setup_dict.get('insert_weight', 0)),
+            data.get('bushing_weight', arrow_setup_dict.get('bushing_weight', 0)),
+            data.get('compatibility_score', arrow_setup_dict.get('compatibility_score')),
             arrow_setup_id
         ))
         
