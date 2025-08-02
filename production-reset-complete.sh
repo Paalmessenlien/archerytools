@@ -181,6 +181,44 @@ fi
 # Step 7: Choose Deployment Strategy
 print_step "🚀 Step 7: Fresh deployment..."
 
+# Function to deploy with retry logic
+deploy_with_retry() {
+    local config_file="$1"
+    local max_attempts=3
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        echo -e "${YELLOW}Deployment attempt $attempt of $max_attempts...${NC}"
+        
+        if [ -f "./deploy-enhanced.sh" ]; then
+            if ./deploy-enhanced.sh "$config_file"; then
+                print_status "Deployment successful on attempt $attempt"
+                return 0
+            fi
+        else
+            if docker-compose -f "$config_file" up -d --build; then
+                print_status "Deployment successful on attempt $attempt"
+                return 0
+            fi
+        fi
+        
+        if [ $attempt -lt $max_attempts ]; then
+            print_warning "Deployment attempt $attempt failed, retrying in 30 seconds..."
+            sleep 30
+            
+            # Clean up failed containers before retry
+            echo -e "${YELLOW}Cleaning up failed containers...${NC}"
+            docker-compose -f "$config_file" down 2>/dev/null || true
+            sleep 10
+        fi
+        
+        attempt=$((attempt + 1))
+    done
+    
+    print_error "All deployment attempts failed"
+    return 1
+}
+
 if [ -n "$DOMAIN" ]; then
     echo -e "${BLUE}Deploying with SSL for domain: $DOMAIN${NC}"
     
@@ -188,29 +226,50 @@ if [ -n "$DOMAIN" ]; then
     sed -i "s|GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://$DOMAIN|g" .env
     sed -i "s|NUXT_PUBLIC_API_BASE=.*|NUXT_PUBLIC_API_BASE=https://$DOMAIN/api|g" .env
     
-    # Deploy with enhanced SSL configuration
-    if [ -f "./deploy-enhanced.sh" ]; then
-        ./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
-    else
-        # Fallback to standard SSL deployment
-        docker-compose -f docker-compose.ssl.yml up -d --build
-    fi
+    # Deploy with enhanced SSL configuration and retry logic
+    deploy_with_retry "docker-compose.enhanced-ssl.yml"
 else
     echo -e "${BLUE}Deploying HTTP-only (no domain provided)${NC}"
     
-    # Use fresh deployment to avoid container conflicts
-    if [ -f "./deploy-fresh.sh" ]; then
-        ./deploy-fresh.sh
+    # Deploy with retry logic
+    if [ -f "docker-compose.fresh.yml" ]; then
+        deploy_with_retry "docker-compose.fresh.yml"
     else
-        docker-compose -f docker-compose.fresh.yml up -d --build
+        deploy_with_retry "docker-compose.yml"
     fi
 fi
 
-# Step 8: Wait for Services
+# Step 8: Wait for Services with Health Monitoring
 print_step "⏳ Step 8: Waiting for services to start..."
-sleep 60
 
-# Step 9: Health Checks
+# Function to wait for service health with timeout
+wait_for_service() {
+    local service_name="$1"
+    local url="$2"
+    local max_wait=300  # 5 minutes
+    local wait_time=0
+    local check_interval=15
+    
+    echo -e "${YELLOW}Waiting for $service_name to be healthy...${NC}"
+    
+    while [ $wait_time -lt $max_wait ]; do
+        local status=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+        
+        if [ "$status" = "200" ]; then
+            print_status "$service_name is healthy (HTTP $status) after ${wait_time}s"
+            return 0
+        fi
+        
+        echo -e "   ${YELLOW}$service_name not ready (HTTP $status), waiting... (${wait_time}s/${max_wait}s)${NC}"
+        sleep $check_interval
+        wait_time=$((wait_time + check_interval))
+    done
+    
+    print_warning "$service_name not healthy after ${max_wait}s (HTTP $status)"
+    return 1
+}
+
+# Step 9: Health Checks with Timeout
 print_step "🔍 Step 9: Health verification..."
 
 # Check API health
@@ -219,12 +278,8 @@ if [ -n "$DOMAIN" ]; then
     API_URL="https://$DOMAIN/api/simple-health"
 fi
 
+wait_for_service "API" "$API_URL"
 API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" 2>/dev/null || echo "000")
-if [ "$API_STATUS" = "200" ]; then
-    print_status "API is healthy (HTTP $API_STATUS)"
-else
-    print_warning "API not ready (HTTP $API_STATUS)"
-fi
 
 # Check database stats
 DB_STATS=$(curl -s "$API_URL" 2>/dev/null | grep -o '"arrows":[0-9]*' | cut -d: -f2 || echo "0")
@@ -236,12 +291,8 @@ if [ -n "$DOMAIN" ]; then
     FRONTEND_URL="https://$DOMAIN"
 fi
 
+wait_for_service "Frontend" "$FRONTEND_URL"
 FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null || echo "000")
-if [ "$FRONTEND_STATUS" = "200" ]; then
-    print_status "Frontend is healthy (HTTP $FRONTEND_STATUS)"
-else
-    print_warning "Frontend not ready (HTTP $FRONTEND_STATUS)"
-fi
 
 # Step 10: SSL Setup (if domain provided)
 if [ -n "$DOMAIN" ]; then
