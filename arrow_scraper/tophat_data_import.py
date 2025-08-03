@@ -300,12 +300,11 @@ class TopHatDataImporter:
         """Add a completely new arrow to the database"""
         cursor = self.conn.cursor()
         
-        # Insert arrow
+        # Insert arrow (only fields that exist in arrows table)
         cursor.execute('''
             INSERT INTO arrows (manufacturer, model_name, material, arrow_type, 
-                              description, image_url, recommended_use, 
-                              straightness_tolerance, weight_tolerance)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              description, image_url, source_url, scraped_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             tophat_arrow['manufacturer'],
             tophat_arrow['model_name'],
@@ -313,26 +312,28 @@ class TopHatDataImporter:
             tophat_arrow.get('arrow_type'),
             tophat_arrow.get('description'),
             tophat_arrow.get('image_url'),
-            tophat_arrow.get('recommended_use'),
-            tophat_arrow.get('straightness_tolerance'),
-            tophat_arrow.get('weight_tolerance')
+            'TopHat Archery',  # source_url
+            datetime.now().isoformat()  # scraped_at
         ))
         
         arrow_id = cursor.lastrowid
         
-        # Add spine specifications
+        # Add spine specifications (tolerances go here)
         for spec in tophat_arrow['spine_specifications']:
             cursor.execute('''
                 INSERT INTO spine_specifications
-                (arrow_id, spine, outer_diameter, inner_diameter, gpi_weight, length_options)
-                VALUES (?, ?, ?, ?, ?, ?)
+                (arrow_id, spine, outer_diameter, inner_diameter, gpi_weight, 
+                 length_options, straightness_tolerance, weight_tolerance)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 arrow_id,
                 spec['spine'],
                 spec.get('outer_diameter'),
                 spec.get('inner_diameter'),
                 spec.get('gpi_weight'),
-                json.dumps(spec.get('length_options', []))
+                json.dumps(spec.get('length_options', [])),
+                tophat_arrow.get('straightness_tolerance'),
+                tophat_arrow.get('weight_tolerance')
             ))
         
         self.conn.commit()
