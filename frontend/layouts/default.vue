@@ -23,7 +23,7 @@
                   BETA
                 </span>
               </div>
-              <p class="hidden text-sm text-gray-600 dark:text-gray-300 sm:block">
+              <p class="hidden text-sm text-gray-600 dark:text-gray-300 lg:block">
                 Professional Archery Tools - Invitation Only
               </p>
             </div>
@@ -32,25 +32,141 @@
           <div class="flex items-center space-x-4">
             <!-- Desktop Navigation -->
             <div class="items-center hidden space-x-4 md:flex">
-                  <NuxtLink
-                    to="/database"
-                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
-                  >
-                    Arrows
-                  </NuxtLink>
-                  <NuxtLink
-                    to="/calculator"
-                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
-                  >
-                    Calculator
-                  </NuxtLink>
-                  <NuxtLink
-                    v-if="user"
-                    to="/my-page"
-                    class="text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400"
-                  >
-                    My Setup
-                  </NuxtLink>
+                  <!-- Mega Menu -->
+                  <div class="relative">
+                    <button
+                      @click="toggleDesktopMenu"
+                      class="flex items-center space-x-2 px-3 py-2 text-gray-700 transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-purple-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <i class="fas fa-th-large"></i>
+                      <span>Menu</span>
+                      <i class="fas fa-chevron-down text-sm transition-transform" :class="{ 'rotate-180': desktopMenuOpen }"></i>
+                    </button>
+                    
+                    <!-- Mega Menu Dropdown -->
+                    <div v-if="desktopMenuOpen" class="absolute top-full right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                      <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4">
+                          <!-- Navigation Section -->
+                          <div class="space-y-3">
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Navigation</h3>
+                            
+                            <NuxtLink
+                              to="/"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/' }"
+                            >
+                              <i class="fas fa-home text-blue-600 dark:text-purple-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Home</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Dashboard & overview</div>
+                              </div>
+                            </NuxtLink>
+                            
+                            <NuxtLink
+                              to="/database"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/database' }"
+                            >
+                              <i class="fas fa-database text-green-600 dark:text-green-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Arrow Database</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Browse 1,100+ arrows</div>
+                              </div>
+                            </NuxtLink>
+                            
+                            <NuxtLink
+                              to="/calculator"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/calculator' }"
+                            >
+                              <i class="fas fa-calculator text-purple-600 dark:text-purple-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Spine Calculator</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Professional calculations</div>
+                              </div>
+                            </NuxtLink>
+                          </div>
+                          
+                          <!-- Tools Section -->
+                          <div class="space-y-3">
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Tuning Tools</h3>
+                            
+                            <NuxtLink
+                              to="/guides"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/guides' }"
+                            >
+                              <i class="fas fa-book-open text-amber-600 dark:text-amber-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Tuning Guides</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Step-by-step tutorials</div>
+                              </div>
+                            </NuxtLink>
+                            
+                            <NuxtLink
+                              to="/tuning"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/tuning' }"
+                            >
+                              <i class="fas fa-bullseye text-red-600 dark:text-red-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Interactive Tuning</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Guided tuning sessions</div>
+                              </div>
+                            </NuxtLink>
+                            
+                            <NuxtLink
+                              v-if="user"
+                              to="/my-page"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/my-page' }"
+                            >
+                              <i class="fas fa-user text-indigo-600 dark:text-indigo-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">My Setup</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Bow configurations</div>
+                              </div>
+                            </NuxtLink>
+                          </div>
+                        </div>
+                        
+                        <!-- Admin Section -->
+                        <div v-if="user && isAdmin" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <NuxtLink
+                            to="/admin"
+                            @click="closeDesktopMenu"
+                            class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-red-100 dark:hover:bg-red-900/20 text-red-700 dark:text-red-200"
+                          >
+                            <i class="fas fa-shield-alt text-red-600 dark:text-red-400 w-5"></i>
+                            <div>
+                              <div class="font-medium">Admin Panel</div>
+                              <div class="text-xs text-red-500 dark:text-red-400">System administration</div>
+                            </div>
+                          </NuxtLink>
+                        </div>
+                        
+                        <!-- Settings Section -->
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div class="flex items-center justify-between p-3">
+                            <div class="flex items-center space-x-3">
+                              <i class="fas fa-moon text-gray-600 dark:text-gray-400 w-5"></i>
+                              <span class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</span>
+                            </div>
+                            <DarkModeToggle />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- User Actions -->
                   <CustomButton
                     v-if="user"
                     @click="logout"
@@ -67,258 +183,19 @@
                   >
                     Login with Google
                   </CustomButton>
-                  <DarkModeToggle />
                 </div>
             
-            <!-- Mobile menu button -->
-            <button 
-              @click="toggleMobileMenu"
-              class="p-2 text-gray-600 transition-colors rounded-lg md:hidden hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <svg v-if="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
-              <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+            <!-- Mobile header - no navigation needed -->
           </div>
         </div>
       </div>
       
-      <!-- Mobile menu -->
-      <div v-if="mobileMenuOpen" class="bg-white border-t border-gray-200 md:hidden dark:bg-gray-800 dark:border-gray-700">
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <NuxtLink 
-            to="/" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Home
-          </NuxtLink>
-          <NuxtLink 
-            to="/database" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Arrows
-          </NuxtLink>
-          <NuxtLink 
-            to="/calculator" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Calculator
-          </NuxtLink>
-          <NuxtLink 
-            to="/components" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Components
-          </NuxtLink>
-          <NuxtLink 
-            to="/guides" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Guides
-          </NuxtLink>
-          <NuxtLink 
-            to="/tuning" 
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Interactive Tuning
-          </NuxtLink>
-          
-          <NuxtLink
-            v-if="user"
-            to="/my-page"
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            My Setup
-          </NuxtLink>
-          <NuxtLink
-            v-if="user && isAdmin"
-            to="/admin"
-            @click="closeMobileMenu"
-            class="block px-3 py-2 text-red-700 transition-colors rounded-lg hover:bg-red-100 dark:text-red-200 dark:hover:bg-red-900/20"
-          >
-            <i class="fas fa-shield-alt mr-2"></i>
-            Admin Panel
-          </NuxtLink>
-          <div class="px-3 py-2">
-            <CustomButton
-              v-if="user"
-              @click="logout"
-              variant="outlined"
-              class="w-full text-gray-700 dark:text-gray-200"
-            >
-              Logout
-            </CustomButton>
-            <CustomButton
-              v-else
-              @click="loginWithGoogle"
-              variant="filled"
-              class="w-full text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-            >
-              Login with Google
-            </CustomButton>
-          </div>
-          <!-- Dark Mode Toggle (Mobile) -->
-          <div class="px-3 py-2">
-            <DarkModeToggle />
-          </div>
-        </div>
-      </div>
+      <!-- Mobile menu removed - navigation now handled by bottom nav -->
     </header>
 
     <!-- Main Content -->
-    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="flex flex-col gap-6 lg:flex-row">
-        <!-- Sidebar Navigation -->
-        <aside class="flex-shrink-0 lg:w-64">
-          <nav class="card">
-            <div class="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-x-visible">
-              <!-- Home - Always accessible for logged-in users -->
-              <template v-if="user">
-                <NuxtLink 
-                  to="/"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/' }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                  </svg>
-                  <span class="hidden sm:block">Home</span>
-                </NuxtLink>
-                
-                <NuxtLink
-                  to="/database"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/database' }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 17l4 4 4-4m-4-5v9"/>
-                    <path d="M16 12l-4-4-4 4"/>
-                    <path d="M12 1v3"/>
-                  </svg>
-                  <span class="hidden sm:block">Arrows</span>
-                </NuxtLink>
-                
-                <NuxtLink
-                  to="/calculator"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/calculator' }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                  <span class="hidden sm:block">Calculator</span>
-                </NuxtLink>
-                
-                <NuxtLink
-                  to="/components"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/components' }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="7" height="7"/>
-                    <rect x="14" y="3" width="7" height="7"/>
-                    <rect x="14" y="14" width="7" height="7"/>
-                    <rect x="3" y="14" width="7" height="7"/>
-                  </svg>
-                  <span class="hidden sm:block">Components</span>
-                </NuxtLink>
-
-                <NuxtLink
-                  to="/guides"
-                  class="nav-tab"
-                  :class="{ active: $route.path.startsWith('/guides') }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                  </svg>
-                  <span class="hidden sm:block">Guides</span>
-                </NuxtLink>
-
-                <NuxtLink
-                  to="/tuning"
-                  class="nav-tab"
-                  :class="{ active: $route.path.startsWith('/tuning') }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                  <span class="hidden sm:block">Tuning</span>
-                </NuxtLink>
-
-                <NuxtLink
-                  to="/my-page"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/my-page' }"
-                >
-                  <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span class="hidden sm:block">My Setup</span>
-                </NuxtLink>
-
-                <NuxtLink
-                  v-if="isAdmin"
-                  to="/admin"
-                  class="nav-tab"
-                  :class="{ active: $route.path === '/admin' }"
-                >
-                  <i class="fas fa-shield-alt flex-shrink-0 w-5 h-5 text-red-600 dark:text-red-400"></i>
-                  <span class="hidden sm:block">Admin</span>
-                </NuxtLink>
-              </template>
-              
-              <!-- Locked Navigation for Non-authenticated Users -->
-              <template v-else>
-                <div 
-                  @click="redirectToLogin"
-                  class="nav-tab cursor-not-allowed opacity-60"
-                  title="Login required to access full features"
-                >
-                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
-                  <span class="hidden sm:block">Home</span>
-                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
-                </div>
-                
-                <div 
-                  @click="redirectToLogin"
-                  class="nav-tab cursor-not-allowed opacity-60"
-                  title="Login required to access Arrow Database"
-                >
-                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
-                  <span class="hidden sm:block">Arrows</span>
-                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
-                </div>
-                
-                <div 
-                  @click="redirectToLogin"
-                  class="nav-tab cursor-not-allowed opacity-60"
-                  title="Login required to access Components"
-                >
-                  <i class="fas fa-lock flex-shrink-0 w-5 h-5 text-gray-500 dark:text-gray-400"></i>
-                  <span class="hidden sm:block">Components</span>
-                  <i class="fas fa-lock text-xs text-gray-400 ml-auto"></i>
-                </div>
-              </template>
-            </div>
-          </nav>
-        </aside>
-
-        <!-- Page Content -->
-        <div class="flex-1 min-w-0">
-          <slot />
-        </div>
-      </div>
+    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-20 md:pb-6">
+      <slot />
     </main>
 
     <!-- Loading Indicator -->
@@ -328,6 +205,9 @@
         <span class="text-gray-700 dark:text-gray-200">Loading...</span>
       </div>
     </div>
+    
+    <!-- Mobile Bottom Navigation -->
+    <MobileBottomNav @login="handleLogin" />
   </div>
 </template>
 
@@ -341,9 +221,33 @@ const isLoading = computed(() => bowConfigStore.isLoading)
 const { user, logout, loginWithGoogle, fetchUser, initializeGoogleAuth } = useAuth()
 const router = useRouter()
 
+// Desktop menu state
+const desktopMenuOpen = ref(false)
+
 // Check if user is admin
 const isAdmin = computed(() => {
   return user.value?.email === 'messenlien@gmail.com'
+})
+
+// Desktop menu methods
+const toggleDesktopMenu = () => {
+  desktopMenuOpen.value = !desktopMenuOpen.value
+}
+
+const closeDesktopMenu = () => {
+  desktopMenuOpen.value = false
+}
+
+// Close menu when clicking outside
+const handleClickOutside = (event) => {
+  if (desktopMenuOpen.value && !event.target.closest('.relative')) {
+    closeDesktopMenu()
+  }
+}
+
+// Close menu when route changes
+watch(() => router.currentRoute.value.path, () => {
+  closeDesktopMenu()
 })
 
 const handleLogin = () => {
@@ -356,45 +260,32 @@ const redirectToLogin = () => {
 
 // Fetch user on mount if token exists
 onMounted(() => {
-  initializeGoogleAuth();
-  fetchUser();
-});
-
-// Dark mode
-const { initializeTheme } = useDarkMode()
-
-// Mobile menu state
-const mobileMenuOpen = ref(false)
-
-const toggleMobileMenu = () => {
-  mobileMenuOpen.value = !mobileMenuOpen.value
-}
-
-const closeMobileMenu = () => {
-  mobileMenuOpen.value = false
-}
-
-// Close mobile menu on route change
-const route = useRoute()
-watch(() => route.path, () => {
-  mobileMenuOpen.value = false
+  fetchUser()
+  initializeGoogleAuth()
+  
+  // Add click outside listener
+  document.addEventListener('click', handleClickOutside)
 })
 
-// Close mobile menu on escape key and initialize theme
-onMounted(() => {
-  // Initialize dark mode theme
-  initializeTheme()
-  
-  const handleEscape = (e) => {
-    if (e.key === 'Escape') {
-      mobileMenuOpen.value = false
-    }
-  }
-  
-  document.addEventListener('keydown', handleEscape)
-  
-  onUnmounted(() => {
-    document.removeEventListener('keydown', handleEscape)
-  })
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
+
+<style scoped>
+.nav-tab {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 whitespace-nowrap border-none cursor-pointer bg-transparent text-gray-600 hover:bg-gray-100;
+}
+
+.nav-tab.active {
+  @apply bg-blue-50 text-blue-600 font-medium;
+}
+
+.dark .nav-tab {
+  @apply text-gray-300 hover:bg-gray-700;
+}
+
+.dark .nav-tab.active {
+  @apply bg-purple-900/20 text-purple-400;
+}
+</style>

@@ -35,8 +35,13 @@ export default defineNuxtConfig({
     head: {
       title: 'ArcheryTool - Professional Archery Tools',
       meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5' },
         { name: 'description', content: 'Professional archery tools for arrow selection and tuning' },
-        { name: 'keywords', content: 'archery, arrows, tuning, spine calculator, bow setup' }
+        { name: 'keywords', content: 'archery, arrows, tuning, spine calculator, bow setup' },
+        { name: 'format-detection', content: 'telephone=no' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },

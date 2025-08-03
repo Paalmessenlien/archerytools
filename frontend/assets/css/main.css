@@ -59,6 +59,16 @@
     @apply text-indigo-600;
   }
   
+  /* Mobile modal z-index fix */
+  .modal-overlay {
+    z-index: 9999 !important;
+  }
+  
+  /* Mobile bottom nav z-index */
+  .mobile-bottom-nav {
+    z-index: 1000;
+  }
+  
   /* Glassmorphism card effect */
   .glass-card {
     @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
@@ -99,7 +109,44 @@
   
   /* Dark mode input field styling */
   .dark .input-field {
-    @apply bg-gray-800 border-gray-600 text-gray-100 focus:ring-blue-400 focus:border-blue-400;
+    @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500;
+  }
+  
+  /* Mobile-optimized button sizes */
+  @media (max-width: 640px) {
+    .btn-primary, .btn-secondary {
+      @apply px-6 py-3 text-base;
+    }
+  }
+  
+  /* Responsive table wrapper */
+  .table-responsive {
+    @apply -mx-4 sm:mx-0 overflow-x-auto;
+  }
+  
+  .table-responsive table {
+    @apply min-w-full;
+  }
+  
+  /* Mobile-friendly card spacing */
+  @media (max-width: 640px) {
+    .card {
+      @apply p-4;
+    }
+  }
+  
+  /* Touch-friendly interactive elements */
+  @media (hover: none) {
+    .btn-primary:active, .btn-secondary:active {
+      @apply scale-95;
+    }
+  }
+  
+  /* Better mobile typography */
+  @media (max-width: 640px) {
+    h1 { @apply text-2xl; }
+    h2 { @apply text-xl; }
+    h3 { @apply text-lg; }
   }
   
   .select-field {

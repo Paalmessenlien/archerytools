@@ -1,9 +1,19 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="w-full max-w-lg p-6 bg-white shadow-lg dark:bg-gray-800 rounded-xl">
-      <h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-        {{ props.modelValue?.id ? 'Edit Bow Setup' : 'Add New Bow Setup' }}
-      </h3>
+  <div class="fixed inset-0 modal-overlay bg-white dark:bg-gray-900 md:bg-black md:bg-opacity-50 md:flex md:items-center md:justify-center md:p-4">
+    <div class="w-full h-full md:w-full md:max-w-2xl md:max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 md:shadow-lg md:rounded-xl">
+      <div class="sticky top-0 z-10 px-4 md:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {{ props.modelValue?.id ? 'Edit Bow Setup' : 'Add New Bow Setup' }}
+        </h3>
+        <!-- Close button for mobile -->
+        <button 
+          @click="$emit('close')"
+          class="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div class="px-4 md:px-6 pb-6 pb-20 md:pb-6">
       <form @submit.prevent="saveBowSetup">
         <div class="space-y-6">
           <!-- Setup Name -->
@@ -445,12 +455,13 @@
           <textarea id="description" v-model="setupData.description" class="form-textarea"></textarea>
         </div>
 
-        <div class="flex justify-end space-x-3">
+        <!-- Action buttons - fixed at bottom on mobile, inline on desktop -->
+        <div class="fixed bottom-0 left-0 right-0 md:sticky md:bottom-auto flex justify-end space-x-3 p-4 md:pt-4 md:mt-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 md:relative">
           <CustomButton
             type="button"
             @click="$emit('close')"
             variant="outlined"
-            class="text-gray-700 dark:text-gray-200"
+            class="text-gray-700 dark:text-gray-200 hidden md:inline-flex"
           >
             Cancel
           </CustomButton>
@@ -458,7 +469,7 @@
             type="submit"
             variant="filled"
             :disabled="isSaving"
-            class="text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+            class="flex-1 md:flex-none text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
           >
             <span v-if="isSaving">Saving...</span>
             <span v-else>{{ props.modelValue?.id ? 'Update Setup' : 'Add Setup' }}</span>
@@ -466,6 +477,7 @@
         </div>
         <p v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</p>
       </form>
+      </div>
     </div>
   </div>
 </template>

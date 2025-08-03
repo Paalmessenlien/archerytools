@@ -119,12 +119,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['remove-setup'])
+const emit = defineEmits(['remove-setup', 'confirm-remove'])
 
 const removeSetup = (setup) => {
-  if (confirm(`Remove ${setup.database_arrow.manufacturer} ${setup.database_arrow.model_name} from "${setup.arrow_config.name}"?`)) {
-    emit('remove-setup', setup)
-  }
+  // Emit confirmation request to parent instead of using browser confirm
+  emit('confirm-remove', {
+    setup,
+    message: `Remove ${setup.database_arrow.manufacturer} ${setup.database_arrow.model_name} from "${setup.arrow_config.name}"?`
+  })
 }
 
 const viewArrowDetails = (arrow) => {

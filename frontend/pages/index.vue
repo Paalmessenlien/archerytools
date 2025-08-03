@@ -44,8 +44,8 @@
           Professional archery tools designed for enthusiasts who demand precision and performance.
         </p>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 sm:p-6 rounded-lg border border-blue-200 dark:border-blue-800">
             <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
               <i class="fas fa-database mr-2"></i>
               Comprehensive Database
@@ -55,7 +55,7 @@
             </p>
           </div>
           
-          <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+          <div class="bg-green-50 dark:bg-green-900/20 p-4 sm:p-6 rounded-lg border border-green-200 dark:border-green-800">
             <h3 class="text-lg font-semibold text-green-900 dark:text-green-200 mb-3">
               <i class="fas fa-calculator mr-2"></i>
               Professional Calculations
@@ -65,7 +65,7 @@
             </p>
           </div>
           
-          <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div class="bg-purple-50 dark:bg-purple-900/20 p-4 sm:p-6 rounded-lg border border-purple-200 dark:border-purple-800">
             <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-200 mb-3">
               <i class="fas fa-user-cog mr-2"></i>
               Personal Setup Management
@@ -75,7 +75,7 @@
             </p>
           </div>
           
-          <div class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+          <div class="bg-orange-50 dark:bg-orange-900/20 p-4 sm:p-6 rounded-lg border border-orange-200 dark:border-orange-800">
             <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-200 mb-3">
               <i class="fas fa-book-open mr-2"></i>
               Interactive Guides
@@ -104,8 +104,8 @@
     </div>
 
     <!-- Quick Access Section -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 sm:p-6 rounded-lg border border-blue-200 dark:border-blue-800">
         <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
           <i class="fas fa-calculator mr-2"></i>
           Arrow Calculator
@@ -121,7 +121,7 @@
         </NuxtLink>
       </div>
       
-      <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+      <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 sm:p-6 rounded-lg border border-green-200 dark:border-green-800">
         <h3 class="text-lg font-semibold text-green-900 dark:text-green-200 mb-3">
           <i class="fas fa-database mr-2"></i>
           Arrow Database

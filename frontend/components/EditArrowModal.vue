@@ -372,7 +372,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['close', 'arrow-updated'])
+const emit = defineEmits(['close', 'arrow-updated', 'error'])
 
 // API
 const api = useApi()
@@ -574,7 +574,7 @@ const saveChanges = async () => {
     
   } catch (error) {
     console.error('Error updating arrow:', error)
-    alert('Failed to update arrow settings. Please try again.')
+    emit('error', 'Failed to update arrow settings. Please try again.')
   } finally {
     saving.value = false
   }

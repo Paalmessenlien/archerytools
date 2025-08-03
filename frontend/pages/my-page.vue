@@ -1,5 +1,29 @@
 <template>
   <div class="container mx-auto px-4 py-8">
+    <!-- Notification Toast -->
+    <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
+      <div 
+        :class="[
+          'p-4 rounded-lg shadow-lg max-w-sm',
+          notification.type === 'success' ? 'bg-green-500 text-white' : '',
+          notification.type === 'error' ? 'bg-red-500 text-white' : '',
+          notification.type === 'warning' ? 'bg-yellow-500 text-black' : ''
+        ]"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i v-if="notification.type === 'success'" class="fas fa-check-circle mr-2"></i>
+            <i v-if="notification.type === 'error'" class="fas fa-exclamation-circle mr-2"></i>
+            <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
+            <span>{{ notification.message }}</span>
+          </div>
+          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">My Setup</h1>
     
     <div v-if="isLoadingUser" class="text-center py-8">
@@ -244,7 +268,7 @@
         />
 
         <!-- Confirm Delete Modal -->
-        <div v-if="isConfirmingDelete" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div v-if="isConfirmingDelete" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal-overlay p-4">
           <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Confirm Deletion</h3>
             <p class="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to delete this bow setup?</p>
@@ -275,8 +299,39 @@
           :arrow-setup="editingArrowSetup"
           @close="closeEditArrowModal"
           @arrow-updated="handleArrowUpdated"
+          @error="handleArrowEditError"
         />
         <!-- End of Edit Arrow Modal -->
+
+        <!-- Arrow Removal Confirmation Modal -->
+        <div v-if="arrowRemovalConfirm.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal-overlay p-4 z-50">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
+            <div class="mb-4">
+              <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Remove Arrow</h3>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to remove "{{ arrowRemovalConfirm.arrowName }}" from this setup?
+            </p>
+            <div class="flex justify-center space-x-4">
+              <CustomButton
+                @click="hideArrowRemovalConfirm"
+                variant="outlined"
+                class="text-gray-700 dark:text-gray-200"
+              >
+                Cancel
+              </CustomButton>
+              <CustomButton
+                @click="confirmRemoveArrow"
+                variant="filled"
+                class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+              >
+                Remove
+              </CustomButton>
+            </div>
+          </div>
+        </div>
+        <!-- End of Arrow Removal Confirmation Modal -->
 
       </div>
       <!-- End of Bow Setups Section -->
@@ -327,6 +382,20 @@ const editingSetupId = ref(null);
 // Edit arrow modal state
 const isEditArrowModalOpen = ref(false);
 const editingArrowSetup = ref(null);
+
+// Notification state
+const notification = ref({
+  show: false,
+  message: '',
+  type: 'success' // 'success', 'error', 'warning'
+});
+
+// Arrow removal confirmation state
+const arrowRemovalConfirm = ref({
+  show: false,
+  arrowSetupId: null,
+  arrowName: ''
+});
 
 const newSetup = ref({
   name: '',
@@ -530,7 +599,11 @@ const handleArrowUpdated = async (updatedArrowData) => {
   closeEditArrowModal();
   
   // Show success message
-  alert('Arrow settings updated successfully!');
+  showNotification('Arrow settings updated successfully!');
+};
+
+const handleArrowEditError = (errorMessage) => {
+  showNotification(errorMessage, 'error');
 };
 
 const loadArrowsForSetup = async (setupId) => {
@@ -550,10 +623,14 @@ const loadArrowsForSetup = async (setupId) => {
 };
 
 
-const removeArrowFromSetup = async (arrowSetupId) => {
-  if (!confirm('Are you sure you want to remove this arrow from the setup?')) {
-    return;
-  }
+const removeArrowFromSetup = async (arrowSetupId, arrowName = 'arrow') => {
+  // Show confirmation dialog instead of alert
+  showArrowRemovalConfirm(arrowSetupId, arrowName);
+};
+
+const confirmRemoveArrow = async () => {
+  const arrowSetupId = arrowRemovalConfirm.value.arrowSetupId;
+  hideArrowRemovalConfirm();
   
   try {
     await deleteArrowFromSetup(arrowSetupId);
@@ -561,16 +638,51 @@ const removeArrowFromSetup = async (arrowSetupId) => {
     // Reload all bow setups to refresh the arrows lists 
     await loadBowSetups();
     
-    alert('Arrow removed successfully!');
+    showNotification('Arrow removed successfully!');
   } catch (err) {
     console.error('Error removing arrow from setup:', err);
-    alert('Failed to remove arrow. Please try again.');
+    showNotification('Failed to remove arrow. Please try again.', 'error');
   }
 };
 
 const viewArrowDetails = (arrowId) => {
   // Navigate to arrow details page
   navigateTo(`/arrows/${arrowId}`);
+};
+
+// Notification helper functions
+const showNotification = (message, type = 'success') => {
+  notification.value = {
+    show: true,
+    message,
+    type
+  };
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    notification.value.show = false;
+  }, 4000);
+};
+
+const hideNotification = () => {
+  notification.value.show = false;
+};
+
+// Arrow removal confirmation helpers
+const showArrowRemovalConfirm = (arrowSetupId, arrowName) => {
+  arrowRemovalConfirm.value = {
+    show: true,
+    arrowSetupId,
+    arrowName
+  };
+};
+
+const hideArrowRemovalConfirm = () => {
+  arrowRemovalConfirm.value = {
+    show: false,
+    arrowSetupId: null,
+    arrowName: ''
+  };
 };
 
 // Helper functions for display formatting

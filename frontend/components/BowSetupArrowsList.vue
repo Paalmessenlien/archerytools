@@ -57,54 +57,65 @@
               </span>
             </div>
             
-            <!-- Arrow Specifications as Chips -->
-            <md-chip-set class="mb-3 flex-wrap">
-              <!-- Calculated Spine -->
-              <md-assist-chip :label="`Spine: ${getDisplaySpine(arrowSetup)}`">
-                <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
-              </md-assist-chip>
+            <!-- Arrow Specifications as Vertical List -->
+            <div class="mb-3 space-y-2">
+              <!-- Primary Specifications -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-ruler-horizontal text-indigo-600 dark:text-indigo-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Spine: <span class="font-medium text-gray-900 dark:text-gray-100">{{ getDisplaySpine(arrowSetup) }}</span></span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-arrows-alt-h text-green-600 dark:text-green-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Length: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow_length }}"</span></span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-bullseye text-red-600 dark:text-red-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Point: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.point_weight }} gr</span></span>
+                </div>
+                
+                <div class="flex items-center space-x-2 col-span-2 sm:col-span-1">
+                  <i class="fas fa-layer-group text-amber-600 dark:text-amber-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Material: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow?.material || 'N/A' }}</span></span>
+                </div>
+              </div>
               
-              <!-- Arrow Length -->
-              <md-assist-chip :label="`Length: ${arrowSetup.arrow_length}\&quot;`">
-                <i class="fas fa-arrows-alt-h fa-icon" slot="icon" style="color: #059669;"></i>
-              </md-assist-chip>
-              
-              <!-- Point Weight -->
-              <md-assist-chip :label="`Point: ${arrowSetup.point_weight} gr`">
-                <i class="fas fa-bullseye fa-icon" slot="icon" style="color: #dc2626;"></i>
-              </md-assist-chip>
-              
-              <!-- Material -->
-              <md-assist-chip :label="arrowSetup.arrow?.material || 'Material N/A'">
-                <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #7c2d12;"></i>
-              </md-assist-chip>
-
               <!-- Component Weights (when available) -->
-              <md-assist-chip v-if="arrowSetup.nock_weight" :label="`Nock: ${arrowSetup.nock_weight} gr`">
-                <i class="fas fa-circle fa-icon" slot="icon" style="color: #8b5cf6;"></i>
-              </md-assist-chip>
+              <div v-if="arrowSetup.nock_weight || (arrowSetup.insert_weight && arrowSetup.insert_weight > 0) || (arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0)" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div v-if="arrowSetup.nock_weight" class="flex items-center space-x-2">
+                  <i class="fas fa-circle text-purple-600 dark:text-purple-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Nock: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.nock_weight }} gr</span></span>
+                </div>
+                
+                <div v-if="arrowSetup.insert_weight && arrowSetup.insert_weight > 0" class="flex items-center space-x-2">
+                  <i class="fas fa-circle-dot text-orange-600 dark:text-orange-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Insert: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.insert_weight }} gr</span></span>
+                </div>
+                
+                <div v-if="arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0" class="flex items-center space-x-2">
+                  <i class="fas fa-ring text-green-600 dark:text-green-400"></i>
+                  <span class="text-gray-700 dark:text-gray-300">Bushing: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.bushing_weight }} gr</span></span>
+                </div>
+              </div>
               
-              <md-assist-chip v-if="arrowSetup.insert_weight && arrowSetup.insert_weight > 0" :label="`Insert: ${arrowSetup.insert_weight} gr`">
-                <i class="fas fa-circle-dot fa-icon" slot="icon" style="color: #f59e0b;"></i>
-              </md-assist-chip>
-              
-              <md-assist-chip v-if="arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0" :label="`Bushing: ${arrowSetup.bushing_weight} gr`">
-                <i class="fas fa-ring fa-icon" slot="icon" style="color: #10b981;"></i>
-              </md-assist-chip>
-
-              <!-- Total Component Weight -->
-              <md-assist-chip v-if="calculateTotalComponentWeight(arrowSetup)" :label="`Components: ${calculateTotalComponentWeight(arrowSetup)} gr`" class="bg-blue-100 dark:bg-blue-900">
-                <i class="fas fa-weight-hanging fa-icon" slot="icon" style="color: #3b82f6;"></i>
-              </md-assist-chip>
-
-              <!-- Total Arrow Weight -->
-              <md-assist-chip v-if="calculateTotalArrowWeight(arrowSetup)" :label="`Arrow: ${calculateTotalArrowWeight(arrowSetup)} gr`" class="bg-purple-100 dark:bg-purple-900">
-                <i class="fas fa-balance-scale fa-icon" slot="icon" style="color: #8b5cf6;"></i>
-              </md-assist-chip>
-            </md-chip-set>
+              <!-- Weight Totals -->
+              <div v-if="calculateTotalComponentWeight(arrowSetup) || calculateTotalArrowWeight(arrowSetup)" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div v-if="calculateTotalComponentWeight(arrowSetup)" class="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded">
+                  <i class="fas fa-weight-hanging text-blue-600 dark:text-blue-400"></i>
+                  <span class="text-blue-800 dark:text-blue-200">Components: <span class="font-medium">{{ calculateTotalComponentWeight(arrowSetup) }} gr</span></span>
+                </div>
+                
+                <div v-if="calculateTotalArrowWeight(arrowSetup)" class="flex items-center space-x-2 bg-purple-50 dark:bg-purple-900/30 px-3 py-1 rounded">
+                  <i class="fas fa-balance-scale text-purple-600 dark:text-purple-400"></i>
+                  <span class="text-purple-800 dark:text-purple-200">Total Arrow: <span class="font-medium">{{ calculateTotalArrowWeight(arrowSetup) }} gr</span></span>
+                </div>
+              </div>
+            </div>
             
             <!-- Match Score & Notes -->
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div class="flex items-center space-x-3">
                 <!-- Compatibility Score -->
                 <div v-if="arrowSetup.compatibility_score" class="flex items-center">
@@ -122,33 +133,33 @@
               </div>
               
               <!-- Actions -->
-              <div class="flex space-x-2">
+              <div class="flex space-x-1 sm:space-x-2 overflow-x-auto">
                 <CustomButton
                   @click="editArrow(arrowSetup)"
                   variant="outlined"
                   size="small"
-                  class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400"
+                  class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400 whitespace-nowrap"
                 >
                   <i class="fas fa-edit mr-1"></i>
-                  Edit
+                  <span class="hidden sm:inline">Edit</span>
                 </CustomButton>
                 <CustomButton
                   @click="viewArrowDetails(arrowSetup.arrow_id)"
                   variant="outlined"
                   size="small"
-                  class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400"
+                  class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 whitespace-nowrap"
                 >
                   <i class="fas fa-info-circle mr-1"></i>
-                  Details
+                  <span class="hidden sm:inline">Details</span>
                 </CustomButton>
                 <CustomButton
                   @click="removeArrow(arrowSetup.id)"
                   variant="outlined"
                   size="small"
-                  class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400"
+                  class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 whitespace-nowrap"
                 >
                   <i class="fas fa-trash mr-1"></i>
-                  Remove
+                  <span class="hidden sm:inline">Remove</span>
                 </CustomButton>
               </div>
             </div>

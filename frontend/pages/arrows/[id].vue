@@ -120,7 +120,7 @@
           </span>
         </h3>
         
-        <div class="overflow-x-auto">
+        <div class="table-responsive">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>

@@ -11,7 +11,7 @@ manufacturers:
     - http://aurel-archery.de/pfeilschaefte/aurel-mako-pfeil/
     - http://aurel-archery.de/pfeilschaefte/aurel-oryx-pfeilschaft/
     - http://aurel-archery.de/pfeilschaefte/aurel-uhyre-pfeilschaft/
-  BigArchery:
+  Cross-X:
     base_url: https://www.bigarchery.com/gb/
     extraction_method: text
     language: italian
@@ -223,6 +223,42 @@ manufacturers:
     - https://victoryarchery.com/arrows-target/vap/
     - https://victoryarchery.com/arrows-target/3dhv/
     - https://www.victoryarchery.com/arrows-target/vft/
+  Black Eagle Arrows:
+    base_url: https://blackeaglearrows.com/
+    extraction_method: text
+    language: english
+    product_urls:
+    # Hunting Arrows (Page 1)
+    - https://blackeaglearrows.com/arrows/carnivore/
+    - https://blackeaglearrows.com/arrows/deep-impact/
+    - https://blackeaglearrows.com/arrows/outlaw/
+    - https://blackeaglearrows.com/arrows/rampage/
+    - https://blackeaglearrows.com/arrows/rampage-xt/
+    - https://blackeaglearrows.com/arrows/reckoning/
+    - https://blackeaglearrows.com/arrows/spartan/
+    - https://blackeaglearrows.com/arrows/x-impact/
+    # Hunting Arrows (Page 2)
+    - https://blackeaglearrows.com/arrows/anthem/
+    - https://blackeaglearrows.com/arrows/anthem-impact/
+    - https://blackeaglearrows.com/arrows/anthem-x/
+    - https://blackeaglearrows.com/arrows/anthem-xx/
+    - https://blackeaglearrows.com/arrows/psr/
+    - https://blackeaglearrows.com/arrows/psr-impact/
+    - https://blackeaglearrows.com/arrows/psr-x/
+    - https://blackeaglearrows.com/arrows/psr-xx/
+    # Target Arrows
+    - https://blackeaglearrows.com/arrows/aftermath/
+    - https://blackeaglearrows.com/arrows/aftermath-x/
+    - https://blackeaglearrows.com/arrows/aftermath-xx/
+    - https://blackeaglearrows.com/arrows/aftermath-pro/
+    - https://blackeaglearrows.com/arrows/aftermath-pro-x/
+    - https://blackeaglearrows.com/arrows/aftermath-pro-xx/
+    - https://blackeaglearrows.com/arrows/aftermath-pro-xxx/
+    - https://blackeaglearrows.com/arrows/velocity/
+    - https://blackeaglearrows.com/arrows/victory/
+    - https://blackeaglearrows.com/arrows/victory-x/
+    - https://blackeaglearrows.com/arrows/victory-vap/
+    - https://blackeaglearrows.com/arrows/victory-vap-x/
 settings:
   batch_size: 10
   easyocr:

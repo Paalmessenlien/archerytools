@@ -247,8 +247,7 @@
         <md-elevated-card 
           v-for="recommendation in paginatedRecommendations" 
           :key="recommendation.arrow.id"
-          @click="openArrowDetails(recommendation.arrow)"
-          class="cursor-pointer group hover:shadow-lg transition-all duration-200"
+          class="group hover:shadow-lg transition-all duration-200"
         >
           <div class="p-4 sm:p-6">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
@@ -298,7 +297,7 @@
                   <md-filled-button 
                     v-if="props.selectedBowSetup"
                     size="small"
-                    @click="addToSetup(recommendation)"
+                    @click.stop="addToSetup(recommendation)"
                     class="bg-green-600 text-white hover:bg-green-700"
                   >
                     <i class="fas fa-plus" style="margin-right: 6px;"></i>
@@ -524,7 +523,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['arrow-added-to-setup'])
+const emit = defineEmits(['arrow-added-to-setup', 'error'])
 
 // Store
 const bowConfigStore = useBowConfigStore()
@@ -892,10 +891,6 @@ const clearFilters = () => {
   currentPage.value = 1
 }
 
-const openArrowDetails = (arrow) => {
-  // Navigate to arrow details page
-  navigateTo(`/arrows/${arrow.id}`)
-}
 
 // Calculate vane weight based on type and length (same logic as calculator)
 const calculateVaneWeight = () => {
@@ -956,7 +951,7 @@ const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) =>
 
 const addToSetup = async (recommendation) => {
   if (!props.selectedBowSetup) {
-    alert('No bow setup selected')
+    emit('error', 'No bow setup selected')
     return
   }
 
@@ -994,7 +989,7 @@ const addToSetup = async (recommendation) => {
 
   } catch (error) {
     console.error('Error adding arrow to setup:', error)
-    alert('Failed to add arrow to setup. Please try again.')
+    emit('error', 'Failed to add arrow to setup. Please try again.')
   }
 }
 

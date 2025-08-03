@@ -99,7 +99,8 @@
       "Bash(sudo systemctl enable:*)",
       "Bash(sudo systemctl start:*)",
       "Bash(sudo docker run:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(NODE_ENV=development ./scripts/start-dual-architecture.sh stop)"
     ],
     "deny": []
   }

@@ -19,41 +19,41 @@
       <p class="text-gray-600 dark:text-gray-300">Browse and search arrow specifications from leading manufacturers</p>
     </div>
       <!-- Database Stats -->
-      <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div v-if="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-6">
-          <div class="text-2xl font-bold text-indigo-600 mb-2">
-            <i class="fas fa-bullseye" style="margin-right: 8px; color: #6366f1;"></i>
+        <div class="p-4 sm:p-6">
+          <div class="text-xl sm:text-2xl font-bold text-indigo-600 mb-1 sm:mb-2">
+            <i class="fas fa-bullseye text-base sm:text-xl" style="margin-right: 4px; color: #6366f1;"></i>
             {{ stats.total_arrows }}
           </div>
-          <div class="text-sm text-gray-600">Total Arrows</div>
+          <div class="text-xs sm:text-sm text-gray-600">Total Arrows</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-6">
-          <div class="text-2xl font-bold text-green-600 mb-2">
-            <i class="fas fa-industry" style="margin-right: 8px; color: #059669;"></i>
+        <div class="p-4 sm:p-6">
+          <div class="text-xl sm:text-2xl font-bold text-green-600 mb-1 sm:mb-2">
+            <i class="fas fa-industry text-base sm:text-xl" style="margin-right: 4px; color: #059669;"></i>
             {{ stats.total_manufacturers }}
           </div>
-          <div class="text-sm text-gray-600">Manufacturers</div>
+          <div class="text-xs sm:text-sm text-gray-600">Manufacturers</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-6">
-          <div class="text-2xl font-bold text-purple-600 mb-2">
-            <i class="fas fa-ruler-horizontal" style="margin-right: 8px; color: #7c3aed;"></i>
+        <div class="p-4 sm:p-6">
+          <div class="text-xl sm:text-2xl font-bold text-purple-600 mb-1 sm:mb-2">
+            <i class="fas fa-ruler-horizontal text-base sm:text-xl" style="margin-right: 4px; color: #7c3aed;"></i>
             {{ stats.spine_range.max - stats.spine_range.min }}
           </div>
-          <div class="text-sm text-gray-600">Spine Range</div>
+          <div class="text-xs sm:text-sm text-gray-600">Spine Range</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-6">
-          <div class="text-2xl font-bold text-orange-600 mb-2">
-            <i class="fas fa-dot-circle" style="margin-right: 8px; color: #ea580c;"></i>
+        <div class="p-4 sm:p-6">
+          <div class="text-xl sm:text-2xl font-bold text-orange-600 mb-1 sm:mb-2">
+            <i class="fas fa-dot-circle text-base sm:text-xl" style="margin-right: 4px; color: #ea580c;"></i>
             {{ (stats.diameter_range.max - stats.diameter_range.min).toFixed(3) }}
           </div>
-          <div class="text-sm text-gray-600">Diameter Range</div>
+          <div class="text-xs sm:text-sm text-gray-600">Diameter Range</div>
         </div>
       </md-elevated-card>
     </div>
@@ -76,7 +76,7 @@
         </div>
         
         <!-- Basic Filter Dropdowns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <md-filled-select :value="filters.manufacturer" @change="handleFilterChange('manufacturer', $event.target.value)" label="Manufacturer">
             <md-select-option value="">
               <div slot="headline">All Manufacturers</div>
@@ -127,7 +127,7 @@
           <md-divider class="mb-4"></md-divider>
           
           <!-- Row 1: Spine Range + Diameter Range ---->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
             <md-outlined-text-field 
               :value="filters.spine_min"
               @input="handleAdvancedFilterChange('spine_min', $event.target.value)"
@@ -165,7 +165,7 @@
           </div>
           
           <!-- Row 2: Weight Range ---->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <md-outlined-text-field 
               :value="filters.gpi_min"
               @input="handleAdvancedFilterChange('gpi_min', $event.target.value)"
@@ -331,43 +331,115 @@
         </div>
       </md-elevated-card>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex justify-center items-center space-x-4 pt-6">
-        <md-outlined-button 
-          :disabled="currentPage <= 1"
-          @click="changePage(currentPage - 1)"
-        >
-          <i class="fas fa-chevron-left" style="margin-right: 6px;"></i>
-          Previous
-        </md-outlined-button>
-        
-        <div class="flex items-center space-x-2">
-          <template v-for="page in paginationRange" :key="page">
-            <md-filled-button
-              v-if="page !== '...' && page === currentPage"
-              @click="changePage(page)"
-              size="small"
-            >
-              {{ page }}
-            </md-filled-button>
+      <!-- Pagination - Mobile Responsive -->
+      <div v-if="totalPages > 1" class="pt-6">
+        <!-- Mobile Pagination -->
+        <div class="flex md:hidden justify-between items-center space-x-2">
+          <md-outlined-button 
+            :disabled="currentPage <= 1"
+            @click="changePage(currentPage - 1)"
+            size="small"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </md-outlined-button>
+          
+          <div class="flex items-center space-x-2">
+            <!-- Show first page if not current and not adjacent -->
             <md-outlined-button
-              v-else-if="page !== '...'"
-              @click="changePage(page)"
+              v-if="currentPage > 3"
+              @click="changePage(1)"
               size="small"
             >
-              {{ page }}
+              1
             </md-outlined-button>
-            <span v-else class="text-gray-500">...</span>
-          </template>
+            <span v-if="currentPage > 4" class="text-gray-500 text-sm">...</span>
+            
+            <!-- Show previous page -->
+            <md-outlined-button
+              v-if="currentPage > 1"
+              @click="changePage(currentPage - 1)"
+              size="small"
+            >
+              {{ currentPage - 1 }}
+            </md-outlined-button>
+            
+            <!-- Current page -->
+            <md-filled-button size="small">
+              {{ currentPage }}
+            </md-filled-button>
+            
+            <!-- Show next page -->
+            <md-outlined-button
+              v-if="currentPage < totalPages"
+              @click="changePage(currentPage + 1)"
+              size="small"
+            >
+              {{ currentPage + 1 }}
+            </md-outlined-button>
+            
+            <!-- Show last page if not current and not adjacent -->
+            <span v-if="currentPage < totalPages - 3" class="text-gray-500 text-sm">...</span>
+            <md-outlined-button
+              v-if="currentPage < totalPages - 2"
+              @click="changePage(totalPages)"
+              size="small"
+            >
+              {{ totalPages }}
+            </md-outlined-button>
+          </div>
+          
+          <md-outlined-button 
+            :disabled="currentPage >= totalPages"
+            @click="changePage(currentPage + 1)"
+            size="small"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </md-outlined-button>
         </div>
         
-        <md-outlined-button 
-          :disabled="currentPage >= totalPages"
-          @click="changePage(currentPage + 1)"
-        >
-          Next
-          <i class="fas fa-chevron-right" style="margin-left: 6px;"></i>
-        </md-outlined-button>
+        <!-- Desktop Pagination -->
+        <div class="hidden md:flex justify-center items-center space-x-4">
+          <md-outlined-button 
+            :disabled="currentPage <= 1"
+            @click="changePage(currentPage - 1)"
+          >
+            <i class="fas fa-chevron-left" style="margin-right: 6px;"></i>
+            Previous
+          </md-outlined-button>
+          
+          <div class="flex items-center space-x-2">
+            <template v-for="page in paginationRange" :key="page">
+              <md-filled-button
+                v-if="page !== '...' && page === currentPage"
+                @click="changePage(page)"
+                size="small"
+              >
+                {{ page }}
+              </md-filled-button>
+              <md-outlined-button
+                v-else-if="page !== '...'"
+                @click="changePage(page)"
+                size="small"
+              >
+                {{ page }}
+              </md-outlined-button>
+              <span v-else class="text-gray-500">...</span>
+            </template>
+          </div>
+          
+          <md-outlined-button 
+            :disabled="currentPage >= totalPages"
+            @click="changePage(currentPage + 1)"
+          >
+            Next
+            <i class="fas fa-chevron-right" style="margin-left: 6px;"></i>
+          </md-outlined-button>
+        </div>
+        
+        <!-- Page Info -->
+        <div class="text-center mt-3 text-sm text-gray-600 dark:text-gray-400">
+          Page {{ currentPage }} of {{ totalPages }} • {{ totalArrows }} arrows total
+        </div>
       </div>
     </div>
   </div>

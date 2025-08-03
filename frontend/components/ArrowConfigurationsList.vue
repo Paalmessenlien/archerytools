@@ -174,7 +174,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-configuration', 'update-configuration', 'delete-configuration', 'add-arrow-to-setup'])
+const emit = defineEmits(['add-configuration', 'update-configuration', 'delete-configuration', 'add-arrow-to-setup', 'confirm-delete'])
 
 // Modal state
 const showAddModal = ref(false)
@@ -215,9 +215,11 @@ const editConfiguration = (config: ArrowConfiguration) => {
 }
 
 const deleteConfiguration = (config: ArrowConfiguration) => {
-  if (confirm(`Are you sure you want to delete "${config.name}"?`)) {
-    emit('delete-configuration', config)
-  }
+  // Emit confirmation request to parent
+  emit('confirm-delete', {
+    config,
+    message: `Are you sure you want to delete "${config.name}"?`
+  })
 }
 
 const closeModal = () => {

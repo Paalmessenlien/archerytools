@@ -89,8 +89,8 @@ export const useAuth = () => {
       console.error('Google Auth client not initialized. Make sure to call initializeGoogleAuth().');
       // As a fallback, try to initialize now.
       initializeGoogleAuth();
-      // Ask user to click again
-      alert("Login service is initializing. Please click the login button again.");
+      // Login will be handled by the initialization callback
+      console.log('Login service is initializing. The login will proceed automatically.');
     }
   };
 

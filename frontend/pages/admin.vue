@@ -1,5 +1,29 @@
 <template>
   <div>
+    <!-- Notification Toast -->
+    <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
+      <div 
+        :class="[
+          'p-4 rounded-lg shadow-lg max-w-sm',
+          notification.type === 'success' ? 'bg-green-500 text-white' : '',
+          notification.type === 'error' ? 'bg-red-500 text-white' : '',
+          notification.type === 'warning' ? 'bg-yellow-500 text-black' : ''
+        ]"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i v-if="notification.type === 'success'" class="fas fa-check-circle mr-2"></i>
+            <i v-if="notification.type === 'error'" class="fas fa-exclamation-circle mr-2"></i>
+            <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
+            <span class="text-sm">{{ notification.message }}</span>
+          </div>
+          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Notice Banner -->
     <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
       <div class="flex items-center">
@@ -194,6 +218,36 @@
         </form>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div v-if="confirmation.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
+        <div class="mb-4">
+          <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Action</h3>
+        </div>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          {{ confirmation.message }}
+        </p>
+        <div class="flex justify-center space-x-4">
+          <CustomButton
+            @click="confirmation.onCancel"
+            variant="outlined"
+            class="text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            @click="confirmation.onConfirm"
+            variant="filled"
+            class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+          >
+            Confirm
+          </CustomButton>
+        </div>
+      </div>
+    </div>
+    <!-- End of Confirmation Modal -->
   </div>
 </template>
 
@@ -216,6 +270,21 @@ const userStats = ref({
 const loading = ref(false)
 const showInviteModal = ref(false)
 const isSendingInvite = ref(false)
+
+// Notification state
+const notification = ref({
+  show: false,
+  message: '',
+  type: 'success' // 'success', 'error', 'warning'
+})
+
+// Confirmation state
+const confirmation = ref({
+  show: false,
+  message: '',
+  onConfirm: null,
+  onCancel: null
+})
 
 const inviteForm = ref({
   email: '',
@@ -260,19 +329,61 @@ const updateStats = () => {
   }
 }
 
+// Notification helper functions
+const showNotification = (message, type = 'success') => {
+  notification.value = {
+    show: true,
+    message,
+    type
+  };
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    notification.value.show = false;
+  }, 4000);
+};
+
+const hideNotification = () => {
+  notification.value.show = false;
+};
+
+// Confirmation helper functions
+const showConfirmation = (message, onConfirm, onCancel = null) => {
+  confirmation.value = {
+    show: true,
+    message,
+    onConfirm,
+    onCancel: onCancel || (() => confirmation.value.show = false)
+  };
+};
+
+const hideConfirmation = () => {
+  confirmation.value.show = false;
+};
+
 // User management functions
 const toggleAdminStatus = async (user) => {
   try {
     const newAdminStatus = !user.is_admin
-    const confirmation = confirm(`Are you sure you want to ${newAdminStatus ? 'grant admin access to' : 'remove admin access from'} ${user.name || user.email}?`)
     
-    if (confirmation) {
-      await setUserAdminStatus(user.id, newAdminStatus)
-      user.is_admin = newAdminStatus
-    }
+    showConfirmation(
+      `Are you sure you want to ${newAdminStatus ? 'grant admin access to' : 'remove admin access from'} ${user.name || user.email}?`,
+      async () => {
+        try {
+          await setUserAdminStatus(user.id, newAdminStatus)
+          user.is_admin = newAdminStatus
+          showNotification(`Successfully ${newAdminStatus ? 'granted' : 'removed'} admin access for ${user.name || user.email}`)
+          hideConfirmation()
+        } catch (error) {
+          console.error('Error updating admin status:', error)
+          showNotification('Failed to update admin status: ' + error.message, 'error')
+          hideConfirmation()
+        }
+      }
+    )
   } catch (error) {
     console.error('Error updating admin status:', error)
-    alert('Failed to update admin status: ' + error.message)
+    showNotification('Failed to update admin status: ' + error.message, 'error')
   }
 }
 
@@ -290,20 +401,27 @@ const toggleUserStatus = async (user) => {
 }
 
 const deleteUser = async (user) => {
-  if (confirm(`Are you sure you want to delete ${user.name || user.email}?`)) {
-    try {
-      // TODO: Implement API call
-      // await api.deleteUser(user.id)
-      
-      const index = users.value.findIndex(u => u.id === user.id)
-      if (index !== -1) {
-        users.value.splice(index, 1)
+  showConfirmation(
+    `Are you sure you want to delete ${user.name || user.email}?`,
+    async () => {
+      try {
+        // TODO: Implement API call
+        // await api.deleteUser(user.id)
+        
+          const index = users.value.findIndex(u => u.id === user.id)
+          if (index !== -1) {
+            users.value.splice(index, 1)
+          }
+          updateStats()
+          showNotification(`Successfully deleted ${user.name || user.email}`)
+          hideConfirmation()
+        } catch (error) {
+          console.error('Error deleting user:', error)
+          showNotification('Failed to delete user: ' + error.message, 'error')
+          hideConfirmation()
+        }
       }
-      updateStats()
-    } catch (error) {
-      console.error('Error deleting user:', error)
-    }
-  }
+    )
 }
 
 const sendInvite = async () => {

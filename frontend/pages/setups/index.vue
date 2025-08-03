@@ -1,6 +1,30 @@
 
 <template>
   <div class="container p-4 mx-auto">
+    <!-- Notification Toast -->
+    <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
+      <div 
+        :class="[
+          'p-4 rounded-lg shadow-lg max-w-sm',
+          notification.type === 'success' ? 'bg-green-500 text-white' : '',
+          notification.type === 'error' ? 'bg-red-500 text-white' : '',
+          notification.type === 'warning' ? 'bg-yellow-500 text-black' : ''
+        ]"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i v-if="notification.type === 'success'" class="fas fa-check-circle mr-2"></i>
+            <i v-if="notification.type === 'error'" class="fas fa-exclamation-circle mr-2"></i>
+            <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
+            <span class="text-sm">{{ notification.message }}</span>
+          </div>
+          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-6">
       <h1 class="mb-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">My Bow Setups</h1>
@@ -220,6 +244,34 @@
         </form>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div v-if="confirmation.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
+        <div class="mb-4">
+          <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Deletion</h3>
+        </div>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          {{ confirmation.message }}
+        </p>
+        <div class="flex justify-center space-x-4">
+          <button
+            @click="hideConfirmation"
+            class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDelete"
+            class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- End of Confirmation Modal -->
   </div>
 </template>
 
@@ -231,6 +283,20 @@ const { token } = useAuth();
 const setups = ref([]);
 const showCreateForm = ref(false);
 const editingSetup = ref(null);
+
+// Notification state
+const notification = ref({
+  show: false,
+  message: '',
+  type: 'success' // 'success', 'error', 'warning'
+});
+
+// Confirmation state
+const confirmation = ref({
+  show: false,
+  message: '',
+  setupId: null
+});
 
 const form = ref({
   name: '',
@@ -290,9 +356,52 @@ const editSetup = (setup) => {
   };
 };
 
-const deleteSetup = async (id) => {
-  if (!confirm('Are you sure you want to delete this setup?')) return;
+// Notification helper functions
+const showNotification = (message, type = 'success') => {
+  notification.value = {
+    show: true,
+    message,
+    type
+  };
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    notification.value.show = false;
+  }, 4000);
+};
 
+const hideNotification = () => {
+  notification.value.show = false;
+};
+
+// Confirmation helper functions
+const showDeleteConfirmation = (setupId) => {
+  confirmation.value = {
+    show: true,
+    message: 'Are you sure you want to delete this setup?',
+    setupId
+  };
+};
+
+const hideConfirmation = () => {
+  confirmation.value = {
+    show: false,
+    message: '',
+    setupId: null
+  };
+};
+
+const confirmDelete = async () => {
+  const setupId = confirmation.value.setupId;
+  hideConfirmation();
+  await performDelete(setupId);
+};
+
+const deleteSetup = async (id) => {
+  showDeleteConfirmation(id);
+};
+
+const performDelete = async (id) => {
   try {
     const res = await fetch(`/api/bow-setups/${id}`, {
       method: 'DELETE',
@@ -302,11 +411,14 @@ const deleteSetup = async (id) => {
     });
     if (res.ok) {
       fetchSetups();
+      showNotification('Bow setup deleted successfully');
     } else {
       console.error('Failed to delete setup');
+      showNotification('Failed to delete setup', 'error');
     }
   } catch (err) {
     console.error('Failed to delete setup:', err);
+    showNotification('Failed to delete setup', 'error');
   }
 };
 

@@ -1,5 +1,29 @@
 <template>
   <div>
+    <!-- Notification Toast -->
+    <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
+      <div 
+        :class="[
+          'p-4 rounded-lg shadow-lg max-w-sm',
+          notification.type === 'success' ? 'bg-green-500 text-white' : '',
+          notification.type === 'error' ? 'bg-red-500 text-white' : '',
+          notification.type === 'warning' ? 'bg-yellow-500 text-black' : ''
+        ]"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <i v-if="notification.type === 'success'" class="fas fa-check-circle mr-2"></i>
+            <i v-if="notification.type === 'error'" class="fas fa-exclamation-circle mr-2"></i>
+            <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
+            <span class="text-sm">{{ notification.message }}</span>
+          </div>
+          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Arrow Calculator</h1>
@@ -480,6 +504,13 @@ const userBowSetups = ref([])
 // UI state
 const showComponents = ref(false)
 
+// Notification state
+const notification = ref({
+  show: false,
+  message: '',
+  type: 'success' // 'success', 'error', 'warning'
+})
+
 // Clear selected bow setup
 const clearSelectedSetup = () => {
   selectedBowSetup.value = null
@@ -526,13 +557,31 @@ const loadUserBowSetups = async () => {
   }
 }
 
+// Notification helper functions
+const showNotification = (message, type = 'success') => {
+  notification.value = {
+    show: true,
+    message,
+    type
+  };
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    notification.value.show = false;
+  }, 4000);
+};
+
+const hideNotification = () => {
+  notification.value.show = false;
+};
+
 // Handle arrow added to bow setup
 const handleArrowAddedToSetup = (arrowData) => {
   // Show success message
-  alert(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
+  showNotification(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
   
-  // Navigate to my-page to show the updated setup
-  navigateTo('/my-page')
+  // Stay on calculator page - all data is preserved via Pinia store
+  // User can continue browsing and adding more arrows
 }
 
 // Calculate vane weight based on type and length
