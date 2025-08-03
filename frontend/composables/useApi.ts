@@ -24,12 +24,20 @@ export const useApi = () => {
     // Get token from localStorage for authentication
     const token = process.client ? localStorage.getItem('token') : null
     
+    // Build headers, but don't set Content-Type for FormData (browser will set it with boundary)
+    const headers: Record<string, string> = {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers,
+    }
+    
+    // Only set Content-Type if it's not FormData
+    const isFormData = options.body instanceof FormData
+    if (!isFormData && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json'
+    }
+    
     const defaultOptions: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers,
-      },
+      headers,
     }
     
     const response = await fetch(url, { ...defaultOptions, ...options })
@@ -226,6 +234,31 @@ export const useApi = () => {
     }>('/health')
   }
 
+  // HTTP method helpers
+  const get = async <T>(endpoint: string, options: RequestInit = {}) => {
+    return apiRequest<T>(endpoint, { ...options, method: 'GET' })
+  }
+
+  const post = async <T>(endpoint: string, data?: any, options: RequestInit = {}) => {
+    return apiRequest<T>(endpoint, {
+      method: 'POST',
+      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
+      ...options
+    })
+  }
+
+  const put = async <T>(endpoint: string, data?: any, options: RequestInit = {}) => {
+    return apiRequest<T>(endpoint, {
+      method: 'PUT',
+      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
+      ...options
+    })
+  }
+
+  const del = async <T>(endpoint: string, options: RequestInit = {}) => {
+    return apiRequest<T>(endpoint, { ...options, method: 'DELETE' })
+  }
+
   return {
     // Arrow Database
     getArrows,
@@ -255,8 +288,13 @@ export const useApi = () => {
     // System
     healthCheck,
     
+    // HTTP methods
+    get,
+    post,
+    put,
+    delete: del,
+    
     // Generic request
-    get: apiRequest,
     apiRequest
   }
 }

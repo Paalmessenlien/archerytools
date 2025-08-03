@@ -55,9 +55,22 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Basic Info -->
+          <!-- Profile Picture & Basic Info -->
           <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Basic Information</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile</h3>
+            
+            <!-- Profile Picture Upload -->
+            <div class="mb-6">
+              <ImageUpload
+                :current-image-url="user.profile_picture_url"
+                alt-text="Profile picture"
+                upload-path="profile"
+                @upload-success="handleProfilePictureUpload"
+                @upload-error="handleUploadError"
+                @image-removed="handleProfilePictureRemoval"
+              />
+            </div>
+            
             <div class="space-y-3">
               <div>
                 <span class="text-sm text-gray-600 dark:text-gray-400">Name:</span>
@@ -360,6 +373,7 @@ import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
 import EditArcherProfileModal from '~/components/EditArcherProfileModal.vue';
 import EditArrowModal from '~/components/EditArrowModal.vue';
+import ImageUpload from '~/components/ImageUpload.vue';
 
 const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup, updateArrowInSetup } = useAuth();
 
@@ -763,6 +777,46 @@ const formatBowUsage = (usage) => {
     'outdoor': 'Outdoor'
   };
   return usageMap[usage] || usage;
+};
+
+// Profile picture upload handlers
+const handleProfilePictureUpload = async (imageUrl) => {
+  try {
+    // Update the user's profile picture URL locally first for immediate feedback
+    if (user.value) {
+      user.value.profile_picture_url = imageUrl;
+    }
+    
+    // The API endpoint already updates the database, so we just show success
+    showNotification('Profile picture updated successfully!');
+    
+    // Refresh user data to ensure everything is in sync
+    await fetchUser();
+  } catch (error) {
+    console.error('Profile picture update error:', error);
+    showNotification('Profile picture updated, but there was an issue syncing data.', 'warning');
+  }
+};
+
+const handleProfilePictureRemoval = async () => {
+  try {
+    // Update user profile to remove picture URL
+    await updateUserProfile({ profile_picture_url: null });
+    
+    // Update local user object
+    if (user.value) {
+      user.value.profile_picture_url = null;
+    }
+    
+    showNotification('Profile picture removed successfully!');
+  } catch (error) {
+    console.error('Profile picture removal error:', error);
+    showNotification('Failed to remove profile picture. Please try again.', 'error');
+  }
+};
+
+const handleUploadError = (errorMessage) => {
+  showNotification(errorMessage, 'error');
 };
 
 onMounted(async () => {

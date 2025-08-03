@@ -2615,3 +2615,114 @@ def debug_database():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/upload/image', methods=['POST'])
+@token_required
+def upload_image(current_user):
+    """Upload image to CDN and return URL"""
+    try:
+        # Check if image file was provided
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image file provided'}), 400
+        
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Get upload parameters
+        upload_path = request.form.get('upload_path', 'profile')
+        filename = request.form.get('filename', '')
+        
+        # Validate file type
+        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+        file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_extension not in allowed_extensions:
+            return jsonify({'error': f'File type not supported. Use: {", ".join(allowed_extensions.upper())}'}), 400
+        
+        # Validate file size (5MB max)
+        max_size = 5 * 1024 * 1024  # 5MB
+        file.seek(0, 2)  # Seek to end
+        size = file.tell()
+        file.seek(0)  # Reset to beginning
+        
+        if size > max_size:
+            return jsonify({'error': 'File too large. Maximum size: 5MB'}), 400
+        
+        # Import CDN uploader
+        from cdn_uploader import CDNUploader
+        
+        # Get CDN type from environment (default to bunnycdn since it's configured)
+        cdn_type = os.getenv('CDN_TYPE', 'bunnycdn')
+        
+        # Initialize CDN uploader
+        try:
+            uploader = CDNUploader(cdn_type)
+        except Exception as e:
+            print(f"CDN initialization error: {e}")
+            # Fallback to local storage
+            uploader = CDNUploader('local')
+            cdn_type = 'local'
+        
+        # Create temporary file for upload
+        import tempfile
+        import uuid
+        
+        temp_dir = tempfile.gettempdir()
+        temp_filename = f"upload_{uuid.uuid4().hex[:8]}.{file_extension}"
+        temp_path = os.path.join(temp_dir, temp_filename)
+        
+        try:
+            # Save file temporarily
+            file.save(temp_path)
+            
+            # Generate CDN path based on upload type and user
+            if upload_path == 'profile':
+                manufacturer = f"user_{current_user['id']}"
+                model_name = "profile_picture"
+            else:
+                manufacturer = upload_path
+                model_name = filename or f"upload_{uuid.uuid4().hex[:8]}"
+            
+            # Upload to CDN
+            result = uploader.upload_from_file(
+                temp_path, 
+                manufacturer, 
+                model_name, 
+                "primary"
+            )
+            
+            if not result:
+                return jsonify({'error': 'Upload to CDN failed'}), 500
+            
+            # Update user profile picture if this is a profile upload
+            if upload_path == 'profile':
+                from user_database import UserDatabase
+                user_db = UserDatabase()
+                updated_user = user_db.update_user_profile(
+                    current_user['id'], 
+                    profile_picture_url=result['cdn_url']
+                )
+                
+                if not updated_user:
+                    print(f"Warning: Failed to update user profile picture URL in database")
+            
+            return jsonify({
+                'success': True,
+                'cdn_url': result['cdn_url'],
+                'cdn_type': result['cdn_type'],
+                'upload_path': upload_path,
+                'file_size': result.get('bytes', size)
+            })
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+    except Exception as e:
+        print(f"Image upload error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Upload failed. Please try again.'}), 500
+
