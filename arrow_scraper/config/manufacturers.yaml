@@ -228,37 +228,59 @@ manufacturers:
     extraction_method: text
     language: english
     product_urls:
-    # Hunting Arrows (Page 1)
-    - https://blackeaglearrows.com/arrows/carnivore/
-    - https://blackeaglearrows.com/arrows/deep-impact/
-    - https://blackeaglearrows.com/arrows/outlaw/
-    - https://blackeaglearrows.com/arrows/rampage/
-    - https://blackeaglearrows.com/arrows/rampage-xt/
-    - https://blackeaglearrows.com/arrows/reckoning/
-    - https://blackeaglearrows.com/arrows/spartan/
-    - https://blackeaglearrows.com/arrows/x-impact/
-    # Hunting Arrows (Page 2)
-    - https://blackeaglearrows.com/arrows/anthem/
-    - https://blackeaglearrows.com/arrows/anthem-impact/
-    - https://blackeaglearrows.com/arrows/anthem-x/
-    - https://blackeaglearrows.com/arrows/anthem-xx/
-    - https://blackeaglearrows.com/arrows/psr/
-    - https://blackeaglearrows.com/arrows/psr-impact/
-    - https://blackeaglearrows.com/arrows/psr-x/
-    - https://blackeaglearrows.com/arrows/psr-xx/
-    # Target Arrows
-    - https://blackeaglearrows.com/arrows/aftermath/
-    - https://blackeaglearrows.com/arrows/aftermath-x/
-    - https://blackeaglearrows.com/arrows/aftermath-xx/
-    - https://blackeaglearrows.com/arrows/aftermath-pro/
-    - https://blackeaglearrows.com/arrows/aftermath-pro-x/
-    - https://blackeaglearrows.com/arrows/aftermath-pro-xx/
-    - https://blackeaglearrows.com/arrows/aftermath-pro-xxx/
-    - https://blackeaglearrows.com/arrows/velocity/
-    - https://blackeaglearrows.com/arrows/victory/
-    - https://blackeaglearrows.com/arrows/victory-x/
-    - https://blackeaglearrows.com/arrows/victory-vap/
-    - https://blackeaglearrows.com/arrows/victory-vap-x/
+    # Shaft specification pages (with actual table data)
+    - https://blackeaglearrows.com/outlaw-shafts/
+    - https://blackeaglearrows.com/new-carnivore-arrows-and-shafts/
+    - https://blackeaglearrows.com/deep-impact-shafts/
+    - https://blackeaglearrows.com/rampage-shafts/
+    - https://blackeaglearrows.com/rampage-xt-shafts/
+    - https://blackeaglearrows.com/reckoning-shafts/
+    - https://blackeaglearrows.com/spartan-shafts/
+    - https://blackeaglearrows.com/x-impact-shafts/
+    # Target arrow shafts
+    - https://blackeaglearrows.com/anthem-shafts/
+    - https://blackeaglearrows.com/anthem-impact-shafts/
+    - https://blackeaglearrows.com/aftermath-shafts/
+    - https://blackeaglearrows.com/aftermath-x-shafts/
+    - https://blackeaglearrows.com/aftermath-xx-shafts/
+    - https://blackeaglearrows.com/aftermath-pro-shafts/
+    - https://blackeaglearrows.com/psr-shafts/
+    - https://blackeaglearrows.com/psr-impact-shafts/
+    - https://blackeaglearrows.com/psr-x-shafts/
+    - https://blackeaglearrows.com/psr-xx-shafts/
+    # Traditional arrows
+    - https://blackeaglearrows.com/instinct-shafts/
+    - https://blackeaglearrows.com/zombie-slayer-shafts/
+  Altra Arrows:
+    base_url: https://altraarrows.com/
+    extraction_method: text
+    language: english
+    product_urls:
+    # Hunting/Target Arrows
+    - https://altraarrows.com/collections/arrows/products/altra-hunter
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-x
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-xx
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-xxx
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-pro
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-pro-x
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-pro-xx
+    - https://altraarrows.com/collections/arrows/products/altra-hunter-pro-xxx
+    - https://altraarrows.com/collections/arrows/products/altra-competition
+    - https://altraarrows.com/collections/arrows/products/altra-competition-x
+    - https://altraarrows.com/collections/arrows/products/altra-competition-xx
+    - https://altraarrows.com/collections/arrows/products/altra-competition-xxx
+    - https://altraarrows.com/collections/arrows/products/altra-competition-pro
+    - https://altraarrows.com/collections/arrows/products/altra-competition-pro-x
+    - https://altraarrows.com/collections/arrows/products/altra-competition-pro-xx
+    - https://altraarrows.com/collections/arrows/products/altra-competition-pro-xxx
+    # Specialty Arrows (3D/Target)
+    - https://altraarrows.com/collections/arrows/products/altra-3d
+    - https://altraarrows.com/collections/arrows/products/altra-3d-x
+    - https://altraarrows.com/collections/arrows/products/altra-3d-xx
+    - https://altraarrows.com/collections/arrows/products/altra-3d-pro
+    - https://altraarrows.com/collections/arrows/products/altra-3d-pro-x
+    - https://altraarrows.com/collections/arrows/products/altra-3d-pro-xx
+
 settings:
   batch_size: 10
   easyocr:

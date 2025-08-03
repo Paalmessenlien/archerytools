@@ -1,0 +1,47 @@
+{
+  "manufacturer": "Black Eagle Arrows",
+  "total_arrows": 1,
+  "scraped_at": "2025-08-03T21:28:35.521424",
+  "extraction_method": "pattern_learning",
+  "arrows": [
+    {
+      "manufacturer": "Black Eagle Arrows",
+      "model_name": "Outlaw Carbon Arrow Hunting Shafts",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.3,
+          "gpi_weight": 9.1
+        },
+        {
+          "spine": 350,
+          "outer_diameter": 0.297,
+          "gpi_weight": 8.6
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.294,
+          "gpi_weight": 8.1
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 7.4
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.278,
+          "gpi_weight": 6.8
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.275,
+          "gpi_weight": 6.1
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "The Black Eagle Outlaw is the ultimate hunting arrow, delivering unmatched performance at an incredible value. Built around a robust 6.4mm (.244\") inner diameter, this arrow offers exceptional durability and stability. Super-sorted for unparalleled consistency, the Outlaw delivers arrow-to-arrow performance that hunters demand."
+    }
+  ]
+}

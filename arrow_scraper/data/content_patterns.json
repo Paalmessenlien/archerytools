@@ -14,5 +14,21 @@
     "last_used": "2025-08-01T13:24:04.808754",
     "confidence_score": 1.0,
     "sample_content": "\n1000 | 5.5 | .204 | 29 | #1 | #1 | NA | #1  \n1150 | 5.5 | .208 | 28.5 | #1 | #1 | NA | #1  \n###### ABOUT THE PRODUCT\nExperience the World’s Finest Arrow with the X10 4mm Parallel Pro.  \nRenowned as t"
+  },
+  "e2a73c20056b120d": {
+    "domain": "blackeaglearrows.com",
+    "manufacturer": "Black Eagle Arrows",
+    "pattern_type": "generic_table",
+    "start_marker": "spine",
+    "end_marker": "weight",
+    "content_slice": [
+      6796,
+      14406
+    ],
+    "extraction_method": "text",
+    "success_count": 4,
+    "last_used": "2025-08-03T21:24:57.117592",
+    "confidence_score": 1.0,
+    "sample_content": "rrows-245-id-clearance/)\n    * [ Brands ](https://blackeaglearrows.com/brands/)\n### Brands\n[Shop All](https://blackeaglearrows.com/brands/)\n      * [ Black Eagle Arrows ](https://blackeaglearrows.com/"
   }
 }

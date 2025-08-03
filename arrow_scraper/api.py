@@ -23,7 +23,7 @@ for env_path in env_paths:
         load_dotenv(env_path)
         break
 
-from datetime import datetime, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 import uuid
 
@@ -2725,4 +2725,13 @@ def upload_image(current_user):
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Upload failed. Please try again.'}), 500
+
+
+# Run the app
+if __name__ == '__main__':
+    port = int(os.environ.get('API_PORT', 5000))
+    print(f"🚀 Starting ArrowTuner API on port {port}")
+    print(f"🎯 Environment: {os.environ.get('NODE_ENV', 'development')}")
+    print(f"📊 Database: {get_database_status()}")
+    app.run(host='0.0.0.0', port=port, debug=False)
 
