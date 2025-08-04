@@ -80,7 +80,8 @@ export default defineNuxtConfig({
   // Nitro (server) configuration for headers
   nitro: {
     headers: {
-      'Cross-Origin-Opener-Policy': 'unsafe-none'
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Content-Security-Policy': "default-src 'self'; connect-src 'self' http://localhost http://localhost:5000 https://archerytool.online https://accounts.google.com https://apis.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"
     },
     // Fix for internal paths resolution
     experimental: {

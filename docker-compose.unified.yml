@@ -68,7 +68,7 @@ services:
       args:
         - NODE_ENV=${NODE_ENV:-production}
         - BUILD_VERIFICATION=${BUILD_VERIFICATION:-enabled}
-        - NUXT_PUBLIC_API_BASE=http://localhost:5000/api
+        - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://localhost/api}
     container_name: arrowtuner-frontend
     restart: unless-stopped
     ports:
@@ -78,7 +78,7 @@ services:
       - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
       
       # API Configuration - Dynamic based on deployment mode
-      - NUXT_PUBLIC_API_BASE=http://localhost:5000/api
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://localhost/api}
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
       
       # Build Verification
@@ -106,10 +106,10 @@ services:
       - NGINX_HOST=${DOMAIN_NAME:-localhost}
       - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
       - SSL_ENABLED=${SSL_ENABLED:-false}
-      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
     volumes:
-      # Unified nginx configuration template
-      - ./deploy/nginx/unified.conf.template:/etc/nginx/templates/default.conf.template:ro
+      # SSL nginx configuration for production
+      - ./deploy/nginx/nginx.ssl.conf:/etc/nginx/nginx.conf:ro
       
       # SSL certificates (if needed)
       - ./deploy/ssl:/etc/nginx/ssl:ro
