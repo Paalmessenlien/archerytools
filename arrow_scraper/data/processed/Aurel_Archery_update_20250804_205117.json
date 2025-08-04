@@ -1,0 +1,249 @@
+{
+  "manufacturer": "Aurel Archery",
+  "total_arrows": 6,
+  "scraped_at": "2025-08-04T20:51:17.689890",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "AGNIS™",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.344,
+          "gpi_weight": 11.6
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.328,
+          "gpi_weight": 10.8
+        },
+        {
+          "spine": 520,
+          "outer_diameter": 0.313,
+          "gpi_weight": 10.3
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.297,
+          "gpi_weight": 9.8
+        },
+        {
+          "spine": 730,
+          "outer_diameter": 0.281,
+          "gpi_weight": 9.2
+        },
+        {
+          "spine": 870,
+          "outer_diameter": 0.266,
+          "gpi_weight": 8.8
+        },
+        {
+          "spine": 1040,
+          "outer_diameter": 0.25,
+          "gpi_weight": 8.5
+        },
+        {
+          "spine": 1310,
+          "outer_diameter": 0.234,
+          "gpi_weight": 7.9
+        },
+        {
+          "spine": 1650,
+          "outer_diameter": 0.219,
+          "gpi_weight": 7.3
+        }
+      ],
+      "material": "ENAW 7001-T6 Aluminium",
+      "arrow_type": "target",
+      "description": "Gezogener Aluminium Pfeilschaft mit engen Tolleranzen und guten Flugeigenschaften. Bushings sind bereits werkseitig vormontiert.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-agnis-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/wp-content/uploads/aurel_logo_invert_255_501.png"
+    },
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "MANTIS",
+      "spine_specifications": [
+        {
+          "spine": 750,
+          "outer_diameter": 0.246,
+          "gpi_weight": 11.7
+        }
+      ],
+      "material": "Hochleistungs-Composit",
+      "arrow_type": "target",
+      "description": "Gewickelter Hochleistungs-Composit Pfeilschaft für Breitensportler und Bögen bis 40 Pfund Zuggewicht.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-mantis-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/pfeilschaefte/aurel-mantis-pfeilschaft/"
+    },
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "TRIOS X",
+      "spine_specifications": [
+        {
+          "spine": 500,
+          "outer_diameter": 0.287,
+          "gpi_weight": 7.7
+        }
+      ],
+      "material": "50% Carbon und 50% Hochleistungs-Composit",
+      "arrow_type": "target",
+      "description": "Gewickelter Composit-Carbon-Hybrid-Pfeilschaft für optimale Haltbarkeit und Treffsicherheit. Ideal für Parcour mit flacher und schneller Flugbahn.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-trios-x-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/wp-content/uploads/aurel_logo_invert_255_501.png"
+    },
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "AGIL",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.297,
+          "gpi_weight": 8.4
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.3
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.284,
+          "gpi_weight": 6.1
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.281,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.278,
+          "gpi_weight": 5.1
+        }
+      ],
+      "material": "100% Carbon",
+      "arrow_type": "target",
+      "description": "Gewickelter Vollcarbon-Pfeilschaft mit Ultraleicht-Konzept für messerscharfe Flugbahnen und hervorragende Penetrationskraft im Ziel. Kompatibel mit den meisten 5/16″ bzw. 9/32″ Komponenten.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-agil-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/wp-content/uploads/aurel_logo_invert_255_501.png"
+    },
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "ORYX",
+      "spine_specifications": [
+        {
+          "spine": 350,
+          "outer_diameter": 0.247,
+          "gpi_weight": 10.2
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.239,
+          "gpi_weight": 9.1
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.233,
+          "gpi_weight": 8.2
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.226,
+          "gpi_weight": 7.2
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.22,
+          "gpi_weight": 6.5
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.217,
+          "gpi_weight": 5.9
+        },
+        {
+          "spine": 900,
+          "outer_diameter": 0.212,
+          "gpi_weight": 5.4
+        },
+        {
+          "spine": 1000,
+          "outer_diameter": 0.211,
+          "gpi_weight": 5.2
+        },
+        {
+          "spine": 1100,
+          "outer_diameter": 0.208,
+          "gpi_weight": 4.8
+        },
+        {
+          "spine": 1300,
+          "outer_diameter": 0.205,
+          "gpi_weight": 4.3
+        }
+      ],
+      "material": "100% Carbon",
+      "arrow_type": "target",
+      "description": "Der ORYX™ ist ein Multitalent für Ziel- und 3D-Schiessen. Hohe Treffsicherheit bei jeder Witterung und extreme Robustheit.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-oryx-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/wp-content/uploads/aurel_logo_invert_255_501.png"
+    },
+    {
+      "manufacturer": "Aurel Archery",
+      "model_name": "UHYRE",
+      "spine_specifications": [
+        {
+          "spine": 400,
+          "outer_diameter": 0.221,
+          "gpi_weight": 6.9
+        },
+        {
+          "spine": 450,
+          "outer_diameter": 0.219,
+          "gpi_weight": 6.4
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.214,
+          "gpi_weight": 6.0
+        },
+        {
+          "spine": 550,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.6
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.21,
+          "gpi_weight": 5.3
+        },
+        {
+          "spine": 650,
+          "outer_diameter": 0.208,
+          "gpi_weight": 5.0
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.207,
+          "gpi_weight": 4.8
+        },
+        {
+          "spine": 750,
+          "outer_diameter": 0.204,
+          "gpi_weight": 4.5
+        },
+        {
+          "spine": 800,
+          "outer_diameter": 0.204,
+          "gpi_weight": 4.4
+        }
+      ],
+      "material": "100% hochmodulares Carbon-Prepregs",
+      "arrow_type": "target",
+      "description": "Gewickelter Vollcarbon-Pfeilschaft mit erstaunlichen Gewichtseinsparungen bei zugleich erhöhter Stabilität und Haltbarkeit. Ideal für Recurve- und Compoundschützen.",
+      "source_url": "http://aurel-archery.de/pfeilschaefte/aurel-uhyre-pfeilschaft/",
+      "primary_image_url": "http://aurel-archery.de/wp-content/uploads/aurel_logo_invert_255_501.png"
+    }
+  ]
+}
