@@ -346,22 +346,32 @@ class DatabaseCleaner:
         
         return {'arrows_merged': arrows_merged}
     
-    def find_duplicates(self, use_fuzzy: bool = True) -> List[Dict[str, Any]]:
+    def find_duplicates(self, use_fuzzy: bool = True, manufacturer_filter: str = None) -> List[Dict[str, Any]]:
         """Find potential duplicate arrows using fuzzy matching on model names"""
         cursor = self.conn.cursor()
         
         if not use_fuzzy:
             # Fall back to exact matching
-            cursor.execute('''
+            query = '''
                 SELECT manufacturer, model_name, COUNT(*) as count,
                        GROUP_CONCAT(id) as arrow_ids,
                        GROUP_CONCAT(material) as materials,
                        GROUP_CONCAT(arrow_type) as arrow_types
                 FROM arrows 
+            '''
+            params = []
+            
+            if manufacturer_filter:
+                query += ' WHERE LOWER(manufacturer) = LOWER(?)'
+                params.append(manufacturer_filter)
+            
+            query += '''
                 GROUP BY LOWER(manufacturer), LOWER(model_name)
                 HAVING COUNT(*) > 1
                 ORDER BY manufacturer, model_name
-            ''')
+            '''
+            
+            cursor.execute(query, params)
             
             duplicates = []
             for row in cursor.fetchall():
@@ -379,12 +389,19 @@ class DatabaseCleaner:
             return duplicates
         
         # Get all arrows for fuzzy comparison
-        cursor.execute('''
+        query = '''
             SELECT id, manufacturer, model_name, material, arrow_type
             FROM arrows 
-            ORDER BY manufacturer, model_name
-        ''')
+        '''
+        params = []
         
+        if manufacturer_filter:
+            query += ' WHERE LOWER(manufacturer) = LOWER(?)'
+            params.append(manufacturer_filter)
+        
+        query += ' ORDER BY manufacturer, model_name'
+        
+        cursor.execute(query, params)
         all_arrows = [dict(row) for row in cursor.fetchall()]
         
         # Group arrows by manufacturer first (for efficiency)
@@ -436,9 +453,9 @@ class DatabaseCleaner:
         
         return duplicate_groups
     
-    def clean_duplicate_arrows(self, dry_run: bool = False, use_fuzzy: bool = True) -> Dict[str, int]:
+    def clean_duplicate_arrows(self, dry_run: bool = False, use_fuzzy: bool = True, manufacturer_filter: str = None) -> Dict[str, int]:
         """Remove duplicate arrows, keeping the one with most spine specifications"""
-        duplicates = self.find_duplicates(use_fuzzy=use_fuzzy)
+        duplicates = self.find_duplicates(use_fuzzy=use_fuzzy, manufacturer_filter=manufacturer_filter)
         
         if not duplicates:
             logger.info("No duplicate arrows found")
@@ -795,6 +812,11 @@ Examples:
   python database_cleaner.py --find-duplicates --similarity-threshold 0.75
   python database_cleaner.py --clean-duplicates --similarity-threshold 0.90
   
+  # Find duplicates within a specific manufacturer only
+  python database_cleaner.py --find-duplicates --manufacturer-filter "Easton Archery"
+  python database_cleaner.py --clean-duplicates --manufacturer-filter "Gold Tip"
+  python database_cleaner.py --find-duplicates --manufacturer-filter "Victory Archery" --exact-match
+  
   # Merge manufacturers
   python database_cleaner.py --merge-manufacturers "BigArchery" "Cross-X"
   
@@ -850,6 +872,8 @@ Examples:
                       help='Use exact matching instead of fuzzy matching for duplicates')
     parser.add_argument('--similarity-threshold', type=float, default=0.85,
                       help='Similarity threshold for fuzzy matching (0.0-1.0, default: 0.85)')
+    parser.add_argument('--manufacturer-filter', metavar='MANUFACTURER',
+                      help='Only find duplicates within the specified manufacturer')
     
     # Full database cleaning operations
     parser.add_argument('--clean-all', action='store_true',
@@ -945,7 +969,7 @@ Examples:
         
         elif args.find_duplicates:
             use_fuzzy = not args.exact_match
-            duplicates = cleaner.find_duplicates(use_fuzzy=use_fuzzy)
+            duplicates = cleaner.find_duplicates(use_fuzzy=use_fuzzy, manufacturer_filter=args.manufacturer_filter)
             if duplicates:
                 print(f"\n" + "="*80)
                 print("POTENTIAL DUPLICATE ARROWS")
@@ -972,13 +996,16 @@ Examples:
                 print(f"Exact matches: {exact_count}, Fuzzy matches: {fuzzy_count}")
                 if use_fuzzy:
                     print(f"Similarity threshold: {args.similarity_threshold}")
+                if args.manufacturer_filter:
+                    print(f"Manufacturer filter: {args.manufacturer_filter}")
             else:
                 match_type = "exact" if args.exact_match else "fuzzy"
-                print(f"\nNo duplicate arrows found using {match_type} matching.")
+                filter_msg = f" for {args.manufacturer_filter}" if args.manufacturer_filter else ""
+                print(f"\nNo duplicate arrows found using {match_type} matching{filter_msg}.")
         
         elif args.clean_duplicates:
             use_fuzzy = not args.exact_match
-            result = cleaner.clean_duplicate_arrows(args.dry_run, use_fuzzy=use_fuzzy)
+            result = cleaner.clean_duplicate_arrows(args.dry_run, use_fuzzy=use_fuzzy, manufacturer_filter=args.manufacturer_filter)
             print(f"\nDuplicate cleaning completed:")
             print(f"  Duplicates removed: {result['duplicates_removed']}")
         
