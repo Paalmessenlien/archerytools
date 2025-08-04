@@ -170,25 +170,29 @@ cd arrow_scraper
 # Activate virtual environment (recommended)
 source venv/bin/activate
 
-# 🧠 PATTERN LEARNING MODE - Learn from limited URLs for faster future scraping  
+# 🧠 PATTERN LEARNING MODE - Learn from limited URLs for faster future scraping (NO API calls)
 python main.py --learn-all --limit=1                     # Learn from first URL of ALL manufacturers
 python main.py --learn-all --limit=2                     # Learn from first 2 URLs of each manufacturer
 python main.py --learn --manufacturer=easton --limit=1    # Learn from first URL only
 python main.py --learn --manufacturer=easton --limit=3    # Learn from first 3 URLs
 python main.py --learn --manufacturer=goldtip --limit=5   # Learn from first 5 Gold Tip URLs
 
-# 🎯 LIMITED PROCESSING - Process specific number of URLs
-python main.py --manufacturer=easton --limit=10          # Process first 10 Easton URLs
-python main.py easton --limit=2                         # Backward compatible syntax
+# 🤖 PATTERN LEARNING WITH DATA EXTRACTION - Using DeepSeek API for actual arrow data
+python main.py --learn --manufacturer=aurel --limit=1 --use-deepseek     # Extract from first Aurel URL
+python main.py --learn-all --limit=1 --use-deepseek                     # Extract from first URL of ALL manufacturers
 
-# 🚀 FULL MANUFACTURER SCRAPING
-python main.py easton                                    # All Easton URLs (uses learned patterns)
-python main.py --manufacturer=goldtip                   # All Gold Tip URLs
+# 🎯 LIMITED PROCESSING - Process specific number of URLs with data extraction
+python main.py --manufacturer=easton --limit=10 --use-deepseek          # Process first 10 Easton URLs
+python main.py easton --limit=2 --use-deepseek                         # Backward compatible syntax
 
-# 🌍 ALL MANUFACTURERS WITH TRANSLATION (RECOMMENDED)
-python main.py --update-all                             # Update all with learned patterns
-python main.py --update-all --no-translate              # Without translation (faster)
-python main.py --update-all --force                     # Force complete rebuild of ALL
+# 🚀 FULL MANUFACTURER SCRAPING with data extraction
+python main.py easton --use-deepseek                                    # All Easton URLs with API extraction
+python main.py --manufacturer=goldtip --use-deepseek                   # All Gold Tip URLs with API extraction
+
+# 🌍 ALL MANUFACTURERS WITH TRANSLATION (RECOMMENDED) - Full data extraction
+python main.py --update-all --use-deepseek                             # Update all with API extraction
+python main.py --update-all --no-translate --use-deepseek              # Without translation (faster)
+python main.py --update-all --force --use-deepseek                     # Force complete rebuild of ALL
 
 # 📋 INFORMATION COMMANDS
 python main.py --list-manufacturers                     # List all 13+ manufacturers
@@ -1160,6 +1164,18 @@ The Archery Tools platform provides:
 ### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Database Permission Errors Fix (August 2025):**
+- **Issue**: Scraper failing with `[Errno 13] Permission denied: '/app'` when running locally, caused by database classes trying to access Docker container paths
+- **Root Cause**: Database path resolution logic attempting to create directories in `/app` which requires root permissions in local development
+- **Solution**: 
+  - Enhanced `_resolve_db_path()` methods in both `ArrowDatabase` and `UserDatabase` classes
+  - Added proper exception handling for `PermissionError` when accessing Docker paths
+  - Graceful fallback to accessible local development paths (`arrow_scraper/` directory)
+  - Fixed destructor safety in `ArrowDatabase.__del__()` to handle incomplete initialization
+- **Files**: `arrow_scraper/arrow_database.py`, `arrow_scraper/user_database.py`
+- **Testing**: Verified with `python main.py --manufacturer=aurel --limit=1 --use-deepseek`
+- **Status**: ✅ **RESOLVED** - Scraper now works correctly in local development environments
 
 **Manufacturer Filter Match Scoring Fix (August 2025):**
 - **Issue**: Manufacturer dropdown filtering showing 0% match scores while "All Manufacturers" showed proper 90-95% scores
