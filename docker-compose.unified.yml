@@ -6,8 +6,6 @@
 #   Production:  DEPLOYMENT_MODE=production DOMAIN_NAME=yourdomain.com docker-compose -f docker-compose.unified.yml up
 #   SSL:         DEPLOYMENT_MODE=ssl DOMAIN_NAME=yourdomain.com SSL_ENABLED=true docker-compose -f docker-compose.unified.yml up
 
-version: '3.8'
-
 services:
   # Flask API Backend - Consistent across all environments
   api:
