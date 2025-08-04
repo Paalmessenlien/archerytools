@@ -79,8 +79,19 @@ def migrate_arrow_database():
     if existing_db:
         print_message(YELLOW, f"  📋 Found existing database at: {existing_db}")
         print_message(BLUE, f"  🔄 Migrating to: {target_path}")
-        shutil.copy2(existing_db, target_path)
-        print_message(GREEN, "  ✅ Arrow database migrated successfully")
+        try:
+            shutil.copy2(existing_db, target_path)
+            print_message(GREEN, "  ✅ Arrow database migrated successfully")
+        except PermissionError as e:
+            print_message(YELLOW, f"  ⚠️  Permission denied, trying symlink instead: {e}")
+            # Try creating a symlink instead
+            try:
+                target_path.symlink_to(existing_db)
+                print_message(GREEN, f"  ✅ Created symlink to existing database")
+            except Exception as e2:
+                print_message(RED, f"  ❌ Failed to create symlink: {e2}")
+                # Use the existing location
+                print_message(YELLOW, f"  ℹ️  Will use existing database at: {existing_db}")
     else:
         print_message(YELLOW, "  ⚠️  No existing arrow database found")
         # Import from JSON files if available

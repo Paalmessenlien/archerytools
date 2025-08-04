@@ -34,9 +34,9 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
       
-      # Database Paths - UNIFIED
-      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      # Database Paths - Compatible with existing startup script
+      - ARROW_DATABASE_PATH=/app/arrow_database.db
+      - USER_DATABASE_PATH=/app/user_data/user_data.db
       
       # Startup Configuration
       - DATABASE_VERIFICATION=${DATABASE_VERIFICATION:-enabled}
@@ -45,8 +45,8 @@ services:
       # Configuration
       - ./.env:/app/.env:ro
       
-      # Unified Database Volume
-      - arrowtuner-databases:/app/databases
+      # Database Volumes - Compatible with existing structure
+      - arrowtuner-databases:/app/user_data
       
       # Data and Logs
       - ./arrow_scraper/data:/app/data:ro
@@ -70,6 +70,7 @@ services:
       args:
         - NODE_ENV=${NODE_ENV:-production}
         - BUILD_VERIFICATION=${BUILD_VERIFICATION:-enabled}
+        - NUXT_PUBLIC_API_BASE=http://localhost:5000/api
     container_name: arrowtuner-frontend
     restart: unless-stopped
     ports:
@@ -79,7 +80,7 @@ services:
       - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
       
       # API Configuration - Dynamic based on deployment mode
-      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://localhost:5000/api}
+      - NUXT_PUBLIC_API_BASE=http://localhost:5000/api
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
       
       # Build Verification

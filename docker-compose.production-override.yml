@@ -1,0 +1,52 @@
+# Production Override for Unified Architecture
+# This handles the existing volume structure in production
+
+services:
+  api:
+    environment:
+      # Override database paths to use existing locations
+      - ARROW_DATABASE_PATH=/app/arrow_database.db
+      - USER_DATABASE_PATH=/app/user_data/user_data.db
+    volumes:
+      # Map existing data structure
+      - ./.env:/app/.env:ro
+      - arrowtuner-userdata:/app/user_data
+      - arrowtuner-arrowdata:/app/arrow_data
+      - arrowtuner-logs:/app/logs
+      - ./arrow_scraper/data:/app/data:ro
+      # Add the arrow database from host
+      - ./arrow_scraper/arrow_database.db:/app/arrow_database.db:ro
+
+  frontend:
+    # No changes needed
+
+  nginx:
+    # No changes needed
+
+  db-init:
+    # Skip database init in production
+    entrypoint: ["echo", "Skipping database init in production"]
+    command: [""]
+
+  db-backup:
+    environment:
+      - ARROW_DATABASE_PATH=/app/arrow_database.db
+      - USER_DATABASE_PATH=/app/user_data/user_data.db
+
+volumes:
+  # Use existing volume names
+  arrowtuner-userdata:
+    external: true
+    name: arrowtuner2_arrowtuner-userdata
+  
+  arrowtuner-arrowdata:
+    driver: local
+  
+  arrowtuner-databases:
+    driver: local
+  
+  arrowtuner-logs:
+    driver: local
+  
+  arrowtuner-backups:
+    driver: local
