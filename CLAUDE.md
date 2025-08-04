@@ -349,6 +349,47 @@ python cdn_integration_example.py setup    # Show setup guide
 python cdn_uploader.py                     # Test uploader directly
 ```
 
+### Database Backup & Restore System
+
+**🗄️ Professional Backup Management (2025 Update):**
+```bash
+# Create full backup with auto-generated name
+./backup-databases.sh
+
+# Create backup with custom name
+./backup-databases.sh --name production_backup_2025_08_04
+
+# Create user database only backup
+./backup-databases.sh --user-db-only
+
+# Create backup with cleanup (keep 5 most recent)
+./backup-databases.sh --cleanup --keep 5
+
+# List available backups
+./restore-databases.sh --list
+
+# Restore from backup (with confirmation)
+./restore-databases.sh --file backup.tar.gz
+
+# Restore user database only
+./restore-databases.sh --file backup.tar.gz --user-db-only
+
+# Verify backup integrity
+./restore-databases.sh --verify --file backup.tar.gz
+
+# Force restore without confirmation
+./restore-databases.sh --file backup.tar.gz --force
+```
+
+**Direct Backup Manager Usage:**
+```bash
+# Inside Docker container
+docker exec arrowtuner-api-enhanced python3 /app/backup_manager.py backup --name test_backup
+docker exec arrowtuner-api-enhanced python3 /app/backup_manager.py list
+docker exec arrowtuner-api-enhanced python3 /app/backup_manager.py restore backup.tar.gz
+docker exec arrowtuner-api-enhanced python3 /app/backup_manager.py cleanup --keep 10
+```
+
 ### Arrow Tuning System
 ```bash
 # Interactive tuning calculator
@@ -596,29 +637,44 @@ sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 
 ### Database Architecture
 
-**Unified Database System (2025 Update):**
+**Unified Database System with Comprehensive Persistence (2025 Update):**
 - ✅ **Arrow Database** (`arrow_database.db`): Arrow specifications, spine data, components, and component categories
 - ✅ **User Database** (`user_data.db`): User accounts, bow setups, guide sessions, and arrow assignments
+- ✅ **Backup System**: Professional-grade backup and restore functionality
 - ❌ **Legacy Removed**: `component_database.db` (merged into arrow_database.db)
 
 **Key Features:**
-- **Data Separation**: Arrow/component data separate from user data for clean rebuilds
-- **Docker Volumes**: User data persists through container rebuilds and updates
-- **Import System**: JSON files automatically imported to arrow database during startup
+- **Full Persistence**: Both databases persist across Docker container restarts using volumes
+- **Environment Path Resolution**: Database classes prioritize environment variables for Docker deployment
+- **Production Import Control**: Automatic imports disabled in production for security
+- **Comprehensive Backup System**: SQLite backup API with compressed archives and metadata
+- **Data Separation**: Arrow/component data separate from user data for clean management
 - **Migration Support**: Automatic schema migrations for both databases
 - **Component Integration**: Components (inserts, nocks, points) stored with arrows in unified database
 
-**Production Database Files:**
+**Production Database Architecture:**
 ```
-arrow_scraper/
-├── arrow_database.db      # Arrow specs, spine data, components (rebuilt from JSON)
-├── user_data.db          # User accounts, bow setups (persistent)
-└── data/processed/       # Source JSON files for arrow data
+Docker Volumes:
+├── arrowtuner-arrowdata:/app/arrow_data/     # Arrow database persistence
+├── arrowtuner-userdata:/app/user_data/      # User database persistence
+└── arrowtuner-logs:/app/logs/               # Log persistence
+
+Database Files:
+├── /app/arrow_data/arrow_database.db        # Arrow specs, spine data, components
+├── /app/user_data/user_data.db             # User accounts, bow setups
+└── /app/backups/                           # Backup archive storage
+    ├── production_backup.tar.gz
+    └── daily_backup_20250804.tar.gz
+
+Source Data:
+└── data/processed/                         # Source JSON files for arrow data
     ├── easton_arrows.json
     ├── goldtip_arrows.json
     └── components/
         └── tophat_archery_components_*.json
 ```
+
+**Database Persistence Documentation**: See [DATABASE_PERSISTENCE.md](DATABASE_PERSISTENCE.md) for complete persistence and backup system documentation.
 
 ### Environment Configuration
 **Development:** Create `.env` file in `arrow_scraper/` directory:
