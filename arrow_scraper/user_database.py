@@ -29,14 +29,21 @@ class UserDatabase:
         ]
 
         for p in possible_paths:
-            # Create parent directory if it doesn't exist
-            p.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Attempting to use user database path: {p} (parent exists: {p.parent.exists()})")
-            return str(p)
+            try:
+                # Check if we can create parent directory (permission test)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Successfully resolved user database path: {p}")
+                return str(p)
+            except PermissionError:
+                print(f"Permission denied for path: {p}, trying next option...")
+                continue
+            except Exception as e:
+                print(f"Error accessing path {p}: {e}, trying next option...")
+                continue
         
         # Fallback to default if no suitable path found
-        print(f"Warning: No ideal path found for user database. Defaulting to: {db_path}")
-        return db_path
+        print(f"Warning: No accessible path found for user database. Defaulting to local: {Path(__file__).parent / db_path}")
+        return str(Path(__file__).parent / db_path)
 
     def get_connection(self):
         """Get a database connection with row factory"""

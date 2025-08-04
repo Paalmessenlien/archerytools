@@ -158,14 +158,21 @@ class ArrowDatabase:
         ]
 
         for p in possible_paths:
-            # Create parent directory if it doesn't exist
-            p.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Attempting to use arrow database path: {p} (parent exists: {p.parent.exists()})")
-            return p
+            try:
+                # Check if we can create parent directory (permission test)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Successfully resolved arrow database path: {p}")
+                return p
+            except PermissionError:
+                print(f"Permission denied for path: {p}, trying next option...")
+                continue
+            except Exception as e:
+                print(f"Error accessing path {p}: {e}, trying next option...")
+                continue
         
         # Fallback to default if no suitable path found
-        print(f"Warning: No ideal path found for arrow database. Defaulting to: {db_path}")
-        return Path(db_path)
+        print(f"Warning: No accessible path found for arrow database. Defaulting to local: {Path(__file__).parent / db_path}")
+        return Path(__file__).parent / db_path
     
     def get_connection(self):
         """Get thread-local database connection"""
@@ -799,7 +806,12 @@ class ArrowDatabase:
             
     def __del__(self):
         """Cleanup on deletion"""
-        self.close()
+        try:
+            if hasattr(self, 'local'):
+                self.close()
+        except Exception:
+            # Ignore errors during cleanup
+            pass
 
 
 # Example usage and testing
