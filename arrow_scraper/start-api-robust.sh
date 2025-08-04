@@ -124,6 +124,14 @@ run_migrations() {
 
 # Function to run database import from JSON files
 run_database_import() {
+    # Skip import in production unless explicitly enabled
+    if [ "$FLASK_ENV" = "production" ] && [ "$FORCE_DATABASE_IMPORT" != "true" ]; then
+        echo "📥 Skipping database import in production environment"
+        echo "    Use FORCE_DATABASE_IMPORT=true to enable import in production"
+        echo "    Or use backup/restore scripts for production data management"
+        return 0
+    fi
+    
     echo "📥 Running database import from JSON files..."
     
     # Check for database import manager
@@ -158,7 +166,19 @@ echo "================================"
 if [ -d "/app" ] && [ -f "/app/api.py" ]; then
     # Docker environment
     echo "🐳 Running in Docker environment"
-    ARROW_DB="/app/arrow_database.db"
+    
+    # Setup arrow database path (prioritize volume if available)
+    if [ -d "/app/arrow_data" ]; then
+        ARROW_DB="/app/arrow_data/arrow_database.db"
+        echo "📁 Using arrow_data directory for arrow database"
+    else
+        # Create arrow_data directory if it doesn't exist (Docker volume mount)
+        mkdir -p "/app/arrow_data"
+        ARROW_DB="/app/arrow_data/arrow_database.db"
+        echo "📁 Created arrow_data directory for arrow database"
+    fi
+    
+    # Setup user database path (existing logic)
     USER_DB="/app/user_data.db"
     
     # Try user_data directory first (Docker volume)
@@ -201,8 +221,41 @@ else
             exit 1
         fi
     else
-        echo "❌ No backup available, cannot continue"
-        exit 1
+        echo "⚠️  No backup available, attempting to create new database..."
+        echo "    This will create an empty arrow database that can be populated later"
+        
+        # Ensure directory exists (permissions set by Docker volume)
+        mkdir -p "$(dirname "$ARROW_DB")"
+        
+        echo "    Creating database at: $ARROW_DB"
+        echo "    Directory: $(dirname "$ARROW_DB")"
+        echo "    Permissions: $(ls -ld "$(dirname "$ARROW_DB")")"
+        
+        # Create minimal arrow database structure
+        sqlite3 "$ARROW_DB" << 'EOF'
+CREATE TABLE IF NOT EXISTS arrows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    manufacturer TEXT NOT NULL,
+    model_name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS spine_specifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    arrow_id INTEGER NOT NULL,
+    spine INTEGER NOT NULL,
+    outer_diameter REAL,
+    gpi_weight REAL,
+    FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE
+);
+EOF
+        
+        if verify_database "$ARROW_DB" "Arrow"; then
+            echo "✅ Created new empty arrow database"
+            echo "    Use backup/restore scripts or import tools to populate data"
+        else
+            echo "❌ Failed to create new arrow database"
+            exit 1
+        fi
     fi
 fi
 

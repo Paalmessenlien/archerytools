@@ -24,6 +24,7 @@ services:
     volumes:
       - ./.env:/app/.env:ro  # Mount root .env file as read-only
       - arrowtuner-userdata:/app/user_data  # Persist user database
+      - arrowtuner-arrowdata:/app/arrow_data  # Persist arrow database
       - arrowtuner-logs:/app/logs  # Persist logs
     networks:
       - arrowtuner-network
@@ -118,6 +119,7 @@ services:
     volumes:
       - ./.env:/app/.env:ro
       - arrowtuner-userdata:/app/user_data
+      - arrowtuner-arrowdata:/app/arrow_data
       - arrowtuner-logs:/app/logs
     networks:
       - arrowtuner-network
@@ -132,6 +134,8 @@ volumes:
   arrowtuner-data:
     driver: local
   arrowtuner-userdata:
+    driver: local
+  arrowtuner-arrowdata:
     driver: local
   arrowtuner-logs:
     driver: local

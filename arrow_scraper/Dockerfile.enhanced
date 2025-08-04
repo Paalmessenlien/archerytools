@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p /app/data/processed /app/data/raw /app/logs /app/user_data
+RUN mkdir -p /app/data/processed /app/data/raw /app/logs /app/user_data /app/arrow_data /app/backups
 
 # Make scripts executable
 RUN chmod +x /app/api.py \
@@ -45,7 +45,7 @@ RUN addgroup --gid 1000 appgroup && \
 # Set up basic directory structure and permissions
 RUN echo "🔧 Setting up directory structure..." && \
     chown -R appuser:appgroup /app && \
-    chmod 755 /app/logs /app/user_data /app/data && \
+    chmod 755 /app/logs /app/user_data /app/data /app/arrow_data /app/backups && \
     echo "✅ Directory setup completed"
 
 # Verify build integrity (imports only - no database files expected at build time)

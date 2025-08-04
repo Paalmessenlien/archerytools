@@ -6,6 +6,7 @@ Consolidates extracted arrow data into a searchable database for Phase 2 tuning 
 
 import json
 import sqlite3
+import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
@@ -130,9 +131,41 @@ class ArrowDatabase:
     """Database for managing extracted arrow specifications"""
     
     def __init__(self, db_path: str = "arrow_database.db"):
-        self.db_path = Path(db_path)
+        # Check for environment variable first (Docker deployment)
+        env_db_path = os.environ.get('ARROW_DATABASE_PATH')
+        if env_db_path:
+            self.db_path = Path(env_db_path)
+            print(f"🔧 Using ARROW_DATABASE_PATH environment variable: {self.db_path}")
+        else:
+            self.db_path = self._resolve_db_path(db_path)
+            print(f"🔧 Resolved arrow database path: {self.db_path}")
         self.local = threading.local()  # Thread-local storage for connections
         self.create_database()
+    
+    def _resolve_db_path(self, db_path):
+        """Resolve database path, prioritizing Docker volume locations"""
+        # Prioritize absolute path if provided
+        if Path(db_path).is_absolute():
+            print(f"Using absolute path provided: {db_path}")
+            return Path(db_path)
+        
+        # Try common locations for arrow_database.db, prioritizing Docker volume
+        possible_paths = [
+            Path("/app/arrow_data") / db_path,  # Docker volume mount path (highest priority)
+            Path("/app") / db_path,  # Docker/production path
+            Path(__file__).parent / db_path, # Default development path (arrow_scraper/)
+            Path(__file__).parent.parent / db_path # Root directory path
+        ]
+
+        for p in possible_paths:
+            # Create parent directory if it doesn't exist
+            p.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Attempting to use arrow database path: {p} (parent exists: {p.parent.exists()})")
+            return p
+        
+        # Fallback to default if no suitable path found
+        print(f"Warning: No ideal path found for arrow database. Defaulting to: {db_path}")
+        return Path(db_path)
     
     def get_connection(self):
         """Get thread-local database connection"""
