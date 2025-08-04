@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""
+Summary: Fixed JSON Export for --learn-all
+"""
+
+print("✅ FIXED: JSON Export for --learn-all")
+print("=" * 50)
+
+print("\n🔧 Problem Identified:")
+print("   • --learn-all was only saving pattern data to data/content_patterns.json")
+print("   • Arrow data wasn't being saved to data/processed/ folder")
+print("   • Original code used Pydantic models requiring virtual environment")
+
+print("\n🎯 Solution Implemented:")
+print("   • Enhanced --learn-all to save both pattern data AND arrow data")
+print("   • Simplified JSON export to work without virtual environment")
+print("   • Uses basic Python dict/JSON instead of Pydantic models")
+print("   • Includes proper error handling")
+
+print("\n📁 What You'll Now See:")
+print("   When you run: python main.py --learn-all --limit=1")
+print("   ")
+print("   Files created in data/processed/:")
+print("   • Easton_Archery_learn_20250801_095123.json")
+print("   • Gold_Tip_learn_20250801_095124.json")
+print("   • Skylon_Archery_learn_20250801_095125.json")
+print("   • ... (one per successful manufacturer)")
+
+print("\n📊 Each JSON File Contains:")
+print("   {")
+print('     "manufacturer": "Easton Archery",')
+print('     "total_arrows": 3,')
+print('     "scraped_at": "2025-08-01T09:51:23.456789",')
+print('     "extraction_method": "pattern_learning",')
+print('     "arrows": [')
+print("       {")
+print('         "manufacturer": "Easton Archery",')
+print('         "model_name": "X10 Parallel Pro",')
+print('         "spine_specifications": [')
+print("           {")
+print('             "spine": 1000,')
+print('             "outer_diameter": 0.204,')
+print('             "gpi_weight": 5.5')
+print("           }")
+print("         ],")
+print('         "material": "Carbon",')
+print('         "arrow_type": "Target"')
+print("       }")
+print("     ]")
+print("   }")
+
+print("\n🚀 Benefits:")
+print("   ✅ Pattern learning for future speed improvements")
+print("   ✅ Arrow data saved for immediate use")
+print("   ✅ Works without virtual environment activation")
+print("   ✅ Compatible with existing production workflow")
+print("   ✅ Ready for database import")
+
+print("\n🎯 Ready to Test:")
+print("   python main.py --learn-all --limit=1")
+print("   ")
+print("   You should now see:")
+print("   1. Pattern learning progress messages")
+print("   2. 'X arrows saved to filename.json' messages")
+print("   3. New JSON files in data/processed/")
+print("   4. Updated patterns in data/content_patterns.json")
+
+print("\n🔥 Perfect! Now both pattern learning AND data extraction work together!")

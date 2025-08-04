@@ -2,6 +2,13 @@
 
 # Production SSL Deployment - Fast, reliable deployment with SSL certificates
 # Automatically detects and configures SSL certificates for production
+# 
+# Usage: ./deploy-production-ssl.sh [domain] [options]
+# Options:
+#   --rebuild-database    Rebuild entire database (arrows + components)
+#   --rebuild-arrows      Rebuild only arrow database
+#   --rebuild-components  Rebuild only components database
+#   --help               Show this help message
 
 set -e
 
@@ -12,11 +19,85 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-DOMAIN="${1:-archerytool.online}"
+# Parse arguments
+DOMAIN=""
+REBUILD_DATABASE=false
+REBUILD_ARROWS=false
+REBUILD_COMPONENTS=false
+REBUILD_USERS=false
+
+for arg in "$@"; do
+    case $arg in
+        --rebuild-database)
+            REBUILD_DATABASE=true
+            ;;
+        --rebuild-arrows)
+            REBUILD_ARROWS=true
+            ;;
+        --rebuild-components)
+            REBUILD_COMPONENTS=true
+            ;;
+        --rebuild-users)
+            REBUILD_USERS=true
+            ;;
+        --help)
+            echo "Production SSL Deployment Script"
+            echo ""
+            echo "Usage: ./deploy-production-ssl.sh [domain] [options]"
+            echo ""
+            echo "Arguments:"
+            echo "  domain                Domain name (default: archerytool.online)"
+            echo ""
+            echo "Options:"
+            echo "  --rebuild-database    Rebuild entire database (arrows + components + users)"
+            echo "  --rebuild-arrows      Rebuild only arrow database from JSON files"
+            echo "  --rebuild-components  Rebuild only components database from JSON files"
+            echo "  --rebuild-users       Rebuild only user database (WARNING: deletes all users)"
+            echo "  --help               Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  ./deploy-production-ssl.sh                     # Deploy only"
+            echo "  ./deploy-production-ssl.sh archerytool.online  # Deploy with custom domain"
+            echo "  ./deploy-production-ssl.sh --rebuild-database  # Deploy + rebuild all data"
+            echo "  ./deploy-production-ssl.sh mysite.com --rebuild-arrows  # Custom domain + arrows only"
+            echo "  ./deploy-production-ssl.sh --rebuild-users     # Deploy + reset user database"
+            exit 0
+            ;;
+        --*)
+            echo "Unknown option: $arg"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+        *)
+            if [[ "$arg" != *.* ]] && [[ "$DOMAIN" == "" ]]; then
+                # Assume it's a domain if it contains dots and no domain set yet
+                DOMAIN="$arg"
+            elif [[ "$DOMAIN" == "" ]]; then
+                DOMAIN="$arg"
+            fi
+            ;;
+    esac
+done
+
+# Set default domain if not provided
+DOMAIN="${DOMAIN:-archerytool.online}"
 
 echo -e "${BLUE}🚀 Production SSL Deployment${NC}"
 echo -e "${BLUE}=============================${NC}"
 echo -e "${BLUE}Domain: $DOMAIN${NC}"
+
+# Show what operations will be performed
+if [ "$REBUILD_DATABASE" = true ]; then
+    echo -e "${BLUE}🔄 Full database rebuild enabled (arrows + components + users)${NC}"
+elif [ "$REBUILD_ARROWS" = true ] || [ "$REBUILD_COMPONENTS" = true ] || [ "$REBUILD_USERS" = true ]; then
+    echo -e "${BLUE}🔄 Selective database rebuild enabled:${NC}"
+    [ "$REBUILD_ARROWS" = true ] && echo -e "${BLUE}  - Arrow database${NC}"
+    [ "$REBUILD_COMPONENTS" = true ] && echo -e "${BLUE}  - Components database${NC}"
+    [ "$REBUILD_USERS" = true ] && echo -e "${BLUE}  - User database${NC}"
+else
+    echo -e "${BLUE}⚡ Fast deployment mode (no database rebuild)${NC}"
+fi
+echo ""
 
 # Function to print status
 print_status() {
@@ -75,10 +156,70 @@ else
     exit 1
 fi
 
-# Step 2: Import data
-echo -e "${BLUE}📦 Importing arrow data...${NC}"
-./production-import-only.sh
-print_status "Arrow data imported"
+# Step 2: Database operations (only if requested)
+if [ "$REBUILD_DATABASE" = true ] || [ "$REBUILD_ARROWS" = true ] || [ "$REBUILD_COMPONENTS" = true ] || [ "$REBUILD_USERS" = true ]; then
+    if [ "$REBUILD_DATABASE" = true ]; then
+        echo -e "${BLUE}📦 Rebuilding entire database (arrows + components + users)...${NC}"
+        ./production-import-only.sh
+        
+        # Also rebuild user database if full rebuild requested
+        cd arrow_scraper
+        echo -e "${BLUE}👥 Rebuilding user database...${NC}"
+        if [ -f "user_data.db" ]; then
+            rm user_data.db
+            print_status "User database cleared"
+        fi
+        python3 -c "from user_database import UserDatabase; UserDatabase()" 
+        print_status "User database reinitialized"
+        cd ..
+        
+        print_status "Complete database rebuilt"
+    else
+        # Navigate to scraper directory for selective rebuilds
+        cd arrow_scraper
+        
+        if [ "$REBUILD_ARROWS" = true ]; then
+            echo -e "${BLUE}🏹 Rebuilding arrow database only...${NC}"
+            if python3 database_import_manager.py --import-all --force; then
+                print_status "Arrow database rebuilt"
+            else
+                print_error "Arrow database rebuild failed"
+                cd ..
+                exit 1
+            fi
+        fi
+        
+        if [ "$REBUILD_COMPONENTS" = true ]; then
+            echo -e "${BLUE}🧩 Rebuilding components database only...${NC}"
+            if python3 component_importer.py --force; then
+                print_status "Components database rebuilt"
+            else
+                print_warning "Components database rebuild failed (continuing)"
+            fi
+        fi
+        
+        if [ "$REBUILD_USERS" = true ]; then
+            echo -e "${BLUE}👥 Rebuilding user database only...${NC}"
+            echo -e "${YELLOW}⚠️  WARNING: This will delete all user accounts, bow setups, and sessions!${NC}"
+            read -p "Are you sure you want to continue? (yes/no): " confirm
+            if [ "$confirm" = "yes" ]; then
+                if [ -f "user_data.db" ]; then
+                    rm user_data.db
+                    print_status "User database cleared"
+                fi
+                python3 -c "from user_database import UserDatabase; UserDatabase()" 
+                print_status "User database reinitialized"
+            else
+                print_warning "User database rebuild cancelled"
+            fi
+        fi
+        
+        cd ..
+    fi
+else
+    echo -e "${BLUE}⚡ Skipping database rebuild (use --rebuild-database to rebuild)${NC}"
+    print_status "Using existing databases"
+fi
 
 # Step 3: Update environment for HTTPS
 echo -e "${BLUE}🔧 Configuring for HTTPS deployment...${NC}"
