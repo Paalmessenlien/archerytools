@@ -1,0 +1,191 @@
+# Unified Docker Compose Configuration for ArrowTuner
+# ONE configuration for ALL deployment scenarios (development, production, SSL)
+# 
+# Usage:
+#   Development: DEPLOYMENT_MODE=development docker-compose -f docker-compose.unified.yml up
+#   Production:  DEPLOYMENT_MODE=production DOMAIN_NAME=yourdomain.com docker-compose -f docker-compose.unified.yml up
+#   SSL:         DEPLOYMENT_MODE=ssl DOMAIN_NAME=yourdomain.com SSL_ENABLED=true docker-compose -f docker-compose.unified.yml up
+
+version: '3.8'
+
+services:
+  # Flask API Backend - Consistent across all environments
+  api:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+    container_name: arrowtuner-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5000}:5000"
+    environment:
+      # Deployment Configuration
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+      - SSL_ENABLED=${SSL_ENABLED:-false}
+      
+      # Flask Configuration
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      
+      # API Keys
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-not-set}
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
+      
+      # Database Paths - UNIFIED
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
+      
+      # Startup Configuration
+      - DATABASE_VERIFICATION=${DATABASE_VERIFICATION:-enabled}
+      - STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-120}
+    volumes:
+      # Configuration
+      - ./.env:/app/.env:ro
+      
+      # Unified Database Volume
+      - arrowtuner-databases:/app/databases
+      
+      # Data and Logs
+      - ./arrow_scraper/data:/app/data:ro
+      - arrowtuner-logs:/app/logs
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: ${STARTUP_TIMEOUT:-120}s
+    depends_on:
+      - db-init
+
+  # Nuxt 3 Frontend - Environment-aware configuration
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ${FRONTEND_DOCKERFILE:-Dockerfile}
+      args:
+        - NODE_ENV=${NODE_ENV:-production}
+        - BUILD_VERIFICATION=${BUILD_VERIFICATION:-enabled}
+    container_name: arrowtuner-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
+      
+      # API Configuration - Dynamic based on deployment mode
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://localhost:5000/api}
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      
+      # Build Verification
+      - BUILD_VERIFICATION=${BUILD_VERIFICATION:-enabled}
+    depends_on:
+      - api
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: ${STARTUP_TIMEOUT:-120}s
+
+  # Nginx Reverse Proxy - Handles both HTTP and HTTPS based on environment
+  nginx:
+    image: nginx:alpine
+    container_name: arrowtuner-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NGINX_HOST=${DOMAIN_NAME:-localhost}
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-development}
+      - SSL_ENABLED=${SSL_ENABLED:-false}
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+    volumes:
+      # Unified nginx configuration template
+      - ./deploy/nginx/unified.conf.template:/etc/nginx/templates/default.conf.template:ro
+      
+      # SSL certificates (if needed)
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+      
+      # Logs
+      - arrowtuner-logs:/var/log/nginx
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - arrowtuner-network
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t && (curl -f http://localhost/health || nc -z localhost 80)"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    profiles:
+      - with-nginx
+
+  # Database Initialization Service - Runs once to ensure databases exist
+  db-init:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+    container_name: arrowtuner-db-init
+    environment:
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - INIT_MODE=true
+    volumes:
+      - arrowtuner-databases:/app/databases
+      - ./arrow_scraper/data:/app/data:ro
+      - ./.env:/app/.env:ro
+    networks:
+      - arrowtuner-network
+    command: ["python3", "/app/unified-db-init.py"]
+    restart: "no"
+
+  # Database Backup Service - Scheduled backups
+  db-backup:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+    container_name: arrowtuner-db-backup
+    environment:
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - BACKUP_DIR=/app/backups
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+    volumes:
+      - arrowtuner-databases:/app/databases:ro
+      - arrowtuner-backups:/app/backups
+    networks:
+      - arrowtuner-network
+    command: ["python3", "/app/backup_manager.py", "scheduled"]
+    restart: unless-stopped
+    profiles:
+      - with-backup
+
+# Unified Volume Configuration
+volumes:
+  # Single unified database volume for both databases
+  arrowtuner-databases:
+    driver: local
+  
+  # Unified logs volume
+  arrowtuner-logs:
+    driver: local
+  
+  # Backup volume
+  arrowtuner-backups:
+    driver: local
+
+# Network Configuration
+networks:
+  arrowtuner-network:
+    driver: bridge

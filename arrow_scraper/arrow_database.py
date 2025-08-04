@@ -143,23 +143,29 @@ class ArrowDatabase:
         self.create_database()
     
     def _resolve_db_path(self, db_path):
-        """Resolve database path, prioritizing Docker volume locations"""
+        """Resolve database path with unified architecture"""
         # Prioritize absolute path if provided
         if Path(db_path).is_absolute():
             print(f"Using absolute path provided: {db_path}")
             return Path(db_path)
         
-        # Try common locations for arrow_database.db, prioritizing Docker volume
+        # Unified database paths - consistent across all environments
         possible_paths = [
-            Path("/app/arrow_data") / db_path,  # Docker volume mount path (highest priority)
-            Path("/app") / db_path,  # Docker/production path
-            Path(__file__).parent / db_path, # Default development path (arrow_scraper/)
-            Path(__file__).parent.parent / db_path # Root directory path
+            Path("/app/databases") / db_path,  # Unified Docker path (highest priority)
+            Path("/app/arrow_data") / db_path,  # Legacy Docker volume path
+            Path("/app") / db_path,  # Legacy Docker path
+            Path(__file__).parent / "databases" / db_path,  # Local unified path
+            Path(__file__).parent / db_path,  # Legacy local path
+            Path(__file__).parent.parent / "databases" / db_path  # Root unified path
         ]
 
         for p in possible_paths:
             try:
-                # Check if we can create parent directory (permission test)
+                # Check if database exists
+                if p.exists():
+                    print(f"Found existing arrow database at: {p}")
+                    return p
+                # Check if we can create parent directory
                 p.parent.mkdir(parents=True, exist_ok=True)
                 print(f"Successfully resolved arrow database path: {p}")
                 return p
@@ -170,9 +176,11 @@ class ArrowDatabase:
                 print(f"Error accessing path {p}: {e}, trying next option...")
                 continue
         
-        # Fallback to default if no suitable path found
-        print(f"Warning: No accessible path found for arrow database. Defaulting to local: {Path(__file__).parent / db_path}")
-        return Path(__file__).parent / db_path
+        # Fallback to unified local path
+        unified_local = Path(__file__).parent / "databases" / db_path
+        print(f"Using unified local path: {unified_local}")
+        unified_local.parent.mkdir(parents=True, exist_ok=True)
+        return unified_local
     
     def get_connection(self):
         """Get thread-local database connection"""

@@ -24,8 +24,9 @@ class BackupManager:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         
         # Database paths (use environment variables if available)
-        self.arrow_db_path = Path(os.environ.get('ARROW_DATABASE_PATH', '/app/arrow_data/arrow_database.db'))
-        self.user_db_path = Path(os.environ.get('USER_DATABASE_PATH', '/app/user_data/user_data.db'))
+        # Unified database paths
+        self.arrow_db_path = Path(os.environ.get('ARROW_DATABASE_PATH', '/app/databases/arrow_database.db'))
+        self.user_db_path = Path(os.environ.get('USER_DATABASE_PATH', '/app/databases/user_data.db'))
         
         print(f"🗄️  Backup Manager initialized")
         print(f"   Backup directory: {self.backup_dir}")
