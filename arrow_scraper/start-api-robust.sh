@@ -165,6 +165,11 @@ if [ -d "/app" ] && [ -f "/app/api.py" ]; then
     if [ -d "/app/user_data" ]; then
         USER_DB="/app/user_data/user_data.db"
         echo "📁 Using user_data directory for user database"
+    else
+        # Create user_data directory if it doesn't exist (Docker volume mount)
+        mkdir -p "/app/user_data"
+        USER_DB="/app/user_data/user_data.db"
+        echo "📁 Created user_data directory for user database"
     fi
 else
     # Local development environment

@@ -4,26 +4,35 @@ from pathlib import Path
 
 class UserDatabase:
     def __init__(self, db_path="user_data.db"):
-        self.db_path = self._resolve_db_path(db_path)
+        # Check for environment variable first (Docker deployment)
+        env_db_path = os.environ.get('USER_DATABASE_PATH')
+        if env_db_path:
+            self.db_path = env_db_path
+            print(f"🔧 Using USER_DATABASE_PATH environment variable: {self.db_path}")
+        else:
+            self.db_path = self._resolve_db_path(db_path)
+            print(f"🔧 Resolved user database path: {self.db_path}")
         self._initialize_db()
 
     def _resolve_db_path(self, db_path):
         # Prioritize absolute path if provided
         if Path(db_path).is_absolute():
+            print(f"Using absolute path provided: {db_path}")
             return db_path
         
-        # Try common locations for user_data.db
+        # Try common locations for user_data.db, prioritizing Docker volume
         possible_paths = [
-            Path("/app/user_data") / db_path,  # Docker volume mount path
+            Path("/app/user_data") / db_path,  # Docker volume mount path (highest priority)
             Path("/app") / db_path,  # Docker/production path
             Path(__file__).parent / db_path, # Default development path (arrow_scraper/)
             Path(__file__).parent.parent / db_path # Root directory path
         ]
 
         for p in possible_paths:
-            if p.parent.exists(): # Ensure parent directory exists before trying to create file
-                print(f"Attempting to use user database path: {p}")
-                return str(p)
+            # Create parent directory if it doesn't exist
+            p.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Attempting to use user database path: {p} (parent exists: {p.parent.exists()})")
+            return str(p)
         
         # Fallback to default if no suitable path found
         print(f"Warning: No ideal path found for user database. Defaulting to: {db_path}")
