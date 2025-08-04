@@ -9,9 +9,11 @@ import argparse
 import logging
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 import shutil
+import difflib
+import re
 
 # Setup logging
 logging.basicConfig(
@@ -24,15 +26,73 @@ logger = logging.getLogger(__name__)
 class DatabaseCleaner:
     """Comprehensive database cleaning and maintenance tool"""
     
-    def __init__(self, database_path: str = "arrow_database.db"):
+    def __init__(self, database_path: str = "arrow_database.db", similarity_threshold: float = 0.85):
         self.database_path = database_path
         self.conn = None
+        self.similarity_threshold = similarity_threshold
         
     def connect(self):
         """Connect to the database"""
         self.conn = sqlite3.connect(self.database_path)
         self.conn.row_factory = sqlite3.Row
         return self.conn
+    
+    def normalize_model_name(self, model_name: str) -> str:
+        """Normalize model name for better comparison"""
+        if not model_name:
+            return ""
+        
+        # Convert to lowercase
+        normalized = model_name.lower().strip()
+        
+        # Remove common prefixes/suffixes that might cause false negatives
+        # Remove trademark symbols and other special characters
+        normalized = re.sub(r'[™®©]', '', normalized)
+        
+        # Normalize spacing and punctuation
+        normalized = re.sub(r'[_\-\s]+', ' ', normalized)
+        normalized = re.sub(r'[^\w\s]', '', normalized)
+        
+        # Remove common archery terms that add noise
+        noise_words = ['arrow', 'shaft', 'hunting', 'target', 'carbon', 'aluminum', 'wood']
+        words = normalized.split()
+        words = [word for word in words if word not in noise_words]
+        
+        return ' '.join(words).strip()
+    
+    def calculate_similarity(self, name1: str, name2: str) -> float:
+        """Calculate similarity score between two model names"""
+        norm1 = self.normalize_model_name(name1)
+        norm2 = self.normalize_model_name(name2)
+        
+        if not norm1 or not norm2:
+            return 0.0
+        
+        # Use SequenceMatcher for similarity calculation
+        similarity = difflib.SequenceMatcher(None, norm1, norm2).ratio()
+        
+        # Boost score for exact matches after normalization
+        if norm1 == norm2:
+            similarity = 1.0
+        
+        return similarity
+    
+    def are_similar_arrows(self, arrow1: Dict[str, Any], arrow2: Dict[str, Any]) -> Tuple[bool, float]:
+        """
+        Check if two arrows are similar enough to be considered duplicates
+        Returns (is_similar, similarity_score)
+        """
+        # Must be same manufacturer (exact match)
+        if arrow1['manufacturer'].lower() != arrow2['manufacturer'].lower():
+            return False, 0.0
+        
+        # Calculate model name similarity
+        model_similarity = self.calculate_similarity(arrow1['model_name'], arrow2['model_name'])
+        
+        # Check if similarity exceeds threshold
+        is_similar = model_similarity >= self.similarity_threshold
+        
+        return is_similar, model_similarity
     
     def backup_database(self) -> str:
         """Create a backup of the database before making changes"""
@@ -286,36 +346,99 @@ class DatabaseCleaner:
         
         return {'arrows_merged': arrows_merged}
     
-    def find_duplicates(self) -> List[Dict[str, Any]]:
-        """Find potential duplicate arrows (same manufacturer and model)"""
+    def find_duplicates(self, use_fuzzy: bool = True) -> List[Dict[str, Any]]:
+        """Find potential duplicate arrows using fuzzy matching on model names"""
         cursor = self.conn.cursor()
+        
+        if not use_fuzzy:
+            # Fall back to exact matching
+            cursor.execute('''
+                SELECT manufacturer, model_name, COUNT(*) as count,
+                       GROUP_CONCAT(id) as arrow_ids,
+                       GROUP_CONCAT(material) as materials,
+                       GROUP_CONCAT(arrow_type) as arrow_types
+                FROM arrows 
+                GROUP BY LOWER(manufacturer), LOWER(model_name)
+                HAVING COUNT(*) > 1
+                ORDER BY manufacturer, model_name
+            ''')
+            
+            duplicates = []
+            for row in cursor.fetchall():
+                duplicates.append({
+                    'manufacturer': row['manufacturer'],
+                    'model_name': row['model_name'],
+                    'count': row['count'],
+                    'arrow_ids': [int(id) for id in row['arrow_ids'].split(',')],
+                    'materials': row['materials'].split(','),
+                    'arrow_types': row['arrow_types'].split(','),
+                    'similarity_scores': [1.0] * row['count'],  # Exact matches
+                    'match_type': 'exact'
+                })
+            
+            return duplicates
+        
+        # Get all arrows for fuzzy comparison
         cursor.execute('''
-            SELECT manufacturer, model_name, COUNT(*) as count,
-                   GROUP_CONCAT(id) as arrow_ids,
-                   GROUP_CONCAT(material) as materials,
-                   GROUP_CONCAT(arrow_type) as arrow_types
+            SELECT id, manufacturer, model_name, material, arrow_type
             FROM arrows 
-            GROUP BY LOWER(manufacturer), LOWER(model_name)
-            HAVING COUNT(*) > 1
             ORDER BY manufacturer, model_name
         ''')
         
-        duplicates = []
-        for row in cursor.fetchall():
-            duplicates.append({
-                'manufacturer': row['manufacturer'],
-                'model_name': row['model_name'],
-                'count': row['count'],
-                'arrow_ids': [int(id) for id in row['arrow_ids'].split(',')],
-                'materials': row['materials'].split(','),
-                'arrow_types': row['arrow_types'].split(',')
-            })
+        all_arrows = [dict(row) for row in cursor.fetchall()]
         
-        return duplicates
+        # Group arrows by manufacturer first (for efficiency)
+        manufacturer_groups = {}
+        for arrow in all_arrows:
+            mfr = arrow['manufacturer'].lower()
+            if mfr not in manufacturer_groups:
+                manufacturer_groups[mfr] = []
+            manufacturer_groups[mfr].append(arrow)
+        
+        duplicate_groups = []
+        processed_ids = set()
+        
+        # For each manufacturer, find similar arrows
+        for manufacturer, arrows in manufacturer_groups.items():
+            for i, arrow1 in enumerate(arrows):
+                if arrow1['id'] in processed_ids:
+                    continue
+                
+                # Find all similar arrows to this one
+                similar_group = [arrow1]
+                similarity_scores = [1.0]  # Self-similarity is 1.0
+                
+                for j, arrow2 in enumerate(arrows[i+1:], i+1):
+                    if arrow2['id'] in processed_ids:
+                        continue
+                    
+                    is_similar, similarity = self.are_similar_arrows(arrow1, arrow2)
+                    if is_similar:
+                        similar_group.append(arrow2)
+                        similarity_scores.append(similarity)
+                        processed_ids.add(arrow2['id'])
+                
+                # If we found duplicates, add to results
+                if len(similar_group) > 1:
+                    processed_ids.add(arrow1['id'])
+                    
+                    duplicate_groups.append({
+                        'manufacturer': arrow1['manufacturer'],
+                        'model_name': arrow1['model_name'],  # Use first arrow's name as representative
+                        'count': len(similar_group),
+                        'arrow_ids': [arrow['id'] for arrow in similar_group],
+                        'materials': [arrow['material'] for arrow in similar_group],
+                        'arrow_types': [arrow['arrow_type'] for arrow in similar_group],
+                        'model_names': [arrow['model_name'] for arrow in similar_group],
+                        'similarity_scores': similarity_scores,
+                        'match_type': 'fuzzy'
+                    })
+        
+        return duplicate_groups
     
-    def clean_duplicate_arrows(self, dry_run: bool = False) -> Dict[str, int]:
+    def clean_duplicate_arrows(self, dry_run: bool = False, use_fuzzy: bool = True) -> Dict[str, int]:
         """Remove duplicate arrows, keeping the one with most spine specifications"""
-        duplicates = self.find_duplicates()
+        duplicates = self.find_duplicates(use_fuzzy=use_fuzzy)
         
         if not duplicates:
             logger.info("No duplicate arrows found")
@@ -338,9 +461,17 @@ class DatabaseCleaner:
             keep_arrow_id = spine_counts[0][0]
             remove_ids = [id for id, _ in spine_counts[1:]]
             
-            logger.info(f"Duplicate: {duplicate['manufacturer']} {duplicate['model_name']}")
-            logger.info(f"  Keeping arrow ID {keep_arrow_id} ({spine_counts[0][1]} spine specs)")
-            logger.info(f"  Removing IDs: {remove_ids}")
+            # Enhanced logging for fuzzy matches
+            if duplicate.get('match_type') == 'fuzzy':
+                logger.info(f"Fuzzy duplicate: {duplicate['manufacturer']}")
+                for i, (model_name, similarity) in enumerate(zip(duplicate['model_names'], duplicate['similarity_scores'])):
+                    status = "KEEP" if duplicate['arrow_ids'][i] == keep_arrow_id else "REMOVE"
+                    logger.info(f"  [{status}] ID {duplicate['arrow_ids'][i]}: '{model_name}' (similarity: {similarity:.2f})")
+                logger.info(f"  Keeping arrow ID {keep_arrow_id} ({spine_counts[0][1]} spine specs)")
+            else:
+                logger.info(f"Exact duplicate: {duplicate['manufacturer']} {duplicate['model_name']}")
+                logger.info(f"  Keeping arrow ID {keep_arrow_id} ({spine_counts[0][1]} spine specs)")
+                logger.info(f"  Removing IDs: {remove_ids}")
             
             if not dry_run:
                 # Remove spine specifications for arrows we're deleting
@@ -352,9 +483,10 @@ class DatabaseCleaner:
         
         if not dry_run:
             self.conn.commit()
-            logger.info(f"Removed {removed_count} duplicate arrows")
+            logger.info(f"Removed {removed_count} duplicate arrows using {'fuzzy' if use_fuzzy else 'exact'} matching")
         else:
-            logger.info(f"DRY RUN: Would remove {len([id for dup in duplicates for id in dup['arrow_ids'][1:]])} duplicate arrows")
+            total_would_remove = sum(len(dup['arrow_ids']) - 1 for dup in duplicates)
+            logger.info(f"DRY RUN: Would remove {total_would_remove} duplicate arrows using {'fuzzy' if use_fuzzy else 'exact'} matching")
         
         return {'duplicates_removed': removed_count}
     
@@ -651,9 +783,17 @@ Examples:
   # List arrows for specific manufacturer
   python database_cleaner.py --list-arrows "Gold Tip"
   
-  # Find and clean duplicates
+  # Find and clean duplicates (uses fuzzy matching by default)
   python database_cleaner.py --find-duplicates
   python database_cleaner.py --clean-duplicates
+  
+  # Use exact matching only
+  python database_cleaner.py --find-duplicates --exact-match
+  python database_cleaner.py --clean-duplicates --exact-match
+  
+  # Adjust fuzzy matching sensitivity (0.0-1.0, default: 0.85)
+  python database_cleaner.py --find-duplicates --similarity-threshold 0.75
+  python database_cleaner.py --clean-duplicates --similarity-threshold 0.90
   
   # Merge manufacturers
   python database_cleaner.py --merge-manufacturers "BigArchery" "Cross-X"
@@ -697,13 +837,19 @@ Examples:
     
     # Data cleaning operations
     parser.add_argument('--find-duplicates', action='store_true',
-                      help='Find potential duplicate arrows')
+                      help='Find potential duplicate arrows using fuzzy matching')
     parser.add_argument('--clean-duplicates', action='store_true',
                       help='Remove duplicate arrows (keeps most complete)')
     parser.add_argument('--validate', action='store_true',
                       help='Validate database integrity')
     parser.add_argument('--stats', action='store_true',
                       help='Show comprehensive database statistics')
+    
+    # Fuzzy matching options
+    parser.add_argument('--exact-match', action='store_true',
+                      help='Use exact matching instead of fuzzy matching for duplicates')
+    parser.add_argument('--similarity-threshold', type=float, default=0.85,
+                      help='Similarity threshold for fuzzy matching (0.0-1.0, default: 0.85)')
     
     # Full database cleaning operations
     parser.add_argument('--clean-all', action='store_true',
@@ -725,8 +871,8 @@ Examples:
     
     args = parser.parse_args()
     
-    # Create cleaner instance
-    cleaner = DatabaseCleaner(args.database)
+    # Create cleaner instance with similarity threshold
+    cleaner = DatabaseCleaner(args.database, similarity_threshold=args.similarity_threshold)
     cleaner.connect()
     
     # Determine if we need a backup
@@ -798,23 +944,41 @@ Examples:
             print(f"  Arrows merged: {result['arrows_merged']}")
         
         elif args.find_duplicates:
-            duplicates = cleaner.find_duplicates()
+            use_fuzzy = not args.exact_match
+            duplicates = cleaner.find_duplicates(use_fuzzy=use_fuzzy)
             if duplicates:
-                print(f"\n" + "="*60)
+                print(f"\n" + "="*80)
                 print("POTENTIAL DUPLICATE ARROWS")
-                print("="*60)
+                print("="*80)
                 for dup in duplicates:
                     print(f"{dup['manufacturer']} - {dup['model_name']}")
-                    print(f"  Count: {dup['count']}")
+                    print(f"  Count: {dup['count']} | Match Type: {dup.get('match_type', 'exact').upper()}")
                     print(f"  IDs: {dup['arrow_ids']}")
-                    print(f"  Materials: {set(dup['materials'])}")
+                    
+                    if dup.get('match_type') == 'fuzzy' and 'model_names' in dup:
+                        print(f"  Model variations:")
+                        for i, (model_name, similarity) in enumerate(zip(dup['model_names'], dup['similarity_scores'])):
+                            print(f"    ID {dup['arrow_ids'][i]}: '{model_name}' (similarity: {similarity:.2f})")
+                    
+                    materials = set(filter(None, dup['materials']))  # Remove None/empty values
+                    if materials:
+                        print(f"  Materials: {materials}")
                     print()
                 print(f"Total duplicate groups: {len(duplicates)}")
+                
+                # Summary by match type
+                exact_count = sum(1 for dup in duplicates if dup.get('match_type') == 'exact')
+                fuzzy_count = sum(1 for dup in duplicates if dup.get('match_type') == 'fuzzy')
+                print(f"Exact matches: {exact_count}, Fuzzy matches: {fuzzy_count}")
+                if use_fuzzy:
+                    print(f"Similarity threshold: {args.similarity_threshold}")
             else:
-                print("\nNo duplicate arrows found.")
+                match_type = "exact" if args.exact_match else "fuzzy"
+                print(f"\nNo duplicate arrows found using {match_type} matching.")
         
         elif args.clean_duplicates:
-            result = cleaner.clean_duplicate_arrows(args.dry_run)
+            use_fuzzy = not args.exact_match
+            result = cleaner.clean_duplicate_arrows(args.dry_run, use_fuzzy=use_fuzzy)
             print(f"\nDuplicate cleaning completed:")
             print(f"  Duplicates removed: {result['duplicates_removed']}")
         
