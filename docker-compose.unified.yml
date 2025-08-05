@@ -131,22 +131,24 @@ services:
       - with-nginx
 
   # Database Initialization Service - Runs once to ensure databases exist
+  # NOTE: Database initialization is now handled by the API service startup script
+  # This service is kept for compatibility but can be disabled
   db-init:
     build: 
       context: ./arrow_scraper
       dockerfile: ${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-init
     environment:
-      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - ARROW_DATABASE_PATH=/app/arrow_database.db
+      - USER_DATABASE_PATH=/app/user_data/user_data.db
       - INIT_MODE=true
     volumes:
-      - arrowtuner-databases:/app/databases
+      - arrowtuner-databases:/app/user_data
       - ./arrow_scraper/data:/app/data:ro
       - ./.env:/app/.env:ro
     networks:
       - arrowtuner-network
-    command: ["python3", "/app/unified-db-init.py"]
+    command: ["sh", "-c", "echo 'Database initialization handled by API service startup'; exit 0"]
     restart: "no"
 
   # Database Backup Service - Scheduled backups
@@ -156,12 +158,12 @@ services:
       dockerfile: ${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-backup
     environment:
-      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - ARROW_DATABASE_PATH=/app/arrow_database.db
+      - USER_DATABASE_PATH=/app/user_data/user_data.db
       - BACKUP_DIR=/app/backups
       - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
     volumes:
-      - arrowtuner-databases:/app/databases:ro
+      - arrowtuner-databases:/app/user_data:ro
       - arrowtuner-backups:/app/backups
     networks:
       - arrowtuner-network
