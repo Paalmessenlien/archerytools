@@ -2102,16 +2102,21 @@ def update_arrow_admin(current_user, arrow_id):
         update_fields = []
         params = []
         
+        # Only include fields that actually exist in the arrows table
         allowed_fields = [
             'manufacturer', 'model_name', 'material', 'arrow_type', 
-            'description', 'image_url', 'recommended_use',
-            'straightness_tolerance', 'weight_tolerance', 'carbon_content'
+            'description', 'image_url', 'carbon_content'
         ]
         
         for field in allowed_fields:
             if field in data:
                 update_fields.append(f"{field} = ?")
                 params.append(data[field])
+        
+        # Handle primary_image_url -> image_url mapping from frontend
+        if 'primary_image_url' in data and 'image_url' not in data:
+            update_fields.append("image_url = ?")
+            params.append(data['primary_image_url'])
         
         if not update_fields:
             return jsonify({'error': 'No valid fields to update'}), 400
@@ -2231,14 +2236,16 @@ def create_arrow_admin(current_user):
         db = get_database()
         cursor = db.get_connection().cursor()
         
-        # Insert arrow
+        # Insert arrow - only include fields that exist in arrows table
         arrow_query = """
             INSERT INTO arrows 
             (manufacturer, model_name, material, arrow_type, description, 
-             image_url, recommended_use, straightness_tolerance, 
-             weight_tolerance, carbon_content, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             image_url, carbon_content, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
+        
+        # Handle primary_image_url -> image_url mapping from frontend
+        image_url = data.get('image_url') or data.get('primary_image_url')
         
         now = datetime.utcnow().isoformat()
         cursor.execute(arrow_query, (
@@ -2247,10 +2254,7 @@ def create_arrow_admin(current_user):
             data.get('material'),
             data.get('arrow_type'),
             data.get('description'),
-            data.get('image_url'),
-            data.get('recommended_use'),
-            data.get('straightness_tolerance'),
-            data.get('weight_tolerance'),
+            image_url,
             data.get('carbon_content'),
             now
         ))

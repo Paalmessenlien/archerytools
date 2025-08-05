@@ -279,15 +279,9 @@ echo "🔍 Step 3: Database Migrations"
 echo "============================"
 run_migrations
 
-# Run database import from JSON files
-echo ""
-echo "🔍 Step 4: Database Import from JSON Files"
-echo "=========================================="
-run_database_import
-
 # Environment validation
 echo ""
-echo "🔍 Step 5: Environment Validation"
+echo "🔍 Step 4: Environment Validation"
 echo "================================"
 
 # Check critical environment variables
@@ -316,7 +310,7 @@ fi
 
 # Final health check
 echo ""
-echo "🔍 Step 6: Pre-startup Health Check"
+echo "🔍 Step 5: Pre-startup Health Check"
 echo "=================================="
 
 # Check Python imports
@@ -347,7 +341,7 @@ fi
 
 # Start the application
 echo ""
-echo "🚀 Step 7: Starting Flask API Server"
+echo "🚀 Step 6: Starting Flask API Server"
 echo "=================================="
 echo "🌐 All checks passed, starting Flask API server..."
 echo "📊 Arrow database: $ARROW_DB"
