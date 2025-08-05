@@ -1166,7 +1166,20 @@ The Archery Tools platform provides:
 
 This section details recent fixes and improvements to common development and deployment issues.
 
-**Admin Arrow Save/Update API Error Fix (August 2025):**
+**Admin Arrow Editing 500 Internal Server Error Fix (August 2025):**
+- **Issue**: Admin arrow editing failing with 500 Internal Server Error when trying to save material changes (e.g., "Carbon" → "Carbon / Aluminum")
+- **Root Cause**: Two critical issues:
+  1. Database schema mismatch - API trying to update non-existent columns (`recommended_use`, `straightness_tolerance`, `weight_tolerance`)
+  2. Field name mismatch - Frontend sends `primary_image_url`, backend expects `image_url`
+- **Solution**: 
+  - Fixed `allowed_fields` in admin API to only include columns that exist in arrows table
+  - Added `primary_image_url` → `image_url` field mapping for frontend compatibility
+  - Removed database imports from Docker startup process (`start-api-robust.sh`) for faster container boot
+  - Updated both `create_arrow_admin` and `update_arrow_admin` endpoints
+- **Files**: `arrow_scraper/api.py`, `arrow_scraper/start-api-robust.sh`
+- **Status**: ✅ **RESOLVED** - All admin arrow editing now works correctly, material changes save successfully
+
+**Previous Admin Arrow Save/Update API Error Fix (August 2025):**
 - **Issue**: Admin arrow editing functionality failing with API errors when trying to save or update arrows with spine specifications
 - **Root Cause**: Database schema mismatch - `spine_specifications` table missing 7 columns that AdminArrowEditModal expected
 - **Solution**: 
