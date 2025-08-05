@@ -167,16 +167,9 @@ if [ -d "/app" ] && [ -f "/app/api.py" ]; then
     # Docker environment
     echo "🐳 Running in Docker environment"
     
-    # Setup arrow database path (prioritize volume if available)
-    if [ -d "/app/arrow_data" ]; then
-        ARROW_DB="/app/arrow_data/arrow_database.db"
-        echo "📁 Using arrow_data directory for arrow database"
-    else
-        # Create arrow_data directory if it doesn't exist (Docker volume mount)
-        mkdir -p "/app/arrow_data"
-        ARROW_DB="/app/arrow_data/arrow_database.db"
-        echo "📁 Created arrow_data directory for arrow database"
-    fi
+    # Setup arrow database path (use standard location)
+    ARROW_DB="/app/arrow_database.db"
+    echo "📁 Using standard arrow database location: $ARROW_DB"
     
     # Setup user database path (existing logic)
     USER_DB="/app/user_data.db"

@@ -136,6 +136,10 @@ class ArrowDatabase:
         if env_db_path:
             self.db_path = Path(env_db_path)
             print(f"🔧 Using ARROW_DATABASE_PATH environment variable: {self.db_path}")
+        elif Path(db_path).is_absolute():
+            # If an absolute path is provided directly, use it
+            self.db_path = Path(db_path)
+            print(f"🔧 Using absolute path provided: {self.db_path}")
         else:
             self.db_path = self._resolve_db_path(db_path)
             print(f"🔧 Resolved arrow database path: {self.db_path}")
