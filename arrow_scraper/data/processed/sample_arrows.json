@@ -1,0 +1,27 @@
+{
+  "manufacturer": "Sample Arrows",
+  "arrows_found": 2,
+  "scraping_date": "2025-01-31T12:00:00",
+  "status": "sample",
+  "arrows": [
+    {
+      "model_name": "Sample Target",
+      "material": "Carbon",
+      "arrow_type": "Target",
+      "description": "Sample target arrow for testing",
+      "spine_specifications": [
+        {"spine": 300, "outer_diameter": 0.246, "gpi_weight": 9.5},
+        {"spine": 400, "outer_diameter": 0.246, "gpi_weight": 9.0}
+      ]
+    },
+    {
+      "model_name": "Sample Hunting",
+      "material": "Carbon",
+      "arrow_type": "Hunting",
+      "description": "Sample hunting arrow for testing",
+      "spine_specifications": [
+        {"spine": 340, "outer_diameter": 0.244, "gpi_weight": 10.5}
+      ]
+    }
+  ]
+}

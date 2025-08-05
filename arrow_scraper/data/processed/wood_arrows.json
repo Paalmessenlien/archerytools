@@ -1,0 +1,29 @@
+{
+  "manufacturer": "Traditional Wood Arrows",
+  "arrows_found": 2,
+  "scraping_date": "2025-01-31T12:00:00",
+  "status": "traditional",
+  "arrows": [
+    {
+      "model_name": "Cedar Shaft",
+      "material": "Cedar Wood",
+      "arrow_type": "Traditional",
+      "description": "Traditional cedar wood arrow shaft",
+      "spine_specifications": [
+        {"spine": 45, "outer_diameter": 0.315, "gpi_weight": 8.8},
+        {"spine": 50, "outer_diameter": 0.318, "gpi_weight": 9.1},
+        {"spine": 55, "outer_diameter": 0.321, "gpi_weight": 9.4}
+      ]
+    },
+    {
+      "model_name": "Pine Shaft",
+      "material": "Pine Wood",
+      "arrow_type": "Traditional",
+      "description": "Traditional pine wood arrow shaft",
+      "spine_specifications": [
+        {"spine": 40, "outer_diameter": 0.318, "gpi_weight": 8.1},
+        {"spine": 45, "outer_diameter": 0.321, "gpi_weight": 8.4}
+      ]
+    }
+  ]
+}
