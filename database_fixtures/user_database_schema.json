@@ -1,0 +1,17 @@
+{
+  "schema": [
+    "CREATE TABLE users (\n                    id INTEGER PRIMARY KEY AUTOINCREMENT,\n                    email TEXT UNIQUE NOT NULL,\n                    name TEXT,\n                    is_admin BOOLEAN DEFAULT FALSE,\n                    created_at TEXT DEFAULT CURRENT_TIMESTAMP\n                )",
+    "CREATE TABLE bow_setups (\n                    id INTEGER PRIMARY KEY AUTOINCREMENT,\n                    user_id INTEGER,\n                    name TEXT NOT NULL,\n                    bow_type TEXT,\n                    draw_weight REAL,\n                    draw_length REAL,\n                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n                    FOREIGN KEY (user_id) REFERENCES users (id)\n                )"
+  ],
+  "sample_data": {
+    "users": [
+      {
+        "id": 1,
+        "email": "admin@example.com",
+        "name": "Admin User",
+        "is_admin": true,
+        "created_at": "2025-08-05T05:36:00.874534"
+      }
+    ]
+  }
+}
