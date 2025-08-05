@@ -39,13 +39,19 @@ from compatibility_engine import CompatibilityEngine
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'arrow-tuning-secret-key-change-in-production')
 
-# Enable CORS for the Nuxt frontend with explicit method support
-CORS(app, origins=[
-    "http://localhost:3000",  # Nuxt dev server
-    "http://localhost:3001",  # Nuxt dev server alternate port
-    "https://archerytool.online", # Production domain
-    "https://www.archerytool.online", # Production domain with www
-], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+# Enable CORS in Flask (nginx CORS disabled to prevent duplicates)
+CORS(app, 
+     origins=[
+         "http://localhost:3000",  # Nuxt dev server
+         "http://localhost:3001",  # Nuxt dev server alternate port
+         "http://localhost",       # Nginx proxy
+         "http://localhost:80",    # Nginx proxy with port
+         "https://archerytool.online", # Production domain
+         "https://www.archerytool.online", # Production domain with www
+     ], 
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True)
 
 # Global variables for lazy initialization
 tuning_system = None
@@ -1945,6 +1951,347 @@ def check_admin_status(current_user):
         })
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== ADMIN ARROW MANAGEMENT API ENDPOINTS =====
+
+@app.route('/api/admin/arrows', methods=['GET'])
+@token_required
+@admin_required
+def get_all_arrows_admin(current_user):
+    """Get all arrows with pagination for admin management"""
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+        search = request.args.get('search', '')
+        manufacturer = request.args.get('manufacturer', '')
+        
+        db = get_database()
+        
+        # Build query conditions
+        conditions = []
+        params = []
+        
+        if search:
+            conditions.append("(a.manufacturer LIKE ? OR a.model_name LIKE ? OR a.description LIKE ?)")
+            search_param = f"%{search}%"
+            params.extend([search_param, search_param, search_param])
+        
+        if manufacturer:
+            conditions.append("a.manufacturer = ?")
+            params.append(manufacturer)
+        
+        where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+        
+        # Count total arrows
+        count_query = f"""
+            SELECT COUNT(DISTINCT a.id) as total
+            FROM arrows a
+            {where_clause}
+        """
+        
+        cursor = db.get_connection().cursor()
+        cursor.execute(count_query, params)
+        total = cursor.fetchone()['total']
+        
+        # Get arrows with spine specifications
+        offset = (page - 1) * per_page
+        arrows_query = f"""
+            SELECT DISTINCT
+                a.id,
+                a.manufacturer,
+                a.model_name,
+                a.material,
+                a.arrow_type,
+                a.description,
+                a.image_url as primary_image_url,
+                a.created_at,
+                COUNT(s.id) as spine_count,
+                MIN(s.spine) as min_spine,
+                MAX(s.spine) as max_spine
+            FROM arrows a
+            LEFT JOIN spine_specifications s ON a.id = s.arrow_id
+            {where_clause}
+            GROUP BY a.id
+            ORDER BY a.manufacturer, a.model_name
+            LIMIT ? OFFSET ?
+        """
+        
+        cursor.execute(arrows_query, params + [per_page, offset])
+        arrows = [dict(row) for row in cursor.fetchall()]
+        
+        return jsonify({
+            'arrows': arrows,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/arrows/<int:arrow_id>', methods=['GET'])
+@token_required
+@admin_required
+def get_arrow_admin(current_user, arrow_id):
+    """Get detailed arrow information for admin editing"""
+    try:
+        db = get_database()
+        
+        # Get arrow details with spine specifications
+        query = """
+            SELECT 
+                a.*,
+                COUNT(s.id) as spine_count
+            FROM arrows a
+            LEFT JOIN spine_specifications s ON a.id = s.arrow_id
+            WHERE a.id = ?
+            GROUP BY a.id
+        """
+        
+        cursor = db.get_connection().cursor()
+        cursor.execute(query, (arrow_id,))
+        arrow = cursor.fetchone()
+        
+        if not arrow:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        arrow_data = dict(arrow)
+        
+        # Get spine specifications
+        spine_query = """
+            SELECT *
+            FROM spine_specifications
+            WHERE arrow_id = ?
+            ORDER BY spine
+        """
+        
+        cursor.execute(spine_query, (arrow_id,))
+        spine_specs = [dict(row) for row in cursor.fetchall()]
+        
+        arrow_data['spine_specifications'] = spine_specs
+        
+        return jsonify(arrow_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/arrows/<int:arrow_id>', methods=['PUT'])
+@token_required
+@admin_required
+def update_arrow_admin(current_user, arrow_id):
+    """Update arrow information (admin only)"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if arrow exists
+        cursor.execute("SELECT id FROM arrows WHERE id = ?", (arrow_id,))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        # Build update query
+        update_fields = []
+        params = []
+        
+        allowed_fields = [
+            'manufacturer', 'model_name', 'material', 'arrow_type', 
+            'description', 'image_url', 'recommended_use',
+            'straightness_tolerance', 'weight_tolerance', 'carbon_content'
+        ]
+        
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                params.append(data[field])
+        
+        if not update_fields:
+            return jsonify({'error': 'No valid fields to update'}), 400
+        
+        # Note: updated_at column doesn't exist in arrows table
+        params.append(arrow_id)
+        
+        # Update arrow
+        update_query = f"""
+            UPDATE arrows 
+            SET {', '.join(update_fields)}
+            WHERE id = ?
+        """
+        
+        cursor.execute(update_query, params)
+        db.get_connection().commit()
+        
+        # Handle spine specifications update if provided
+        if 'spine_specifications' in data:
+            spine_specs = data['spine_specifications']
+            
+            # Delete existing spine specifications
+            cursor.execute("DELETE FROM spine_specifications WHERE arrow_id = ?", (arrow_id,))
+            
+            # Insert new spine specifications
+            for spec in spine_specs:
+                spine_query = """
+                    INSERT INTO spine_specifications 
+                    (arrow_id, spine, outer_diameter, gpi_weight, inner_diameter, 
+                     length_options, wall_thickness, insert_weight_range, nock_size, 
+                     notes, straightness_tolerance, weight_tolerance, diameter_category)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+                cursor.execute(spine_query, (
+                    arrow_id,
+                    spec.get('spine'),
+                    spec.get('outer_diameter'),
+                    spec.get('gpi_weight'),
+                    spec.get('inner_diameter'),
+                    json.dumps(spec.get('length_options', [])),
+                    spec.get('wall_thickness'),
+                    spec.get('insert_weight_range'),
+                    spec.get('nock_size'),
+                    spec.get('notes'),
+                    spec.get('straightness_tolerance'),
+                    spec.get('weight_tolerance'),
+                    spec.get('diameter_category')
+                ))
+            
+            db.get_connection().commit()
+        
+        return jsonify({
+            'message': 'Arrow updated successfully',
+            'arrow_id': arrow_id,
+            'updated_by': current_user['email']
+        })
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/arrows/<int:arrow_id>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_arrow_admin(current_user, arrow_id):
+    """Delete arrow (admin only)"""
+    try:
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if arrow exists
+        cursor.execute("SELECT manufacturer, model_name FROM arrows WHERE id = ?", (arrow_id,))
+        arrow = cursor.fetchone()
+        if not arrow:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        arrow_info = dict(arrow)
+        
+        # Delete spine specifications first (foreign key constraint)
+        cursor.execute("DELETE FROM spine_specifications WHERE arrow_id = ?", (arrow_id,))
+        
+        # Delete arrow
+        cursor.execute("DELETE FROM arrows WHERE id = ?", (arrow_id,))
+        
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': f'Arrow {arrow_info["manufacturer"]} {arrow_info["model_name"]} deleted successfully',
+            'arrow_id': arrow_id,
+            'deleted_by': current_user['email']
+        })
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/arrows', methods=['POST'])
+@token_required
+@admin_required
+def create_arrow_admin(current_user):
+    """Create new arrow (admin only)"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['manufacturer', 'model_name', 'spine_specifications']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'error': f'Field {field} is required'}), 400
+        
+        if not isinstance(data['spine_specifications'], list) or len(data['spine_specifications']) == 0:
+            return jsonify({'error': 'At least one spine specification is required'}), 400
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Insert arrow
+        arrow_query = """
+            INSERT INTO arrows 
+            (manufacturer, model_name, material, arrow_type, description, 
+             image_url, recommended_use, straightness_tolerance, 
+             weight_tolerance, carbon_content, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        now = datetime.utcnow().isoformat()
+        cursor.execute(arrow_query, (
+            data['manufacturer'],
+            data['model_name'],
+            data.get('material'),
+            data.get('arrow_type'),
+            data.get('description'),
+            data.get('image_url'),
+            data.get('recommended_use'),
+            data.get('straightness_tolerance'),
+            data.get('weight_tolerance'),
+            data.get('carbon_content'),
+            now
+        ))
+        
+        arrow_id = cursor.lastrowid
+        
+        # Insert spine specifications
+        for spec in data['spine_specifications']:
+            spine_query = """
+                INSERT INTO spine_specifications 
+                (arrow_id, spine, outer_diameter, gpi_weight, inner_diameter, 
+                 length_options, wall_thickness, insert_weight_range, nock_size, 
+                 notes, straightness_tolerance, weight_tolerance, diameter_category)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            cursor.execute(spine_query, (
+                arrow_id,
+                spec.get('spine'),
+                spec.get('outer_diameter'),
+                spec.get('gpi_weight'),
+                spec.get('inner_diameter'),
+                json.dumps(spec.get('length_options', [])),
+                spec.get('wall_thickness'),
+                spec.get('insert_weight_range'),
+                spec.get('nock_size'),
+                spec.get('notes'),
+                spec.get('straightness_tolerance'),
+                spec.get('weight_tolerance'),
+                spec.get('diameter_category')
+            ))
+        
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': 'Arrow created successfully',
+            'arrow_id': arrow_id,
+            'created_by': current_user['email']
+        }), 201
+        
+    except Exception as e:
+        db.get_connection().rollback()
         return jsonify({'error': str(e)}), 500
 
 # ===== GUIDE WALKTHROUGH API ENDPOINTS =====

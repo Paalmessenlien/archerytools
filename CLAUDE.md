@@ -49,6 +49,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **JSON-Based Database Import System**: Automatic database import from JSON files during server startup with smart update detection
 - ✅ **Traditional Wood Arrows Support**: Complete database support for traditional wooden arrow shafts including Cedar, Pine, Poplar, Birch, and Fir
 - ✅ **German Decimal Conversion**: Automatic conversion of German decimal format (5,40 → 5.40) for European manufacturers
+- ✅ **Admin Arrow Editing Fix**: Complete resolution of admin arrow save/update functionality with database schema migration and API enhancements
 
 ## Development Commands
 
@@ -1164,6 +1165,16 @@ The Archery Tools platform provides:
 ### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Admin Arrow Save/Update API Error Fix (August 2025):**
+- **Issue**: Admin arrow editing functionality failing with API errors when trying to save or update arrows with spine specifications
+- **Root Cause**: Database schema mismatch - `spine_specifications` table missing 7 columns that AdminArrowEditModal expected
+- **Solution**: 
+  - Created `migrate_spine_specifications.py` migration script to add missing columns (length_options, wall_thickness, insert_weight_range, nock_size, notes, straightness_tolerance, weight_tolerance)
+  - Updated admin API functions (`create_arrow_admin` and `update_arrow_admin`) to use complete spine specifications schema
+  - Enhanced SQL insert queries to handle all 14 columns in spine_specifications table
+- **Files**: `arrow_scraper/migrate_spine_specifications.py`, `arrow_scraper/api.py`, `arrow_scraper/test_admin_arrow_save.py`
+- **Status**: ✅ **RESOLVED** - Admin arrow creation and editing now works correctly with complete spine specification support
 
 **Database Permission Errors Fix (August 2025):**
 - **Issue**: Scraper failing with `[Errno 13] Permission denied: '/app'` when running locally, caused by database classes trying to access Docker container paths
