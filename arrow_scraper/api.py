@@ -1965,6 +1965,8 @@ def backup_test_new():
 
 # Removed duplicate list_backups function - using the complete implementation later in the file
 
+# Removed test routes - using actual implementations later in the file
+
 # ===== ADMIN ARROW MANAGEMENT API ENDPOINTS =====
 
 @app.route('/api/admin/arrows', methods=['GET'])
@@ -2957,24 +2959,6 @@ def get_tuning_history(current_user):
         return jsonify({'error': str(e)}), 500
 
 # Configuration and setup
-if __name__ == '__main__':
-    # Development server
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    try:
-        app.run(
-            host='0.0.0.0',
-            port=port,
-            debug=debug
-        )
-    except OSError as e:
-        if "Address already in use" in str(e):
-            import sys
-            sys.exit(1)
-        else:
-            raise e
-
 # ===== RETAILER ENHANCEMENT API ENDPOINTS =====
 
 @app.route('/api/arrows/<int:arrow_id>/retailer-data', methods=['GET'])
@@ -3406,6 +3390,11 @@ def create_backup(current_user):
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Backup creation failed: {str(e)}'}), 500
+
+@app.route('/api/admin/backup-test-post', methods=['POST'])
+def backup_test_post():
+    """Test POST route registration after create_backup function"""
+    return jsonify({'message': 'POST route registration works', 'status': 'ok'})
 
 # Re-added the list_backups function after accidentally removing all instances
 
