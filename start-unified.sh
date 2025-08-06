@@ -77,11 +77,12 @@ setup_environment() {
         "development")
             export FLASK_ENV="development"
             export NODE_ENV="development"
-            export NUXT_PUBLIC_API_BASE="http://localhost/api"
+            export NUXT_PUBLIC_API_BASE="http://localhost:5000/api"
             export API_DOCKERFILE="Dockerfile"
             export FRONTEND_DOCKERFILE="Dockerfile"
             COMPOSE_PROFILES="--profile with-nginx"
             print_message "$GREEN" "✅ Development environment configured"
+            print_message "$YELLOW" "⚠️  Note: For local development without Docker, use ./start-local-dev.sh instead"
             ;;
             
         "production")

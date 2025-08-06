@@ -105,7 +105,7 @@
     </div>
 
     <!-- Admin Dashboard -->
-    <div v-else-if="isAdmin" class="space-y-6">
+    <div v-else-if="!isCheckingAdmin && isAdmin" class="space-y-6">
       <!-- Users Tab -->
       <div v-if="activeTab === 'users'">
         <!-- User Statistics -->
@@ -356,7 +356,7 @@
               Upload & Restore Backup
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Upload a backup file (.tar.gz) to restore from external source
+              Upload a backup file (.tar.gz or .gz) to restore from external source
             </p>
             
             <form @submit.prevent="uploadAndRestoreBackup" class="space-y-4">
@@ -486,8 +486,16 @@
                       <h3 class="font-medium text-gray-900 dark:text-gray-100">
                         {{ backup.backup_name }}
                       </h3>
-                      <span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      <span v-if="backup.cdn_type" class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                         {{ backup.cdn_type.toUpperCase() }}
+                      </span>
+                      <span 
+                        class="ml-2 px-2 py-1 text-xs rounded-full"
+                        :class="backup.source === 'cdn' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'"
+                      >
+                        {{ backup.source_description || (backup.source === 'cdn' ? 'Production/CDN' : 'Local Development') }}
                       </span>
                     </div>
                     
@@ -498,7 +506,7 @@
                       </div>
                       <div>
                         <i class="fas fa-weight-hanging mr-1"></i>
-                        {{ backup.file_size_mb.toFixed(2) }} MB
+                        {{ backup.file_size_mb ? backup.file_size_mb.toFixed(2) : 'Unknown' }} MB
                       </div>
                       <div>
                         <i class="fas fa-user mr-1"></i>
@@ -610,7 +618,7 @@
     </div>
 
     <!-- Access Denied -->
-    <div v-else class="text-center py-12">
+    <div v-else-if="!isCheckingAdmin && !isAdmin" class="text-center py-12">
       <i class="fas fa-shield-alt text-6xl text-red-500 mb-4"></i>
       <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Access Denied</h2>
       <p class="text-gray-600 dark:text-gray-400 mb-4">You do not have permission to access the admin panel.</p>
@@ -720,21 +728,29 @@
               Databases to Restore
             </label>
             <div class="space-y-2">
-              <label v-if="backupToRestore?.include_arrow_db" class="flex items-center">
+              <label class="flex items-center">
                 <input 
                   v-model="restoreForm.restoreArrowDb" 
                   type="checkbox" 
                   class="mr-2"
+                  :disabled="backupToRestore?.include_arrow_db === false"
                 />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                  Arrow Database 
+                  <span v-if="backupToRestore?.include_arrow_db === false" class="text-xs text-gray-400">(not in backup)</span>
+                </span>
               </label>
-              <label v-if="backupToRestore?.include_user_db" class="flex items-center">
+              <label class="flex items-center">
                 <input 
                   v-model="restoreForm.restoreUserDb" 
                   type="checkbox" 
                   class="mr-2"
+                  :disabled="backupToRestore?.include_user_db === false"
                 />
-                <span class="text-sm text-gray-700 dark:text-gray-300">User Database</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                  User Database
+                  <span v-if="backupToRestore?.include_user_db === false" class="text-xs text-gray-400">(not in backup)</span>
+                </span>
               </label>
             </div>
           </div>
@@ -1153,10 +1169,10 @@ const loadBackups = async () => {
     isLoadingBackups.value = true
     const response = await api.get('/admin/backups')
     
-    // Combine CDN backups (primary) with local backups for completeness
-    backups.value = response.cdn_backups || []
+    // Use the enhanced all_backups array that includes source information and is sorted
+    backups.value = response.all_backups || response.cdn_backups || []
     
-    console.log(`Loaded ${backups.value.length} backups`)
+    console.log(`Loaded ${backups.value.length} total backups (${response.total_cdn} CDN, ${response.total_local} local)`)
   } catch (error) {
     console.error('Error loading backups:', error)
     showNotification('Failed to load backups: ' + error.message, 'error')
@@ -1196,13 +1212,28 @@ const createBackup = async () => {
 }
 
 const showRestoreModal = (backup) => {
+  console.log('Opening restore modal for backup:', backup)
   backupToRestore.value = backup
   
-  // Set default restore options based on what backup contains
+  // Intelligently detect what's in the backup using various property names
+  const hasArrowDb = backup.include_arrow_db || backup.includes?.arrow_database || 
+                     backup.arrow_db_stats || backup.backup_name?.includes('arrows') ||
+                     !backup.backup_name?.includes('users') // If not user-only, likely has arrows
+  const hasUserDb = backup.include_user_db || backup.includes?.user_database || 
+                    backup.user_db_stats || backup.backup_name?.includes('users')
+  
+  // Set backup properties for the modal to use
+  backup.include_arrow_db = hasArrowDb
+  backup.include_user_db = hasUserDb
+  
+  // Set default restore options - ensure at least one is selected
   restoreForm.value = {
-    restoreArrowDb: backup.include_arrow_db,
-    restoreUserDb: false // Default to false for safety
+    restoreArrowDb: hasArrowDb, // Default to true if backup contains arrow data
+    restoreUserDb: false // Default to false for safety, but allow user to choose
   }
+  
+  console.log('Backup analysis:', { hasArrowDb, hasUserDb, backup_name: backup.backup_name })
+  console.log('Restore form initialized:', restoreForm.value)
   
   showRestoreBackupModal.value = true
 }
@@ -1240,16 +1271,53 @@ const downloadBackup = async (backup) => {
   try {
     const response = await api.get(`/admin/backup/${backup.id}/download`)
     
-    // Open CDN URL in new window for download
+    console.log('Download response:', response)
+    
     if (response.cdn_url) {
+      // CDN backup - open URL in new window
       window.open(response.cdn_url, '_blank')
       showNotification('Download started')
+    } else if (response.download_type === 'local_file' && response.local_path) {
+      // Local file backup - download through file endpoint
+      try {
+        const config = useRuntimeConfig()
+        const downloadResponse = await fetch(`${config.public.apiBase}/admin/backup/download-file`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token.value}`
+          },
+          body: JSON.stringify({
+            local_path: response.local_path
+          })
+        })
+        
+        if (!downloadResponse.ok) {
+          throw new Error(`Download failed: ${downloadResponse.statusText}`)
+        }
+        
+        // Create blob and download
+        const blob = await downloadResponse.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = response.backup_name + '.tar.gz'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        showNotification('Download started')
+      } catch (fileError) {
+        console.error('Error downloading file:', fileError)
+        showNotification('Failed to download file: ' + fileError.message, 'error')
+      }
     } else {
-      showNotification('Download URL not available', 'error')
+      showNotification('Download not available for this backup', 'error')
     }
   } catch (error) {
     console.error('Error downloading backup:', error)
-    showNotification('Failed to get download URL: ' + error.message, 'error')
+    showNotification('Failed to get download info: ' + error.message, 'error')
   }
 }
 
@@ -1275,18 +1343,27 @@ const confirmDeleteBackup = (backup) => {
 
 const getBackupContents = (backup) => {
   const contents = []
-  if (backup.include_arrow_db) contents.push('Arrows')
-  if (backup.include_user_db) contents.push('Users')
-  return contents.join(', ') || 'Unknown'
+  
+  // Check various property names that might indicate database inclusion
+  const hasArrowDb = backup.include_arrow_db || backup.includes?.arrow_database || 
+                     backup.arrow_db_stats || backup.backup_name?.includes('arrows') ||
+                     !backup.backup_name?.includes('users') // If not user-only, likely has arrows
+  const hasUserDb = backup.include_user_db || backup.includes?.user_database || 
+                    backup.user_db_stats || backup.backup_name?.includes('users')
+  
+  if (hasArrowDb) contents.push('Arrows')
+  if (hasUserDb) contents.push('Users')
+  return contents.join(', ') || 'Both'
 }
 
 // File upload functions
 const handleFileSelect = (event) => {
   const file = event.target.files[0]
   if (file) {
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.tar.gz')) {
-      showNotification('Please select a .tar.gz backup file', 'error')
+    // Validate file type - support both .tar.gz and .gz files
+    const filename = file.name.toLowerCase()
+    if (!(filename.endsWith('.tar.gz') || filename.endsWith('.gz'))) {
+      showNotification('Please select a .tar.gz or .gz backup file', 'error')
       return
     }
     selectedFile.value = file
@@ -1364,6 +1441,8 @@ const checkAndLoadAdminData = async () => {
       console.log('User exists, calling checkAdminStatus...')
       const adminStatus = await checkAdminStatus()
       console.log('Admin status result:', adminStatus)
+      
+      // Set admin status BEFORE setting loading to false
       isAdmin.value = adminStatus
       
       if (adminStatus) {
@@ -1385,6 +1464,7 @@ const checkAndLoadAdminData = async () => {
     console.error('Error checking admin status:', error)
     isAdmin.value = false
   } finally {
+    // Ensure isCheckingAdmin is only set to false after isAdmin is properly set
     isCheckingAdmin.value = false
   }
 }

@@ -1028,13 +1028,12 @@ def update_user_profile(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-from user_database import UserDatabase
-
 # Bow Setups API
 @app.route('/api/bow-setups', methods=['GET'])
 @token_required
 def get_bow_setups(current_user):
     """Get all bow setups for the current user"""
+    from user_database import UserDatabase
     user_db = UserDatabase()
     conn = user_db.get_connection()
     cursor = conn.cursor()
@@ -3335,11 +3334,11 @@ def create_backup(current_user):
             uploader = CDNUploader('local')
             cdn_type = 'local'
         
-        # Upload backup to CDN
+        # Upload backup to CDN  
         result = uploader.upload_from_file(
             local_backup_path,
-            manufacturer="archerytools",
-            model_name=f"backups/{backup_name}",
+            manufacturer="backups",  # Use 'backups' as manufacturer to simplify path
+            model_name=backup_name,  # Just the backup name without extra path
             image_type="backup"
         )
         
@@ -3351,7 +3350,7 @@ def create_backup(current_user):
         
         # Store backup metadata in user database
         from user_database import UserDatabase
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -3396,6 +3395,122 @@ def backup_test_post():
     """Test POST route registration after create_backup function"""
     return jsonify({'message': 'POST route registration works', 'status': 'ok'})
 
+# Helper functions for CDN backup management
+
+def get_bunny_cdn_backups():
+    """Fetch backup files directly from Bunny CDN Storage API"""
+    import requests
+    
+    # Get Bunny CDN configuration from environment
+    storage_zone = os.getenv('BUNNY_STORAGE_ZONE', 'arrowtuner-images')
+    access_key = os.getenv('BUNNY_ACCESS_KEY')
+    region = os.getenv('BUNNY_REGION', 'de')
+    
+    if not access_key:
+        print("❌ Bunny CDN access key not configured")
+        return []
+    
+    # Determine API endpoint based on region
+    if region == 'de':
+        api_base = 'https://storage.bunnycdn.com'
+    elif region == 'uk':
+        api_base = 'https://uk.storage.bunnycdn.com'
+    elif region == 'la':
+        api_base = 'https://la.storage.bunnycdn.com'
+    elif region == 'ny':
+        api_base = 'https://ny.storage.bunnycdn.com'
+    elif region == 'sg':
+        api_base = 'https://sg.storage.bunnycdn.com'
+    elif region == 'syd':
+        api_base = 'https://syd.storage.bunnycdn.com'
+    else:
+        api_base = 'https://storage.bunnycdn.com'  # Default to main region
+    
+    # API endpoint to list files in storage zone (matches CDN uploader path structure)
+    api_url = f"{api_base}/{storage_zone}/arrows/backups/"
+    
+    headers = {
+        'AccessKey': access_key,
+        'Accept': 'application/json'
+    }
+    
+    try:
+        print(f"🌐 Fetching backups from Bunny CDN: {api_url}")
+        response = requests.get(api_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            files = response.json()
+            cdn_backups = []
+            
+            for file_info in files:
+                # Filter for backup files (.tar.gz and .gz)
+                filename = file_info.get('ObjectName', '')
+                if filename.endswith('.tar.gz') or filename.endswith('.gz'):
+                    # Convert Bunny CDN file info to our backup format
+                    import hashlib
+                    clean_name = filename.replace('.tar.gz', '').replace('.gz', '')
+                    cdn_backup_id = hashlib.md5(filename.encode()).hexdigest()[:8]
+                    
+                    backup_info = {
+                        'id': f"cdn_{cdn_backup_id}",  # Add consistent ID field
+                        'backup_name': clean_name,
+                        'name': clean_name,
+                        'file_size_mb': file_info.get('Length', 0) / (1024 * 1024),
+                        'created_at': file_info.get('LastChanged', 'Unknown'),
+                        'cdn_url': f"https://{os.getenv('BUNNY_HOSTNAME', f'{storage_zone}.b-cdn.net')}/arrows/backups/{filename}",
+                        'cdn_type': 'bunnycdn',
+                        'include_arrow_db': True,  # Assume all backups include both
+                        'include_user_db': True,
+                        'file': filename,
+                        'is_cdn_direct': True  # Flag to indicate this came directly from CDN API
+                    }
+                    cdn_backups.append(backup_info)
+            
+            print(f"✅ Found {len(cdn_backups)} backup files on Bunny CDN")
+            return cdn_backups
+            
+        else:
+            print(f"❌ Bunny CDN API error: {response.status_code} - {response.text}")
+            return []
+            
+    except requests.RequestException as e:
+        print(f"❌ Network error fetching from Bunny CDN: {e}")
+        return []
+    except Exception as e:
+        print(f"❌ Unexpected error fetching from Bunny CDN: {e}")
+        return []
+
+def get_database_cdn_backups():
+    """Fallback: Get CDN backups from database metadata"""
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT bm.*, u.name as created_by_name, u.email as created_by_email
+            FROM backup_metadata bm
+            LEFT JOIN users u ON bm.created_by = u.id
+            ORDER BY bm.created_at DESC
+        ''')
+        
+        cdn_backups = []
+        for row in cursor.fetchall():
+            backup_info = dict(row)
+            # Ensure database backups have consistent ID format
+            if 'id' not in backup_info or not backup_info['id']:
+                backup_info['id'] = f"db_{backup_info.get('backup_name', 'unknown')}"
+            # Add status based on whether local file still exists
+            backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
+            backup_info['is_cdn_direct'] = False  # Flag to indicate this came from database
+            cdn_backups.append(backup_info)
+        
+        return cdn_backups
+        
+    finally:
+        conn.close()
+
 # Re-added the list_backups function after accidentally removing all instances
 
 @app.route('/api/admin/backups', methods=['GET'])
@@ -3410,34 +3525,53 @@ def list_backups(current_user):
         backup_manager = BackupManager()
         local_backups = backup_manager.list_backups()
         
-        # Get CDN backups from database metadata
-        from user_database import UserDatabase
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
-        conn = user_db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT bm.*, u.name as created_by_name, u.email as created_by_email
-            FROM backup_metadata bm
-            LEFT JOIN users u ON bm.created_by = u.id
-            ORDER BY bm.created_at DESC
-        ''')
-        
+        # Get CDN backups directly from Bunny CDN Storage API
         cdn_backups = []
-        for row in cursor.fetchall():
-            backup_info = dict(row)
-            # Add status based on whether local file still exists
-            backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
-            cdn_backups.append(backup_info)
+        try:
+            cdn_backups = get_bunny_cdn_backups()
+        except Exception as cdn_error:
+            print(f"⚠️  Could not fetch CDN backups: {cdn_error}")
+            # Fallback to database metadata if CDN API fails
+            cdn_backups = get_database_cdn_backups()
         
-        conn.close()
+        # No need to close connection here since it's handled in helper functions
+        
+        # Enhance backup information with source indicators
+        for backup in local_backups:
+            backup['source'] = 'local'
+            backup['source_description'] = 'Local Development'
+            # Normalize property names: local backups use 'size_mb', frontend expects 'file_size_mb'
+            if 'size_mb' in backup and 'file_size_mb' not in backup:
+                backup['file_size_mb'] = backup['size_mb']
+            
+        for backup in cdn_backups:
+            backup['source'] = 'cdn'
+            backup['is_remote'] = True
+            
+            # Different descriptions based on data source
+            if backup.get('is_cdn_direct', False):
+                backup['source_description'] = 'Production/CDN (Live)'
+                # Ensure CDN direct backups have consistent property names
+                if 'file_size_mb' not in backup:
+                    backup['file_size_mb'] = 0.0  # Default value if missing
+            else:
+                backup['source_description'] = 'Production/CDN (Metadata)'
+                # Ensure database CDN backups have consistent property names
+                if 'file_size_mb' not in backup:
+                    backup['file_size_mb'] = 0.0  # Default value if missing
+        
+        # Combine and sort by creation date for unified display
+        all_backups = local_backups + cdn_backups
+        all_backups.sort(key=lambda x: x.get('created_at', ''), reverse=True)
         
         return jsonify({
             'success': True,
             'local_backups': local_backups,
             'cdn_backups': cdn_backups,
+            'all_backups': all_backups,  # Combined and sorted list
             'total_local': len(local_backups),
-            'total_cdn': len(cdn_backups)
+            'total_cdn': len(cdn_backups),
+            'total_all': len(all_backups)
         })
         
     except Exception as e:
@@ -3466,7 +3600,7 @@ def restore_backup_from_cdn(current_user, backup_id):
         
         # Get backup metadata from database
         from user_database import UserDatabase
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -3520,7 +3654,8 @@ def restore_backup_from_cdn(current_user, backup_id):
             os.remove(backup_file_path)
         
         # Record restore activity
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -3557,8 +3692,7 @@ def download_backup(current_user, backup_id):
     """Get download URL for backup"""
     try:
         from user_database import UserDatabase
-        
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -3583,15 +3717,223 @@ def download_backup(current_user, backup_id):
     except Exception as e:
         return jsonify({'error': f'Failed to get backup download info: {str(e)}'}), 500
 
-@app.route('/api/admin/backup/<int:backup_id>', methods=['DELETE'])
+@app.route('/api/admin/backup/<backup_id>/restore', methods=['POST'])
+@token_required
+@admin_required
+def restore_backup_new_format(current_user, backup_id):
+    """Restore database from backup (supports new string ID format)"""
+    try:
+        from backup_manager import BackupManager
+        
+        data = request.get_json() or {}
+        restore_arrow_db = data.get('restore_arrow_db', True)
+        restore_user_db = data.get('restore_user_db', True)
+        force = data.get('force', False)
+        
+        if not restore_arrow_db and not restore_user_db:
+            return jsonify({'error': 'At least one database must be selected for restore'}), 400
+        
+        print(f"Restoring backup {backup_id}, arrow_db: {restore_arrow_db}, user_db: {restore_user_db}")
+        
+        backup_manager = BackupManager()
+        
+        # Handle different backup ID formats
+        if backup_id.startswith('local_'):
+            # Local file backup - find the matching backup file
+            backups = backup_manager.list_backups()
+            backup_file = None
+            
+            for backup in backups:
+                if backup.get('id') == backup_id:
+                    backup_file = backup.get('file')
+                    break
+            
+            if not backup_file or not os.path.exists(backup_file):
+                return jsonify({'error': 'Local backup file not found'}), 404
+            
+            # Restore from local file
+            success = backup_manager.restore_backup(
+                backup_path=backup_file,
+                restore_arrow_db=restore_arrow_db,
+                restore_user_db=restore_user_db,
+                force=force
+            )
+            
+        elif backup_id.startswith('cdn_'):
+            return jsonify({'error': 'CDN backup restore not yet implemented'}), 501
+            
+        else:
+            # Legacy integer backup ID - delegate to old endpoint logic
+            try:
+                backup_id_int = int(backup_id)
+                # Call the existing restore logic
+                return restore_backup_from_cdn(current_user, backup_id_int)
+            except ValueError:
+                return jsonify({'error': 'Invalid backup ID format'}), 400
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Backup restored successfully',
+                'restored_databases': {
+                    'arrow_db': restore_arrow_db,
+                    'user_db': restore_user_db
+                }
+            })
+        else:
+            return jsonify({'error': 'Backup restore failed'}), 500
+            
+    except Exception as e:
+        print(f"Backup restore error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Backup restore failed: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/<backup_id>/download', methods=['GET'])
+@token_required
+@admin_required
+def download_backup_new_format(current_user, backup_id):
+    """Get download URL for backup (supports new string ID format)"""
+    try:
+        print(f"Download request for backup {backup_id}")
+        
+        # Handle different backup ID formats
+        if backup_id.startswith('local_'):
+            # Local file backup - provide direct file access
+            from backup_manager import BackupManager
+            backup_manager = BackupManager()
+            backups = backup_manager.list_backups()
+            
+            for backup in backups:
+                if backup.get('id') == backup_id:
+                    backup_file = backup.get('file')
+                    if backup_file and os.path.exists(backup_file):
+                        # For local files, we'll need to create a download endpoint
+                        # For now, return file info so frontend can handle appropriately
+                        return jsonify({
+                            'success': True,
+                            'backup_name': backup.get('backup_name', backup.get('name')),
+                            'local_path': backup_file,
+                            'file_size_mb': backup.get('size_mb'),
+                            'local_exists': True,
+                            'download_type': 'local_file'
+                        })
+                    else:
+                        return jsonify({'error': 'Local backup file not found'}), 404
+            
+            return jsonify({'error': 'Backup not found'}), 404
+            
+        elif backup_id.startswith('cdn_'):
+            return jsonify({'error': 'CDN backup download not yet implemented'}), 501
+            
+        else:
+            # Legacy integer backup ID - delegate to old endpoint logic
+            try:
+                backup_id_int = int(backup_id)
+                # Call the existing download logic
+                return download_backup(current_user, backup_id_int)
+            except ValueError:
+                return jsonify({'error': 'Invalid backup ID format'}), 400
+                
+    except Exception as e:
+        print(f"Backup download error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to get backup download info: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/download-file', methods=['POST'])
+@token_required
+@admin_required
+def download_backup_file(current_user):
+    """Download a local backup file"""
+    try:
+        data = request.get_json() or {}
+        local_path = data.get('local_path')
+        
+        if not local_path or not os.path.exists(local_path):
+            return jsonify({'error': 'Backup file not found'}), 404
+        
+        # Security check - ensure file is in backups directory
+        backup_dir = os.path.abspath('backups')
+        file_path = os.path.abspath(local_path)
+        
+        if not file_path.startswith(backup_dir):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Send file
+        from flask import send_file
+        filename = os.path.basename(local_path)
+        return send_file(local_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        print(f"File download error: {e}")
+        return jsonify({'error': f'Failed to download file: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/<backup_id>', methods=['DELETE'])
 @token_required
 @admin_required
 def delete_backup(current_user, backup_id):
-    """Delete backup from both CDN and local storage"""
+    """Delete backup from local storage, CDN, or database metadata"""
+    try:
+        # Handle different backup ID formats
+        if backup_id.startswith('local_'):
+            # Local file backup
+            return delete_local_backup(backup_id)
+        elif backup_id.startswith('cdn_'):
+            # CDN backup
+            return delete_cdn_backup(backup_id)
+        else:
+            # Legacy database backup ID (integer)
+            try:
+                db_backup_id = int(backup_id)
+                return delete_database_backup(db_backup_id)
+            except ValueError:
+                return jsonify({'error': 'Invalid backup ID format'}), 400
+                
+    except Exception as e:
+        print(f"Error deleting backup {backup_id}: {e}")
+        return jsonify({'error': 'Failed to delete backup'}), 500
+
+def delete_local_backup(backup_id):
+    """Delete local backup file"""
+    try:
+        from backup_manager import BackupManager
+        backup_manager = BackupManager()
+        
+        # Get all local backups to find the matching one
+        local_backups = backup_manager.list_backups()
+        target_backup = None
+        
+        for backup in local_backups:
+            if backup.get('id') == backup_id:
+                target_backup = backup
+                break
+        
+        if not target_backup:
+            return jsonify({'error': 'Local backup not found'}), 404
+        
+        # Delete the local file
+        backup_file_path = target_backup.get('file')
+        if backup_file_path and os.path.exists(backup_file_path):
+            os.remove(backup_file_path)
+            return jsonify({'message': 'Local backup deleted successfully'})
+        else:
+            return jsonify({'error': 'Backup file not found'}), 404
+            
+    except Exception as e:
+        print(f"Error deleting local backup {backup_id}: {e}")
+        return jsonify({'error': 'Failed to delete local backup'}), 500
+
+def delete_cdn_backup(backup_id):
+    """Delete CDN backup (not implemented yet)"""
+    # TODO: Implement CDN backup deletion using Bunny CDN API
+    return jsonify({'error': 'CDN backup deletion not yet implemented'}), 501
+
+def delete_database_backup(backup_id):
+    """Delete database backup record (legacy)"""
     try:
         from user_database import UserDatabase
-        
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        user_db = UserDatabase()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -3621,15 +3963,14 @@ def delete_backup(current_user, backup_id):
         conn.commit()
         conn.close()
         
-        return jsonify({
-            'success': True,
-            'message': f'Backup "{backup_record["backup_name"]}" deleted successfully',
-            'local_deleted': local_deleted,
-            'deleted_by': current_user['email']
-        })
+        return jsonify({'message': 'Database backup deleted successfully'})
         
     except Exception as e:
-        return jsonify({'error': f'Failed to delete backup: {str(e)}'}), 500
+        print(f"Error deleting database backup {backup_id}: {e}")
+        return jsonify({'error': 'Failed to delete database backup'}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 @app.route('/api/admin/backup/upload', methods=['POST'])
 @token_required
@@ -3652,9 +3993,10 @@ def upload_backup_file(current_user):
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        # Validate file extension
-        if not file.filename.lower().endswith('.tar.gz'):
-            return jsonify({'error': 'Invalid file format. Only .tar.gz files are supported'}), 400
+        # Validate file extension - support both .tar.gz and .gz files
+        filename_lower = file.filename.lower()
+        if not (filename_lower.endswith('.tar.gz') or filename_lower.endswith('.gz')):
+            return jsonify({'error': 'Invalid file format. Only .tar.gz and .gz files are supported'}), 400
         
         # Get restore options from form data
         restore_arrow_db = request.form.get('restore_arrow_db', 'true').lower() == 'true'
@@ -3712,7 +4054,8 @@ def upload_backup_file(current_user):
         
         # Record the restore operation in the database
         try:
-            user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+            from user_database import UserDatabase
+            user_db = UserDatabase()
             conn = user_db.get_connection()
             cursor = conn.cursor()
             

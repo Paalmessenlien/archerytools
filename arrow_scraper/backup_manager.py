@@ -19,19 +19,88 @@ from typing import Dict, List, Optional, Tuple
 class BackupManager:
     """Manages database backups and restores for ArrowTuner system"""
     
-    def __init__(self, backup_dir: str = "/app/backups"):
-        self.backup_dir = Path(backup_dir)
-        self.backup_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, backup_dir: str = None):
+        # Resolve backup directory with fallback options
+        if backup_dir is None:
+            backup_dir = self._resolve_backup_dir()
         
-        # Database paths (use environment variables if available)
-        # Unified database paths
-        self.arrow_db_path = Path(os.environ.get('ARROW_DATABASE_PATH', '/app/databases/arrow_database.db'))
-        self.user_db_path = Path(os.environ.get('USER_DATABASE_PATH', '/app/databases/user_data.db'))
+        self.backup_dir = Path(backup_dir)
+        # Try to create directory, handle permission errors gracefully
+        try:
+            self.backup_dir.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            # Fall back to a local backup directory
+            fallback_dir = Path.cwd() / "backups"
+            print(f"⚠️  Permission denied for {self.backup_dir}, using fallback: {fallback_dir}")
+            self.backup_dir = fallback_dir
+            self.backup_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Database paths with proper resolution
+        self.arrow_db_path = Path(self._resolve_arrow_db_path())
+        self.user_db_path = Path(self._resolve_user_db_path())
         
         print(f"🗄️  Backup Manager initialized")
         print(f"   Backup directory: {self.backup_dir}")
         print(f"   Arrow database: {self.arrow_db_path}")
         print(f"   User database: {self.user_db_path}")
+    
+    def _resolve_backup_dir(self) -> str:
+        """Resolve backup directory with fallback options"""
+        # Try Docker paths first, then local development paths
+        backup_paths = [
+            os.environ.get('BACKUP_DIR'),  # Environment variable override
+            '/app/backups',                # Docker production path
+            './backups',                   # Local development path
+        ]
+        
+        for path in backup_paths:
+            if path:
+                try:
+                    test_path = Path(path)
+                    # Test if we can create this directory
+                    test_path.mkdir(parents=True, exist_ok=True)
+                    return str(path)
+                except (PermissionError, OSError):
+                    continue
+        
+        # Final fallback
+        return './backups'
+    
+    def _resolve_arrow_db_path(self) -> str:
+        """Resolve arrow database path with fallback options"""
+        # Try multiple locations
+        arrow_db_paths = [
+            os.environ.get('ARROW_DATABASE_PATH'),
+            '/app/databases/arrow_database.db',     # Docker path
+            '/app/arrow_data/arrow_database.db',    # Alternative Docker path  
+            './databases/arrow_database.db',       # Local development path
+            './arrow_database.db',                 # Fallback local path
+        ]
+        
+        for db_path in arrow_db_paths:
+            if db_path and Path(db_path).exists():
+                return str(db_path)
+        
+        # Default to local development location
+        return './databases/arrow_database.db'
+    
+    def _resolve_user_db_path(self) -> str:
+        """Resolve user database path with fallback options"""
+        # Try multiple locations
+        user_db_paths = [
+            os.environ.get('USER_DATABASE_PATH'),
+            '/app/databases/user_data.db',         # Docker path
+            '/app/user_data/user_data.db',         # Alternative Docker path
+            './databases/user_data.db',           # Local development path
+            './user_data.db',                     # Fallback local path
+        ]
+        
+        for db_path in user_db_paths:
+            if db_path and Path(db_path).exists():
+                return str(db_path)
+        
+        # Default to local development location
+        return './databases/user_data.db'
     
     def create_backup(self, backup_name: Optional[str] = None, include_arrow_db: bool = True, include_user_db: bool = True) -> str:
         """Create a complete backup of the database system"""
@@ -119,12 +188,23 @@ class BackupManager:
         temp_dir = self.backup_dir / f"restore_temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         try:
-            # Extract backup
+            # Extract backup - support both .tar.gz and .gz files
             print(f"📦 Extracting backup: {backup_file.name}")
             temp_dir.mkdir(exist_ok=True)
             
-            with tarfile.open(backup_file, "r:gz") as tar:
-                tar.extractall(temp_dir)
+            if backup_file.name.endswith('.tar.gz'):
+                # Standard tar.gz format
+                with tarfile.open(backup_file, "r:gz") as tar:
+                    tar.extractall(temp_dir)
+            elif backup_file.name.endswith('.gz'):
+                # CDN .gz format - extract as gzipped tar
+                import gzip
+                with gzip.open(backup_file, 'rb') as gz_file:
+                    with tarfile.open(fileobj=gz_file, mode='r') as tar:
+                        tar.extractall(temp_dir)
+            else:
+                print(f"❌ Unsupported backup format: {backup_file.name}")
+                return False
             
             # Load metadata
             metadata_path = temp_dir / "backup_metadata.json"
@@ -181,39 +261,75 @@ class BackupManager:
             return False
     
     def list_backups(self) -> List[Dict]:
-        """List all available backups"""
+        """List all available backups - supports both .tar.gz and .gz files"""
         backups = []
         
-        for backup_file in self.backup_dir.glob("*.tar.gz"):
-            try:
-                # Try to extract metadata
-                temp_dir = self.backup_dir / f"list_temp_{backup_file.stem}"
-                temp_dir.mkdir(exist_ok=True)
-                
-                with tarfile.open(backup_file, "r:gz") as tar:
-                    try:
-                        metadata_member = tar.getmember("backup_metadata.json")
-                        metadata_file = tar.extractfile(metadata_member)
-                        metadata = json.load(metadata_file)
-                    except:
-                        metadata = {}
-                
-                backup_info = {
-                    "file": str(backup_file),
-                    "name": backup_file.stem,
-                    "size_mb": backup_file.stat().st_size / (1024 * 1024),
-                    "created_at": metadata.get('created_at', 'Unknown'),
-                    "includes": metadata.get('includes', {}),
-                    "arrow_db_stats": metadata.get('arrow_db_stats', {}),
-                    "user_db_stats": metadata.get('user_db_stats', {})
-                }
-                backups.append(backup_info)
-                
-                # Cleanup
-                shutil.rmtree(temp_dir, ignore_errors=True)
-                
-            except Exception as e:
-                print(f"⚠️  Could not read backup {backup_file.name}: {e}")
+        # Look for both .tar.gz and .gz files
+        backup_patterns = ["*.tar.gz", "*.gz"]
+        for pattern in backup_patterns:
+            for backup_file in self.backup_dir.glob(pattern):
+                try:
+                    # Skip .tar.gz files when processing .gz pattern to avoid duplicates
+                    if pattern == "*.gz" and backup_file.name.endswith('.tar.gz'):
+                        continue
+                        
+                    # Try to extract metadata
+                    temp_dir = self.backup_dir / f"list_temp_{backup_file.stem}"
+                    temp_dir.mkdir(exist_ok=True)
+                    
+                    # Handle both .tar.gz and .gz formats
+                    if backup_file.name.endswith('.tar.gz'):
+                        # Standard tar.gz format
+                        with tarfile.open(backup_file, "r:gz") as tar:
+                            try:
+                                metadata_member = tar.getmember("backup_metadata.json")
+                                metadata_file = tar.extractfile(metadata_member)
+                                metadata = json.load(metadata_file)
+                            except:
+                                metadata = {}
+                    elif backup_file.name.endswith('.gz'):
+                        # CDN .gz format
+                        with gzip.open(backup_file, 'rb') as gz_file:
+                            with tarfile.open(fileobj=gz_file, mode='r') as tar:
+                                try:
+                                    metadata_member = tar.getmember("backup_metadata.json")
+                                    metadata_file = tar.extractfile(metadata_member)
+                                    metadata = json.load(metadata_file)
+                                except:
+                                    metadata = {}
+                    else:
+                        continue  # Skip unsupported formats
+                    
+                    # Extract clean backup name (remove both .tar.gz and .gz extensions)
+                    clean_name = backup_file.name
+                    if clean_name.endswith('.tar.gz'):
+                        clean_name = clean_name[:-7]  # Remove .tar.gz
+                    elif clean_name.endswith('.gz'):
+                        clean_name = clean_name[:-3]  # Remove .gz
+                    
+                    # Generate consistent ID for local backups (hash of filename)
+                    import hashlib
+                    backup_id = hashlib.md5(clean_name.encode()).hexdigest()[:8]
+                    
+                    backup_info = {
+                        "id": f"local_{backup_id}",  # Add consistent ID field
+                        "file": str(backup_file),
+                        "name": clean_name,
+                        "backup_name": clean_name,  # Add backup_name for consistency with CDN format
+                        "size_mb": backup_file.stat().st_size / (1024 * 1024),
+                        "created_at": metadata.get('created_at', 'Unknown'),
+                        "includes": metadata.get('includes', {}),
+                        "arrow_db_stats": metadata.get('arrow_db_stats', {}),
+                        "user_db_stats": metadata.get('user_db_stats', {}),
+                        "is_local_file": True  # Flag to indicate this is a local file backup
+                    }
+                    backups.append(backup_info)
+                    
+                    # Cleanup
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    
+                except Exception as e:
+                    print(f"⚠️  Could not read backup {backup_file.name}: {e}")
         
         return sorted(backups, key=lambda x: x['created_at'], reverse=True)
     
@@ -228,37 +344,56 @@ class BackupManager:
         try:
             print(f"🔍 Verifying backup: {backup_file.name}")
             
-            with tarfile.open(backup_file, "r:gz") as tar:
-                # Check tar file integrity
-                members = tar.getnames()
+            # Support both .tar.gz and .gz files
+            members = []
+            tar_obj = None
+            
+            if backup_file.name.endswith('.tar.gz'):
+                # Standard tar.gz format
+                tar_obj = tarfile.open(backup_file, "r:gz")
+                members = tar_obj.getnames()
                 print(f"📁 Archive contains {len(members)} files")
-                
-                # Verify expected files
-                expected_files = ["backup_metadata.json"]
-                missing_files = []
-                
-                for expected in expected_files:
-                    if expected not in members:
-                        missing_files.append(expected)
-                
-                if missing_files:
-                    print(f"⚠️  Missing files: {', '.join(missing_files)}")
-                
-                # Try to extract and verify metadata
-                try:
-                    metadata_member = tar.getmember("backup_metadata.json")
-                    metadata_file = tar.extractfile(metadata_member)
-                    metadata = json.load(metadata_file)
-                    print(f"📋 Backup created: {metadata.get('created_at', 'Unknown')}")
-                    print(f"📋 Includes: {metadata.get('includes', {})}")
-                except Exception as e:
-                    print(f"⚠️  Could not read metadata: {e}")
-                
-                # Verify database files if present
-                for db_file in ["arrow_database.db", "user_data.db"]:
-                    if db_file in members:
-                        print(f"✅ Found {db_file}")
-                        # TODO: Could add SQLite integrity check here
+            elif backup_file.name.endswith('.gz'):
+                # CDN .gz format - verify as gzipped tar
+                gz_file = gzip.open(backup_file, 'rb')
+                tar_obj = tarfile.open(fileobj=gz_file, mode='r')
+                members = tar_obj.getnames()
+                print(f"📁 Archive contains {len(members)} files")
+            else:
+                print(f"❌ Unsupported backup format: {backup_file.name}")
+                return False
+            
+            # Verify expected files
+            expected_files = ["backup_metadata.json"]
+            missing_files = []
+            
+            for expected in expected_files:
+                if expected not in members:
+                    missing_files.append(expected)
+            
+            if missing_files:
+                print(f"⚠️  Missing files: {', '.join(missing_files)}")
+            
+            # Try to extract and verify metadata
+            try:
+                metadata_member = tar_obj.getmember("backup_metadata.json")
+                metadata_file = tar_obj.extractfile(metadata_member)
+                metadata = json.load(metadata_file)
+                print(f"📋 Backup created: {metadata.get('created_at', 'Unknown')}")
+                print(f"📋 Includes: {metadata.get('includes', {})}")
+            except Exception as e:
+                print(f"⚠️  Could not read metadata: {e}")
+            finally:
+                if tar_obj:
+                    tar_obj.close()
+                if 'gz_file' in locals():
+                    gz_file.close()
+            
+            # Verify database files if present
+            for db_file in ["arrow_database.db", "user_data.db"]:
+                if db_file in members:
+                    print(f"✅ Found {db_file}")
+                    # TODO: Could add SQLite integrity check here
                 
             print(f"✅ Backup verification completed")
             return True

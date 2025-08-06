@@ -530,21 +530,20 @@ curl http://localhost:5000/api/admin/backup-test
 - **Docker Deployment Guide**: See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive Docker deployment instructions
 - **Production Server Guide**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for full production server setup, SSL, monitoring, and maintenance
 
-**Standard Production Deployment (Recommended)**
+**Standard Production Deployment (Legacy)**
 ```bash
 # Step 1: Clone and configure
 git clone https://github.com/Paalmessenlien/archerytools.git
 cd archerytools
 
-# Step 2: Import arrow data (NO server-side scraping)
-./production-import-only.sh
-
-# Step 3: Configure environment
+# Step 2: Configure environment
 cp .env.example .env
 # Edit .env with your settings
 
-# Step 4: Deploy with standard Docker configuration
+# Step 3: Deploy with standard Docker configuration
 ./deploy-production.sh
+
+# Note: This method is legacy. Use ./start-unified.sh production for new deployments
 
 # Access URLs after deployment:
 # - Frontend: http://localhost:3000
@@ -552,29 +551,28 @@ cp .env.example .env
 # - Nginx: http://localhost
 ```
 
-**Enhanced Production Deployment (SSL + Domain)**
+**Enhanced Production Deployment (Legacy - SSL + Domain)**
 ```bash
 # Step 1: Clone and configure
 git clone https://github.com/Paalmessenlien/archerytools.git
 cd archerytools
 
-# Step 2: Import arrow data (NO server-side scraping)
-./production-import-only.sh
-
-# Step 3: Configure environment
+# Step 2: Configure environment
 cp .env.example .env
 # Edit .env with your settings
 
-# Step 4: Deploy with enhanced Docker configuration
+# Step 3: Deploy with enhanced Docker configuration
 ./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
 
-# Step 5: Configure DNS (add A record: yourdomain.com -> your-server-ip)
+# Step 4: Configure DNS (add A record: yourdomain.com -> your-server-ip)
 
-# Step 6: Set up SSL certificates
+# Step 5: Set up SSL certificates
 sudo certbot certonly --standalone -d yourdomain.com
 
-# Step 7: Production deployment with HTTPS
+# Step 6: Production deployment with HTTPS
 sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
+
+# Note: This method is legacy. Use ./start-unified.sh ssl yourdomain.com for new deployments
 ```
 
 **Production Features:**
@@ -590,11 +588,37 @@ sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 - ✅ Component integration (inserts, nocks, points) in unified database
 - ✅ Comprehensive backup and monitoring systems
 
+**Unified Production Deployment (Recommended - SSL + Domain)**
+```bash
+# Step 1: Clone and configure
+git clone https://github.com/Paalmessenlien/archerytools.git
+cd archerytools
+
+# Step 2: Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Step 3: Deploy with unified startup script for SSL production
+./start-unified.sh ssl yourdomain.com
+
+# The script will:
+# - Check prerequisites and SSL certificates
+# - Set up production environment variables
+# - Import arrow data automatically on first startup
+# - Start services with nginx reverse proxy and backup system
+# - Display access URLs and status information
+
+# Access your deployment:
+# Frontend: https://yourdomain.com
+# API: https://yourdomain.com/api
+```
+
 **Key Deployment Scripts:**
-- `production-import-only.sh` - Import arrow data from JSON files (NO scraping)
-- `deploy-production.sh` - Standard Docker deployment with Nginx reverse proxy
-- `deploy-enhanced.sh` - Enhanced production deployment with verification
-- `docker-production-setup.sh` - Automated Docker setup with health checks
+- `start-unified.sh` - **RECOMMENDED** Unified startup script for all deployment modes (development, production, SSL) with automatic data import
+- `production-import-only.sh` - Manual arrow data import from JSON files (rarely needed)
+- `deploy-production.sh` - Legacy standard Docker deployment with Nginx reverse proxy
+- `deploy-enhanced.sh` - Legacy enhanced production deployment with verification
+- `docker-production-setup.sh` - Legacy automated Docker setup with health checks
 - `test-bow-saving.py` - Production functionality testing utility
 
 **⚠️ Important: Production systems only import existing JSON data files and do NOT perform web scraping on the server.**
@@ -609,12 +633,12 @@ cd /path/to/your/archerytools/project
 # Pull latest changes
 git pull
 
-# Import updated arrow data (NO scraping on server)
-./production-import-only.sh
+# Restart with unified script (recommended)
+./start-unified.sh ssl yourdomain.com
 
-# Rebuild and restart containers with latest code
-sudo docker-compose -f docker-compose.enhanced-ssl.yml down
-sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
+# Alternative: Legacy Docker Compose method
+# sudo docker-compose -f docker-compose.enhanced-ssl.yml down
+# sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 
 # Verify deployment
 curl https://yourdomain.com/api/health
@@ -635,11 +659,13 @@ git add data/processed/
 git commit -m "Update arrow database JSON files with latest scraped data"
 git push
 
-# 3. Deploy to production (imports from JSON files only)
+# 3. Deploy to production (automatic JSON import on startup)
 # On production server:
 git pull
-./production-import-only.sh  # Imports from JSON files only
-sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
+./start-unified.sh ssl yourdomain.com  # Imports JSON data automatically
+
+# Alternative legacy method:
+# sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 ```
 
 **⚠️ Critical Production Deployment Notes:**
@@ -647,10 +673,47 @@ sudo docker-compose -f docker-compose.enhanced-ssl.yml up -d --build
 - **JSON Import Only**: Production only imports from existing JSON files in data/processed/
 - **Local Development**: All scraping is done in development environments only
 - **Database Persistence**: User database persists through container rebuilds using Docker volumes
-- **Enhanced Infrastructure**: Always use `docker-compose.enhanced-ssl.yml` for production
-- **Backup Recommended**: Automated backup system included in enhanced deployment
+- **Unified Deployment**: Use `start-unified.sh ssl yourdomain.com` for production SSL deployment
+- **Backup Recommended**: Automated backup system included with `--profile with-backup`
 - **Verification**: Use `test-bow-saving.py` to verify production functionality
 - **Health Checks**: Extended health monitoring with 120s startup periods
+
+### Production Compatibility Verification
+
+**Admin Backup System Compatibility (August 2025):**
+The recent admin backup system fixes are fully compatible with production deployments using `start-unified.sh ssl archerytool.online`:
+
+✅ **API Endpoint Compatibility**: All 7 new backup endpoints handle both string and integer backup IDs:
+- `/api/admin/backup/<backup_id>/restore` - Works with `local_*`, `cdn_*`, and integer IDs
+- `/api/admin/backup/<backup_id>/download` - Supports all backup sources (local, CDN, database)
+- `/api/admin/backup/download-file` - Secure file serving with authentication
+
+✅ **Frontend State Management**: Vue.js conditional rendering fixes prevent UI race conditions across all deployment environments
+
+✅ **Database Persistence**: Enhanced Docker volumes ensure backup metadata persists through container restarts
+
+✅ **SSL Environment**: All backup operations work correctly with HTTPS-enabled production deployments
+
+✅ **Authentication Flow**: JWT token authentication works seamlessly with `GOOGLE_REDIRECT_URI=https://yourdomain.com`
+
+**Environment Variable Compatibility:**
+The unified startup script properly sets all required environment variables for production SSL mode:
+```bash
+export FLASK_ENV="production"
+export NODE_ENV="production"
+export SSL_ENABLED="true"
+export NUXT_PUBLIC_API_BASE="https://yourdomain.com/api"
+export GOOGLE_REDIRECT_URI="https://yourdomain.com"
+```
+
+**Database Path Resolution:**
+Enhanced database classes correctly handle production Docker container paths in `/app/` directory while gracefully falling back to local development paths when needed.
+
+**Backup System Production Features:**
+- CDN integration (Bunny CDN, Cloudinary, AWS S3) works with production SSL certificates
+- Local file downloads use secure authentication-protected endpoints
+- Backup restoration supports both arrow and user database selective restore
+- All backup operations logged and tracked in production environment
 
 ### Database Architecture
 
@@ -1178,10 +1241,54 @@ The Archery Tools platform provides:
 
 This section details recent fixes and improvements to common development and deployment issues.
 
+**Admin Panel Display Race Condition Fix (August 2025):**
+- **Issue**: Admin panel showing both admin content and "Access Denied" message simultaneously despite admin functionality working correctly
+- **Root Cause**: Vue.js conditional rendering race condition where `isCheckingAdmin` would become false before `isAdmin` was properly set
+- **Solution**: Updated conditional rendering logic in `/home/paal/archerytools/frontend/pages/admin.vue` to prevent race conditions:
+  - Modified `checkAndLoadAdminData()` function to ensure proper state sequencing
+  - Updated template conditions to be more explicit: `v-else-if="!isCheckingAdmin && isAdmin"` for admin content and `v-else-if="!isCheckingAdmin && !isAdmin"` for access denied
+  - Enhanced state management to prevent simultaneous display of conflicting UI states
+- **Files**: `frontend/pages/admin.vue`
+- **Status**: ✅ **RESOLVED** - Admin panel now correctly shows only appropriate content based on user authentication status
+
+**Admin Backup System Download Fix (August 2025):**
+- **Issue**: "Error downloading backup: TypeError: NetworkError when attempting to fetch resource." when trying to download backups
+- **Root Cause**: Frontend calling string backup ID endpoints (e.g., `/api/admin/backup/local_8ba17867/download`) but endpoints only supported integer IDs
+- **Solution**: Added comprehensive backup download system:
+  - New download endpoint `/api/admin/backup/<backup_id>/download` that handles string backup IDs (local_*, cdn_*, and legacy integer IDs)
+  - New file serving endpoint `/api/admin/backup/download-file` for secure local file downloads with authentication checks
+  - Updated frontend `downloadBackup` function to handle different response types (CDN URLs vs local file downloads)
+  - Enhanced backup ID parsing and routing for backward compatibility
+- **Files**: `arrow_scraper/api.py`, `frontend/pages/admin.vue`
+- **Status**: ✅ **RESOLVED** - All backup download functionality now works correctly across all backup sources
+
+**Admin Backup System Restore Fix (August 2025):**
+- **Issue**: "Error restoring backup: TypeError: NetworkError when attempting to fetch resource." when trying to restore backups
+- **Root Cause**: Frontend calling string backup ID endpoints (e.g., `/api/admin/backup/local_8ba17867/restore`) but endpoints only supported integer IDs
+- **Solution**: Added new restore endpoint `/api/admin/backup/<backup_id>/restore` that handles string backup IDs and delegates to appropriate restore logic based on ID format
+- **Files**: `arrow_scraper/api.py`
+- **Status**: ✅ **RESOLVED** - Backup restoration now works correctly with all backup ID formats
+
+**Admin Panel Restore Modal Button Fix (August 2025):**
+- **Issue**: "the restore backup button is not clickable" - restore confirmation modal button was disabled despite user selecting restore options
+- **Root Cause**: Backup objects lacked proper `include_arrow_db` and `include_user_db` properties, causing both checkboxes to be unchecked and triggering the disabled condition `(!restoreForm.restoreArrowDb && !restoreForm.restoreUserDb)`
+- **Solution**: Implemented intelligent backup detection in `showRestoreModal` function:
+  ```javascript
+  const hasArrowDb = backup.include_arrow_db || backup.includes?.arrow_database || 
+                     backup.arrow_db_stats || backup.backup_name?.includes('arrows') ||
+                     !backup.backup_name?.includes('users')
+  const hasUserDb = backup.include_user_db || backup.includes?.user_database || 
+                    backup.user_db_stats || backup.backup_name?.includes('users')
+  ```
+  - Enhanced backup metadata normalization across different sources (local files, CDN, database metadata)
+  - Ensured at least one restore option is selected by default based on backup content detection
+- **Files**: `frontend/pages/admin.vue`
+- **Status**: ✅ **RESOLVED** - Restore modal buttons now function correctly with proper content detection
+
 **Admin Backup/Restore System Implementation (August 2025):**
 - **Feature**: Complete admin backup and restore system with CDN integration
 - **Implementation**: 
-  - 5 new authenticated API endpoints for backup operations (`/api/admin/backup*`)
+  - 7 new authenticated API endpoints for backup operations (`/api/admin/backup*`)
   - Database schema enhancements with backup metadata and operations tracking
   - CDN integration supporting Bunny CDN, Cloudinary, AWS S3, and local storage
   - Admin panel UI components for intuitive backup management
