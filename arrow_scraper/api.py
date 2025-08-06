@@ -3636,6 +3636,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))
     print(f"🚀 Starting ArrowTuner API on port {port}")
     print(f"🎯 Environment: {os.environ.get('NODE_ENV', 'development')}")
-    print(f"📊 Database: {get_database_status()}")
+    print(f"📊 Arrow Database: {os.environ.get('ARROW_DATABASE_PATH', '/app/arrow_database.db')}")
+    print(f"👤 User Database: {os.environ.get('USER_DATABASE_PATH', '/app/user_data/user_data.db')}")
     app.run(host='0.0.0.0', port=port, debug=False)
 
