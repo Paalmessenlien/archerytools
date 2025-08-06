@@ -3631,6 +3631,131 @@ def delete_backup(current_user, backup_id):
     except Exception as e:
         return jsonify({'error': f'Failed to delete backup: {str(e)}'}), 500
 
+@app.route('/api/admin/backup/upload', methods=['POST'])
+@token_required
+@admin_required
+def upload_backup_file(current_user):
+    """Upload and restore from backup file"""
+    try:
+        from backup_manager import BackupManager
+        from user_database import UserDatabase
+        from werkzeug.utils import secure_filename
+        import tempfile
+        import uuid
+        from datetime import datetime
+        
+        # Check if file was uploaded
+        if 'backup_file' not in request.files:
+            return jsonify({'error': 'No backup file provided'}), 400
+        
+        file = request.files['backup_file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Validate file extension
+        if not file.filename.lower().endswith('.tar.gz'):
+            return jsonify({'error': 'Invalid file format. Only .tar.gz files are supported'}), 400
+        
+        # Get restore options from form data
+        restore_arrow_db = request.form.get('restore_arrow_db', 'true').lower() == 'true'
+        restore_user_db = request.form.get('restore_user_db', 'true').lower() == 'true'
+        force_restore = request.form.get('force_restore', 'false').lower() == 'true'
+        
+        if not restore_arrow_db and not restore_user_db:
+            return jsonify({'error': 'At least one database must be selected for restore'}), 400
+        
+        # Create secure filename
+        filename = secure_filename(file.filename)
+        
+        # Save uploaded file to temporary location
+        temp_dir = tempfile.mkdtemp()
+        temp_file_path = os.path.join(temp_dir, filename)
+        file.save(temp_file_path)
+        
+        # Verify the backup file first
+        backup_manager = BackupManager()
+        
+        print(f"🔍 Verifying uploaded backup file: {filename}")
+        if not backup_manager.verify_backup(temp_file_path):
+            # Cleanup temp file
+            try:
+                os.remove(temp_file_path)
+                os.rmdir(temp_dir)
+            except:
+                pass
+            return jsonify({'error': 'Invalid or corrupted backup file'}), 400
+        
+        print(f"✅ Backup verification successful")
+        
+        # Perform the restore
+        print(f"🔄 Restoring from uploaded backup...")
+        print(f"   Arrow DB: {'Yes' if restore_arrow_db else 'No'}")
+        print(f"   User DB: {'Yes' if restore_user_db else 'No'}")
+        print(f"   Force: {'Yes' if force_restore else 'No'}")
+        
+        success = backup_manager.restore_backup(
+            backup_path=temp_file_path,
+            restore_arrow_db=restore_arrow_db,
+            restore_user_db=restore_user_db,
+            force=True  # Always force in API context
+        )
+        
+        # Cleanup temp file
+        try:
+            os.remove(temp_file_path)
+            os.rmdir(temp_dir)
+        except Exception as cleanup_error:
+            print(f"⚠️  Cleanup warning: {cleanup_error}")
+        
+        if not success:
+            return jsonify({'error': 'Failed to restore from backup file'}), 500
+        
+        # Record the restore operation in the database
+        try:
+            user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+            conn = user_db.get_connection()
+            cursor = conn.cursor()
+            
+            # Insert restore record
+            cursor.execute('''
+                INSERT INTO backup_operations 
+                (operation_type, backup_name, user_email, timestamp, details, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                'restore_upload',
+                filename,
+                current_user['email'],
+                datetime.now().isoformat(),
+                json.dumps({
+                    'restore_arrow_db': restore_arrow_db,
+                    'restore_user_db': restore_user_db,
+                    'uploaded_filename': filename,
+                    'file_size_bytes': os.path.getsize(temp_file_path) if os.path.exists(temp_file_path) else 0
+                }),
+                'success'
+            ))
+            
+            conn.commit()
+            conn.close()
+            
+        except Exception as db_error:
+            print(f"⚠️  Failed to record restore operation: {db_error}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully restored from uploaded backup: {filename}',
+            'restored': {
+                'arrow_database': restore_arrow_db,
+                'user_database': restore_user_db
+            },
+            'restored_by': current_user['email'],
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"❌ Upload restore error: {e}")
+        return jsonify({'error': f'Failed to restore from uploaded file: {str(e)}'}), 500
+
 # Run the app
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))

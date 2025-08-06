@@ -348,6 +348,105 @@
           </div>
         </md-elevated-card>
 
+        <!-- Upload Backup File for Restore -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-upload mr-2 text-green-600"></i>
+              Upload & Restore Backup
+            </h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Upload a backup file (.tar.gz) to restore from external source
+            </p>
+            
+            <form @submit.prevent="uploadAndRestoreBackup" class="space-y-4">
+              <!-- File Upload -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Backup File (.tar.gz)
+                </label>
+                <div class="flex items-center space-x-4">
+                  <input
+                    ref="fileInput"
+                    type="file"
+                    accept=".tar.gz"
+                    @change="handleFileSelect"
+                    class="hidden"
+                  />
+                  <CustomButton
+                    type="button"
+                    @click="$refs.fileInput?.click()"
+                    variant="outlined"
+                    class="text-gray-600 border-gray-300 dark:text-gray-300 dark:border-gray-600"
+                  >
+                    <i class="fas fa-file mr-2"></i>
+                    {{ selectedFile ? selectedFile.name : 'Choose File' }}
+                  </CustomButton>
+                  <span v-if="selectedFile" class="text-sm text-green-600 dark:text-green-400">
+                    {{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB
+                  </span>
+                </div>
+              </div>
+
+              <!-- Restore Options -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Databases to Restore
+                </label>
+                <div class="space-y-2">
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      v-model="uploadForm.restoreArrowDb"
+                      class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
+                    />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database (specifications, spine data)</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      v-model="uploadForm.restoreUserDb"
+                      class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
+                    />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">User Database (accounts, bow setups)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Warning -->
+              <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                <div class="flex">
+                  <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-3 mt-0.5"></i>
+                  <div class="text-sm">
+                    <p class="text-yellow-800 dark:text-yellow-200 font-medium">Warning</p>
+                    <p class="text-yellow-700 dark:text-yellow-300 mt-1">
+                      This will overwrite existing data. The current databases will be backed up automatically before restore.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="flex justify-end">
+                <CustomButton
+                  type="submit"
+                  :disabled="isUploadingBackup || !selectedFile || (!uploadForm.restoreArrowDb && !uploadForm.restoreUserDb)"
+                  class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                >
+                  <span v-if="isUploadingBackup">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    Uploading & Restoring...
+                  </span>
+                  <span v-else>
+                    <i class="fas fa-upload mr-2"></i>
+                    Upload & Restore
+                  </span>
+                </CustomButton>
+              </div>
+            </form>
+          </div>
+        </md-elevated-card>
+
         <!-- Backup Management -->
         <md-elevated-card class="light-surface light-elevation">
           <div class="p-6">
@@ -739,6 +838,14 @@ const backupForm = ref({
 const restoreForm = ref({
   restoreArrowDb: true,
   restoreUserDb: false
+})
+
+// Upload backup state
+const selectedFile = ref(null)
+const isUploadingBackup = ref(false)
+const uploadForm = ref({
+  restoreArrowDb: true,
+  restoreUserDb: true
 })
 
 // Notification state
@@ -1171,6 +1278,80 @@ const getBackupContents = (backup) => {
   if (backup.include_arrow_db) contents.push('Arrows')
   if (backup.include_user_db) contents.push('Users')
   return contents.join(', ') || 'Unknown'
+}
+
+// File upload functions
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.tar.gz')) {
+      showNotification('Please select a .tar.gz backup file', 'error')
+      return
+    }
+    selectedFile.value = file
+    console.log('File selected:', file.name, file.size, 'bytes')
+  } else {
+    selectedFile.value = null
+  }
+}
+
+const uploadAndRestoreBackup = async () => {
+  if (!selectedFile.value) {
+    showNotification('Please select a backup file', 'error')
+    return
+  }
+  
+  if (!uploadForm.value.restoreArrowDb && !uploadForm.value.restoreUserDb) {
+    showNotification('Please select at least one database to restore', 'error')
+    return
+  }
+  
+  try {
+    isUploadingBackup.value = true
+    
+    // Create FormData for file upload
+    const formData = new FormData()
+    formData.append('backup_file', selectedFile.value)
+    formData.append('restore_arrow_db', uploadForm.value.restoreArrowDb.toString())
+    formData.append('restore_user_db', uploadForm.value.restoreUserDb.toString())
+    formData.append('force_restore', 'true')
+    
+    console.log('Uploading backup file:', selectedFile.value.name)
+    console.log('Restore options:', uploadForm.value)
+    
+    // Upload and restore
+    const result = await api.post('/admin/backup/upload', formData)
+    
+    showNotification(result.message || 'Backup uploaded and restored successfully', 'success')
+    
+    // Reset form
+    selectedFile.value = null
+    uploadForm.value = {
+      restoreArrowDb: true,
+      restoreUserDb: true
+    }
+    
+    // Clear file input
+    if (process.client) {
+      const fileInput = document.querySelector('input[type="file"]')
+      if (fileInput) fileInput.value = ''
+    }
+    
+    // Reload backups list
+    await loadBackups()
+    
+    // Show additional warning if user database was restored
+    if (uploadForm.value.restoreUserDb) {
+      showNotification('User database restored. You may need to refresh the page.', 'warning')
+    }
+    
+  } catch (error) {
+    console.error('Error uploading backup:', error)
+    showNotification('Failed to upload backup: ' + error.message, 'error')
+  } finally {
+    isUploadingBackup.value = false
+  }
 }
 
 // Check admin status and load data
