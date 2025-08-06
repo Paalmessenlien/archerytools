@@ -1963,66 +1963,7 @@ def backup_test_new():
     print(f"🔧 NEW BACKUP TEST ENDPOINT CALLED - {datetime.now()}")
     return jsonify({'message': 'NEW Backup test endpoint works!', 'timestamp': datetime.now().isoformat()})
 
-@app.route('/api/admin/backups', methods=['GET'])
-@token_required
-@admin_required
-def list_backups(current_user):
-    """List all available backups from both local and CDN"""
-    try:
-        from backup_manager import BackupManager
-        backup_manager = BackupManager()
-        local_backups = backup_manager.list_backups()
-        
-        from user_database import UserDatabase
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
-        conn = user_db.get_connection()
-        cursor = conn.cursor()
-        
-        # Get CDN backups from metadata
-        cursor.execute("""
-            SELECT backup_id, backup_name, database_type, cdn_url, created_by, created_at, file_size
-            FROM backup_metadata 
-            ORDER BY created_at DESC
-        """)
-        cdn_backups = []
-        for row in cursor.fetchall():
-            cdn_backups.append({
-                'backup_id': row[0],
-                'backup_name': row[1],
-                'database_type': row[2],
-                'cdn_url': row[3],
-                'created_by': row[4],
-                'created_at': row[5],
-                'file_size': row[6],
-                'location': 'cdn'
-            })
-        
-        conn.close()
-        
-        # Format local backups
-        formatted_local = []
-        for backup in local_backups:
-            formatted_local.append({
-                'backup_name': backup['name'],
-                'database_type': 'local',
-                'file_path': backup['path'],
-                'created_at': backup.get('created', 'Unknown'),
-                'file_size': backup.get('size', 0),
-                'location': 'local'
-            })
-        
-        return jsonify({
-            'success': True,
-            'backups': {
-                'cdn': cdn_backups,
-                'local': formatted_local
-            },
-            'total_cdn': len(cdn_backups),
-            'total_local': len(formatted_local)
-        })
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to list backups: {str(e)}'}), 500
+# Removed duplicate list_backups function - using the complete implementation later in the file
 
 # ===== ADMIN ARROW MANAGEMENT API ENDPOINTS =====
 
@@ -3341,18 +3282,22 @@ def upload_image(current_user):
                 'upload_path': upload_path,
                 'file_size': result.get('bytes', size)
             })
-            
+                
+        except Exception as e:
+            print(f"Image upload error: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': 'Upload failed. Please try again.'}), 500
         finally:
             # Clean up temporary file
-            if os.path.exists(temp_path):
+            if 'temp_path' in locals() and os.path.exists(temp_path):
                 os.remove(temp_path)
-                
+    
     except Exception as e:
-        print(f"Image upload error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Upload failed. Please try again.'}), 500
+        print(f"Upload image function error: {e}")
+        return jsonify({'error': 'Image upload failed'}), 500
 
+# Debug route removed
 
 @app.route('/api/admin/backup', methods=['POST'])
 @token_required
@@ -3462,51 +3407,7 @@ def create_backup(current_user):
         traceback.print_exc()
         return jsonify({'error': f'Backup creation failed: {str(e)}'}), 500
 
-@app.route('/api/admin/backups', methods=['GET'])
-@token_required
-@admin_required
-def list_backups(current_user):
-    """List all available backups from both local and CDN"""
-    try:
-        from backup_manager import BackupManager
-        
-        # Get local backups
-        backup_manager = BackupManager()
-        local_backups = backup_manager.list_backups()
-        
-        # Get CDN backups from database metadata
-        from user_database import UserDatabase
-        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
-        conn = user_db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT bm.*, u.name as created_by_name, u.email as created_by_email
-            FROM backup_metadata bm
-            LEFT JOIN users u ON bm.created_by = u.id
-            ORDER BY bm.created_at DESC
-        ''')
-        
-        cdn_backups = []
-        for row in cursor.fetchall():
-            backup_info = dict(row)
-            # Add status based on whether local file still exists
-            backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
-            cdn_backups.append(backup_info)
-        
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'local_backups': local_backups,
-            'cdn_backups': cdn_backups,
-            'total_local': len(local_backups),
-            'total_cdn': len(cdn_backups)
-        })
-        
-    except Exception as e:
-        print(f"List backups error: {e}")
-        return jsonify({'error': f'Failed to list backups: {str(e)}'}), 500
+# Removed second duplicate list_backups function - this was causing Flask routing conflicts
 
 @app.route('/api/admin/backup/<int:backup_id>/restore', methods=['POST'])
 @token_required
