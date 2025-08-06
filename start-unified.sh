@@ -210,8 +210,22 @@ migrate_databases() {
 start_services() {
     print_message "$BLUE" "🚀 Starting ArrowTuner services..."
     
-    # Build and start services
-    docker-compose -f docker-compose.unified.yml $COMPOSE_PROFILES build
+    # Try to build first, but handle network issues gracefully
+    print_message "$YELLOW" "📦 Building services (this may take a moment)..."
+    if ! docker-compose -f docker-compose.unified.yml $COMPOSE_PROFILES build; then
+        print_message "$YELLOW" "⚠️  Build failed (likely network issue), trying with existing images..."
+        
+        # Check if we have existing images
+        if docker images --format "table {{.Repository}}" | grep -q "archerytools"; then
+            print_message "$BLUE" "✅ Found existing images, starting services..."
+        else
+            print_message "$RED" "❌ No existing images found and build failed"
+            print_message "$YELLOW" "Try again when network connectivity is restored"
+            exit 1
+        fi
+    fi
+    
+    # Start services
     docker-compose -f docker-compose.unified.yml $COMPOSE_PROFILES up -d
     
     print_message "$GREEN" "✅ Services started successfully"

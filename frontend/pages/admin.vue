@@ -40,54 +40,105 @@
     <!-- Page Header -->
     <div class="mb-6">
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Admin Panel</h1>
-      <p class="text-gray-600 dark:text-gray-300">Manage beta access and user permissions</p>
+      <p class="text-gray-600 dark:text-gray-300">Manage beta access, users, and arrow database</p>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div v-if="isAdmin" class="mb-6">
+      <nav class="flex space-x-8 border-b border-gray-200 dark:border-gray-700">
+        <button
+          @click="activeTab = 'users'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'users' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-users mr-2"></i>
+          Users
+        </button>
+        <button
+          @click="activeTab = 'arrows'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'arrows' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-bow-arrow mr-2"></i>
+          Arrows
+        </button>
+        <button
+          @click="activeTab = 'manufacturers'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'manufacturers' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-industry mr-2"></i>
+          Manufacturers
+        </button>
+      </nav>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isCheckingAdmin" class="text-center py-12">
+      <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
+      <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Checking Access...</h2>
+      <p class="text-gray-600 dark:text-gray-400">Verifying your admin privileges</p>
     </div>
 
     <!-- Admin Dashboard -->
-    <div v-if="isAdmin" class="space-y-6">
-      <!-- User Statistics -->
-      <md-elevated-card class="light-surface light-elevation">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-            <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
-            User Statistics
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ userStats.total || 0 }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
-            </div>
-            <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ userStats.active || 0 }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Active Users</div>
-            </div>
-            <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-              <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ userStats.pending || 0 }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Pending Access</div>
-            </div>
-          </div>
-        </div>
-      </md-elevated-card>
-
-      <!-- User Management -->
-      <md-elevated-card class="light-surface light-elevation">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-              <i class="fas fa-users mr-2 text-indigo-600"></i>
-              Beta Users
+    <div v-else-if="isAdmin" class="space-y-6">
+      <!-- Users Tab -->
+      <div v-if="activeTab === 'users'">
+        <!-- User Statistics -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
+              User Statistics
             </h2>
-            <CustomButton
-              @click="showInviteModal = true"
-              variant="filled"
-              class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-            >
-              <i class="fas fa-user-plus mr-2"></i>
-              Invite User
-            </CustomButton>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ userStats.total || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ userStats.active || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Active Users</div>
+              </div>
+              <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ userStats.pending || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Pending Access</div>
+              </div>
+            </div>
           </div>
+        </md-elevated-card>
 
-          <!-- Users Table -->
+        <!-- User Management -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-users mr-2 text-indigo-600"></i>
+                Beta Users
+              </h2>
+              <CustomButton
+                @click="showInviteModal = true"
+                variant="filled"
+                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+              >
+                <i class="fas fa-user-plus mr-2"></i>
+                Invite User
+              </CustomButton>
+            </div>
+
+            <!-- Users Table -->
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-800">
@@ -153,8 +204,113 @@
             <i class="fas fa-users text-4xl text-gray-400 mb-4"></i>
             <p class="text-gray-500 dark:text-gray-400">No users found</p>
           </div>
+          </div>
+        </md-elevated-card>
+      </div>
+
+      <!-- Arrows Tab -->
+      <div v-if="activeTab === 'arrows'">
+        <!-- Arrow Statistics -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
+              Arrow Database Statistics
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ arrowStats.total || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Total Arrows</div>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ arrowStats.manufacturers || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Manufacturers</div>
+              </div>
+              <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ arrowStats.spines || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Total Spines</div>
+              </div>
+              <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ arrowStats.withImages || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">With Images</div>
+              </div>
+            </div>
+          </div>
+        </md-elevated-card>
+
+        <!-- Arrow Management -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <AdminArrowsTable
+              ref="arrowsTableRef"
+              @edit="openEditModal"
+              @create="openCreateModal"
+              @delete="confirmDeleteArrow"
+            />
+          </div>
+        </md-elevated-card>
+      </div>
+
+      <!-- Manufacturers Tab -->
+      <div v-if="activeTab === 'manufacturers'">
+        <!-- Manufacturer Management -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <AdminManufacturersTable
+              ref="manufacturersTableRef"
+              @refresh-stats="loadManufacturerStats"
+              @show-notification="showNotification"
+            />
+          </div>
+        </md-elevated-card>
+      </div>
+    </div>
+
+    <!-- Arrow Edit Modal -->
+    <AdminArrowEditModal
+      :is-open="showArrowEditModal"
+      :arrow="selectedArrow"
+      :is-creating="isCreatingArrow"
+      @close="closeArrowEditModal"
+      @save="saveArrow"
+    />
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
+        <div class="mb-4">
+          <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-2"></i>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Delete</h3>
         </div>
-      </md-elevated-card>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          Are you sure you want to delete <strong>{{ arrowToDelete?.manufacturer }} {{ arrowToDelete?.model_name }}</strong>?
+          This action cannot be undone.
+        </p>
+        <div class="flex justify-center space-x-4">
+          <CustomButton
+            @click="showDeleteModal = false"
+            variant="outlined"
+            class="text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            @click="deleteArrow"
+            variant="filled"
+            :disabled="isDeletingArrow"
+            class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+          >
+            <span v-if="isDeletingArrow">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Deleting...
+            </span>
+            <span v-else>
+              <i class="fas fa-trash mr-2"></i>
+              Delete Arrow
+            </span>
+          </CustomButton>
+        </div>
+      </div>
     </div>
 
     <!-- Access Denied -->
@@ -259,6 +415,7 @@ const { user, token, checkAdminStatus, getAllUsers, setUserAdminStatus } = useAu
 
 // Check if user is admin
 const isAdmin = ref(false)
+const isCheckingAdmin = ref(true) // Loading state for admin check
 
 // State
 const users = ref([])
@@ -270,6 +427,27 @@ const userStats = ref({
 const loading = ref(false)
 const showInviteModal = ref(false)
 const isSendingInvite = ref(false)
+
+// Tab management
+const activeTab = ref('users')
+
+// Arrow management state
+const showArrowEditModal = ref(false)
+const selectedArrow = ref(null)
+const isCreatingArrow = ref(false)
+const showDeleteModal = ref(false)
+const arrowToDelete = ref(null)
+const isDeletingArrow = ref(false)
+const arrowsTableRef = ref(null)
+const manufacturersTableRef = ref(null)
+
+// Arrow statistics
+const arrowStats = ref({
+  total: 0,
+  manufacturers: 0,
+  spines: 0,
+  withImages: 0
+})
 
 // Notification state
 const notification = ref({
@@ -469,10 +647,111 @@ const formatDate = (dateString) => {
   }
 }
 
+// Arrow management functions
+const loadArrowStats = async () => {
+  try {
+    const data = await api.get('/database/stats')
+    arrowStats.value = {
+      total: data.total_arrows || 0,
+      manufacturers: data.total_manufacturers || 0,
+      spines: data.total_specifications || 0,
+      withImages: data.arrows_with_images || 0
+    }
+  } catch (error) {
+    console.error('Error loading arrow stats:', error)
+  }
+}
+
+const loadManufacturerStats = async () => {
+  // This is called when manufacturers are refreshed
+  // We can reload arrow stats since manufacturer changes affect them
+  await loadArrowStats()
+}
+
+const openEditModal = (arrow) => {
+  selectedArrow.value = arrow
+  isCreatingArrow.value = false
+  showArrowEditModal.value = true
+}
+
+const openCreateModal = () => {
+  selectedArrow.value = null
+  isCreatingArrow.value = true
+  showArrowEditModal.value = true
+}
+
+const closeArrowEditModal = () => {
+  showArrowEditModal.value = false
+  selectedArrow.value = null
+  isCreatingArrow.value = false
+}
+
+const saveArrow = async (arrowData) => {
+  try {
+    let result
+    
+    if (isCreatingArrow.value) {
+      // Create new arrow
+      result = await api.post('/admin/arrows', arrowData)
+    } else {
+      // Update existing arrow
+      result = await api.put(`/admin/arrows/${selectedArrow.value.id}`, arrowData)
+    }
+    
+    showNotification(result.message || `Arrow ${isCreatingArrow.value ? 'created' : 'updated'} successfully`)
+    closeArrowEditModal()
+    
+    // Refresh the arrows table
+    if (arrowsTableRef.value) {
+      arrowsTableRef.value.loadArrows()
+    }
+    
+    // Refresh stats
+    await loadArrowStats()
+  } catch (error) {
+    console.error('Error saving arrow:', error)
+    showNotification(error.message || 'Failed to save arrow', 'error')
+  }
+}
+
+const confirmDeleteArrow = (arrow) => {
+  arrowToDelete.value = arrow
+  showDeleteModal.value = true
+}
+
+const deleteArrow = async () => {
+  if (!arrowToDelete.value) return
+  
+  try {
+    isDeletingArrow.value = true
+    
+    const result = await api.delete(`/admin/arrows/${arrowToDelete.value.id}`)
+    
+    showNotification(result.message || 'Arrow deleted successfully')
+    showDeleteModal.value = false
+    arrowToDelete.value = null
+    
+    // Refresh the arrows table
+    if (arrowsTableRef.value) {
+      arrowsTableRef.value.loadArrows()
+    }
+    
+    // Refresh stats
+    await loadArrowStats()
+  } catch (error) {
+    console.error('Error deleting arrow:', error)
+    showNotification(error.message || 'Failed to delete arrow', 'error')
+  } finally {
+    isDeletingArrow.value = false
+  }
+}
+
 // Check admin status and load data
 const checkAndLoadAdminData = async () => {
   try {
     console.log('checkAndLoadAdminData called, user:', user.value)
+    isCheckingAdmin.value = true
+    
     if (user.value) {
       console.log('User exists, calling checkAdminStatus...')
       const adminStatus = await checkAdminStatus()
@@ -480,17 +759,21 @@ const checkAndLoadAdminData = async () => {
       isAdmin.value = adminStatus
       
       if (adminStatus) {
-        console.log('User is admin, loading users...')
+        console.log('User is admin, loading users and arrow stats...')
         await loadUsers()
+        await loadArrowStats()
       } else {
         console.log('User is not admin')
       }
     } else {
       console.log('No user found')
+      isAdmin.value = false
     }
   } catch (error) {
     console.error('Error checking admin status:', error)
     isAdmin.value = false
+  } finally {
+    isCheckingAdmin.value = false
   }
 }
 
@@ -508,6 +791,7 @@ watch(user, () => {
     checkAndLoadAdminData()
   } else {
     isAdmin.value = false
+    isCheckingAdmin.value = false
   }
 })
 

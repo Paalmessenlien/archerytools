@@ -2298,6 +2298,211 @@ def create_arrow_admin(current_user):
         db.get_connection().rollback()
         return jsonify({'error': str(e)}), 500
 
+# ===== MANUFACTURER MANAGEMENT API ENDPOINTS (ADMIN) =====
+
+@app.route('/api/admin/manufacturers', methods=['GET'])
+@token_required
+@admin_required
+def get_manufacturers_admin(current_user):
+    """Get all manufacturers with arrow counts (admin only)"""
+    try:
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Get manufacturers with arrow counts
+        query = """
+            SELECT 
+                manufacturer,
+                COUNT(*) as arrow_count,
+                MIN(created_at) as first_added,
+                MAX(created_at) as last_added
+            FROM arrows 
+            GROUP BY manufacturer 
+            ORDER BY manufacturer
+        """
+        
+        cursor.execute(query)
+        results = cursor.fetchall()
+        
+        manufacturers = []
+        for row in results:
+            manufacturers.append({
+                'name': row[0],
+                'arrow_count': row[1],
+                'first_added': row[2],
+                'last_added': row[3]
+            })
+        
+        return jsonify({
+            'manufacturers': manufacturers,
+            'total_count': len(manufacturers)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/manufacturers/<manufacturer_name>', methods=['PUT'])
+@token_required
+@admin_required
+def update_manufacturer_admin(current_user, manufacturer_name):
+    """Update manufacturer name for all arrows (admin only)"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'new_name' not in data:
+            return jsonify({'error': 'new_name is required'}), 400
+        
+        new_name = data['new_name'].strip()
+        if not new_name:
+            return jsonify({'error': 'new_name cannot be empty'}), 400
+        
+        # URL decode the manufacturer name
+        import urllib.parse
+        manufacturer_name = urllib.parse.unquote(manufacturer_name)
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if manufacturer exists
+        cursor.execute("SELECT COUNT(*) FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        if cursor.fetchone()[0] == 0:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+        
+        # Check if new name already exists (case insensitive)
+        cursor.execute("SELECT COUNT(*) FROM arrows WHERE LOWER(manufacturer) = LOWER(?)", (new_name,))
+        if cursor.fetchone()[0] > 0 and new_name.lower() != manufacturer_name.lower():
+            return jsonify({'error': 'A manufacturer with this name already exists'}), 409
+        
+        # Update all arrows with this manufacturer
+        cursor.execute("""
+            UPDATE arrows 
+            SET manufacturer = ? 
+            WHERE manufacturer = ?
+        """, (new_name, manufacturer_name))
+        
+        affected_rows = cursor.rowcount
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': f'Successfully updated manufacturer from "{manufacturer_name}" to "{new_name}"',
+            'affected_arrows': affected_rows,
+            'updated_by': current_user['email']
+        }), 200
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/manufacturers/<manufacturer_name>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_manufacturer_admin(current_user, manufacturer_name):
+    """Delete manufacturer and all associated arrows (admin only)"""
+    try:
+        # URL decode the manufacturer name
+        import urllib.parse
+        manufacturer_name = urllib.parse.unquote(manufacturer_name)
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if manufacturer exists and get arrow count
+        cursor.execute("SELECT COUNT(*) FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        arrow_count = cursor.fetchone()[0]
+        
+        if arrow_count == 0:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+        
+        # Get arrow IDs for spine specifications cleanup
+        cursor.execute("SELECT id FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        arrow_ids = [row[0] for row in cursor.fetchall()]
+        
+        # Delete spine specifications first (foreign key constraint)
+        if arrow_ids:
+            placeholders = ','.join('?' * len(arrow_ids))
+            cursor.execute(f"DELETE FROM spine_specifications WHERE arrow_id IN ({placeholders})", arrow_ids)
+            deleted_specs = cursor.rowcount
+        else:
+            deleted_specs = 0
+        
+        # Delete arrows
+        cursor.execute("DELETE FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        deleted_arrows = cursor.rowcount
+        
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': f'Successfully deleted manufacturer "{manufacturer_name}" and all associated data',
+            'deleted_arrows': deleted_arrows,
+            'deleted_spine_specifications': deleted_specs,
+            'deleted_by': current_user['email']
+        }), 200
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/manufacturers', methods=['POST'])
+@token_required
+@admin_required
+def create_manufacturer_admin(current_user):
+    """Create a new manufacturer (admin only)"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'name' not in data:
+            return jsonify({'error': 'Manufacturer name is required'}), 400
+        
+        manufacturer_name = data['name'].strip()
+        if not manufacturer_name:
+            return jsonify({'error': 'Manufacturer name cannot be empty'}), 400
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if manufacturer already exists (case insensitive)
+        cursor.execute("SELECT COUNT(*) FROM arrows WHERE LOWER(manufacturer) = LOWER(?)", (manufacturer_name,))
+        if cursor.fetchone()[0] > 0:
+            return jsonify({'error': 'A manufacturer with this name already exists'}), 409
+        
+        # Create a placeholder arrow for the manufacturer
+        # This ensures the manufacturer appears in the list
+        now = datetime.utcnow().isoformat()
+        cursor.execute("""
+            INSERT INTO arrows 
+            (manufacturer, model_name, material, arrow_type, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            manufacturer_name,
+            'Placeholder Model',
+            'TBD',
+            'TBD',
+            f'Placeholder arrow for {manufacturer_name} manufacturer. Replace with actual arrow data.',
+            now
+        ))
+        
+        arrow_id = cursor.lastrowid
+        
+        # Add a basic spine specification for the placeholder
+        cursor.execute("""
+            INSERT INTO spine_specifications 
+            (arrow_id, spine, outer_diameter, gpi_weight)
+            VALUES (?, ?, ?, ?)
+        """, (arrow_id, 500, 0.246, 10.0))
+        
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': f'Successfully created manufacturer "{manufacturer_name}"',
+            'manufacturer_name': manufacturer_name,
+            'placeholder_arrow_id': arrow_id,
+            'created_by': current_user['email']
+        }), 201
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
 # ===== GUIDE WALKTHROUGH API ENDPOINTS =====
 
 @app.route('/api/guides', methods=['GET'])
