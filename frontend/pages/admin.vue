@@ -82,6 +82,18 @@
           <i class="fas fa-industry mr-2"></i>
           Manufacturers
         </button>
+        <button
+          @click="activeTab = 'backups'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'backups' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-database mr-2"></i>
+          Backups
+        </button>
       </nav>
     </div>
 
@@ -264,6 +276,191 @@
           </div>
         </md-elevated-card>
       </div>
+      
+      <!-- Backups Tab -->
+      <div v-if="activeTab === 'backups'">
+        <!-- Backup Creation -->
+        <md-elevated-card class="light-surface light-elevation mb-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                Create New Backup
+              </h2>
+            </div>
+            
+            <form @submit.prevent="createBackup" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Backup Name (Optional)
+                  </label>
+                  <input 
+                    v-model="backupForm.name" 
+                    type="text" 
+                    class="form-input w-full"
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Databases to Backup
+                  </label>
+                  <div class="space-y-2">
+                    <label class="flex items-center">
+                      <input 
+                        v-model="backupForm.includeArrowDb" 
+                        type="checkbox" 
+                        class="mr-2"
+                      />
+                      <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database</span>
+                    </label>
+                    <label class="flex items-center">
+                      <input 
+                        v-model="backupForm.includeUserDb" 
+                        type="checkbox" 
+                        class="mr-2"
+                      />
+                      <span class="text-sm text-gray-700 dark:text-gray-300">User Database</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex justify-end">
+                <CustomButton
+                  type="submit"
+                  variant="filled"
+                  :disabled="isCreatingBackup || (!backupForm.includeArrowDb && !backupForm.includeUserDb)"
+                  class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+                >
+                  <span v-if="isCreatingBackup">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    Creating Backup...
+                  </span>
+                  <span v-else>
+                    <i class="fas fa-database mr-2"></i>
+                    Create Backup
+                  </span>
+                </CustomButton>
+              </div>
+            </form>
+          </div>
+        </md-elevated-card>
+
+        <!-- Backup Management -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-history mr-2 text-indigo-600"></i>
+                Available Backups
+              </h2>
+              <CustomButton
+                @click="loadBackups"
+                variant="outlined"
+                size="small"
+                :disabled="isLoadingBackups"
+                class="text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+              >
+                <i class="fas fa-refresh mr-2"></i>
+                Refresh
+              </CustomButton>
+            </div>
+
+            <!-- Loading State -->
+            <div v-if="isLoadingBackups" class="text-center py-8">
+              <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+              <p class="text-gray-600 dark:text-gray-400">Loading backups...</p>
+            </div>
+
+            <!-- Backup List -->
+            <div v-else-if="backups.length > 0" class="space-y-4">
+              <div 
+                v-for="backup in backups" 
+                :key="backup.id" 
+                class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                      <h3 class="font-medium text-gray-900 dark:text-gray-100">
+                        {{ backup.backup_name }}
+                      </h3>
+                      <span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        {{ backup.cdn_type.toUpperCase() }}
+                      </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div>
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        {{ formatDate(backup.created_at) }}
+                      </div>
+                      <div>
+                        <i class="fas fa-weight-hanging mr-1"></i>
+                        {{ backup.file_size_mb.toFixed(2) }} MB
+                      </div>
+                      <div>
+                        <i class="fas fa-user mr-1"></i>
+                        {{ backup.created_by_name || backup.created_by_email }}
+                      </div>
+                      <div>
+                        <i class="fas fa-database mr-1"></i>
+                        {{ getBackupContents(backup) }}
+                      </div>
+                    </div>
+                    
+                    <div v-if="!backup.local_exists" class="mt-2">
+                      <span class="text-xs text-yellow-600 dark:text-yellow-400">
+                        <i class="fas fa-cloud mr-1"></i>
+                        CDN Only (local file removed)
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex space-x-2 ml-4">
+                    <CustomButton
+                      @click="downloadBackup(backup)"
+                      variant="outlined"
+                      size="small"
+                      class="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+                    >
+                      <i class="fas fa-download mr-1"></i>
+                      Download
+                    </CustomButton>
+                    <CustomButton
+                      @click="showRestoreModal(backup)"
+                      variant="outlined"
+                      size="small"
+                      class="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400"
+                    >
+                      <i class="fas fa-undo mr-1"></i>
+                      Restore
+                    </CustomButton>
+                    <CustomButton
+                      @click="confirmDeleteBackup(backup)"
+                      variant="outlined"
+                      size="small"
+                      class="text-red-600 border-red-600 dark:text-red-400 dark:border-red-400"
+                    >
+                      <i class="fas fa-trash mr-1"></i>
+                      Delete
+                    </CustomButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-8">
+              <i class="fas fa-database text-4xl text-gray-400 mb-4"></i>
+              <p class="text-gray-500 dark:text-gray-400">No backups found</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500">Create your first backup using the form above</p>
+            </div>
+          </div>
+        </md-elevated-card>
+      </div>
     </div>
 
     <!-- Arrow Edit Modal -->
@@ -404,6 +601,82 @@
       </div>
     </div>
     <!-- End of Confirmation Modal -->
+
+    <!-- Restore Backup Modal -->
+    <div v-if="showRestoreBackupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-lg">
+        <div class="mb-4">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+            <i class="fas fa-undo text-green-500 mr-2"></i>
+            Restore Backup
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {{ backupToRestore?.backup_name }}
+          </p>
+        </div>
+
+        <form @submit.prevent="restoreBackup" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Databases to Restore
+            </label>
+            <div class="space-y-2">
+              <label v-if="backupToRestore?.include_arrow_db" class="flex items-center">
+                <input 
+                  v-model="restoreForm.restoreArrowDb" 
+                  type="checkbox" 
+                  class="mr-2"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database</span>
+              </label>
+              <label v-if="backupToRestore?.include_user_db" class="flex items-center">
+                <input 
+                  v-model="restoreForm.restoreUserDb" 
+                  type="checkbox" 
+                  class="mr-2"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">User Database</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            <div class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-2"></i>
+              <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                This will overwrite existing data. Make sure to create a backup first!
+              </p>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3">
+            <CustomButton
+              type="button"
+              @click="showRestoreBackupModal = false"
+              variant="outlined"
+              class="text-gray-700 dark:text-gray-200"
+            >
+              Cancel
+            </CustomButton>
+            <CustomButton
+              type="submit"
+              variant="filled"
+              :disabled="isRestoringBackup || (!restoreForm.restoreArrowDb && !restoreForm.restoreUserDb)"
+              class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+            >
+              <span v-if="isRestoringBackup">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                Restoring...
+              </span>
+              <span v-else>
+                <i class="fas fa-undo mr-2"></i>
+                Restore Backup
+              </span>
+            </CustomButton>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -447,6 +720,25 @@ const arrowStats = ref({
   manufacturers: 0,
   spines: 0,
   withImages: 0
+})
+
+// Backup management state
+const backups = ref([])
+const isLoadingBackups = ref(false)
+const isCreatingBackup = ref(false)
+const isRestoringBackup = ref(false)
+const showRestoreBackupModal = ref(false)
+const backupToRestore = ref(null)
+
+const backupForm = ref({
+  name: '',
+  includeArrowDb: true,
+  includeUserDb: true
+})
+
+const restoreForm = ref({
+  restoreArrowDb: true,
+  restoreUserDb: false
 })
 
 // Notification state
@@ -746,6 +1038,141 @@ const deleteArrow = async () => {
   }
 }
 
+// Backup management functions
+const loadBackups = async () => {
+  if (!isAdmin.value) return
+  
+  try {
+    isLoadingBackups.value = true
+    const response = await api.get('/admin/backups')
+    
+    // Combine CDN backups (primary) with local backups for completeness
+    backups.value = response.cdn_backups || []
+    
+    console.log(`Loaded ${backups.value.length} backups`)
+  } catch (error) {
+    console.error('Error loading backups:', error)
+    showNotification('Failed to load backups: ' + error.message, 'error')
+  } finally {
+    isLoadingBackups.value = false
+  }
+}
+
+const createBackup = async () => {
+  try {
+    isCreatingBackup.value = true
+    
+    const result = await api.post('/admin/backup', {
+      backup_name: backupForm.value.name || undefined,
+      include_arrow_db: backupForm.value.includeArrowDb,
+      include_user_db: backupForm.value.includeUserDb
+    })
+    
+    showNotification(result.message || 'Backup created successfully')
+    
+    // Reset form
+    backupForm.value = {
+      name: '',
+      includeArrowDb: true,
+      includeUserDb: true
+    }
+    
+    // Reload backups list
+    await loadBackups()
+    
+  } catch (error) {
+    console.error('Error creating backup:', error)
+    showNotification('Failed to create backup: ' + error.message, 'error')
+  } finally {
+    isCreatingBackup.value = false
+  }
+}
+
+const showRestoreModal = (backup) => {
+  backupToRestore.value = backup
+  
+  // Set default restore options based on what backup contains
+  restoreForm.value = {
+    restoreArrowDb: backup.include_arrow_db,
+    restoreUserDb: false // Default to false for safety
+  }
+  
+  showRestoreBackupModal.value = true
+}
+
+const restoreBackup = async () => {
+  if (!backupToRestore.value) return
+  
+  try {
+    isRestoringBackup.value = true
+    
+    const result = await api.post(`/admin/backup/${backupToRestore.value.id}/restore`, {
+      restore_arrow_db: restoreForm.value.restoreArrowDb,
+      restore_user_db: restoreForm.value.restoreUserDb,
+      force: true
+    })
+    
+    showNotification(result.message || 'Backup restored successfully')
+    showRestoreBackupModal.value = false
+    backupToRestore.value = null
+    
+    // If user database was restored, we might need to refresh user data
+    if (restoreForm.value.restoreUserDb) {
+      showNotification('User database restored. You may need to refresh the page.', 'warning')
+    }
+    
+  } catch (error) {
+    console.error('Error restoring backup:', error)
+    showNotification('Failed to restore backup: ' + error.message, 'error')
+  } finally {
+    isRestoringBackup.value = false
+  }
+}
+
+const downloadBackup = async (backup) => {
+  try {
+    const response = await api.get(`/admin/backup/${backup.id}/download`)
+    
+    // Open CDN URL in new window for download
+    if (response.cdn_url) {
+      window.open(response.cdn_url, '_blank')
+      showNotification('Download started')
+    } else {
+      showNotification('Download URL not available', 'error')
+    }
+  } catch (error) {
+    console.error('Error downloading backup:', error)
+    showNotification('Failed to get download URL: ' + error.message, 'error')
+  }
+}
+
+const confirmDeleteBackup = (backup) => {
+  showConfirmation(
+    `Are you sure you want to delete the backup "${backup.backup_name}"? This action cannot be undone.`,
+    async () => {
+      try {
+        const result = await api.delete(`/admin/backup/${backup.id}`)
+        showNotification(result.message || 'Backup deleted successfully')
+        
+        // Reload backups list
+        await loadBackups()
+        hideConfirmation()
+      } catch (error) {
+        console.error('Error deleting backup:', error)
+        showNotification('Failed to delete backup: ' + error.message, 'error')
+        hideConfirmation()
+      }
+    }
+  )
+}
+
+const getBackupContents = (backup) => {
+  const contents = []
+  if (backup.include_arrow_db) contents.push('Arrows')
+  if (backup.include_user_db) contents.push('Users')
+  return contents.join(', ') || 'Unknown'
+}
+
 // Check admin status and load data
 const checkAndLoadAdminData = async () => {
   try {
@@ -762,6 +1189,10 @@ const checkAndLoadAdminData = async () => {
         console.log('User is admin, loading users and arrow stats...')
         await loadUsers()
         await loadArrowStats()
+        // Load backups if we're on the backups tab
+        if (activeTab.value === 'backups') {
+          await loadBackups()
+        }
       } else {
         console.log('User is not admin')
       }
@@ -792,6 +1223,13 @@ watch(user, () => {
   } else {
     isAdmin.value = false
     isCheckingAdmin.value = false
+  }
+})
+
+// Watch for tab changes to load data as needed
+watch(activeTab, async (newTab) => {
+  if (newTab === 'backups' && isAdmin.value && backups.value.length === 0) {
+    await loadBackups()
   }
 })
 

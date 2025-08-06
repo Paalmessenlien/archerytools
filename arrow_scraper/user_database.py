@@ -182,6 +182,37 @@ class UserDatabase:
                 )
             """)
             
+            # Create backup_metadata table for tracking CDN backups
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS backup_metadata (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    backup_name TEXT UNIQUE NOT NULL,
+                    cdn_url TEXT NOT NULL,
+                    cdn_type TEXT NOT NULL,
+                    file_size_mb REAL NOT NULL,
+                    include_arrow_db BOOLEAN NOT NULL,
+                    include_user_db BOOLEAN NOT NULL,
+                    created_by INTEGER NOT NULL,
+                    local_path TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
+                )
+            """)
+            
+            # Create backup_restore_log table for tracking restore activities
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS backup_restore_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    backup_id INTEGER NOT NULL,
+                    restored_by INTEGER NOT NULL,
+                    restore_arrow_db BOOLEAN NOT NULL,
+                    restore_user_db BOOLEAN NOT NULL,
+                    restored_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (backup_id) REFERENCES backup_metadata (id) ON DELETE CASCADE,
+                    FOREIGN KEY (restored_by) REFERENCES users (id) ON DELETE CASCADE
+                )
+            """)
+            
             conn.commit()
             
             # Run migrations to add new columns if they don't exist

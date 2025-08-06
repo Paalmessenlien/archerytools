@@ -240,6 +240,7 @@ def simple_health():
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'version': '1.0.0',
+        'test_message': 'BACKUP ENDPOINTS TEST - API FILE UPDATED',
         'environment_vars': {
             'SECRET_KEY': 'set' if os.environ.get('SECRET_KEY') else 'missing',
             'GOOGLE_CLIENT_ID': 'set' if os.environ.get('NUXT_PUBLIC_GOOGLE_CLIENT_ID') else 'missing',
@@ -1953,6 +1954,76 @@ def check_admin_status(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== ADMIN BACKUP/RESTORE API ENDPOINTS =====
+
+@app.route('/api/admin/backup-test', methods=['GET'])
+def backup_test_new():
+    """Simple backup test endpoint without auth"""
+    from datetime import datetime
+    print(f"🔧 NEW BACKUP TEST ENDPOINT CALLED - {datetime.now()}")
+    return jsonify({'message': 'NEW Backup test endpoint works!', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/admin/backups', methods=['GET'])
+@token_required
+@admin_required
+def list_backups(current_user):
+    """List all available backups from both local and CDN"""
+    try:
+        from backup_manager import BackupManager
+        backup_manager = BackupManager()
+        local_backups = backup_manager.list_backups()
+        
+        from user_database import UserDatabase
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get CDN backups from metadata
+        cursor.execute("""
+            SELECT backup_id, backup_name, database_type, cdn_url, created_by, created_at, file_size
+            FROM backup_metadata 
+            ORDER BY created_at DESC
+        """)
+        cdn_backups = []
+        for row in cursor.fetchall():
+            cdn_backups.append({
+                'backup_id': row[0],
+                'backup_name': row[1],
+                'database_type': row[2],
+                'cdn_url': row[3],
+                'created_by': row[4],
+                'created_at': row[5],
+                'file_size': row[6],
+                'location': 'cdn'
+            })
+        
+        conn.close()
+        
+        # Format local backups
+        formatted_local = []
+        for backup in local_backups:
+            formatted_local.append({
+                'backup_name': backup['name'],
+                'database_type': 'local',
+                'file_path': backup['path'],
+                'created_at': backup.get('created', 'Unknown'),
+                'file_size': backup.get('size', 0),
+                'location': 'local'
+            })
+        
+        return jsonify({
+            'success': True,
+            'backups': {
+                'cdn': cdn_backups,
+                'local': formatted_local
+            },
+            'total_cdn': len(cdn_backups),
+            'total_local': len(formatted_local)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to list backups: {str(e)}'}), 500
+
 # ===== ADMIN ARROW MANAGEMENT API ENDPOINTS =====
 
 @app.route('/api/admin/arrows', methods=['GET'])
@@ -3282,6 +3353,345 @@ def upload_image(current_user):
         traceback.print_exc()
         return jsonify({'error': 'Upload failed. Please try again.'}), 500
 
+
+@app.route('/api/admin/backup', methods=['POST'])
+@token_required
+@admin_required
+def create_backup(current_user):
+    """Create database backup and upload to CDN"""
+    try:
+        from backup_manager import BackupManager
+        from cdn_uploader import CDNUploader
+        import tempfile
+        import uuid
+        from datetime import datetime
+        
+        data = request.get_json() or {}
+        backup_name = data.get('backup_name')
+        include_arrow_db = data.get('include_arrow_db', True)
+        include_user_db = data.get('include_user_db', True)
+        
+        if not include_arrow_db and not include_user_db:
+            return jsonify({'error': 'At least one database must be selected for backup'}), 400
+        
+        # Create backup manager
+        backup_manager = BackupManager()
+        
+        # Generate backup name if not provided
+        if not backup_name:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            db_types = []
+            if include_arrow_db:
+                db_types.append("arrows")
+            if include_user_db:
+                db_types.append("users")
+            backup_name = f"admin_backup_{'-'.join(db_types)}_{timestamp}"
+        
+        # Create local backup
+        local_backup_path = backup_manager.create_backup(
+            backup_name=backup_name,
+            include_arrow_db=include_arrow_db,
+            include_user_db=include_user_db
+        )
+        
+        if not local_backup_path or not os.path.exists(local_backup_path):
+            return jsonify({'error': 'Failed to create local backup'}), 500
+        
+        # Upload to CDN
+        cdn_type = os.getenv('CDN_TYPE', 'bunnycdn')
+        try:
+            uploader = CDNUploader(cdn_type)
+        except Exception as e:
+            print(f"CDN initialization failed, using local storage: {e}")
+            uploader = CDNUploader('local')
+            cdn_type = 'local'
+        
+        # Upload backup to CDN
+        result = uploader.upload_from_file(
+            local_backup_path,
+            manufacturer="archerytools",
+            model_name=f"backups/{backup_name}",
+            image_type="backup"
+        )
+        
+        if not result:
+            return jsonify({'error': 'Failed to upload backup to CDN'}), 500
+        
+        # Get backup file size
+        backup_size = os.path.getsize(local_backup_path) / (1024 * 1024)  # MB
+        
+        # Store backup metadata in user database
+        from user_database import UserDatabase
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO backup_metadata 
+            (backup_name, cdn_url, cdn_type, file_size_mb, include_arrow_db, include_user_db, 
+             created_by, local_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            backup_name, result['cdn_url'], result['cdn_type'], backup_size,
+            include_arrow_db, include_user_db, current_user['id'], local_backup_path
+        ))
+        
+        backup_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Backup "{backup_name}" created and uploaded successfully',
+            'backup_id': backup_id,
+            'backup_name': backup_name,
+            'cdn_url': result['cdn_url'],
+            'cdn_type': result['cdn_type'],
+            'file_size_mb': backup_size,
+            'includes': {
+                'arrow_database': include_arrow_db,
+                'user_database': include_user_db
+            },
+            'created_by': current_user['email'],
+            'local_path': local_backup_path
+        })
+        
+    except Exception as e:
+        print(f"Backup creation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Backup creation failed: {str(e)}'}), 500
+
+@app.route('/api/admin/backups', methods=['GET'])
+@token_required
+@admin_required
+def list_backups(current_user):
+    """List all available backups from both local and CDN"""
+    try:
+        from backup_manager import BackupManager
+        
+        # Get local backups
+        backup_manager = BackupManager()
+        local_backups = backup_manager.list_backups()
+        
+        # Get CDN backups from database metadata
+        from user_database import UserDatabase
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT bm.*, u.name as created_by_name, u.email as created_by_email
+            FROM backup_metadata bm
+            LEFT JOIN users u ON bm.created_by = u.id
+            ORDER BY bm.created_at DESC
+        ''')
+        
+        cdn_backups = []
+        for row in cursor.fetchall():
+            backup_info = dict(row)
+            # Add status based on whether local file still exists
+            backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
+            cdn_backups.append(backup_info)
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'local_backups': local_backups,
+            'cdn_backups': cdn_backups,
+            'total_local': len(local_backups),
+            'total_cdn': len(cdn_backups)
+        })
+        
+    except Exception as e:
+        print(f"List backups error: {e}")
+        return jsonify({'error': f'Failed to list backups: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/<int:backup_id>/restore', methods=['POST'])
+@token_required
+@admin_required
+def restore_backup_from_cdn(current_user, backup_id):
+    """Restore database from CDN backup"""
+    try:
+        from backup_manager import BackupManager
+        import tempfile
+        import requests
+        
+        data = request.get_json() or {}
+        restore_arrow_db = data.get('restore_arrow_db', True)
+        restore_user_db = data.get('restore_user_db', True)
+        force = data.get('force', False)
+        
+        if not restore_arrow_db and not restore_user_db:
+            return jsonify({'error': 'At least one database must be selected for restore'}), 400
+        
+        # Get backup metadata from database
+        from user_database import UserDatabase
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
+        backup_record = cursor.fetchone()
+        conn.close()
+        
+        if not backup_record:
+            return jsonify({'error': 'Backup not found'}), 404
+        
+        backup_record = dict(backup_record)
+        
+        # Check if backup contains the requested databases
+        if restore_arrow_db and not backup_record['include_arrow_db']:
+            return jsonify({'error': 'Backup does not contain arrow database'}), 400
+        if restore_user_db and not backup_record['include_user_db']:
+            return jsonify({'error': 'Backup does not contain user database'}), 400
+        
+        # Try to use local file first if it exists
+        backup_file_path = None
+        if backup_record['local_path'] and os.path.exists(backup_record['local_path']):
+            backup_file_path = backup_record['local_path']
+        else:
+            # Download from CDN
+            temp_dir = tempfile.gettempdir()
+            backup_filename = f"restore_{backup_record['backup_name']}.tar.gz"
+            backup_file_path = os.path.join(temp_dir, backup_filename)
+            
+            print(f"Downloading backup from CDN: {backup_record['cdn_url']}")
+            
+            response = requests.get(backup_record['cdn_url'], timeout=300)  # 5 minute timeout
+            response.raise_for_status()
+            
+            with open(backup_file_path, 'wb') as f:
+                f.write(response.content)
+        
+        # Restore using backup manager
+        backup_manager = BackupManager()
+        success = backup_manager.restore_backup(
+            backup_path=backup_file_path,
+            restore_arrow_db=restore_arrow_db,
+            restore_user_db=restore_user_db,
+            force=True  # Force restore in API mode
+        )
+        
+        if not success:
+            return jsonify({'error': 'Backup restore failed'}), 500
+        
+        # Clean up downloaded file if it was temporary
+        if backup_record['local_path'] != backup_file_path and os.path.exists(backup_file_path):
+            os.remove(backup_file_path)
+        
+        # Record restore activity
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO backup_restore_log 
+            (backup_id, restored_by, restore_arrow_db, restore_user_db)
+            VALUES (?, ?, ?, ?)
+        ''', (backup_id, current_user['id'], restore_arrow_db, restore_user_db))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully restored from backup "{backup_record["backup_name"]}"',
+            'backup_name': backup_record['backup_name'],
+            'restored': {
+                'arrow_database': restore_arrow_db,
+                'user_database': restore_user_db
+            },
+            'restored_by': current_user['email']
+        })
+        
+    except Exception as e:
+        print(f"Backup restore error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Backup restore failed: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/<int:backup_id>/download', methods=['GET'])
+@token_required
+@admin_required
+def download_backup(current_user, backup_id):
+    """Get download URL for backup"""
+    try:
+        from user_database import UserDatabase
+        
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
+        backup_record = cursor.fetchone()
+        conn.close()
+        
+        if not backup_record:
+            return jsonify({'error': 'Backup not found'}), 404
+        
+        backup_record = dict(backup_record)
+        
+        return jsonify({
+            'success': True,
+            'backup_name': backup_record['backup_name'],
+            'cdn_url': backup_record['cdn_url'],
+            'cdn_type': backup_record['cdn_type'],
+            'file_size_mb': backup_record['file_size_mb'],
+            'local_exists': os.path.exists(backup_record['local_path']) if backup_record['local_path'] else False
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get backup download info: {str(e)}'}), 500
+
+@app.route('/api/admin/backup/<int:backup_id>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_backup(current_user, backup_id):
+    """Delete backup from both CDN and local storage"""
+    try:
+        from user_database import UserDatabase
+        
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
+        backup_record = cursor.fetchone()
+        
+        if not backup_record:
+            conn.close()
+            return jsonify({'error': 'Backup not found'}), 404
+        
+        backup_record = dict(backup_record)
+        
+        # Delete local file if it exists
+        local_deleted = False
+        if backup_record['local_path'] and os.path.exists(backup_record['local_path']):
+            try:
+                os.remove(backup_record['local_path'])
+                local_deleted = True
+            except Exception as e:
+                print(f"Warning: Could not delete local backup file: {e}")
+        
+        # TODO: Delete from CDN if CDN supports deletion
+        # For now, we just remove from our metadata
+        
+        # Delete from metadata
+        cursor.execute('DELETE FROM backup_metadata WHERE id = ?', (backup_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Backup "{backup_record["backup_name"]}" deleted successfully',
+            'local_deleted': local_deleted,
+            'deleted_by': current_user['email']
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete backup: {str(e)}'}), 500
 
 # Run the app
 if __name__ == '__main__':
