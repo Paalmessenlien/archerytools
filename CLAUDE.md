@@ -17,6 +17,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 **Recent Major Updates (2025):**
+- ✅ **Admin Backup/Restore System**: Complete database backup and restore functionality with CDN integration
 - ✅ **Modern UI Overhaul**: Material Web Components integration with custom styling
 - ✅ **Dark Mode System**: Complete dark/light theme support with user preference persistence
 - ✅ **Enhanced UX**: Improved button styling, responsive layouts, and accessibility
@@ -503,13 +504,24 @@ python -m pytest tests/
 # GET /api/admin/users - List all users (admin only)
 # PUT /api/admin/users/<id>/admin - Set user admin status (admin only)
 
+# Admin Backup/Restore System:
+# GET /api/admin/backup-test - Test backup system accessibility
+# GET /api/admin/backups - List all available backups
+# POST /api/admin/backup - Create new backup and upload to CDN
+# POST /api/admin/backup/<id>/restore - Restore database from backup
+# GET /api/admin/backup/<id>/download - Get backup download info
+# DELETE /api/admin/backup/<id> - Delete backup
+
 # Frontend admin panel:
 # Access: /admin (requires admin authentication)
-# Features: User management, admin privilege assignment
+# Features: User management, backup/restore, admin privilege assignment
 
 # Test admin access (after authentication):
 cd arrow_scraper
 python test_admin_api.py
+
+# Test backup system:
+curl http://localhost:5000/api/admin/backup-test
 ```
 
 ### Production Deployment (PRODUCTION READY)
@@ -1165,6 +1177,17 @@ The Archery Tools platform provides:
 ### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Admin Backup/Restore System Implementation (August 2025):**
+- **Feature**: Complete admin backup and restore system with CDN integration
+- **Implementation**: 
+  - 5 new authenticated API endpoints for backup operations (`/api/admin/backup*`)
+  - Database schema enhancements with backup metadata and operations tracking
+  - CDN integration supporting Bunny CDN, Cloudinary, AWS S3, and local storage
+  - Admin panel UI components for intuitive backup management
+- **Critical Bug Fix**: Flask routing issue resolved by moving backup endpoints to proper location in `api.py`
+- **Files**: `arrow_scraper/api.py`, `arrow_scraper/user_database.py`, `frontend/pages/admin.vue`
+- **Status**: ✅ **PRODUCTION READY** - Complete backup/restore functionality available in admin panel
 
 **Admin Arrow Editing 500 Internal Server Error Fix (August 2025):**
 - **Issue**: Admin arrow editing failing with 500 Internal Server Error when trying to save material changes (e.g., "Carbon" → "Carbon / Aluminum")
