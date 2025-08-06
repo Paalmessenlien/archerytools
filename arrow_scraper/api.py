@@ -3407,7 +3407,55 @@ def create_backup(current_user):
         traceback.print_exc()
         return jsonify({'error': f'Backup creation failed: {str(e)}'}), 500
 
-# Removed second duplicate list_backups function - this was causing Flask routing conflicts
+# Re-added the list_backups function after accidentally removing all instances
+
+@app.route('/api/admin/backups', methods=['GET'])
+@token_required
+@admin_required
+def list_backups(current_user):
+    """List all available backups from both local and CDN"""
+    try:
+        from backup_manager import BackupManager
+        
+        # Get local backups
+        backup_manager = BackupManager()
+        local_backups = backup_manager.list_backups()
+        
+        # Get CDN backups from database metadata
+        from user_database import UserDatabase
+        user_db = UserDatabase(db_path='/app/user_data/user_data.db')
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT bm.*, u.name as created_by_name, u.email as created_by_email
+            FROM backup_metadata bm
+            LEFT JOIN users u ON bm.created_by = u.id
+            ORDER BY bm.created_at DESC
+        ''')
+        
+        cdn_backups = []
+        for row in cursor.fetchall():
+            backup_info = dict(row)
+            # Add status based on whether local file still exists
+            backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
+            cdn_backups.append(backup_info)
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'local_backups': local_backups,
+            'cdn_backups': cdn_backups,
+            'total_local': len(local_backups),
+            'total_cdn': len(cdn_backups)
+        })
+        
+    except Exception as e:
+        print(f"List backups error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to list backups: {str(e)}'}), 500
 
 @app.route('/api/admin/backup/<int:backup_id>/restore', methods=['POST'])
 @token_required
