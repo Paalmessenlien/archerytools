@@ -365,27 +365,25 @@
         </md-elevated-card>
       </div>
       
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-center space-x-4 mt-6">
-        <md-outlined-button 
-          @click="currentPage = Math.max(1, currentPage - 1)"
-          :disabled="currentPage === 1"
+      <!-- Load More Button -->
+      <div v-if="hasMoreResults" class="flex flex-col items-center justify-center mt-8 mb-4">
+        <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Showing {{ paginatedRecommendations.length }} of {{ filteredRecommendations.length }} arrows
+        </div>
+        <md-filled-button 
+          @click="loadMoreResults"
+          :disabled="loadingMore"
+          class="bg-primary-600 hover:bg-primary-700"
         >
-          <i class="fas fa-chevron-left" style="margin-right: 6px;"></i>
-          Previous
-        </md-outlined-button>
-        
-        <span class="px-4 py-2 text-sm text-gray-600 font-medium">
-          Page {{ currentPage }} of {{ totalPages }}
-        </span>
-        
-        <md-outlined-button 
-          @click="currentPage = Math.min(totalPages, currentPage + 1)"
-          :disabled="currentPage === totalPages"
-        >
-          Next
-          <i class="fas fa-chevron-right" style="margin-left: 6px;"></i>
-        </md-outlined-button>
+          <template v-if="loadingMore">
+            <div class="loading-spinner mr-2"></div>
+            Loading...
+          </template>
+          <template v-else>
+            <i class="fas fa-arrow-down" style="margin-right: 8px;"></i>
+            Load More Arrows ({{ remainingResults }} remaining)
+          </template>
+        </md-filled-button>
       </div>
     </div> <!-- End Filters & Controls (Always Visible) -->
 
@@ -560,6 +558,8 @@ const pending = ref(false)
 const error = ref(null)
 const currentPage = ref(1)
 const perPage = 20
+const displayLimit = ref(20) // Start by showing 20 items
+const loadingMore = ref(false)
 
 // Manufacturers from API
 const manufacturers = ref([])
@@ -780,9 +780,16 @@ const filteredRecommendations = computed(() => {
 const totalPages = computed(() => Math.ceil(filteredRecommendations.value.length / perPage))
 
 const paginatedRecommendations = computed(() => {
-  const start = (currentPage.value - 1) * perPage
-  const end = start + perPage
-  return filteredRecommendations.value.slice(start, end)
+  // Use display limit for progressive loading
+  return filteredRecommendations.value.slice(0, displayLimit.value)
+})
+
+const hasMoreResults = computed(() => {
+  return filteredRecommendations.value.length > displayLimit.value
+})
+
+const remainingResults = computed(() => {
+  return Math.max(0, filteredRecommendations.value.length - displayLimit.value)
 })
 
 // Methods
@@ -897,6 +904,15 @@ const handleClearFilters = () => {
 
 const clearFilters = () => {
   handleClearFilters()
+}
+
+const loadMoreResults = () => {
+  loadingMore.value = true
+  // Simulate loading delay for better UX
+  setTimeout(() => {
+    displayLimit.value += 20 // Load 20 more results
+    loadingMore.value = false
+  }, 300)
 }
 
 
@@ -1041,7 +1057,7 @@ const loadRecommendations = async () => {
         experience_level: 'intermediate',
         primary_goal: 'maximum_accuracy',
         arrow_type: 'target_outdoor',
-        limit: 100  // Request more recommendations
+        limit: 200  // Request more recommendations for progressive loading
       }
       
       // Add manufacturer filter if selected
@@ -1074,7 +1090,7 @@ const loadRecommendations = async () => {
       // Fallback: Use arrow search with basic filtering - get more results
       const fallbackFilters = {
         // Don't restrict by material initially to get more diverse results
-        limit: 100  // Increased from 50 to get more results
+        limit: 200  // Increased to get more results for progressive loading
       }
       
       // Only add material filter if it's specifically set and not "all materials"
@@ -1213,11 +1229,13 @@ watch(() => filters.value.manufacturer, async (newManufacturer, oldManufacturer)
   
   // Reset to first page when filter changes
   currentPage.value = 1
+  displayLimit.value = 20 // Reset display limit
 })
 
 // Watch for other filter changes
 watch(filters, () => {
   currentPage.value = 1
+  displayLimit.value = 20 // Reset display limit when any filter changes
 }, { deep: true })
 
 // Initial load
