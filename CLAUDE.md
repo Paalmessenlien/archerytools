@@ -535,8 +535,9 @@ curl http://localhost:5000/api/admin/backup-test
 ### Production Deployment (PRODUCTION READY)
 
 **📚 Complete Documentation:**
-- **Docker Deployment Guide**: See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive Docker deployment instructions
-- **Production Server Guide**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for full production server setup, SSL, monitoring, and maintenance
+- **Development Guide**: See [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) for comprehensive deployment instructions, Docker setup, and production server configuration
+- **Database Documentation**: See [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) for complete database structure and relationships
+- **API Documentation**: See [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md) for all REST endpoints with examples
 
 **Standard Production Deployment (Legacy)**
 ```bash
