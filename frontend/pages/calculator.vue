@@ -40,7 +40,7 @@
           <div>
             <h4 class="text-sm font-medium text-green-800 dark:text-green-200">Bow Setup Loaded</h4>
             <p class="text-xs text-green-700 dark:text-green-300 mt-1">
-              {{ selectedBowSetup.name }} ({{ selectedBowSetup.bow_type }}, {{ selectedBowSetup.draw_weight }}lbs) - Find arrows and add them to your setup
+              {{ selectedBowSetup.name }} ({{ selectedBowSetup.bow_type || selectedBowSetup.bow_config?.bow_type }}, {{ selectedBowSetup.draw_weight || selectedBowSetup.bow_config?.draw_weight }}lbs) - Find arrows and add them to your setup
             </p>
           </div>
         </div>
@@ -481,25 +481,27 @@
 
 <script setup lang="ts">
 import { useBowConfigStore } from '~/stores/bowConfig'
+import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 
 // API
 const api = useApi()
 const { user, fetchBowSetups } = useAuth()
 
 const bowConfigStore = useBowConfigStore()
+const bowSetupPickerStore = useBowSetupPickerStore()
 
-// Reactive references from store
+// Reactive references from stores
 const bowConfig = computed(() => bowConfigStore.bowConfig)
 const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
 const arrowSetupDescription = computed(() => bowConfigStore.arrowSetupDescription)
 
-// Store actions
-const { updateBowConfig } = bowConfigStore
-
-// Selected bow setup from navigation or dropdown
-const selectedBowSetup = ref(null)
+// Global bow setup picker state
+const selectedBowSetup = computed(() => bowSetupPickerStore.selectedBowSetup)
 const selectedBowSetupId = ref('')
 const userBowSetups = ref([])
+
+// Store actions
+const { updateBowConfig } = bowConfigStore
 
 // UI state
 const showComponents = ref(false)
@@ -513,12 +515,8 @@ const notification = ref({
 
 // Clear selected bow setup
 const clearSelectedSetup = () => {
-  selectedBowSetup.value = null
+  bowSetupPickerStore.clearSelection()
   selectedBowSetupId.value = ''
-  // Clear from localStorage
-  if (process.client) {
-    localStorage.removeItem('selectedBowSetup')
-  }
 }
 
 // Load bow setup from dropdown selection
@@ -530,17 +528,8 @@ const loadBowSetup = (setupId) => {
   
   const setup = userBowSetups.value.find(s => s.id === parseInt(setupId))
   if (setup) {
-    selectedBowSetup.value = setup
+    bowSetupPickerStore.selectBowSetup(setup)
     selectedBowSetupId.value = setupId
-    
-    // Apply the bow setup configuration to the calculator
-    updateBowConfig({
-      bow_type: setup.bow_type,
-      draw_weight: setup.draw_weight,
-      draw_length: setup.draw_length,
-      arrow_length: setup.arrow_length || 29,
-      point_weight: setup.point_weight || 125
-    })
   }
 }
 
@@ -552,17 +541,8 @@ const loadBowSetupFromId = async (setupId) => {
     const response = await api.get(`/bow-setups/${setupId}`)
     const setup = response
     
-    selectedBowSetup.value = setup
+    bowSetupPickerStore.selectBowSetup(setup)
     selectedBowSetupId.value = setupId.toString()
-    
-    // Apply the bow setup configuration to the calculator
-    updateBowConfig({
-      bow_type: setup.bow_type,
-      draw_weight: setup.draw_weight,
-      draw_length: setup.draw_length,
-      arrow_length: setup.arrow_length || 29,
-      point_weight: setup.point_weight || 125
-    })
     
     console.log('Loaded bow setup from URL:', setup)
   } catch (error) {
@@ -691,6 +671,29 @@ const handleVaneWeightModeChange = (value) => {
   }
 }
 
+// Watch for changes to the selected bow setup from the global picker
+watch(selectedBowSetup, (newBowSetup) => {
+  if (newBowSetup) {
+    // Update dropdown selection
+    selectedBowSetupId.value = newBowSetup.id?.toString() || ''
+    
+    // Apply the bow configuration from the selected setup
+    const bowConfig = newBowSetup.bow_config || {
+      draw_weight: newBowSetup.draw_weight,
+      draw_length: newBowSetup.draw_length,
+      bow_type: newBowSetup.bow_type,
+      arrow_length: newBowSetup.arrow_length || 29,
+      point_weight: newBowSetup.point_weight || 125,
+      arrow_material: newBowSetup.arrow_material || 'carbon'
+    }
+    
+    updateBowConfig(bowConfig)
+  } else {
+    // Clear dropdown when no bow setup selected
+    selectedBowSetupId.value = ''
+  }
+}, { immediate: false })
+
 // Load data on mount
 onMounted(async () => {
   // Load user's bow setups for the dropdown
@@ -701,33 +704,26 @@ onMounted(async () => {
   if (route.query.setupId) {
     // Load bow setup from setupId parameter
     await loadBowSetupFromId(route.query.setupId)
-  } else if (process.client) {
-    // Check if a bow setup was selected from my-page navigation (localStorage)
-    const savedSetup = localStorage.getItem('selectedBowSetup')
-    if (savedSetup) {
-      try {
-        const setup = JSON.parse(savedSetup)
-        selectedBowSetup.value = setup
-        selectedBowSetupId.value = setup.id.toString()
-        
-        // Apply the bow setup configuration to the calculator
-        updateBowConfig({
-          bow_type: setup.bow_type,
-          draw_weight: setup.draw_weight,
-          draw_length: setup.draw_length,
-          arrow_length: setup.arrow_length || 29,
-          point_weight: setup.point_weight || 125
-        })
-        
-        // Clear the stored setup after loading it
-        localStorage.removeItem('selectedBowSetup')
-      } catch (error) {
-        console.error('Error loading selected bow setup:', error)
-      }
+  } else if (selectedBowSetup.value) {
+    // If a bow setup is already selected in the global picker, make sure configuration is applied
+    selectedBowSetupId.value = selectedBowSetup.value.id?.toString() || ''
+    
+    // Ensure the bow configuration is properly loaded from the selected setup
+    const setup = selectedBowSetup.value
+    const bowConfig = setup.bow_config || {
+      draw_weight: setup.draw_weight,
+      draw_length: setup.draw_length,
+      bow_type: setup.bow_type,
+      arrow_length: setup.arrow_length || 29,
+      point_weight: setup.point_weight || 125,
+      arrow_material: setup.arrow_material || 'carbon'
     }
+    
+    // Apply the bow configuration from the selected setup
+    updateBowConfig(bowConfig)
   }
   
-  // Apply any query parameters to the bow config
+  // Apply any query parameters to the bow config (these take precedence)
   if (route.query.bow_type) {
     updateBowConfig({ bow_type: route.query.bow_type })
   }
