@@ -1052,6 +1052,7 @@ def create_bow_setup(current_user):
 
     try:
         # Use the UserDatabase class method for creating bow setups
+        from user_database import UserDatabase
         user_db = UserDatabase()
         new_setup = user_db.create_bow_setup(current_user['id'], data)
         
