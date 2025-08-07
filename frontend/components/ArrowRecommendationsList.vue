@@ -366,14 +366,15 @@
       </div>
       
       <!-- Load More Button -->
-      <div v-if="hasMoreResults" class="flex flex-col items-center justify-center mt-8 mb-4">
+      <div v-if="hasMoreResults && filteredRecommendations.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Showing {{ paginatedRecommendations.length }} of {{ filteredRecommendations.length }} arrows
+          Showing <span class="font-semibold text-gray-900 dark:text-gray-100">{{ paginatedRecommendations.length }}</span> of <span class="font-semibold text-gray-900 dark:text-gray-100">{{ filteredRecommendations.length }}</span> arrows
         </div>
         <md-filled-button 
           @click="loadMoreResults"
           :disabled="loadingMore"
           class="bg-primary-600 hover:bg-primary-700"
+          style="min-width: 200px;"
         >
           <template v-if="loadingMore">
             <div class="loading-spinner mr-2"></div>
@@ -384,6 +385,11 @@
             Load More Arrows ({{ remainingResults }} remaining)
           </template>
         </md-filled-button>
+      </div>
+      
+      <!-- Debug Info (remove in production) -->
+      <div v-if="false" class="mt-4 p-4 bg-yellow-100 text-sm">
+        Debug: Total filtered: {{ filteredRecommendations.length }}, Display limit: {{ displayLimit.value }}, Has more: {{ hasMoreResults }}
       </div>
     </div> <!-- End Filters & Controls (Always Visible) -->
 
@@ -1242,6 +1248,9 @@ watch(filters, () => {
 onMounted(() => {
   // Initialize filters from localStorage
   arrowFiltersStore.initializeFilters()
+  
+  // Reset display limit on mount
+  displayLimit.value = 20
   
   loadManufacturers() // Load manufacturers first
   loadRecommendations()
