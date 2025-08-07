@@ -544,6 +544,32 @@ const loadBowSetup = (setupId) => {
   }
 }
 
+// Load bow setup from API by ID (for URL parameters)
+const loadBowSetupFromId = async (setupId) => {
+  if (!setupId) return
+  
+  try {
+    const response = await api.get(`/bow-setups/${setupId}`)
+    const setup = response
+    
+    selectedBowSetup.value = setup
+    selectedBowSetupId.value = setupId.toString()
+    
+    // Apply the bow setup configuration to the calculator
+    updateBowConfig({
+      bow_type: setup.bow_type,
+      draw_weight: setup.draw_weight,
+      draw_length: setup.draw_length,
+      arrow_length: setup.arrow_length || 29,
+      point_weight: setup.point_weight || 125
+    })
+    
+    console.log('Loaded bow setup from URL:', setup)
+  } catch (error) {
+    console.error('Error loading bow setup from ID:', error)
+  }
+}
+
 // Load user's bow setups
 const loadUserBowSetups = async () => {
   if (!user.value) return
@@ -670,8 +696,13 @@ onMounted(async () => {
   // Load user's bow setups for the dropdown
   await loadUserBowSetups()
   
-  // Check if a bow setup was selected from my-page navigation
-  if (process.client) {
+  // Check for URL query parameters (setupId from bow detail page)
+  const route = useRoute()
+  if (route.query.setupId) {
+    // Load bow setup from setupId parameter
+    await loadBowSetupFromId(route.query.setupId)
+  } else if (process.client) {
+    // Check if a bow setup was selected from my-page navigation (localStorage)
     const savedSetup = localStorage.getItem('selectedBowSetup')
     if (savedSetup) {
       try {
@@ -694,6 +725,23 @@ onMounted(async () => {
         console.error('Error loading selected bow setup:', error)
       }
     }
+  }
+  
+  // Apply any query parameters to the bow config
+  if (route.query.bow_type) {
+    updateBowConfig({ bow_type: route.query.bow_type })
+  }
+  if (route.query.draw_weight) {
+    updateBowConfig({ draw_weight: parseFloat(route.query.draw_weight) })
+  }
+  if (route.query.draw_length) {
+    updateBowConfig({ draw_length: parseFloat(route.query.draw_length) })
+  }
+  if (route.query.arrow_length) {
+    updateBowConfig({ arrow_length: parseFloat(route.query.arrow_length) })
+  }
+  if (route.query.point_weight) {
+    updateBowConfig({ point_weight: parseFloat(route.query.point_weight) })
   }
 })
 

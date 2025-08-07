@@ -181,9 +181,6 @@
             @view-details="viewArrowDetails" 
             @edit-arrow="openEditArrowModal"
           />
-          <div v-if="bowSetup.arrows && bowSetup.arrows.length > 0" class="mt-4 text-sm text-gray-500">
-            Debug: {{ bowSetup.arrows.length }} arrows loaded
-          </div>
         </div>
         <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
           <i class="fas fa-inbox text-4xl mb-4"></i>
@@ -255,6 +252,7 @@ const fetchBowSetup = async () => {
     error.value = null;
     
     const response = await api.get(`/bow-setups/${route.params.id}`);
+    console.log('Fetched bow setup:', response);
     bowSetup.value = response;
     
     // Fetch arrows for this setup
@@ -273,7 +271,8 @@ const fetchSetupArrows = async () => {
     const response = await api.get(`/bow-setups/${route.params.id}/arrows`);
     console.log('Fetched arrows response:', response);
     if (bowSetup.value) {
-      bowSetup.value.arrows = response;
+      // Extract arrows array from response object
+      bowSetup.value.arrows = response.arrows || [];
       console.log('Bow setup arrows after assignment:', bowSetup.value.arrows);
     }
   } catch (err) {
@@ -285,7 +284,7 @@ const fetchSetupArrows = async () => {
 
 const navigateToArrowCalculator = () => {
   navigateTo({
-    path: '/',
+    path: '/calculator',
     query: {
       bow_type: bowSetup.value.bow_type,
       draw_weight: bowSetup.value.draw_weight,
@@ -325,9 +324,9 @@ const handleUpdateSetup = async (setupData) => {
 };
 
 const openArrowSearchModal = () => {
-  // Navigate to main page with this bow setup loaded for arrow selection
+  // Navigate to calculator page with this bow setup loaded for arrow selection
   navigateTo({
-    path: '/',
+    path: '/calculator',
     query: {
       bow_type: bowSetup.value.bow_type,
       draw_weight: bowSetup.value.draw_weight,

@@ -1096,6 +1096,7 @@ def update_bow_setup(current_user, setup_id):
 
     try:
         # Use the user database method for updating
+        from user_database import UserDatabase
         user_db = UserDatabase()
         updated_setup = user_db.update_bow_setup(current_user['id'], setup_id, data)
         
@@ -1110,6 +1111,7 @@ def update_bow_setup(current_user, setup_id):
 @token_required
 def delete_bow_setup(current_user, setup_id):
     """Delete a bow setup"""
+    from user_database import UserDatabase
     user_db = UserDatabase()
     conn = user_db.get_connection()
     cursor = conn.cursor()
