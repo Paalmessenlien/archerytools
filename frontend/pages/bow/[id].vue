@@ -177,11 +177,13 @@
           <BowSetupArrowsList
             :arrows="bowSetup.arrows"
             :loading="loadingArrows"
-            :detailed="true"
             @remove-arrow="removeArrowFromSetup"
-            @view-details="viewArrowDetails"
+            @view-details="viewArrowDetails" 
             @edit-arrow="openEditArrowModal"
           />
+          <div v-if="bowSetup.arrows && bowSetup.arrows.length > 0" class="mt-4 text-sm text-gray-500">
+            Debug: {{ bowSetup.arrows.length }} arrows loaded
+          </div>
         </div>
         <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
           <i class="fas fa-inbox text-4xl mb-4"></i>
@@ -269,8 +271,10 @@ const fetchSetupArrows = async () => {
   try {
     loadingArrows.value = true;
     const response = await api.get(`/bow-setups/${route.params.id}/arrows`);
+    console.log('Fetched arrows response:', response);
     if (bowSetup.value) {
       bowSetup.value.arrows = response;
+      console.log('Bow setup arrows after assignment:', bowSetup.value.arrows);
     }
   } catch (err) {
     console.error('Error fetching setup arrows:', err);
@@ -321,8 +325,19 @@ const handleUpdateSetup = async (setupData) => {
 };
 
 const openArrowSearchModal = () => {
-  // Navigate to calculator page with this bow setup loaded
-  navigateToArrowCalculator();
+  // Navigate to main page with this bow setup loaded for arrow selection
+  navigateTo({
+    path: '/',
+    query: {
+      bow_type: bowSetup.value.bow_type,
+      draw_weight: bowSetup.value.draw_weight,
+      draw_length: bowSetup.value.draw_length || 28,
+      arrow_length: bowSetup.value.arrow_length,
+      point_weight: bowSetup.value.point_weight,
+      setupId: bowSetup.value.id,
+      returnTo: `/bow/${bowSetup.value.id}`
+    }
+  });
 };
 
 const handleArrowSelection = async (arrow) => {
@@ -340,9 +355,10 @@ const handleArrowSelection = async (arrow) => {
   }
 };
 
-const removeArrowFromSetup = async ({ setupId, arrowId }) => {
+const removeArrowFromSetup = async (setupArrowId) => {
   try {
-    await api.delete(`/bow-setups/${setupId}/arrows/${arrowId}`);
+    // The parameter is the setup_arrows.id, not separate setupId and arrowId
+    await api.delete(`/bow-setups/${bowSetup.value.id}/arrows/${setupArrowId}`);
     await fetchSetupArrows();
   } catch (err) {
     console.error('Error removing arrow:', err);
