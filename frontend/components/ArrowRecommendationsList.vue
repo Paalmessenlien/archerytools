@@ -237,6 +237,96 @@
         </div>
       </md-elevated-card>
       
+      <!-- Match Summary -->
+      <div v-if="hasMatchDistribution && !pending" class="mb-6">
+        <md-elevated-card class="!bg-gradient-to-r !from-blue-50 !to-purple-50 dark:!from-blue-900/20 dark:!to-purple-900/20 border border-blue-200 dark:border-blue-800">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+                Match Summary
+              </h3>
+              <div class="text-sm text-gray-600 dark:text-gray-400">
+                {{ matchDistribution.total }} total arrows analyzed
+              </div>
+            </div>
+            
+            <!-- Match Distribution Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <!-- Perfect Matches -->
+              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ matchDistribution.perfect }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Perfect</div>
+                <div class="text-xs font-medium text-green-600 dark:text-green-400">100%</div>
+              </div>
+              
+              <!-- Excellent Matches -->
+              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ matchDistribution.excellent }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Excellent</div>
+                <div class="text-xs font-medium text-blue-600 dark:text-blue-400">90-99%</div>
+              </div>
+              
+              <!-- Good Matches -->
+              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ matchDistribution.good }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Good</div>
+                <div class="text-xs font-medium text-indigo-600 dark:text-indigo-400">80-89%</div>
+              </div>
+              
+              <!-- Fair Matches -->
+              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ matchDistribution.fair }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Fair</div>
+                <div class="text-xs font-medium text-orange-600 dark:text-orange-400">70-79%</div>
+              </div>
+              
+              <!-- Acceptable Matches -->
+              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ matchDistribution.acceptable }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Acceptable</div>
+                <div class="text-xs font-medium text-gray-600 dark:text-gray-400">60-69%</div>
+              </div>
+            </div>
+            
+            <!-- Visual Bar -->
+            <div class="mt-4 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+              <div 
+                v-if="matchDistribution.perfect > 0"
+                class="bg-green-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.perfect / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.excellent > 0"
+                class="bg-blue-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.excellent / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.good > 0"
+                class="bg-indigo-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.good / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.fair > 0"
+                class="bg-orange-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.fair / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.acceptable > 0"
+                class="bg-gray-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.acceptable / matchDistribution.total) * 100}%`"
+              ></div>
+            </div>
+            
+            <!-- Recommendation Note -->
+            <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+              <i class="fas fa-info-circle mr-1"></i>
+              Showing all compatible arrows from 100% down to 60% match. Use the match quality filter above to narrow results.
+            </div>
+          </div>
+        </md-elevated-card>
+      </div>
+      
       <!-- No Recommendations Message (shown after filters) -->
       <md-elevated-card v-if="!filteredRecommendations.length" class="text-center mb-6">
         <div class="p-12">
@@ -798,6 +888,41 @@ const remainingResults = computed(() => {
   return Math.max(0, filteredRecommendations.value.length - displayLimit.value)
 })
 
+// Match distribution statistics
+const matchDistribution = computed(() => {
+  const distribution = {
+    perfect: 0,     // 100%
+    excellent: 0,   // 90-99%
+    good: 0,        // 80-89%
+    fair: 0,        // 70-79%
+    acceptable: 0,  // 60-69%
+    total: 0
+  }
+  
+  recommendations.value.forEach(rec => {
+    const match = rec.match_percentage || 0
+    distribution.total++
+    
+    if (match === 100) {
+      distribution.perfect++
+    } else if (match >= 90) {
+      distribution.excellent++
+    } else if (match >= 80) {
+      distribution.good++
+    } else if (match >= 70) {
+      distribution.fair++
+    } else if (match >= 60) {
+      distribution.acceptable++
+    }
+  })
+  
+  return distribution
+})
+
+const hasMatchDistribution = computed(() => {
+  return matchDistribution.value.total > 0
+})
+
 // Methods
 const getSpineDisplay = (arrow) => {
   // Prioritize exact matched spine over range
@@ -1063,7 +1188,8 @@ const loadRecommendations = async () => {
         experience_level: 'intermediate',
         primary_goal: 'maximum_accuracy',
         arrow_type: 'target_outdoor',
-        limit: 200  // Request more recommendations for progressive loading
+        limit: 300,  // Request more recommendations for progressive loading
+        min_match_percentage: 60  // Include all matches down to 60%
       }
       
       // Add manufacturer filter if selected
