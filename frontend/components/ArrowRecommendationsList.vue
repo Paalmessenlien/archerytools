@@ -478,8 +478,8 @@
       </div>
       
       <!-- Debug Info (remove in production) -->
-      <div v-if="false" class="mt-4 p-4 bg-yellow-100 text-sm">
-        Debug: Total filtered: {{ filteredRecommendations.length }}, Display limit: {{ displayLimit.value }}, Has more: {{ hasMoreResults }}
+      <div v-if="true" class="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 text-sm">
+        Debug: Total recommendations: {{ recommendations.length }}, Total filtered: {{ filteredRecommendations.length }}, Display limit: {{ displayLimit }}, Paginated count: {{ paginatedRecommendations.length }}, Has more: {{ hasMoreResults }}
       </div>
     </div> <!-- End Filters & Controls (Always Visible) -->
 
