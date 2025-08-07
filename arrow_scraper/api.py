@@ -1042,6 +1042,29 @@ def get_bow_setups(current_user):
     conn.close()
     return jsonify([dict(row) for row in setups])
 
+@app.route('/api/bow-setups/<int:setup_id>', methods=['GET'])
+@token_required
+def get_bow_setup(current_user, setup_id):
+    """Get a specific bow setup with its details"""
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get the bow setup and verify ownership
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        setup = cursor.fetchone()
+        
+        if not setup:
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        return jsonify(dict(setup))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/bow-setups', methods=['POST'])
 @token_required
 def create_bow_setup(current_user):

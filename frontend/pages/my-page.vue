@@ -150,112 +150,76 @@
           </div>
 
           <div v-else>
-            <div v-if="bowSetups.length > 0" class="space-y-4 mb-6">
-              <div v-for="setup in bowSetups" :key="setup.id" class="card p-4 border border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-start mb-2">
+            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div 
+                v-for="setup in bowSetups" 
+                :key="setup.id" 
+                class="card p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer"
+                @click="navigateToBowDetail(setup.id)"
+              >
+                <div class="flex justify-between items-start">
                   <div class="flex-1">
-                    <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ setup.name }} ({{ setup.bow_type || 'Unknown' }})</h4>
+                    <!-- Bow Name and Type -->
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      {{ setup.name }} 
+                      <span class="text-sm font-normal text-gray-600 dark:text-gray-400">({{ formatBowType(setup.bow_type) }})</span>
+                    </h4>
                     
-                    <!-- Bow Specifications Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 text-sm">
-                      <!-- Draw Weight & Length -->
+                    <!-- Main Bow Info - Simplified -->
+                    <div class="space-y-1 text-sm">
                       <div class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Draw Weight:</span> {{ setup.draw_weight || 'N/A' }} lbs
-                      </div>
-                      <div v-if="setup.draw_length" class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Draw Length:</span> {{ setup.draw_length }}"
+                        <span class="font-medium">Draw Weight:</span> {{ setup.draw_weight }} lbs
                       </div>
                       
-                      <!-- Arrow Specifications -->
-                      <div v-if="setup.arrow_length" class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Arrow Length:</span> {{ setup.arrow_length }}"
+                      <!-- Show bow model based on type -->
+                      <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
+                        <span v-if="setup.ibo_speed" class="ml-1 text-xs text-gray-500">({{ setup.ibo_speed }} fps)</span>
                       </div>
-                      <div v-if="setup.point_weight" class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Point Weight:</span> {{ setup.point_weight }} gr
-                      </div>
-                    </div>
-                    
-                    <!-- Brand Information Display -->
-                    <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
-                      <span v-if="setup.riser_length" class="ml-1">({{ setup.riser_length }})</span>
-                    </div>
-                    <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="text-sm text-gray-600 dark:text-gray-400">
-                      <span class="font-medium">Limbs:</span> {{ setup.limb_brand }} {{ setup.limb_model }}
-                      <span v-if="setup.limb_length" class="ml-1">({{ setup.limb_length }})</span>
-                    </div>
-                    <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
-                      <span v-if="setup.ibo_speed" class="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-                        {{ setup.ibo_speed }} fps IBO
-                      </span>
-                    </div>
-                    
-                    <!-- Additional Component Weights (if specified) -->
-                    <div v-if="setup.nock_weight || setup.fletching_weight || setup.insert_weight" class="mt-2">
-                      <div class="text-xs text-gray-500 dark:text-gray-500 font-medium mb-1">Component Weights:</div>
-                      <div class="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs text-gray-600 dark:text-gray-400">
-                        <div v-if="setup.nock_weight">
-                          <span class="font-medium">Nock:</span> {{ setup.nock_weight }} gr
-                        </div>
-                        <div v-if="setup.fletching_weight">
-                          <span class="font-medium">Fletching:</span> {{ setup.fletching_weight }} gr
-                        </div>
-                        <div v-if="setup.insert_weight">
-                          <span class="font-medium">Insert:</span> {{ setup.insert_weight }} gr
-                        </div>
+                      <div v-else-if="setup.riser_brand" class="text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
                       </div>
                     </div>
                     
                     <!-- Bow Usage Tags -->
-                    <div v-if="setup.bow_usage" class="mt-2">
+                    <div v-if="setup.bow_usage" class="mt-3">
                       <div class="flex flex-wrap gap-1">
                         <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
-                              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                           {{ formatBowUsage(usage) }}
                         </span>
                       </div>
                     </div>
-                    
-                    <p v-if="setup.description" class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ setup.description }}</p>
+
+                    <!-- Arrow Count Badge -->
+                    <div v-if="setup.arrows && setup.arrows.length > 0" class="mt-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <i class="fas fa-location-arrow mr-1"></i>
+                        {{ setup.arrows.length }} {{ setup.arrows.length === 1 ? 'arrow' : 'arrows' }} selected
+                      </span>
+                    </div>
                   </div>
-                  <div class="flex space-x-2 ml-4">
-                    <CustomButton
-                      @click="navigateToArrowCalculator(setup)"
-                      variant="filled"
-                      size="small"
-                      class="bg-green-600 text-white hover:bg-green-700"
-                    >
-                      <i class="fas fa-calculator mr-1"></i>
-                      Find Arrows
-                    </CustomButton>
+                  
+                  <!-- Quick Actions -->
+                  <div class="flex flex-col space-y-2 ml-4" @click.stop>
                     <CustomButton
                       @click="openEditBowSetupModal(setup)"
                       variant="text"
                       size="small"
-                      class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 p-1"
+                      class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900"
                     >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                      <i class="fas fa-edit"></i>
                     </CustomButton>
                     <CustomButton
                       @click="confirmDeleteSetup(setup.id)"
                       variant="text"
                       size="small"
-                      class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 p-1"
+                      class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
                     >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      <i class="fas fa-trash"></i>
                     </CustomButton>
                   </div>
                 </div>
-                
-                <!-- Arrows List for this Bow Setup -->
-                <BowSetupArrowsList
-                  :arrows="setup.arrows || []"
-                  :loading="setup.loadingArrows || false"
-                  @remove-arrow="removeArrowFromSetup"
-                  @view-details="viewArrowDetails"
-                  @edit-arrow="openEditArrowModal"
-                />
               </div>
             </div>
             <p v-else class="text-gray-600 dark:text-gray-400 mb-4">No bow setups added yet.</p>
@@ -831,6 +795,16 @@ onMounted(async () => {
     await loadBowSetups();
   }
 });
+
+// Navigation methods
+const navigateToBowDetail = (setupId) => {
+  navigateTo(`/bow/${setupId}`);
+};
+
+const formatBowType = (bowType) => {
+  if (!bowType) return 'Unknown';
+  return bowType.charAt(0).toUpperCase() + bowType.slice(1);
+};
 
 // Watch for changes in the user object and reload bow setups
 watch(user, async (newUser) => {
