@@ -193,6 +193,9 @@
       <!-- Mobile menu removed - navigation now handled by bottom nav -->
     </header>
 
+    <!-- Bow Setup Picker - Desktop Only -->
+    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block" />
+
     <!-- Main Content -->
     <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-20 md:pb-6">
       <slot />

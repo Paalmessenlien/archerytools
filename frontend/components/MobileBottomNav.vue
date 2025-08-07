@@ -1,39 +1,44 @@
 <template>
-  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700 md:hidden">
-    <div class="flex h-16">
-      <!-- Menu Button -->
+  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white dark:bg-gray-900 md:hidden shadow-lg">
+    <div class="flex h-20 items-center justify-around px-4">
+      <!-- Home/Menu -->
       <button
         @click="toggleMenu"
-        class="flex items-center justify-center w-16 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-purple-400 transition-colors"
+        class="flex flex-col items-center justify-center p-2 w-16 h-16 rounded-2xl transition-all duration-200"
+        :class="menuOpen 
+          ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200' 
+          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
       >
-        <i class="fas fa-bars text-2xl" v-if="!menuOpen"></i>
-        <i class="fas fa-times text-2xl" v-else></i>
+        <i class="fas text-2xl mb-1" :class="menuOpen ? 'fa-times' : 'fa-bars'"></i>
+        <span class="text-xs font-medium">{{ menuOpen ? 'Close' : 'Menu' }}</span>
       </button>
-      
-      <!-- Center Section - Empty -->
-      <div class="flex-1"></div>
-      
-      <!-- Right Section - My Setup -->
-      <div class="w-20 flex items-center justify-center">
-        <NuxtLink
-          v-if="user"
-          to="/my-page"
-          class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-purple-400 transition-colors"
-          :class="{ 'text-blue-600 dark:text-purple-400': $route.path === '/my-page' }"
-        >
-          <i class="fas fa-user text-xl mb-1"></i>
-          <span class="text-xs">My Setup</span>
-        </NuxtLink>
-        
-        <button
-          v-else
-          @click="$emit('login')"
-          class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-purple-400 transition-colors"
-        >
-          <i class="fas fa-sign-in-alt text-xl mb-1"></i>
-          <span class="text-xs">Login</span>
-        </button>
+
+      <!-- Bow Setup Picker -->
+      <div class="flex items-center justify-center">
+        <BowSetupPicker v-if="user" :is-mobile="true" />
+        <div v-else class="w-16 h-16"></div>
       </div>
+
+      <!-- My Setup / Login -->
+      <NuxtLink
+        v-if="user"
+        to="/my-page"
+        class="flex flex-col items-center justify-center p-2 w-16 h-16 rounded-2xl transition-all duration-200"
+        :class="$route.path === '/my-page'
+          ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200'
+          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+      >
+        <i class="fas fa-user text-xl mb-1"></i>
+        <span class="text-xs font-medium">Profile</span>
+      </NuxtLink>
+      <button
+        v-else
+        @click="handleLogin"
+        class="flex flex-col items-center justify-center p-2 w-16 h-16 rounded-2xl transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <i class="fas fa-sign-in-alt text-xl mb-1"></i>
+        <span class="text-xs font-medium">Login</span>
+      </button>
     </div>
     
     <!-- Mobile Menu Overlay -->
