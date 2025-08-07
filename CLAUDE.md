@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive Archery Tools project that scrapes arrow specifications from manufacturer websites and provides professional tuning calculations for archery equipment. The project has completed all development phases (1-9) and is **READY FOR BETA TESTING** with a production-ready full-stack archery tools platform featuring modern UI/UX.
 
+**📚 COMPREHENSIVE DOCUMENTATION AVAILABLE:**
+- **[Complete Documentation Index](docs/INDEX.md)** - Overview of all documentation
+- **[Database Schema Documentation](docs/DATABASE_SCHEMA.md)** - Complete database structure, tables, relationships
+- **[API Endpoints Documentation](docs/API_ENDPOINTS.md)** - All REST endpoints with request/response examples  
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Architecture, workflows, and troubleshooting
+
+**🚀 For new developers**: Start with [Development Guide](docs/DEVELOPMENT_GUIDE.md) for environment setup and architecture overview.
+
 **Technology Stack:**
 - **Web Scraping**: Crawl4AI + DeepSeek API for intelligent content extraction
 - **Database**: SQLite with comprehensive arrow specifications and relationships  
