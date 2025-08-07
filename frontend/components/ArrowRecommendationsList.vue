@@ -91,23 +91,10 @@
       <!-- Filters & Controls -->
       <md-elevated-card class="mb-6">
         <div class="p-6">
-          <!-- Search Bar -->
-          <div class="mb-4">
-            <md-outlined-text-field 
-              :value="filters.search"
-              @input="filters.search = $event.target.value"
-              label="Search arrows..."
-              type="search"
-              class="w-full"
-            >
-              <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
-            </md-outlined-text-field>
-          </div>
-          
-          <!-- Filter Row -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <!-- Basic Filters Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <!-- Manufacturer Filter -->
-            <md-filled-select :value="filters.manufacturer" @change="filters.manufacturer = $event.target.value" label="Manufacturer">
+            <md-filled-select :value="filters.manufacturer" @change="arrowFiltersStore.updateFilter('manufacturer', $event.target.value)" label="Manufacturer">
               <md-select-option value="">
                 <div slot="headline">All Manufacturers</div>
               </md-select-option>
@@ -117,7 +104,7 @@
             </md-filled-select>
             
             <!-- Match Quality Filter -->
-            <md-filled-select :value="filters.match_quality" @change="filters.match_quality = $event.target.value" label="Match Quality">
+            <md-filled-select :value="filters.match_quality" @change="arrowFiltersStore.updateFilter('match_quality', $event.target.value)" label="Match Quality">
               <md-select-option value="">
                 <div slot="headline">All Matches</div>
               </md-select-option>
@@ -131,57 +118,85 @@
                 <div slot="headline">80%+ Matches</div>
               </md-select-option>
             </md-filled-select>
-            
-            <!-- Sort By -->
-            <md-filled-select :value="sortBy" @change="sortBy = $event.target.value" label="Sort By">
-              <md-select-option value="compatibility">
-                <div slot="headline">Best Match</div>
-              </md-select-option>
-              <md-select-option value="manufacturer">
-                <div slot="headline">Manufacturer</div>
-              </md-select-option>
-              <md-select-option value="diameter_asc">
-                <div slot="headline">Diameter (Small to Large)</div>
-              </md-select-option>
-              <md-select-option value="diameter_desc">
-                <div slot="headline">Diameter (Large to Small)</div>
-              </md-select-option>
-              <md-select-option value="weight_asc">
-                <div slot="headline">Weight (Light to Heavy)</div>
-              </md-select-option>
-              <md-select-option value="weight_desc">
-                <div slot="headline">Weight (Heavy to Light)</div>
-              </md-select-option>
-              <md-select-option value="material">
-                <div slot="headline">Material</div>
-              </md-select-option>
-              <md-select-option value="price">
-                <div slot="headline">Price</div>
-              </md-select-option>
-            </md-filled-select>
           </div>
         
           <!-- Advanced Filters Toggle -->
           <div class="flex items-center justify-between">
-            <md-text-button @click="showAdvancedFilters = !showAdvancedFilters">
+            <md-text-button @click="arrowFiltersStore.toggleAdvancedFilters()">
               <i class="fas transition-transform" :class="showAdvancedFilters ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" style="margin-right: 8px;"></i>
               {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
             </md-text-button>
             
-            <div class="text-sm text-gray-600">
-              Showing {{ filteredRecommendations.length }} arrows
-              <span v-if="recommendedSpine" class="ml-2 font-medium text-primary">
-                (Target Spine: {{ recommendedSpine }})
-              </span>
+            <div class="flex items-center gap-4">
+              <!-- Clear Filters Button -->
+              <md-text-button 
+                v-if="hasActiveFilters" 
+                @click="handleClearFilters"
+                class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
+              >
+                <i class="fas fa-times-circle" style="margin-right: 6px;"></i>
+                Clear Filters
+              </md-text-button>
+              
+              <div class="text-sm text-gray-600">
+                Showing {{ filteredRecommendations.length }} arrows
+                <span v-if="recommendedSpine" class="ml-2 font-medium text-primary">
+                  (Target Spine: {{ recommendedSpine }})
+                </span>
+              </div>
             </div>
           </div>
         
           <!-- Advanced Filters -->
           <div v-if="showAdvancedFilters" class="mt-6 pt-4">
             <md-divider class="mb-4"></md-divider>
+            
+            <!-- Search Bar -->
+            <div class="mb-4">
+              <md-outlined-text-field 
+                :value="filters.search"
+                @input="arrowFiltersStore.updateFilter('search', $event.target.value)"
+                label="Search arrows..."
+                type="search"
+                class="w-full"
+              >
+                <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
+              </md-outlined-text-field>
+            </div>
+            
+            <!-- Sort By -->
+            <div class="mb-4">
+              <md-filled-select :value="sortBy" @change="arrowFiltersStore.updateFilter('sortBy', $event.target.value)" label="Sort By" class="w-full md:w-1/2">
+                <md-select-option value="compatibility">
+                  <div slot="headline">Best Match</div>
+                </md-select-option>
+                <md-select-option value="manufacturer">
+                  <div slot="headline">Manufacturer</div>
+                </md-select-option>
+                <md-select-option value="diameter_asc">
+                  <div slot="headline">Diameter (Small to Large)</div>
+                </md-select-option>
+                <md-select-option value="diameter_desc">
+                  <div slot="headline">Diameter (Large to Small)</div>
+                </md-select-option>
+                <md-select-option value="weight_asc">
+                  <div slot="headline">Weight (Light to Heavy)</div>
+                </md-select-option>
+                <md-select-option value="weight_desc">
+                  <div slot="headline">Weight (Heavy to Light)</div>
+                </md-select-option>
+                <md-select-option value="material">
+                  <div slot="headline">Material</div>
+                </md-select-option>
+                <md-select-option value="price">
+                  <div slot="headline">Price</div>
+                </md-select-option>
+              </md-filled-select>
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <!-- Diameter Range Dropdown -->
-              <md-filled-select :value="filters.diameter_range" @change="filters.diameter_range = $event.target.value" label="Diameter Range">
+              <md-filled-select :value="filters.diameter_range" @change="arrowFiltersStore.updateFilter('diameter_range', $event.target.value)" label="Diameter Range">
                 <md-select-option value="">
                   <div slot="headline">All Diameters</div>
                 </md-select-option>
@@ -205,14 +220,14 @@
               <!-- Weight Range -->
               <md-outlined-text-field 
                 :value="filters.weight_min"
-                @input="filters.weight_min = $event.target.value"
+                @input="arrowFiltersStore.updateFilter('weight_min', $event.target.value)"
                 type="number" 
                 step="0.1"
                 label="Min Weight (GPI)"
               ></md-outlined-text-field>
               <md-outlined-text-field 
                 :value="filters.weight_max"
-                @input="filters.weight_max = $event.target.value"
+                @input="arrowFiltersStore.updateFilter('weight_max', $event.target.value)"
                 type="number" 
                 step="0.1"
                 label="Max Weight (GPI)"
@@ -509,6 +524,7 @@
 
 <script setup>
 import { useBowConfigStore } from '~/stores/bowConfig'
+import { useArrowFiltersStore } from '~/stores/arrowFilters'
 
 // Props
 const props = defineProps({
@@ -525,10 +541,15 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['arrow-added-to-setup', 'error'])
 
-// Store
+// Stores
 const bowConfigStore = useBowConfigStore()
 const bowConfig = computed(() => bowConfigStore.bowConfig)
 const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
+
+const arrowFiltersStore = useArrowFiltersStore()
+const filters = computed(() => arrowFiltersStore.filters)
+const showAdvancedFilters = computed(() => arrowFiltersStore.showAdvancedFilters)
+const sortBy = computed(() => filters.value.sortBy)
 
 // API
 const api = useApi()
@@ -537,23 +558,8 @@ const api = useApi()
 const recommendations = ref([])
 const pending = ref(false)
 const error = ref(null)
-const showAdvancedFilters = ref(false)
 const currentPage = ref(1)
 const perPage = 20
-
-// Filters
-const filters = ref({
-  search: '',
-  manufacturer: '',
-  match_quality: '',
-  weight_min: '',
-  weight_max: '',
-  diameter_range: '',
-  diameter_min: '',
-  diameter_max: ''
-})
-
-const sortBy = ref('compatibility')
 
 // Manufacturers from API
 const manufacturers = ref([])
@@ -877,18 +883,20 @@ const getNumericDiameter = (arrow) => {
   return 0
 }
 
-const clearFilters = () => {
-  filters.value = {
-    search: '',
-    manufacturer: '',
-    match_quality: '',
-    weight_min: '',
-    weight_max: '',
-    diameter_range: '',
-    diameter_min: '',
-    diameter_max: ''
-  }
+const hasActiveFilters = computed(() => {
+  const f = filters.value
+  return !!(f.search || f.manufacturer || f.match_quality || f.weight_min || 
+           f.weight_max || f.diameter_range || f.diameter_min || f.diameter_max ||
+           f.sortBy !== 'compatibility')
+})
+
+const handleClearFilters = () => {
+  arrowFiltersStore.clearFilters()
   currentPage.value = 1
+}
+
+const clearFilters = () => {
+  handleClearFilters()
 }
 
 
@@ -1208,12 +1216,15 @@ watch(() => filters.value.manufacturer, async (newManufacturer, oldManufacturer)
 })
 
 // Watch for other filter changes
-watch(() => filters.value, () => {
+watch(filters, () => {
   currentPage.value = 1
 }, { deep: true })
 
 // Initial load
 onMounted(() => {
+  // Initialize filters from localStorage
+  arrowFiltersStore.initializeFilters()
+  
   loadManufacturers() // Load manufacturers first
   loadRecommendations()
 })
