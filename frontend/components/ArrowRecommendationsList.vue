@@ -478,8 +478,15 @@
       </div>
       
       <!-- Debug Info (remove in production) -->
-      <div v-if="true" class="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 text-sm">
-        Debug: Total recommendations: {{ recommendations.length }}, Total filtered: {{ filteredRecommendations.length }}, Display limit: {{ displayLimit }}, Paginated count: {{ paginatedRecommendations.length }}, Has more: {{ hasMoreResults }}
+      <div v-if="false" class="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 text-sm">
+        <div>Debug Info:</div>
+        <div>• Total recommendations loaded: {{ recommendations.length }}</div>
+        <div>• Total after filtering: {{ filteredRecommendations.length }}</div>
+        <div>• Display limit: {{ displayLimit }}</div>
+        <div>• Currently showing: {{ paginatedRecommendations.length }}</div>
+        <div>• Has more results: {{ hasMoreResults }}</div>
+        <div>• Remaining: {{ remainingResults }}</div>
+        <div>• Pending: {{ pending }}</div>
       </div>
     </div> <!-- End Filters & Controls (Always Visible) -->
 
@@ -1203,7 +1210,14 @@ const loadRecommendations = async () => {
     try {
       const result = await api.getArrowRecommendations(requestData)
       recommendations.value = result.recommended_arrows || []
-      console.log('Loaded recommendations:', recommendations.value.length, 'arrows')
+      console.log('API Response Summary:', {
+        requested_limit: requestData.limit,
+        received_count: recommendations.value.length,
+        result_keys: Object.keys(result),
+        has_more_field: result.has_more || 'not_present',
+        total_available: result.total || 'not_present'
+      })
+      console.log('Full API result structure:', result)
       
       // Debug: Check if we got proper match scores
       if (recommendations.value.length > 0) {
