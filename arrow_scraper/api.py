@@ -772,7 +772,9 @@ def get_arrow_recommendations():
         except Exception as e:
             return jsonify({'error': f'Failed to create tuning session: {str(e)}'}), 500
         
-        recommendations = session.recommended_arrows[:20]  # Limit to top 20
+        # Get limit from request data, default to 20, max 300
+        limit = min(int(data.get('limit', 20)), 300)
+        recommendations = session.recommended_arrows[:limit]
         
         # Convert recommendations to API format
         api_recommendations = []

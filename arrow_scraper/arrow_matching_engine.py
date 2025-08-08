@@ -62,7 +62,7 @@ class MatchRequest:
     material_preference: str = None                    # wood, carbon, aluminum, etc.
     
     # Constraints
-    max_results: int = 10
+    max_results: int = 50  # Allow more results for progressive loading
     min_spine_options: int = 3  # Minimum spine options available
     
 class ArrowMatchingEngine:

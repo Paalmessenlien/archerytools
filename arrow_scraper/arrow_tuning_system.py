@@ -367,7 +367,7 @@ Report ID: {session.session_id}
             target_foc_range=archer_profile.target_foc_range,
             arrow_type_preference=arrow_type,
             material_preference=material_preference,
-            max_results=10
+            max_results=50  # Allow more results for progressive loading
         )
         
         # Apply custom requirements
