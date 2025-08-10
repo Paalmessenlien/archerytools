@@ -32,100 +32,61 @@
     </div>
 
     <div v-else-if="user">
-      <!-- Archer Profile Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Archer Profile</h2>
-          <div class="flex space-x-3">
-            <CustomButton
-              @click="openEditModal"
-              variant="filled"
-              class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-            >
-              Edit Profile
-            </CustomButton>
-            <CustomButton
-              @click="logout"
-              variant="outlined"
-              class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
-            >
-              Logout
-            </CustomButton>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Profile Picture & Basic Info -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile</h3>
-            
-            <!-- Profile Picture Upload -->
-            <div class="mb-6">
-              <ImageUpload
-                :current-image-url="user.profile_picture_url"
-                alt-text="Profile picture"
-                upload-path="profile"
-                @upload-success="handleProfilePictureUpload"
-                @upload-error="handleUploadError"
-                @image-removed="handleProfilePictureRemoval"
-              />
-            </div>
-            
-            <div class="space-y-3">
-              <div>
-                <span class="text-sm text-gray-600 dark:text-gray-400">Name:</span>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.name || 'Not set' }}</p>
-              </div>
-              <div>
-                <span class="text-sm text-gray-600 dark:text-gray-400">Email:</span>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.email }}</p>
+      <!-- Compact Profile Header -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <!-- Profile Summary -->
+          <div class="flex items-center space-x-4">
+            <!-- Profile Picture - Smaller -->
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                <img 
+                  v-if="user.profile_picture_url" 
+                  :src="user.profile_picture_url" 
+                  :alt="user.name || 'Profile picture'" 
+                  class="w-12 h-12 rounded-full object-cover"
+                />
+                <span v-else class="text-lg">
+                  {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
+                </span>
               </div>
             </div>
-          </div>
-
-          <!-- Archer Specifications -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Physical Specifications</h3>
-            <div class="space-y-3">
-              <div>
-                <span class="text-sm text-gray-600 dark:text-gray-400">Draw Length:</span>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{{ user.draw_length || 28.0 }}"</p>
-              </div>
-              <div>
-                <span class="text-sm text-gray-600 dark:text-gray-400">Skill Level:</span>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+            
+            <!-- Basic Info -->
+            <div>
+              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                {{ user.name || 'Archer' }}
+              </h2>
+              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                <span>Draw: {{ user.draw_length || 28.0 }}"</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                       :class="getSkillLevelClass(user.skill_level)">
                   {{ formatSkillLevel(user.skill_level) }}
                 </span>
               </div>
             </div>
           </div>
-
-          <!-- Shooting Preferences -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Shooting Preferences</h3>
-            <div class="space-y-3">
-              <div>
-                <span class="text-sm text-gray-600 dark:text-gray-400">Primary Style:</span>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      :class="getShootingStyleClass(user.shooting_style)">
-                  {{ formatShootingStyles(user.shooting_style) }}
-                </span>
-              </div>
-              <div v-if="user.preferred_manufacturers && user.preferred_manufacturers.length > 0">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Preferred Brands:</span>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <span v-for="brand in user.preferred_manufacturers" :key="brand"
-                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {{ brand }}
-                  </span>
-                </div>
-              </div>
-              <div v-if="user.notes">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Notes:</span>
-                <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ user.notes }}</p>
-              </div>
-            </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex space-x-2">
+            <CustomButton
+              @click="openEditModal"
+              variant="outlined"
+              size="small"
+              class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900"
+            >
+              <i class="fas fa-edit mr-1"></i>
+              Edit
+            </CustomButton>
+            <CustomButton
+              @click="logout"
+              variant="outlined"
+              size="small"
+              class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
+            >
+              <i class="fas fa-sign-out-alt mr-1"></i>
+              Logout
+            </CustomButton>
           </div>
         </div>
       </div>
@@ -140,9 +101,55 @@
         @save="saveProfile"
       />
 
-      <!-- Bow Setups Section -->
-      <div class="mt-8">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">My Bow Setups</h3>
+      <!-- Bow Setups Dashboard Section -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">My Bow Setups</h3>
+            <p class="text-gray-600 dark:text-gray-400">Manage your bow configurations and arrow selections</p>
+          </div>
+          <CustomButton
+            @click="openAddSetupModal"
+            variant="filled"
+            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+          >
+            <i class="fas fa-plus mr-2"></i>
+            Add New Setup
+          </CustomButton>
+        </div>
+
+        <!-- Quick Stats -->
+        <div v-if="bowSetups.length > 0" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+            <div class="flex items-center">
+              <i class="fas fa-bow-arrow text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+              <div>
+                <p class="text-2xl font-bold text-blue-900 dark:text-blue-200">{{ bowSetups.length }}</p>
+                <p class="text-sm text-blue-700 dark:text-blue-300">Bow {{ bowSetups.length === 1 ? 'Setup' : 'Setups' }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+            <div class="flex items-center">
+              <i class="fas fa-location-arrow text-2xl text-green-600 dark:text-green-400 mr-3"></i>
+              <div>
+                <p class="text-2xl font-bold text-green-900 dark:text-green-200">{{ totalArrows }}</p>
+                <p class="text-sm text-green-700 dark:text-green-300">Selected Arrows</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+            <div class="flex items-center">
+              <i class="fas fa-calculator text-2xl text-purple-600 dark:text-purple-400 mr-3"></i>
+              <div>
+                <p class="text-2xl font-bold text-purple-900 dark:text-purple-200">{{ averageDrawWeight }}</p>
+                <p class="text-sm text-purple-700 dark:text-purple-300">Avg. Draw Weight</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
           <div v-if="isLoadingSetups" class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
@@ -222,15 +229,23 @@
                 </div>
               </div>
             </div>
-            <p v-else class="text-gray-600 dark:text-gray-400 mb-4">No bow setups added yet.</p>
-
-            <CustomButton
-              @click="openAddSetupModal"
-              variant="outlined"
-              class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900"
-            >
-              Add New Bow Setup
-            </CustomButton>
+            
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <i class="fas fa-bow-arrow text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+              <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Bow Setups Yet</h4>
+              <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                Get started by creating your first bow setup. Add your bow specifications and start finding the perfect arrows.
+              </p>
+              <CustomButton
+                @click="openAddSetupModal"
+                variant="filled"
+                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+              >
+                <i class="fas fa-plus mr-2"></i>
+                Create Your First Setup
+              </CustomButton>
+            </div>
           </div>
 
         <!-- Add/Edit Bow Setup Modal -->
@@ -782,6 +797,24 @@ const handleProfilePictureRemoval = async () => {
 const handleUploadError = (errorMessage) => {
   showNotification(errorMessage, 'error');
 };
+
+// Dashboard computed properties
+const totalArrows = computed(() => {
+  return bowSetups.value.reduce((total, setup) => {
+    return total + (setup.arrows ? setup.arrows.length : 0);
+  }, 0);
+});
+
+const averageDrawWeight = computed(() => {
+  if (bowSetups.value.length === 0) return '0 lbs';
+  
+  const totalWeight = bowSetups.value.reduce((total, setup) => {
+    return total + (setup.draw_weight || 0);
+  }, 0);
+  
+  const average = totalWeight / bowSetups.value.length;
+  return `${Math.round(average)} lbs`;
+});
 
 onMounted(async () => {
   // Ensure user data is fetched on page load

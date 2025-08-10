@@ -36,6 +36,30 @@
 
     <!-- Arrow Details -->
     <div v-else-if="arrow" class="space-y-6">
+      <!-- Calculation Context (when coming from calculator) -->
+      <CalculationSummary
+        v-if="calculationContext"
+        :bow-config="calculationContext.bowConfig"
+        :compatibility-score="calculationContext.compatibilityScore"
+        :match-percentage="calculationContext.matchPercentage"
+        :compatibility-rating="calculationContext.compatibilityRating"
+        :reasons="calculationContext.reasons"
+        :spine-spec="calculationContext.spineSpec"
+        @edit-configuration="showInlineCalculator = true"
+        @back-to-calculator="navigateTo('/calculator')"
+        class="mb-6"
+      />
+      
+      <!-- Inline Calculator (when editing) -->
+      <InlineCalculator
+        v-if="showInlineCalculator && calculationContext"
+        :bow-config="editingBowConfig || calculationContext.bowConfig"
+        :is-recalculating="isRecalculating"
+        @close="showInlineCalculator = false"
+        @update="handleConfigUpdate"
+        @apply="handleConfigApply"
+        class="mb-6"
+      />
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div>
@@ -113,12 +137,18 @@
 
       <!-- Spine Specifications -->
       <div v-if="arrow.spine_specifications && arrow.spine_specifications.length > 0" class="card">
-        <h3 class="text-lg font-semibold mb-4">
-          Spine Specifications
-          <span class="text-sm font-normal text-gray-600 ml-2">
-            ({{ arrow.spine_specifications.length }} options available)
-          </span>
-        </h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">
+            Spine Specifications
+            <span class="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">
+              ({{ arrow.spine_specifications.length }} options available)
+            </span>
+          </h3>
+          <div v-if="calculationContext?.spineSpec" class="flex items-center text-sm text-blue-600 dark:text-blue-400">
+            <i class="fas fa-star mr-1"></i>
+            Recommended: {{ calculationContext.spineSpec.spine }}
+          </div>
+        </div>
         
         <div class="table-responsive">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -145,10 +175,16 @@
               <tr 
                 v-for="spec in arrow.spine_specifications" 
                 :key="spec.id"
-                class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                :class="[
+                  'hover:bg-gray-50 dark:hover:bg-gray-700',
+                  isRecommendedSpine(spec) ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''
+                ]"
               >
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {{ spec.spine }}
+                  <div class="flex items-center space-x-2">
+                    <span>{{ spec.spine }}</span>
+                    <i v-if="isRecommendedSpine(spec)" class="fas fa-star text-blue-500 text-xs"></i>
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {{ spec.outer_diameter ? spec.outer_diameter.toFixed(3) + '"' : 'N/A' }}
@@ -204,9 +240,20 @@
         
         <div class="flex flex-wrap gap-3">
           <NuxtLink 
-            to="/recommendations" 
+            v-if="calculationContext"
+            to="/calculator" 
             class="btn-primary"
           >
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Calculator
+          </NuxtLink>
+          
+          <NuxtLink 
+            v-else
+            to="/calculator" 
+            class="btn-primary"
+          >
+            <i class="fas fa-calculator mr-2"></i>
             Find Compatible Setup
           </NuxtLink>
           
@@ -214,6 +261,7 @@
             @click="copyToClipboard"
             class="btn-secondary"
           >
+            <i class="fas fa-copy mr-2"></i>
             Copy Arrow Info
           </button>
           
@@ -224,6 +272,7 @@
             rel="noopener"
             class="btn-secondary"
           >
+            <i class="fas fa-external-link-alt mr-2"></i>
             View Original Source
           </a>
         </div>
@@ -232,7 +281,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { BowConfiguration, SpineSpecification } from '~/types/arrow'
+
 // API
 const api = useApi()
 const route = useRoute()
@@ -242,6 +293,12 @@ const arrow = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const imageError = ref(false)
+
+// Calculation context state
+const calculationContext = ref(null)
+const showInlineCalculator = ref(false)
+const editingBowConfig = ref(null)
+const isRecalculating = ref(false)
 
 // Get arrow ID from route
 const arrowId = computed(() => route.params.id)
@@ -258,6 +315,80 @@ const loadArrowDetails = async () => {
     console.error('Error loading arrow details:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const parseCalculationContext = () => {
+  const query = route.query
+  
+  if (query.bow_config && query.compatibility_score) {
+    try {
+      const bowConfig = JSON.parse(atob(query.bow_config))
+      const reasons = query.reasons ? JSON.parse(atob(query.reasons)) : []
+      const spineSpec = query.spine_spec ? JSON.parse(atob(query.spine_spec)) : null
+      
+      calculationContext.value = {
+        bowConfig,
+        compatibilityScore: parseFloat(query.compatibility_score),
+        matchPercentage: parseFloat(query.match_percentage),
+        compatibilityRating: query.compatibility_rating,
+        reasons,
+        spineSpec
+      }
+    } catch (err) {
+      console.error('Error parsing calculation context:', err)
+      calculationContext.value = null
+    }
+  }
+}
+
+const handleConfigUpdate = (newConfig: BowConfiguration) => {
+  editingBowConfig.value = newConfig
+  // TODO: Add debounced real-time recalculation here
+}
+
+const handleConfigApply = async (newConfig: BowConfiguration) => {
+  isRecalculating.value = true
+  showInlineCalculator.value = false
+  
+  try {
+    // Recalculate arrow compatibility with new configuration
+    const response = await api.getArrowRecommendations(newConfig)
+    
+    // Find this arrow in the new recommendations
+    const thisArrowRecommendation = response.recommended_arrows.find(
+      rec => rec.arrow.id === parseInt(arrowId.value)
+    )
+    
+    if (thisArrowRecommendation) {
+      // Update calculation context with new results
+      calculationContext.value = {
+        bowConfig: newConfig,
+        compatibilityScore: thisArrowRecommendation.compatibility_score,
+        matchPercentage: thisArrowRecommendation.match_percentage,
+        compatibilityRating: thisArrowRecommendation.compatibility_rating,
+        reasons: thisArrowRecommendation.reasons,
+        spineSpec: thisArrowRecommendation.spine_specification
+      }
+      
+      // Update URL to reflect new calculation
+      await navigateTo({
+        path: `/arrows/${arrowId.value}`,
+        query: {
+          bow_config: btoa(JSON.stringify(newConfig)),
+          compatibility_score: thisArrowRecommendation.compatibility_score.toString(),
+          match_percentage: thisArrowRecommendation.match_percentage.toString(),
+          compatibility_rating: thisArrowRecommendation.compatibility_rating,
+          reasons: btoa(JSON.stringify(thisArrowRecommendation.reasons)),
+          spine_spec: btoa(JSON.stringify(thisArrowRecommendation.spine_specification))
+        }
+      }, { replace: true })
+    }
+  } catch (err) {
+    console.error('Error recalculating compatibility:', err)
+  } finally {
+    isRecalculating.value = false
+    editingBowConfig.value = null
   }
 }
 
@@ -296,6 +427,11 @@ const getGPIRange = () => {
   return min === max ? `${min.toFixed(1)}` : `${min.toFixed(1)}-${max.toFixed(1)}`
 }
 
+const isRecommendedSpine = (spec) => {
+  return calculationContext.value?.spineSpec && 
+         calculationContext.value.spineSpec.spine === spec.spine
+}
+
 const copyToClipboard = async () => {
   if (!arrow.value) return
   
@@ -319,6 +455,7 @@ Available Spines: ${arrow.value.spine_specifications?.length || 0} options`
 onMounted(() => {
   if (arrowId.value) {
     loadArrowDetails()
+    parseCalculationContext()
   }
 })
 
@@ -326,8 +463,14 @@ onMounted(() => {
 watch(() => arrowId.value, (newId) => {
   if (newId) {
     loadArrowDetails()
+    parseCalculationContext()
   }
 })
+
+// Watch for query parameter changes
+watch(() => route.query, () => {
+  parseCalculationContext()
+}, { deep: true })
 
 // Set dynamic page title
 watchEffect(() => {

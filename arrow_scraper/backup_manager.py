@@ -67,14 +67,15 @@ class BackupManager:
         return './backups'
     
     def _resolve_arrow_db_path(self) -> str:
-        """Resolve arrow database path with fallback options"""
-        # Try multiple locations
+        """Resolve arrow database path with fallback options - UNIFIED ARCHITECTURE"""
+        # Try multiple locations - NEW UNIFIED PATHS FIRST
         arrow_db_paths = [
-            os.environ.get('ARROW_DATABASE_PATH'),
-            '/app/databases/arrow_database.db',     # Docker path
-            '/app/arrow_data/arrow_database.db',    # Alternative Docker path  
-            './databases/arrow_database.db',       # Local development path
-            './arrow_database.db',                 # Fallback local path
+            os.environ.get('ARROW_DATABASE_PATH'),  # Environment override
+            '/app/databases/arrow_database.db',     # 🔴 UNIFIED Docker path (HIGHEST)
+            './databases/arrow_database.db',       # 🔴 UNIFIED local path (PRODUCTION READY)
+            '/app/arrow_data/arrow_database.db',    # 🟡 Legacy Docker path  
+            './arrow_scraper/databases/arrow_database.db',  # 🟡 Legacy subfolder path
+            './arrow_database.db',                 # 🔴 Legacy local path (LOWEST)
         ]
         
         for db_path in arrow_db_paths:
@@ -85,14 +86,15 @@ class BackupManager:
         return './databases/arrow_database.db'
     
     def _resolve_user_db_path(self) -> str:
-        """Resolve user database path with fallback options"""
-        # Try multiple locations
+        """Resolve user database path with fallback options - UNIFIED ARCHITECTURE"""
+        # Try multiple locations - NEW UNIFIED PATHS FIRST
         user_db_paths = [
-            os.environ.get('USER_DATABASE_PATH'),
-            '/app/databases/user_data.db',         # Docker path
-            '/app/user_data/user_data.db',         # Alternative Docker path
-            './databases/user_data.db',           # Local development path
-            './user_data.db',                     # Fallback local path
+            os.environ.get('USER_DATABASE_PATH'),   # Environment override
+            '/app/databases/user_data.db',         # 🔴 UNIFIED Docker path (HIGHEST)
+            './databases/user_data.db',           # 🔴 UNIFIED local path (PRODUCTION READY)
+            '/app/user_data/user_data.db',         # 🟡 Legacy Docker path
+            './arrow_scraper/databases/user_data.db',  # 🟡 Legacy subfolder path
+            './user_data.db',                     # 🔴 Legacy local path (LOWEST)
         ]
         
         for db_path in user_db_paths:

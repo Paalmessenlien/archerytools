@@ -409,7 +409,7 @@
                     Add to {{ props.selectedBowSetup.name }}
                   </md-filled-button>
                   
-                  <md-filled-button size="small" @click="viewArrowDetails(recommendation.arrow.id)">
+                  <md-filled-button size="small" @click="viewArrowDetails(recommendation.arrow.id, recommendation)">
                     <i class="fas fa-eye" style="margin-right: 6px;"></i>
                     View Details
                   </md-filled-button>
@@ -623,7 +623,8 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { BowConfiguration, ArrowRecommendation } from '~/types/arrow'
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useArrowFiltersStore } from '~/stores/arrowFilters'
 
@@ -1155,9 +1156,30 @@ const addToSetup = async (recommendation) => {
   }
 }
 
-const viewArrowDetails = (arrowId) => {
-  // Navigate to arrow details page
-  navigateTo(`/arrows/${arrowId}`)
+const viewArrowDetails = (arrowId, recommendation = null) => {
+  // Navigate to arrow details page with calculation context if available
+  const query: Record<string, string> = {}
+  
+  if (recommendation && props.bowConfig) {
+    // Encode bow configuration
+    query.bow_config = btoa(JSON.stringify(props.bowConfig))
+    
+    // Include recommendation data
+    query.compatibility_score = recommendation.compatibility_score.toString()
+    query.match_percentage = recommendation.match_percentage.toString()
+    query.compatibility_rating = recommendation.compatibility_rating
+    query.reasons = btoa(JSON.stringify(recommendation.reasons))
+    
+    // Include spine specification details
+    if (recommendation.spine_specification) {
+      query.spine_spec = btoa(JSON.stringify(recommendation.spine_specification))
+    }
+  }
+  
+  navigateTo({
+    path: `/arrows/${arrowId}`,
+    query: Object.keys(query).length > 0 ? query : undefined
+  })
 }
 
 const loadManufacturers = async () => {

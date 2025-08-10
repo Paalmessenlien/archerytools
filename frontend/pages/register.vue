@@ -209,7 +209,7 @@ const submitProfile = async () => {
     // Pass the entire profile data object (not just a string)
     await updateUserProfile(profileData.value);
     await fetchUser(); // Ensure local user state is updated
-    router.push('/my-page'); // Redirect to My Setup after successful update
+    router.push('/my-setup'); // Redirect to My Setup after successful update
   } catch (err) {
     console.error('Error submitting profile:', err);
     error.value = err.message || 'Failed to save profile. Please try again.';

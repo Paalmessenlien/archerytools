@@ -32,9 +32,9 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
       
-      # Database Paths - Compatible with existing startup script
-      - ARROW_DATABASE_PATH=/app/arrow_database.db
-      - USER_DATABASE_PATH=/app/user_data/user_data.db
+      # Unified Database Paths - NEW UNIFIED ARCHITECTURE
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
       
       # Startup Configuration
       - DATABASE_VERIFICATION=${DATABASE_VERIFICATION:-enabled}
@@ -43,8 +43,8 @@ services:
       # Configuration
       - ./.env:/app/.env:ro
       
-      # Database Volumes - Compatible with existing structure
-      - arrowtuner-databases:/app/user_data
+      # Unified Database Volume - NEW ARCHITECTURE
+      - ./databases:/app/databases
       
       # Data and Logs
       - ./arrow_scraper/data:/app/data:ro
@@ -139,11 +139,11 @@ services:
       dockerfile: ${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-init
     environment:
-      - ARROW_DATABASE_PATH=/app/arrow_database.db
-      - USER_DATABASE_PATH=/app/user_data/user_data.db
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
       - INIT_MODE=true
     volumes:
-      - arrowtuner-databases:/app/user_data
+      - ./databases:/app/databases
       - ./arrow_scraper/data:/app/data:ro
       - ./.env:/app/.env:ro
     networks:
@@ -158,13 +158,13 @@ services:
       dockerfile: ${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-backup
     environment:
-      - ARROW_DATABASE_PATH=/app/arrow_database.db
-      - USER_DATABASE_PATH=/app/user_data/user_data.db
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
+      - USER_DATABASE_PATH=/app/databases/user_data.db
       - BACKUP_DIR=/app/backups
       - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
     volumes:
-      - arrowtuner-databases:/app/user_data:ro
-      - arrowtuner-backups:/app/backups
+      - ./databases:/app/databases:ro
+      - ./backups:/app/backups
     networks:
       - arrowtuner-network
     command: ["python3", "/app/backup_manager.py", "scheduled"]
@@ -172,18 +172,10 @@ services:
     profiles:
       - with-backup
 
-# Unified Volume Configuration
+# Unified Volume Configuration - Host directories only
 volumes:
-  # Single unified database volume for both databases
-  arrowtuner-databases:
-    driver: local
-  
-  # Unified logs volume
+  # Logs volume (only volume needed now)
   arrowtuner-logs:
-    driver: local
-  
-  # Backup volume
-  arrowtuner-backups:
     driver: local
 
 # Network Configuration

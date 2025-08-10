@@ -121,13 +121,16 @@ def get_database():
     return database
 
 def get_arrow_db():
-    """Get arrow database connection with fallback locations"""
+    """Get arrow database connection with fallback locations - sync with ArrowDatabase class"""
     try:
-        # Try multiple database locations
+        # UNIFIED DATABASE PATH RESOLUTION - NEW ARCHITECTURE (August 2025)
         db_paths = [
-            '/app/arrow_database.db',          # Primary location
-            '/app/arrow_database_backup.db',   # Backup location
-            'arrow_database.db',               # Development location
+            '/app/databases/arrow_database.db',                    # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
+            '../databases/arrow_database.db',                      # 🔴 UNIFIED local path (PRODUCTION READY)
+            'databases/arrow_database.db',                         # 🟡 Legacy unified subfolder
+            '/app/arrow_data/arrow_database.db',                   # 🟡 Legacy Docker volume path
+            '/app/arrow_database.db',                              # 🟡 Legacy Docker path
+            'arrow_database.db',                                   # 🔴 Legacy current folder (LOWEST PRIORITY)
         ]
         
         database_path = None
@@ -1315,12 +1318,18 @@ def get_setup_arrows(current_user, setup_id):
             try:
                 arrow_cursor = arrow_conn.cursor()
                 for row in rows:
+                    print(f"Looking for arrow_id: {row['arrow_id']}")  # Debug log
                     # Get basic arrow info
                     arrow_cursor.execute('''
                         SELECT manufacturer, model_name, material, description
                         FROM arrows WHERE id = ?
                     ''', (row['arrow_id'],))
                     arrow_data = arrow_cursor.fetchone()
+                    
+                    if arrow_data:
+                        print(f"Found arrow data: {dict(arrow_data) if hasattr(arrow_data, 'keys') else arrow_data}")  # Debug log
+                    else:
+                        print(f"No arrow found for arrow_id: {row['arrow_id']}")  # Debug log
                     
                     # Get spine specifications for this arrow
                     arrow_cursor.execute('''
@@ -1335,10 +1344,15 @@ def get_setup_arrows(current_user, setup_id):
                             'basic_info': arrow_data,
                             'spine_specifications': [dict(spec) for spec in spine_specs] if spine_specs else []
                         }
+                    else:
+                        print(f"Warning: Arrow ID {row['arrow_id']} not found in arrow database")
                 arrow_conn.close()
             except Exception as e:
                 print(f"Error fetching arrow details: {e}")
-                arrow_conn.close()
+                import traceback
+                traceback.print_exc()
+                if arrow_conn:
+                    arrow_conn.close()
         else:
             print("Warning: Arrow database connection failed - arrow details will not be available")
         
@@ -1362,13 +1376,23 @@ def get_setup_arrows(current_user, setup_id):
                 basic_info = arrow_detail['basic_info']
                 spine_specifications = arrow_detail['spine_specifications']
                 
-                arrow_info['arrow'] = {
-                    'manufacturer': basic_info['manufacturer'], 
-                    'model_name': basic_info['model_name'],
-                    'material': basic_info['material'],
-                    'description': basic_info['description'],
-                    'spine_specifications': spine_specifications
-                }
+                # Handle both dict (sqlite3.Row) and tuple access
+                if hasattr(basic_info, 'keys'):  # Dictionary-like (sqlite3.Row)
+                    arrow_info['arrow'] = {
+                        'manufacturer': basic_info['manufacturer'], 
+                        'model_name': basic_info['model_name'],
+                        'material': basic_info['material'],
+                        'description': basic_info['description'],
+                        'spine_specifications': spine_specifications
+                    }
+                else:  # Tuple access (index based on SELECT order: manufacturer, model_name, material, description)
+                    arrow_info['arrow'] = {
+                        'manufacturer': basic_info[0] if len(basic_info) > 0 else 'Unknown Manufacturer', 
+                        'model_name': basic_info[1] if len(basic_info) > 1 else 'Unknown Model',
+                        'material': basic_info[2] if len(basic_info) > 2 else 'Unknown Material',
+                        'description': basic_info[3] if len(basic_info) > 3 else 'No description available',
+                        'spine_specifications': spine_specifications
+                    }
                 
                 # Add component weights from setup_arrows table if available
                 for field in ['nock_weight', 'insert_weight', 'bushing_weight', 'fletching_weight']:

@@ -64,7 +64,7 @@
                         <i class="fas fa-bow-arrow text-4xl text-gray-500 dark:text-gray-400 mb-2"></i>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">No bow setups found</p>
                         <NuxtLink
-                          to="/my-page"
+                          to="/my-setup"
                           class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-full text-sm font-medium hover:bg-primary-700 transition-colors"
                           @click="closePicker"
                         >
@@ -119,7 +119,7 @@
             <!-- Quick Actions -->
             <div class="flex items-center space-x-2">
               <NuxtLink
-                to="/my-page"
+                to="/my-setup"
                 class="text-xs text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
               >
                 Manage Bows
@@ -207,7 +207,7 @@
                 <i class="fas fa-bow-arrow text-2xl text-gray-400 dark:text-gray-500 mb-3"></i>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">No bow setups found</p>
                 <NuxtLink
-                  to="/my-page"
+                  to="/my-setup"
                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
                   @click="closePicker"
                 >

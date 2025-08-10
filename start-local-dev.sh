@@ -96,6 +96,10 @@ start_api() {
     export PORT="$API_PORT"
     export PYTHONUNBUFFERED="1"
     
+    # NEW UNIFIED DATABASE ARCHITECTURE (August 2025)
+    export ARROW_DATABASE_PATH="$(pwd)/databases/arrow_database.db"
+    export USER_DATABASE_PATH="$(pwd)/databases/user_data.db"
+    
     # Start Flask API
     python api.py > ../logs/api.log 2>&1 &
     

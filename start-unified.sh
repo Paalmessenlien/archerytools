@@ -199,12 +199,26 @@ cleanup_old_setup() {
     print_message "$GREEN" "✅ Cleanup completed"
 }
 
-# Function to migrate databases to unified location
-migrate_databases() {
-    print_message "$BLUE" "🗄️  Migrating databases to unified location..."
+# Function to ensure unified databases exist
+ensure_unified_databases() {
+    print_message "$BLUE" "🗄️  Ensuring unified databases directory..."
     
-    # This will be handled by the db-init service
-    print_message "$GREEN" "✅ Database migration will be handled by db-init service"
+    # Create unified databases directory if it doesn't exist
+    mkdir -p "./databases"
+    
+    # The databases should already be in the unified location
+    # If not, they will be created by the database classes on first run
+    if [[ -f "./databases/arrow_database.db" ]]; then
+        print_message "$GREEN" "✅ Arrow database found in unified location"
+    else
+        print_message "$YELLOW" "⚠️  Arrow database will be created on first run"
+    fi
+    
+    if [[ -f "./databases/user_data.db" ]]; then
+        print_message "$GREEN" "✅ User database found in unified location" 
+    else
+        print_message "$YELLOW" "⚠️  User database will be created on first run"
+    fi
 }
 
 # Function to start the services
@@ -282,8 +296,8 @@ main() {
     # Clean up old setup
     cleanup_old_setup
     
-    # Migrate databases
-    migrate_databases
+    # Ensure unified databases
+    ensure_unified_databases
     
     # Start services
     start_services

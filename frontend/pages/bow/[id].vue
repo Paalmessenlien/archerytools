@@ -12,7 +12,7 @@
         <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
         <p class="text-lg">{{ error }}</p>
       </div>
-      <CustomButton @click="navigateTo('/my-page')" variant="outlined">
+      <CustomButton @click="navigateTo('/my-setup')" variant="outlined">
         Back to My Setup
       </CustomButton>
     </div>
@@ -21,7 +21,7 @@
     <div v-else-if="bowSetup">
       <!-- Back Navigation -->
       <div class="mb-6">
-        <CustomButton @click="navigateTo('/my-page')" variant="text" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+        <CustomButton @click="navigateTo('/my-setup')" variant="text" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
           <i class="fas fa-arrow-left mr-2"></i>
           Back to My Setup
         </CustomButton>
@@ -356,16 +356,18 @@ const handleArrowSelection = async (arrow) => {
 
 const removeArrowFromSetup = async (setupArrowId) => {
   try {
-    // The parameter is the setup_arrows.id, not separate setupId and arrowId
-    await api.delete(`/bow-setups/${bowSetup.value.id}/arrows/${setupArrowId}`);
+    // Use the correct API endpoint for removing arrows from setup
+    await api.delete(`/setup-arrows/${setupArrowId}`);
     await fetchSetupArrows();
   } catch (err) {
     console.error('Error removing arrow:', err);
   }
 };
 
-const viewArrowDetails = (arrow) => {
-  navigateTo(`/arrows/${arrow.arrow_id || arrow.id}`);
+const viewArrowDetails = (arrowIdOrArrow) => {
+  // Handle both cases: direct ID number or arrow object
+  const arrowId = typeof arrowIdOrArrow === 'number' ? arrowIdOrArrow : (arrowIdOrArrow.arrow_id || arrowIdOrArrow.id);
+  navigateTo(`/arrows/${arrowId}`);
 };
 
 const openEditArrowModal = (arrow) => {

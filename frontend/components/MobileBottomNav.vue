@@ -22,14 +22,14 @@
       <!-- My Setup / Login -->
       <NuxtLink
         v-if="user"
-        to="/my-page"
+        to="/my-setup"
         class="flex flex-col items-center justify-center p-2 w-16 h-16 rounded-2xl transition-all duration-200"
-        :class="$route.path === '/my-page'
+        :class="$route.path === '/my-setup'
           ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200'
           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
       >
         <i class="fas fa-user text-xl mb-1"></i>
-        <span class="text-xs font-medium">Profile</span>
+        <span class="text-xs font-medium">Setup</span>
       </NuxtLink>
       <button
         v-else
@@ -48,13 +48,13 @@
     <div v-if="menuOpen" class="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 shadow-lg">
       <div class="px-4 py-6 space-y-4">
         <NuxtLink 
-          to="/" 
+          :to="user ? '/my-setup' : '/'" 
           @click="closeMenu"
           class="flex items-center px-4 py-3 text-base font-medium text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/' }"
+          :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': (user && $route.path === '/my-setup') || (!user && $route.path === '/') }"
         >
           <i class="fas fa-home w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-          Home
+          {{ user ? 'Dashboard' : 'Home' }}
         </NuxtLink>
         
         <NuxtLink 
@@ -95,6 +95,16 @@
         >
           <i class="fas fa-bullseye w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
           Interactive Tuning
+        </NuxtLink>
+        
+        <NuxtLink 
+          to="/about" 
+          @click="closeMenu"
+          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+          :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/about' }"
+        >
+          <i class="fas fa-info-circle w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+          About
         </NuxtLink>
         
         <hr class="border-gray-200 dark:border-gray-700">

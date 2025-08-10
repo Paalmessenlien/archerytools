@@ -21,14 +21,14 @@ class UserDatabase:
             print(f"Using absolute path provided: {db_path}")
             return db_path
         
-        # Unified database paths - consistent across all environments
+        # Unified database paths - NEW UNIFIED ARCHITECTURE (August 2025)
         possible_paths = [
-            Path("/app/databases") / db_path,  # Unified Docker path (highest priority)
-            Path("/app/user_data") / db_path,  # Legacy Docker volume path
-            Path("/app") / db_path,  # Legacy Docker path
-            Path(__file__).parent / "databases" / db_path,  # Local unified path
-            Path(__file__).parent / db_path,  # Legacy local path
-            Path(__file__).parent.parent / "databases" / db_path  # Root unified path
+            Path("/app/databases") / db_path,  # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
+            Path(__file__).parent.parent / "databases" / db_path,  # 🔴 UNIFIED local path (PRODUCTION READY)
+            Path(__file__).parent / "databases" / db_path,  # 🟡 Legacy local unified path
+            Path("/app/user_data") / db_path,  # 🟡 Legacy Docker volume path
+            Path("/app") / db_path,  # 🟡 Legacy Docker path
+            Path(__file__).parent / db_path,  # 🔴 Legacy local path (LOWEST PRIORITY)
         ]
 
         for p in possible_paths:

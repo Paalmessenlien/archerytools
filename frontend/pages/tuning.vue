@@ -87,7 +87,7 @@
           <i class="fas fa-archway text-gray-400 text-4xl mb-4"></i>
           <p class="text-gray-500 dark:text-gray-400 mb-4">No bow setups found. Create one first.</p>
           <NuxtLink 
-            to="/my-page"
+            to="/my-setup"
             class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
           >
             Create Bow Setup

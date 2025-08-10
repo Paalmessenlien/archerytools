@@ -12,8 +12,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     await fetchUser(); // Attempt to fetch user if not already loaded
     console.log('After fetchUser, user:', user.value);
     if (!user.value) {
-      console.log('Still no user, redirecting to login');
-      return navigateTo('/login'); // Redirect to login if not authenticated
+      console.log('Still no user, redirecting to home');
+      return navigateTo('/'); // Redirect to home for login if not authenticated
     }
   }
   console.log('Auth middleware passed, allowing access to:', to.path);

@@ -52,15 +52,15 @@
                             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Navigation</h3>
                             
                             <NuxtLink
-                              to="/"
+                              :to="user ? '/my-setup' : '/'"
                               @click="closeDesktopMenu"
                               class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/' }"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': (user && $route.path === '/my-setup') || (!user && $route.path === '/') }"
                             >
                               <i class="fas fa-home text-blue-600 dark:text-purple-400 w-5"></i>
                               <div>
-                                <div class="font-medium text-gray-900 dark:text-gray-100">Home</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Dashboard & overview</div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">{{ user ? 'Dashboard' : 'Home' }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ user ? 'My bow setups' : 'Welcome page' }}</div>
                               </div>
                             </NuxtLink>
                             
@@ -123,10 +123,10 @@
                             
                             <NuxtLink
                               v-if="user"
-                              to="/my-page"
+                              to="/my-setup"
                               @click="closeDesktopMenu"
                               class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/my-page' }"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/my-setup' }"
                             >
                               <i class="fas fa-user text-indigo-600 dark:text-indigo-400 w-5"></i>
                               <div>
@@ -152,6 +152,22 @@
                           </NuxtLink>
                         </div>
                         
+                        <!-- About Section -->
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <NuxtLink
+                            to="/about"
+                            @click="closeDesktopMenu"
+                            class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                            :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/about' }"
+                          >
+                            <i class="fas fa-info-circle text-gray-600 dark:text-gray-400 w-5"></i>
+                            <div>
+                              <div class="font-medium text-gray-900 dark:text-gray-100">About</div>
+                              <div class="text-xs text-gray-500 dark:text-gray-400">Platform features & info</div>
+                            </div>
+                          </NuxtLink>
+                        </div>
+
                         <!-- Settings Section -->
                         <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div class="flex items-center justify-between p-3">
