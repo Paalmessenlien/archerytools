@@ -37,6 +37,14 @@
           </CustomButton>
         </div>
         
+        <!-- Debug Info (temporary for production troubleshooting) -->
+        <div class="mt-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-200" v-if="arrowSetup">
+          <strong>Debug:</strong> 
+          calculated_spine: {{ arrowSetup.calculated_spine || 'none' }} | 
+          availableSpines: {{ availableSpines.length }} spines |
+          showSpineSelector: {{ !!(arrowSetup?.calculated_spine && availableSpines.length > 1) }}
+        </div>
+        
         <!-- Spine Selection Section -->
         <div class="mt-4" v-if="arrowSetup?.calculated_spine && availableSpines.length > 1">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
