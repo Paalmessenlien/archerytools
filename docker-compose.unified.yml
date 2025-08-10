@@ -109,8 +109,8 @@ services:
       - SSL_ENABLED=${SSL_ENABLED:-false}
       - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
     volumes:
-      # Unified nginx configuration for all environments
-      - ./deploy/nginx/nginx.unified.conf:/etc/nginx/nginx.conf:ro
+      # Generated nginx configuration based on deployment mode
+      - ./deploy/nginx/nginx.generated.conf:/etc/nginx/nginx.conf:ro
       
       # SSL certificates (if needed)
       - ./deploy/ssl:/etc/nginx/ssl:ro

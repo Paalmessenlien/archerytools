@@ -127,8 +127,8 @@ server {
     server_name ${NGINX_HOST};
 
     # SSL Configuration - Using Let's Encrypt certificates
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
     
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
