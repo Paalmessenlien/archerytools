@@ -162,39 +162,55 @@ run_database_import() {
 echo "🔍 Step 1: Database Verification"
 echo "================================"
 
-# Determine if running in Docker or local environment
+# UNIFIED DATABASE ARCHITECTURE (August 2025)
+# Determine database paths using environment variables with fallbacks
+
+echo "🗄️  Using UNIFIED DATABASE ARCHITECTURE"
+
+# Use environment variables if set, otherwise use unified fallback paths
+ARROW_DB="${ARROW_DATABASE_PATH:-}"
+USER_DB="${USER_DATABASE_PATH:-}"
+
 if [ -d "/app" ] && [ -f "/app/api.py" ]; then
-    # Docker environment
+    # Docker environment - use unified database paths
     echo "🐳 Running in Docker environment"
     
-    # Setup arrow database path (use standard location)
-    ARROW_DB="/app/arrow_database.db"
-    echo "📁 Using standard arrow database location: $ARROW_DB"
-    
-    # Setup user database path (existing logic)
-    USER_DB="/app/user_data.db"
-    
-    # Try user_data directory first (Docker volume)
-    if [ -d "/app/user_data" ]; then
-        USER_DB="/app/user_data/user_data.db"
-        echo "📁 Using user_data directory for user database"
-    else
-        # Create user_data directory if it doesn't exist (Docker volume mount)
-        mkdir -p "/app/user_data"
-        USER_DB="/app/user_data/user_data.db"
-        echo "📁 Created user_data directory for user database"
+    # Use environment variables or unified defaults
+    if [ -z "$ARROW_DB" ]; then
+        ARROW_DB="/app/databases/arrow_database.db"
     fi
+    if [ -z "$USER_DB" ]; then
+        USER_DB="/app/databases/user_data.db"
+    fi
+    
+    echo "📁 Arrow database (UNIFIED): $ARROW_DB"
+    echo "📁 User database (UNIFIED): $USER_DB"
+    
+    # Ensure unified databases directory exists
+    mkdir -p "/app/databases"
 else
-    # Local development environment
+    # Local development environment - use unified local paths
     echo "💻 Running in local development environment"
-    ARROW_DB="arrow_database.db"
-    USER_DB="user_data.db"
     
     # Check if we're in the arrow_scraper directory
     if [ ! -f "api.py" ] && [ -f "../arrow_scraper/api.py" ]; then
         cd ../arrow_scraper
         echo "📁 Changed to arrow_scraper directory"
     fi
+    
+    # Use environment variables or unified local defaults
+    if [ -z "$ARROW_DB" ]; then
+        ARROW_DB="../databases/arrow_database.db"
+    fi
+    if [ -z "$USER_DB" ]; then
+        USER_DB="../databases/user_data.db"
+    fi
+    
+    echo "📁 Arrow database (UNIFIED LOCAL): $ARROW_DB"
+    echo "📁 User database (UNIFIED LOCAL): $USER_DB"
+    
+    # Ensure unified databases directory exists
+    mkdir -p "../databases"
 fi
 
 # Verify arrow database
