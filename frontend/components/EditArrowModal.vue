@@ -22,9 +22,9 @@
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate" v-if="arrowSetup">
               {{ arrowSetup.arrow?.manufacturer }} {{ arrowSetup.arrow?.model_name }}
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-500 mt-1" v-if="arrowSetup?.calculated_spine && availableSpines.length <= 1">
+            <p class="text-xs text-gray-500 dark:text-gray-500 mt-1" v-if="selectedSpine && availableSpines.length <= 1">
               <i class="fas fa-info-circle mr-1"></i>
-              Current Spine: {{ arrowSetup.calculated_spine }} (only option)
+              Current Spine: {{ selectedSpine }} (only option)
             </p>
           </div>
           <CustomButton
@@ -41,12 +41,13 @@
         <div class="mt-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-200" v-if="arrowSetup">
           <strong>Debug:</strong> 
           calculated_spine: {{ arrowSetup.calculated_spine || 'none' }} | 
+          selectedSpine: {{ selectedSpine || 'none' }} |
           availableSpines: {{ availableSpines.length }} spines |
-          showSpineSelector: {{ !!(arrowSetup?.calculated_spine && availableSpines.length > 1) }}
+          showSpineSelector: {{ !!(selectedSpine && availableSpines.length > 1) }}
         </div>
         
         <!-- Spine Selection Section -->
-        <div class="mt-4" v-if="arrowSetup?.calculated_spine && availableSpines.length > 1">
+        <div class="mt-4" v-if="selectedSpine && availableSpines.length > 1">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <i class="fas fa-exchange-alt mr-1 text-orange-600"></i>
             Spine Selection
@@ -640,8 +641,14 @@ watch(() => props.arrowSetup, (newArrowSetup) => {
       notes: newArrowSetup.notes || ''
     }
     
-    // Initialize selected spine from the arrow setup
-    selectedSpine.value = newArrowSetup.calculated_spine
+    // Initialize selected spine from the arrow setup, with fallback
+    if (newArrowSetup.calculated_spine) {
+      selectedSpine.value = newArrowSetup.calculated_spine
+    } else if (availableSpines.value.length > 0) {
+      // Fallback: use the first available spine if no calculated_spine exists
+      selectedSpine.value = availableSpines.value[0].spine
+      console.log('No calculated_spine found, using first available spine:', selectedSpine.value)
+    }
     
     recalculatedMatchScore.value = null // Reset match score
   }
