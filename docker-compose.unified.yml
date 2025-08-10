@@ -43,12 +43,13 @@ services:
       # Configuration
       - ./.env:/app/.env:ro
       
-      # Unified Database Volume - NEW ARCHITECTURE
-      - ./databases:/app/databases
+      # Unified Database Volume - NEW ARCHITECTURE (with proper permissions)
+      - ./databases:/app/databases:rw
       
       # Data and Logs
       - ./arrow_scraper/data:/app/data:ro
       - arrowtuner-logs:/app/logs
+    user: "root:root"  # Required for database file creation and modification
     networks:
       - arrowtuner-network
     healthcheck:
@@ -117,8 +118,10 @@ services:
       # Logs
       - arrowtuner-logs:/var/log/nginx
     depends_on:
-      - api
-      - frontend
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     networks:
       - arrowtuner-network
     healthcheck:
@@ -167,7 +170,7 @@ services:
       - ./backups:/app/backups
     networks:
       - arrowtuner-network
-    command: ["python3", "/app/backup_manager.py", "scheduled"]
+    command: ["sh", "-c", "echo 'Backup service disabled - use manual backup scripts'; sleep infinity"]
     restart: unless-stopped
     profiles:
       - with-backup
