@@ -87,6 +87,24 @@
 
           <div class="flex flex-col space-y-2 ml-4">
             <CustomButton
+              @click="editSetup(setup)"
+              variant="outlined"
+              size="small"
+              class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400 dark:hover:bg-orange-900/20"
+            >
+              <i class="fas fa-edit mr-1"></i>
+              Edit
+            </CustomButton>
+            <CustomButton
+              @click="duplicateSetup(setup)"
+              variant="outlined"
+              size="small"
+              class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900/20"
+            >
+              <i class="fas fa-copy mr-1"></i>
+              Duplicate
+            </CustomButton>
+            <CustomButton
               @click="viewArrowDetails(setup.database_arrow)"
               variant="outlined"
               size="small"
@@ -119,7 +137,15 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['remove-setup', 'confirm-remove'])
+const emit = defineEmits(['remove-setup', 'confirm-remove', 'edit-setup', 'duplicate-setup'])
+
+const editSetup = (setup) => {
+  emit('edit-setup', setup)
+}
+
+const duplicateSetup = (setup) => {
+  emit('duplicate-setup', setup)
+}
 
 const removeSetup = (setup) => {
   // Emit confirmation request to parent instead of using browser confirm

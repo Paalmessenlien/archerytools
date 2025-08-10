@@ -36,9 +36,20 @@
 
     <!-- Arrow Details -->
     <div v-else-if="arrow" class="space-y-6">
+      <!-- Bow Arrow Configuration (when viewing from bow page) -->
+      <BowArrowConfiguration
+        v-if="bowContext"
+        :bow-id="bowContext.bowId"
+        :arrow-id="arrowId"
+        :bow-name="bowContext.bowName"
+        :return-to="bowContext.returnTo"
+        @loaded="onBowConfigLoaded"
+        class="mb-6"
+      />
+
       <!-- Calculation Context (when coming from calculator) -->
       <CalculationSummary
-        v-if="calculationContext"
+        v-else-if="calculationContext"
         :bow-config="calculationContext.bowConfig"
         :compatibility-score="calculationContext.compatibilityScore"
         :match-percentage="calculationContext.matchPercentage"
@@ -300,6 +311,9 @@ const showInlineCalculator = ref(false)
 const editingBowConfig = ref(null)
 const isRecalculating = ref(false)
 
+// Bow context state
+const bowContext = ref(null)
+
 // Get arrow ID from route
 const arrowId = computed(() => route.params.id)
 
@@ -339,6 +353,20 @@ const parseCalculationContext = () => {
       console.error('Error parsing calculation context:', err)
       calculationContext.value = null
     }
+  }
+}
+
+const parseBowContext = () => {
+  const query = route.query
+  
+  if (query.bowId) {
+    bowContext.value = {
+      bowId: query.bowId,
+      bowName: query.bowName || 'Unknown Bow',
+      returnTo: query.returnTo || null
+    }
+  } else {
+    bowContext.value = null
   }
 }
 
@@ -432,6 +460,11 @@ const isRecommendedSpine = (spec) => {
          calculationContext.value.spineSpec.spine === spec.spine
 }
 
+const onBowConfigLoaded = (bowArrowSetup) => {
+  // Optional: Do something when bow configuration is loaded
+  console.log('Bow arrow configuration loaded:', bowArrowSetup)
+}
+
 const copyToClipboard = async () => {
   if (!arrow.value) return
   
@@ -456,6 +489,7 @@ onMounted(() => {
   if (arrowId.value) {
     loadArrowDetails()
     parseCalculationContext()
+    parseBowContext()
   }
 })
 
@@ -464,12 +498,14 @@ watch(() => arrowId.value, (newId) => {
   if (newId) {
     loadArrowDetails()
     parseCalculationContext()
+    parseBowContext()
   }
 })
 
 // Watch for query parameter changes
 watch(() => route.query, () => {
   parseCalculationContext()
+  parseBowContext()
 }, { deep: true })
 
 // Set dynamic page title

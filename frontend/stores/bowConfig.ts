@@ -92,74 +92,27 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
 
     isLoading.value = true
     try {
+      // Use the centralized calculation system
+      const { calculateSpineAPI } = await import('~/utils/spineCalculation')
       const api = useApi()
-      const result = await api.calculateSpine(bowConfig.value)
+      const result = await calculateSpineAPI(bowConfig.value, api)
       recommendedSpine.value = result.recommended_spine
       lastCalculation.value = new Date()
     } catch (error) {
       console.error('Error calculating spine:', error)
-      console.warn('API failed, falling back to client-side calculation')
+      console.warn('API failed, falling back to deprecated client-side calculation')
       
-      // Fallback to client-side calculation
-      recommendedSpine.value = calculateSpineClientSide()
+      // Use the deprecated fallback from centralized system
+      const { calculateSpineFallback } = await import('~/utils/spineCalculation')
+      recommendedSpine.value = calculateSpineFallback(bowConfig.value)
       lastCalculation.value = new Date()
     } finally {
       isLoading.value = false
     }
   }
 
-  // Client-side spine calculation fallback
-  const calculateSpineClientSide = () => {
-    const drawWeight = bowConfig.value.draw_weight || 45  // Bow's marked draw weight
-    const arrowLength = bowConfig.value.arrow_length || 29  // Physical arrow length
-    const pointWeight = bowConfig.value.point_weight || 125
-    const bowType = bowConfig.value.bow_type || 'compound'
-    const arrowMaterial = bowConfig.value.arrow_material || 'carbon'
-    // NOTE: draw_length is NOT used in spine calculations - only for archer information
-    
-    // Check if wood material is specifically selected - use wood calculation
-    if (arrowMaterial && arrowMaterial.toLowerCase() === 'wood') {
-      // Wood arrow calculation (returns spine in pounds)
-      let baseSpine = drawWeight
-      
-      // Adjust for arrow length - wood arrows are less sensitive to length
-      const lengthAdjustment = (arrowLength - 28) * 2
-      baseSpine += lengthAdjustment
-      
-      // Wood arrow point weight adjustment (much more sensitive)
-      // Point weight adjustment table: 30gn=1, 70gn=2, 100gn=3, 125gn=4
-      const pointWeightTable = { 30: 1, 70: 2, 100: 3, 125: 4 }
-      const closestWeight = Object.keys(pointWeightTable).reduce((prev, curr) => 
-        Math.abs(curr - pointWeight) < Math.abs(prev - pointWeight) ? curr : prev
-      )
-      const pointAdjustmentValue = pointWeightTable[closestWeight]
-      const baselineAdjustment = 3 // 100gn baseline
-      const pointAdjustment = (pointAdjustmentValue - baselineAdjustment) * 2.5
-      baseSpine += pointAdjustment
-      
-      return Math.round(baseSpine) + '#' // Wood spine notation
-    } else {
-      // Carbon/aluminum arrow calculation
-      let baseSpine = drawWeight * 12.5
-      
-      // Adjust for arrow length (longer = weaker/higher spine number)
-      const lengthAdjustment = (arrowLength - 28) * 25
-      baseSpine += lengthAdjustment
-      
-      // Adjust for point weight (heavier = weaker/higher spine number)
-      const pointAdjustment = (pointWeight - 125) * 0.5
-      baseSpine += pointAdjustment
-      
-      // Bow type adjustments
-      if (bowType === 'recurve') {
-        baseSpine += 50
-      } else if (bowType === 'traditional' || bowType === 'longbow') {
-        baseSpine += 100
-      }
-      
-      return Math.round(baseSpine)
-    }
-  }
+  // Note: Client-side calculation moved to ~/utils/spineCalculation.ts
+  // This ensures consistent calculation logic across the entire application
 
   const getArrowRecommendations = async () => {
     if (isLoading.value) return

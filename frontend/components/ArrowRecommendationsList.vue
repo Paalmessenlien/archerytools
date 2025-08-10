@@ -1123,11 +1123,12 @@ const addToSetup = async (recommendation) => {
     const { addArrowToSetup } = useAuth()
 
     // Prepare the arrow data for adding to setup
+    // IMPORTANT: Use the selected arrow spine, NOT the calculated optimal spine
     const arrowData = {
       arrow_id: recommendation.arrow.id,
       arrow_length: bowConfig.value.arrow_length || 29,
       point_weight: bowConfig.value.point_weight || 125,
-      calculated_spine: recommendation.spine_calculation?.calculated_spine || bowConfig.value.calculated_spine,
+      calculated_spine: recommendation.matched_spine || recommendation.arrow?.matched_spine,
       compatibility_score: recommendation.match_percentage,
       // Include all component weights from bow configuration
       nock_weight: bowConfig.value.nock_weight || 10,
