@@ -74,6 +74,32 @@
                 </span>
               </div>
             </div>
+
+            <!-- Draw Specifications -->
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                <i class="fas fa-bullseye mr-2 text-blue-600 dark:text-blue-400"></i>
+                Draw Specifications
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <span class="text-gray-600 dark:text-gray-400">Draw Weight</span>
+                  <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.draw_weight }} lbs</span>
+                </div>
+                <div v-if="bowSetup.draw_length" class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <span class="text-gray-600 dark:text-gray-400">Draw Length</span>
+                  <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.draw_length }}"</span>
+                </div>
+                <div v-if="bowSetup.arrow_length" class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <span class="text-gray-600 dark:text-gray-400">Arrow Length</span>
+                  <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.arrow_length }}"</span>
+                </div>
+                <div v-if="bowSetup.point_weight" class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <span class="text-gray-600 dark:text-gray-400">Point Weight</span>
+                  <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.point_weight }} gr</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Action Buttons -->
@@ -98,53 +124,24 @@
         </div>
       </div>
 
-      <!-- Specifications Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- Draw Specifications -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            <i class="fas fa-bullseye mr-2 text-blue-600 dark:text-blue-400"></i>
-            Draw Specifications
-          </h2>
-          <div class="space-y-3">
-            <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
-              <span class="text-gray-600 dark:text-gray-400">Draw Weight</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.draw_weight }} lbs</span>
-            </div>
-            <div v-if="bowSetup.draw_length" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
-              <span class="text-gray-600 dark:text-gray-400">Draw Length</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.draw_length }}"</span>
-            </div>
-            <div v-if="bowSetup.arrow_length" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
-              <span class="text-gray-600 dark:text-gray-400">Arrow Length</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.arrow_length }}"</span>
-            </div>
-            <div v-if="bowSetup.point_weight" class="flex justify-between items-center py-2">
-              <span class="text-gray-600 dark:text-gray-400">Point Weight</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.point_weight }} gr</span>
-            </div>
+      <!-- Component Weights -->
+      <div v-if="hasComponentWeights" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <i class="fas fa-weight mr-2 text-purple-600 dark:text-purple-400"></i>
+          Component Weights
+        </h2>
+        <div class="space-y-3">
+          <div v-if="bowSetup.nock_weight" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-600 dark:text-gray-400">Nock Weight</span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.nock_weight }} gr</span>
           </div>
-        </div>
-
-        <!-- Component Weights -->
-        <div v-if="hasComponentWeights" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            <i class="fas fa-weight mr-2 text-purple-600 dark:text-purple-400"></i>
-            Component Weights
-          </h2>
-          <div class="space-y-3">
-            <div v-if="bowSetup.nock_weight" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
-              <span class="text-gray-600 dark:text-gray-400">Nock Weight</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.nock_weight }} gr</span>
-            </div>
-            <div v-if="bowSetup.fletching_weight" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
-              <span class="text-gray-600 dark:text-gray-400">Fletching Weight</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.fletching_weight }} gr</span>
-            </div>
-            <div v-if="bowSetup.insert_weight" class="flex justify-between items-center py-2">
-              <span class="text-gray-600 dark:text-gray-400">Insert Weight</span>
-              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.insert_weight }} gr</span>
-            </div>
+          <div v-if="bowSetup.fletching_weight" class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
+            <span class="text-gray-600 dark:text-gray-400">Fletching Weight</span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.fletching_weight }} gr</span>
+          </div>
+          <div v-if="bowSetup.insert_weight" class="flex justify-between items-center py-2">
+            <span class="text-gray-600 dark:text-gray-400">Insert Weight</span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.insert_weight }} gr</span>
           </div>
         </div>
       </div>
@@ -180,6 +177,7 @@
             @remove-arrow="removeArrowFromSetup"
             @view-details="viewArrowDetails" 
             @edit-arrow="openEditArrowModal"
+            @duplicate-arrow="duplicateArrow"
           />
         </div>
         <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -206,9 +204,9 @@
 
     <!-- Edit Arrow Configuration Modal -->
     <EditArrowModal
-      v-if="editingArrow"
-      :arrow="editingArrow"
-      :setupId="bowSetup.id"
+      :is-open="!!editingArrow"
+      :arrow-setup="editingArrow"
+      :bow-setup="bowSetup"
       @save="handleUpdateArrow"
       @close="editingArrow = null"
     />
@@ -220,9 +218,9 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
+import EditArrowModal from '~/components/EditArrowModal.vue';
 
 const route = useRoute();
-const { user } = useAuth();
 const api = useApi();
 
 // State
@@ -339,20 +337,6 @@ const openArrowSearchModal = () => {
   });
 };
 
-const handleArrowSelection = async (arrow) => {
-  try {
-    await api.post(`/bow-setups/${bowSetup.value.id}/arrows`, {
-      arrow_id: arrow.id,
-      arrow_length: bowSetup.value.arrow_length || 28,
-      point_weight: bowSetup.value.point_weight || 100
-    });
-    
-    showArrowSearch.value = false;
-    await fetchSetupArrows();
-  } catch (err) {
-    console.error('Error adding arrow to setup:', err);
-  }
-};
 
 const removeArrowFromSetup = async (setupArrowId) => {
   try {
@@ -367,24 +351,100 @@ const removeArrowFromSetup = async (setupArrowId) => {
 const viewArrowDetails = (arrowIdOrArrow) => {
   // Handle both cases: direct ID number or arrow object
   const arrowId = typeof arrowIdOrArrow === 'number' ? arrowIdOrArrow : (arrowIdOrArrow.arrow_id || arrowIdOrArrow.id);
-  navigateTo(`/arrows/${arrowId}`);
+  
+  // Navigate to arrow details with bow context
+  navigateTo({
+    path: `/arrows/${arrowId}`,
+    query: {
+      bowId: bowSetup.value.id,
+      bowName: bowSetup.value.name,
+      returnTo: `/bow/${bowSetup.value.id}`
+    }
+  });
 };
 
 const openEditArrowModal = (arrow) => {
+  console.log('Opening edit arrow modal for:', arrow);
+  console.log('bowSetup.value:', bowSetup.value);
+  console.log('bowSetup.value.id:', bowSetup.value?.id);
   editingArrow.value = arrow;
+  console.log('editingArrow.value set to:', editingArrow.value);
 };
 
 const handleUpdateArrow = async (updatedArrow) => {
+  console.log('Handling arrow update:', updatedArrow);
   try {
-    await api.put(`/bow-setups/${bowSetup.value.id}/arrows/${updatedArrow.arrow_id}`, {
+    // Use the setup-arrows endpoint (the one that works with arrow setup ID)
+    await api.put(`/setup-arrows/${editingArrow.value.id}`, {
       arrow_length: updatedArrow.arrow_length,
-      point_weight: updatedArrow.point_weight
+      point_weight: updatedArrow.point_weight,
+      calculated_spine: updatedArrow.calculated_spine,
+      nock_weight: updatedArrow.nock_weight,
+      insert_weight: updatedArrow.insert_weight,
+      bushing_weight: updatedArrow.bushing_weight,
+      compatibility_score: updatedArrow.compatibility_score,
+      notes: updatedArrow.notes
     });
     
+    console.log('Arrow updated successfully');
     editingArrow.value = null;
     await fetchSetupArrows();
   } catch (err) {
     console.error('Error updating arrow configuration:', err);
+    console.error('Error details:', err.response?.data || err.message);
+    alert('Error updating arrow: ' + (err.response?.data?.error || err.message));
+  }
+};
+
+const duplicateArrow = async (arrowSetup) => {
+  // Check authentication first
+  const token = process.client ? localStorage.getItem('token') : null;
+  
+  if (!token) {
+    alert('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
+    return;
+  }
+  
+  try {
+    // Create a duplicate arrow configuration with the same settings
+    // but allow the user to modify them before saving
+    const duplicateData = {
+      arrow_id: arrowSetup.arrow_id,
+      arrow_length: arrowSetup.arrow_length,
+      point_weight: arrowSetup.point_weight,
+      calculated_spine: arrowSetup.calculated_spine, // Include the spine selection
+      compatibility_score: arrowSetup.compatibility_score, // Include the match score
+      nock_weight: arrowSetup.nock_weight || 10,
+      insert_weight: arrowSetup.insert_weight || 0,
+      bushing_weight: arrowSetup.bushing_weight || 0,
+      notes: `Duplicate of ${arrowSetup.arrow?.manufacturer || 'Unknown'} ${arrowSetup.arrow?.model_name || 'Arrow'}`
+    };
+    
+    console.log('Duplicating arrow:', arrowSetup.arrow?.manufacturer, arrowSetup.arrow?.model_name);
+    const response = await api.post(`/bow-setups/${bowSetup.value.id}/arrows`, duplicateData);
+    
+    await fetchSetupArrows();
+    
+    // Show success message in console only (no popup)
+    console.log('✅ Arrow duplicated successfully:', {
+      manufacturer: arrowSetup.arrow?.manufacturer,
+      model: arrowSetup.arrow?.model_name,
+      spine: arrowSetup.calculated_spine,
+      newId: response?.id
+    });
+  } catch (err) {
+    console.error('❌ Error duplicating arrow:', err);
+    
+    // Check for authentication errors specifically
+    if (err.message && (err.message.includes('401') || err.message.includes('Token is missing'))) {
+      alert('Please log in to duplicate arrows. The duplicate function requires authentication.');
+    } else if (err.message && err.message.includes('403')) {
+      alert('You do not have permission to duplicate arrows in this bow setup.');  
+    } else if (err.message && err.message.includes('404')) {
+      alert('Bow setup or arrow not found. Please refresh the page and try again.');
+    } else {
+      alert('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
+    }
   }
 };
 

@@ -144,6 +144,15 @@
                   <span class="hidden sm:inline">Edit</span>
                 </CustomButton>
                 <CustomButton
+                  @click="duplicateArrow(arrowSetup)"
+                  variant="outlined"
+                  size="small"
+                  class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 whitespace-nowrap"
+                >
+                  <i class="fas fa-copy mr-1"></i>
+                  <span class="hidden sm:inline">Duplicate</span>
+                </CustomButton>
+                <CustomButton
                   @click="viewArrowDetails(arrowSetup.arrow_id)"
                   variant="outlined"
                   size="small"
@@ -230,7 +239,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow'])
+const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow', 'duplicate-arrow'])
 
 // State
 const isExpanded = ref(false)
@@ -334,7 +343,13 @@ const removeArrow = (arrowSetupId: number) => {
 }
 
 const editArrow = (arrowSetup) => {
+  console.log('Edit arrow clicked:', arrowSetup)
   emit('edit-arrow', arrowSetup)
+}
+
+const duplicateArrow = (arrowSetup) => {
+  console.log('Duplicate arrow clicked:', arrowSetup)
+  emit('duplicate-arrow', arrowSetup)
 }
 
 // Get display spine value - try calculated_spine first, then fall back to arrow specifications

@@ -1,31 +1,73 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
       <!-- Modal Header -->
-      <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              <i class="fas fa-edit mr-2 text-orange-600"></i>
-              Edit Arrow Settings
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" v-if="arrowSetup">
+      <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between sm:justify-start">
+              <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
+                <i class="fas fa-edit mr-2 text-orange-600"></i>
+                Edit Arrow Settings
+              </h3>
+              <CustomButton
+                @click="closeModal"
+                variant="outlined"
+                size="small"
+                class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 sm:hidden"
+              >
+                <i class="fas fa-times"></i>
+              </CustomButton>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate" v-if="arrowSetup">
               {{ arrowSetup.arrow?.manufacturer }} {{ arrowSetup.arrow?.model_name }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-500 mt-1" v-if="arrowSetup?.calculated_spine && availableSpines.length <= 1">
+              <i class="fas fa-info-circle mr-1"></i>
+              Current Spine: {{ arrowSetup.calculated_spine }} (only option)
             </p>
           </div>
           <CustomButton
             @click="closeModal"
             variant="outlined"
             size="small"
-            class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
+            class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 hidden sm:flex"
           >
             <i class="fas fa-times"></i>
           </CustomButton>
         </div>
+        
+        <!-- Spine Selection Section -->
+        <div class="mt-4" v-if="arrowSetup?.calculated_spine && availableSpines.length > 1">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <i class="fas fa-exchange-alt mr-1 text-orange-600"></i>
+            Spine Selection
+          </label>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <md-filled-select 
+              :value="selectedSpine.toString()" 
+              @change="handleSpineChange($event.target.value)"
+              class="flex-1 sm:max-w-xs"
+            >
+              <md-select-option 
+                v-for="spine in availableSpines" 
+                :key="spine.spine"
+                :value="spine.spine.toString()"
+                :selected="spine.spine.toString() === selectedSpine.toString()"
+              >
+                <span class="hidden sm:inline">Spine {{ spine.spine }} ({{ spine.gpi_weight }} GPI, {{ spine.outer_diameter }}")</span>
+                <span class="sm:hidden">{{ spine.spine }} ({{ spine.gpi_weight }}g, {{ spine.outer_diameter }}")</span>
+              </md-select-option>
+            </md-filled-select>
+            <span class="text-xs text-gray-500 dark:text-gray-500 sm:ml-2">
+              {{ availableSpines.length }} options
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- Modal Body -->
-      <div class="p-6">
+      <div class="p-4 sm:p-6">
         <form @submit.prevent="saveChanges">
           <!-- Arrow Length -->
           <div class="mb-6">
@@ -87,7 +129,7 @@
               </CustomButton>
             </div>
 
-            <div v-if="showComponents" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="showComponents" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Insert Weight -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -271,18 +313,22 @@
           </div>
 
           <!-- Calculated Results -->
-          <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Calculated Spine -->
+          <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Calculated Spine (Informational) -->
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <div class="flex items-center mb-2">
-                <i class="fas fa-calculator text-blue-600 mr-2"></i>
-                <span class="text-sm font-medium text-blue-900 dark:text-blue-200">Calculated Spine</span>
+                <i v-if="calculatingSpine" class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>
+                <i v-else class="fas fa-info-circle text-blue-600 mr-2"></i>
+                <span class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                  {{ calculatingSpine ? 'Calculating Spine...' : 'Optimal Spine (Reference)' }}
+                </span>
               </div>
               <p class="text-lg font-semibold text-blue-700 dark:text-blue-300">
-                {{ calculatedSpine || 'Calculating...' }}
+                {{ calculatingSpine ? 'Calculating...' : (calculatedSpine || 'N/A') }}
               </p>
               <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                Based on arrow length and point weight
+                <span class="hidden sm:inline">{{ props.bowSetup ? `For reference - your selected arrow spine remains unchanged` : 'Reference calculation only' }}</span>
+                <span class="sm:hidden">Reference only</span>
               </p>
             </div>
 
@@ -290,28 +336,46 @@
             <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
               <div class="flex items-center mb-2">
                 <i class="fas fa-weight-hanging text-green-600 mr-2"></i>
-                <span class="text-sm font-medium text-green-900 dark:text-green-200">Total Component Weight</span>
+                <span class="text-sm font-medium text-green-900 dark:text-green-200">Component Weight</span>
               </div>
               <p class="text-lg font-semibold text-green-700 dark:text-green-300">
                 {{ calculateTotalComponentWeight() }} gn
               </p>
               <p class="text-xs text-green-600 dark:text-green-400 mt-1">
-                Includes all components
+                Points, vanes, nock, inserts
+              </p>
+            </div>
+
+            <!-- Total Arrow Weight -->
+            <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div class="flex items-center mb-2">
+                <i class="fas fa-balance-scale text-orange-600 mr-2"></i>
+                <span class="text-sm font-medium text-orange-900 dark:text-orange-200">Total Arrow Weight</span>
+              </div>
+              <p class="text-lg font-semibold text-orange-700 dark:text-orange-300">
+                {{ calculateTotalArrowWeight() }} gr
+              </p>
+              <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                Includes shaft weight ({{ selectedSpineSpec?.gpi_weight || 'N/A' }} GPI)
               </p>
             </div>
           </div>
 
-          <!-- Match Score (if available) -->
-          <div v-if="recalculatedMatchScore !== null" class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+          <!-- Match Score -->
+          <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
             <div class="flex items-center mb-2">
-              <i class="fas fa-star text-purple-600 mr-2"></i>
-              <span class="text-sm font-medium text-purple-900 dark:text-purple-200">Updated Match Score</span>
+              <i v-if="calculatingMatchScore" class="fas fa-spinner fa-spin text-purple-600 mr-2"></i>
+              <i v-else class="fas fa-star text-purple-600 mr-2"></i>
+              <span class="text-sm font-medium text-purple-900 dark:text-purple-200">
+                {{ calculatingMatchScore ? 'Calculating Match Score...' : 'Updated Match Score' }}
+              </span>
             </div>
             <p class="text-lg font-semibold text-purple-700 dark:text-purple-300">
-              {{ recalculatedMatchScore }}%
+              {{ calculatingMatchScore ? 'Calculating...' : (recalculatedMatchScore !== null ? `${recalculatedMatchScore}%` : 'N/A') }}
             </p>
             <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
-              Based on your configuration changes
+              <span class="hidden sm:inline">Based on your configuration changes{{ props.bowSetup ? ` for ${props.bowSetup.bow_type} bow` : '' }}</span>
+              <span class="sm:hidden">Based on selected spine vs optimal</span>
             </p>
           </div>
 
@@ -331,11 +395,11 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex justify-end space-x-3">
+          <div class="flex flex-col sm:flex-row sm:justify-end gap-3 sm:space-x-3 sm:gap-0">
             <CustomButton
               @click="closeModal"
               variant="outlined"
-              class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
+              class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 order-2 sm:order-1"
             >
               Cancel
             </CustomButton>
@@ -343,7 +407,7 @@
               type="submit"
               variant="filled"
               :disabled="saving"
-              class="bg-orange-600 text-white hover:bg-orange-700"
+              class="bg-orange-600 text-white hover:bg-orange-700 order-1 sm:order-2"
             >
               <i v-if="saving" class="fas fa-spinner fa-spin mr-2"></i>
               <i v-else class="fas fa-save mr-2"></i>
@@ -357,7 +421,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import { calculateSpineAPI, findBestSpineMatch, calculateCompatibilityScore } from '~/utils/spineCalculation'
 
 // Props
 const props = defineProps({
@@ -368,11 +433,15 @@ const props = defineProps({
   arrowSetup: {
     type: Object,
     default: null
+  },
+  bowSetup: {
+    type: Object,
+    default: null
   }
 })
 
 // Emits
-const emit = defineEmits(['close', 'arrow-updated', 'error'])
+const emit = defineEmits(['close', 'save'])
 
 // API
 const api = useApi()
@@ -381,6 +450,9 @@ const api = useApi()
 const saving = ref(false)
 const showComponents = ref(false)
 const recalculatedMatchScore = ref(null)
+const calculatingMatchScore = ref(false)
+const matchCalculationTimer = ref(null)
+const selectedSpine = ref(null)
 const editForm = ref({
   arrow_length: 29,
   point_weight: 125,
@@ -396,22 +468,50 @@ const editForm = ref({
   notes: ''
 })
 
-// Computed spine calculation (simplified)
-const calculatedSpine = computed(() => {
+// Build bow configuration from arrow setup for calculations
+const bowConfigForCalculation = computed(() => {
   if (!props.arrowSetup) return null
   
-  // Simple spine calculation - in a real implementation this would use the spine calculator
-  const drawWeight = 50 // This would come from the bow setup
-  const arrowLength = editForm.value.arrow_length
-  const pointWeight = editForm.value.point_weight
+  // Use bow setup information if available, otherwise use defaults
+  const bowSetup = props.bowSetup
   
-  let baseSpine = drawWeight * 12.5
-  const lengthAdjustment = (arrowLength - 28) * 25
-  const pointAdjustment = (pointWeight - 125) * 0.5
-  
-  baseSpine += lengthAdjustment + pointAdjustment
-  
-  return Math.round(baseSpine)
+  return {
+    draw_weight: bowSetup?.draw_weight || 50,
+    draw_length: bowSetup?.draw_length || 28,
+    bow_type: bowSetup?.bow_type || 'compound',
+    arrow_length: editForm.value.arrow_length,
+    point_weight: editForm.value.point_weight,
+    arrow_material: props.arrowSetup.arrow?.material || 'carbon',
+    // Component weights from form
+    insert_weight: editForm.value.insert_weight || 0,
+    vane_type: editForm.value.vane_type || 'plastic',
+    vane_length: editForm.value.vane_length || 4,
+    number_of_vanes: editForm.value.number_of_vanes || 3,
+    vane_weight_per: getVaneWeight(),
+    bushing_weight: editForm.value.bushing_weight || 0,
+    nock_weight: editForm.value.nock_weight || 10
+  }
+})
+
+// Reactive spine calculation result from API
+const spineCalculationResult = ref(null)
+const calculatingSpine = ref(false)
+
+// Get calculated spine from API result
+const calculatedSpine = computed(() => {
+  return spineCalculationResult.value?.recommended_spine || 'Calculating...'
+})
+
+// Get available spine options for the current arrow
+const availableSpines = computed(() => {
+  if (!props.arrowSetup?.arrow?.spine_specifications) return []
+  return props.arrowSetup.arrow.spine_specifications.sort((a, b) => a.spine - b.spine)
+})
+
+// Get the currently selected spine specification details
+const selectedSpineSpec = computed(() => {
+  if (!selectedSpine.value) return null
+  return availableSpines.value.find(spec => spec.spine.toString() === selectedSpine.value.toString())
 })
 
 // Calculate vane weight based on type and length
@@ -459,6 +559,21 @@ const calculateTotalComponentWeight = () => {
   return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
 }
 
+// Calculate total arrow weight including shaft
+const calculateTotalArrowWeight = () => {
+  if (!selectedSpineSpec.value?.gpi_weight) return 'N/A'
+  
+  // Calculate shaft weight (GPI * length)
+  const shaftWeight = selectedSpineSpec.value.gpi_weight * (editForm.value.arrow_length || 32)
+  
+  // Add component weights
+  const componentWeight = calculateTotalComponentWeight()
+  
+  const totalWeight = shaftWeight + componentWeight
+  
+  return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
+}
+
 // Component handlers
 const handleInsertChange = (value) => {
   if (value === 'none') {
@@ -490,6 +605,15 @@ const handleVaneWeightModeChange = (value) => {
   }
 }
 
+const handleSpineChange = (newSpineValue) => {
+  const newSpine = parseFloat(newSpineValue)
+  selectedSpine.value = newSpine
+  console.log(`Spine changed to: ${newSpine}`)
+  
+  // Trigger recalculation of match score with new spine
+  triggerCalculation()
+}
+
 // Watch for arrow setup changes
 watch(() => props.arrowSetup, (newArrowSetup) => {
   if (newArrowSetup) {
@@ -507,32 +631,95 @@ watch(() => props.arrowSetup, (newArrowSetup) => {
       number_of_vanes: newArrowSetup.number_of_vanes || 3,
       notes: newArrowSetup.notes || ''
     }
+    
+    // Initialize selected spine from the arrow setup
+    selectedSpine.value = newArrowSetup.calculated_spine
+    
     recalculatedMatchScore.value = null // Reset match score
   }
 }, { immediate: true })
 
-// Watch for form changes to recalculate match score
-watch(editForm, async () => {
-  if (props.arrowSetup && props.arrowSetup.arrow) {
-    try {
-      // Recalculate match score based on new configuration
-      const bowConfig = {
-        arrow_length: editForm.value.arrow_length,
-        point_weight: editForm.value.point_weight,
-        // Add other bow config needed for spine calculation
-        draw_weight: 50, // This would ideally come from the bow setup
-        bow_type: 'compound' // This would ideally come from the bow setup
-      }
+// Unified spine and match score calculation
+const calculateSpineAndMatch = async () => {
+  if (!props.arrowSetup?.arrow || !bowConfigForCalculation.value) return
+  
+  calculatingSpine.value = true
+  calculatingMatchScore.value = true
+  
+  try {
+    console.log('Calculating spine and match score with config:', bowConfigForCalculation.value)
+    
+    // Get spine calculation from API - this is the authoritative calculation
+    const result = await calculateSpineAPI(bowConfigForCalculation.value, api)
+    spineCalculationResult.value = result
+    console.log('Spine calculation result:', result)
+    
+    // Calculate compatibility score using the SELECTED spine (not optimal spine)
+    // This shows the match score for the currently selected arrow spine
+    const currentSpine = selectedSpine.value
+    if (currentSpine && props.arrowSetup.arrow) {
+      const spineSpecs = props.arrowSetup.arrow.spine_specifications || []
       
-      const result = await api.calculateSpine(bowConfig)
-      if (result && result.compatibility_score) {
-        recalculatedMatchScore.value = Math.round(result.compatibility_score)
+      if (spineSpecs.length > 0) {
+        // Calculate compatibility against the optimal spine for this configuration
+        const bowType = props.bowSetup?.bow_type || 'compound'
+        const manufacturer = props.arrowSetup.arrow?.manufacturer?.toLowerCase() || 'easton'
+        
+        // Use the centralized compatibility calculation with SELECTED spine vs OPTIMAL spine
+        const optimalSpine = result?.recommended_spine || currentSpine
+        const compatibility = calculateCompatibilityScore(currentSpine, optimalSpine, bowType, manufacturer)
+        
+        recalculatedMatchScore.value = compatibility.score
+        console.log('Calculated match score:', recalculatedMatchScore.value, 'for selected spine:', currentSpine, 'vs optimal:', optimalSpine)
+        console.log('Compatibility explanation:', compatibility.explanation)
+      } else {
+        recalculatedMatchScore.value = 0
+        console.log('No spine specifications found for compatibility calculation')
       }
-    } catch (error) {
-      console.error('Error recalculating match score:', error)
+    } else {
+      recalculatedMatchScore.value = 0
+      console.log('No selected spine found for compatibility calculation')
     }
+  } catch (error) {
+    console.error('Error calculating spine and match score:', error)
+    // Don't show error to user for this background calculation
+    spineCalculationResult.value = null
+    recalculatedMatchScore.value = null
+  } finally {
+    calculatingSpine.value = false
+    calculatingMatchScore.value = false
   }
-}, { deep: true, debounce: 500 })
+}
+
+// Debounced spine and match calculation trigger
+const triggerCalculation = () => {
+  if (matchCalculationTimer.value) {
+    clearTimeout(matchCalculationTimer.value)
+  }
+  
+  matchCalculationTimer.value = setTimeout(() => {
+    calculateSpineAndMatch()
+  }, 500)
+}
+
+// Watch for form changes to recalculate spine and match score
+watch([editForm, bowConfigForCalculation], () => {
+  if (props.arrowSetup?.arrow && bowConfigForCalculation.value) {
+    triggerCalculation()
+  }
+}, { deep: true })
+
+// Watch for modal opening to trigger initial calculation
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen && props.arrowSetup?.arrow) {
+    // Reset and calculate when modal opens
+    spineCalculationResult.value = null
+    recalculatedMatchScore.value = null
+    nextTick(() => {
+      triggerCalculation()
+    })
+  }
+})
 
 // Methods
 const closeModal = () => {
@@ -545,14 +732,14 @@ const saveChanges = async () => {
   saving.value = true
   
   try {
-    const { useAuth } = await import('~/composables/useAuth')
-    const { updateArrowInSetup } = useAuth()
-    
     // Prepare update data with all component weights
+    // Include the selected spine if it has changed from the original
     const updateData = {
+      arrow_id: props.arrowSetup.arrow_id,
       arrow_length: editForm.value.arrow_length,
       point_weight: editForm.value.point_weight,
-      calculated_spine: calculatedSpine.value,
+      // Include selected spine (user can change spine to other options from same arrow)
+      calculated_spine: selectedSpine.value,
       // Component weights
       nock_weight: editForm.value.nock_weight,
       insert_weight: editForm.value.insert_weight,
@@ -566,11 +753,10 @@ const saveChanges = async () => {
       notes: editForm.value.notes || null
     }
     
-    // Update via API (we'll need to add this method to useAuth)
-    await updateArrowInSetup(props.arrowSetup.id, updateData)
+    console.log('Saving arrow changes:', updateData)
     
-    // Emit success event
-    emit('arrow-updated', updateData)
+    // Emit save event to parent (the parent will handle the API call)
+    emit('save', updateData)
     
   } catch (error) {
     console.error('Error updating arrow:', error)

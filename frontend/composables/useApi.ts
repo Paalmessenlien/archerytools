@@ -43,7 +43,12 @@ export const useApi = () => {
     const response = await fetch(url, { ...defaultOptions, ...options })
     
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+      const errorData = await response.text();
+      // Log errors for debugging but don't spam console for successful requests
+      if (response.status >= 400) {
+        console.error(`API Error ${response.status}:`, errorData);
+      }
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorData}`)
     }
     
     return response.json()
