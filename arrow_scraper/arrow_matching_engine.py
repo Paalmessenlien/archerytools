@@ -12,6 +12,7 @@ import math
 # Import our custom modules
 from arrow_database import ArrowDatabase
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
+from spine_service import spine_service
 
 class MatchCriteria(Enum):
     """Criteria for ranking arrow matches"""
@@ -95,14 +96,15 @@ class ArrowMatchingEngine:
         print(f"   Point weight: {request.point_weight}gr")
         print(f"   Material preference: {request.material_preference}")
         
-        # Calculate required spine
-        spine_result = self.spine_calculator.calculate_required_spine(
-            request.bow_config,
-            request.arrow_length,
-            request.point_weight,
-            request.nock_weight,
-            request.fletching_weight,
-            request.material_preference
+        # Calculate required spine using unified service
+        spine_result = spine_service.calculate_spine(
+            draw_weight=request.bow_config.draw_weight,
+            arrow_length=request.arrow_length,
+            point_weight=request.point_weight,
+            bow_type=request.bow_config.bow_type.value,
+            nock_weight=request.nock_weight,
+            fletching_weight=request.fletching_weight,
+            material_preference=request.material_preference
         )
         
         optimal_spine = spine_result['calculated_spine']

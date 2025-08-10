@@ -162,34 +162,37 @@ run_database_import() {
 echo "🔍 Step 1: Database Verification"
 echo "================================"
 
-# UNIFIED DATABASE ARCHITECTURE (August 2025)
-# Determine database paths using environment variables with fallbacks
+# Database Path Resolution - Compatible with Production Docker Volumes
+echo "🗄️  Configuring database paths for deployment environment"
 
-echo "🗄️  Using UNIFIED DATABASE ARCHITECTURE"
-
-# Use environment variables if set, otherwise use unified fallback paths
+# Use environment variables if set, otherwise detect environment and use appropriate defaults
 ARROW_DB="${ARROW_DATABASE_PATH:-}"
 USER_DB="${USER_DATABASE_PATH:-}"
 
 if [ -d "/app" ] && [ -f "/app/api.py" ]; then
-    # Docker environment - use unified database paths
+    # Docker environment - check for volume mounts and environment variables
     echo "🐳 Running in Docker environment"
     
-    # Use environment variables or unified defaults
-    if [ -z "$ARROW_DB" ]; then
-        ARROW_DB="/app/databases/arrow_database.db"
-    fi
-    if [ -z "$USER_DB" ]; then
-        USER_DB="/app/databases/user_data.db"
+    # Check if we have unified database environment variables (new architecture)
+    if [ -n "$ARROW_DATABASE_PATH" ] && [ -n "$USER_DATABASE_PATH" ]; then
+        echo "📁 Using environment-specified unified database paths"
+        ARROW_DB="$ARROW_DATABASE_PATH"
+        USER_DB="$USER_DATABASE_PATH"
+        mkdir -p "$(dirname "$ARROW_DB")" "$(dirname "$USER_DB")"
+    else
+        # Production volume mount paths (existing working system)
+        echo "📁 Using production Docker volume paths"
+        ARROW_DB="/app/arrow_data/arrow_database.db"
+        USER_DB="/app/user_data/user_data.db"
+        
+        # Ensure directories exist (Docker volumes)
+        mkdir -p "/app/arrow_data" "/app/user_data"
     fi
     
-    echo "📁 Arrow database (UNIFIED): $ARROW_DB"
-    echo "📁 User database (UNIFIED): $USER_DB"
-    
-    # Ensure unified databases directory exists
-    mkdir -p "/app/databases"
+    echo "📁 Arrow database: $ARROW_DB"
+    echo "📁 User database: $USER_DB"
 else
-    # Local development environment - use unified local paths
+    # Local development environment
     echo "💻 Running in local development environment"
     
     # Check if we're in the arrow_scraper directory
@@ -198,19 +201,16 @@ else
         echo "📁 Changed to arrow_scraper directory"
     fi
     
-    # Use environment variables or unified local defaults
+    # Local development defaults (can be overridden by environment variables)
     if [ -z "$ARROW_DB" ]; then
-        ARROW_DB="../databases/arrow_database.db"
+        ARROW_DB="arrow_database.db"
     fi
     if [ -z "$USER_DB" ]; then
-        USER_DB="../databases/user_data.db"
+        USER_DB="user_data.db"
     fi
     
-    echo "📁 Arrow database (UNIFIED LOCAL): $ARROW_DB"
-    echo "📁 User database (UNIFIED LOCAL): $USER_DB"
-    
-    # Ensure unified databases directory exists
-    mkdir -p "../databases"
+    echo "📁 Arrow database (local): $ARROW_DB"
+    echo "📁 User database (local): $USER_DB"
 fi
 
 # Verify arrow database
