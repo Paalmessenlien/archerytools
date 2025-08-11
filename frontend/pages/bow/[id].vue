@@ -443,6 +443,13 @@ const duplicateArrow = async (arrowSetup) => {
       spine: arrowSetup.calculated_spine,
       newId: response?.id
     });
+    
+    // Show brief success notification to user
+    if (process.client && window.alert) {
+      setTimeout(() => {
+        alert(`✅ Arrow duplicated successfully!\n${arrowSetup.arrow?.manufacturer || 'Arrow'} ${arrowSetup.arrow?.model_name || ''} has been added to your bow setup.`);
+      }, 100);
+    }
   } catch (err) {
     console.error('❌ Error duplicating arrow:', err);
     

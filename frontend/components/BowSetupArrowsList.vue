@@ -348,7 +348,8 @@ const editArrow = (arrowSetup) => {
 }
 
 const duplicateArrow = (arrowSetup) => {
-  console.log('Duplicate arrow clicked:', arrowSetup)
+  console.log('🖱️ Duplicate button clicked in BowSetupArrowsList:', arrowSetup)
+  console.log('🚀 Emitting duplicate-arrow event to parent component')
   emit('duplicate-arrow', arrowSetup)
 }
 
