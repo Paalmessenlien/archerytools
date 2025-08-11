@@ -120,8 +120,9 @@
             <div class="flex items-center space-x-2">
               <NuxtLink
                 to="/my-setup"
-                class="text-xs text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
               >
+                <i class="fas fa-cog mr-1.5"></i>
                 Manage Bows
               </NuxtLink>
             </div>

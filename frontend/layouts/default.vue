@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+    <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sticky top-0 z-40">
       <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-3">
@@ -210,7 +210,7 @@
     </header>
 
     <!-- Bow Setup Picker - Desktop Only -->
-    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block" />
+    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block sticky top-16 z-30" />
 
     <!-- Main Content -->
     <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-20 md:pb-6">
