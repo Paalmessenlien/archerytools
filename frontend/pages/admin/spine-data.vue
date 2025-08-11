@@ -601,18 +601,19 @@ async function loadSpineData() {
   try {
     // Load parameters
     const paramsResponse = await api.get('/admin/spine-data/parameters')
-    parameters.value = paramsResponse.data
+    parameters.value = paramsResponse?.data || paramsResponse || {}
     
     // Load materials
     const materialsResponse = await api.get('/admin/spine-data/materials')
-    materials.value = materialsResponse.data.materials
+    materials.value = materialsResponse?.data?.materials || materialsResponse?.materials || []
     
     // Load manufacturer charts
     const chartsResponse = await api.get('/admin/spine-data/manufacturer-charts')
-    charts.value = chartsResponse.data.charts
+    charts.value = chartsResponse?.data?.charts || chartsResponse?.charts || []
     
   } catch (err) {
-    error.value = 'Failed to load spine data: ' + (err.response?.data?.error || err.message)
+    console.error('Spine data loading error:', err)
+    error.value = 'Failed to load spine data: ' + (err?.response?.data?.error || err?.message || 'Unknown error')
   } finally {
     loading.value = false
   }
@@ -663,7 +664,7 @@ async function saveMaterial() {
     
     // Reload materials
     const materialsResponse = await api.get('/admin/spine-data/materials')
-    materials.value = materialsResponse.data.materials
+    materials.value = materialsResponse?.data?.materials || materialsResponse?.materials || []
     
     closeEditMaterialModal()
   } catch (err) {
