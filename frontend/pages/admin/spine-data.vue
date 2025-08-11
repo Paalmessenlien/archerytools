@@ -535,7 +535,7 @@ import { useApi } from '~/composables/useApi'
 // Page metadata
 definePageMeta({
   layout: 'default',
-  middleware: ['auth', 'admin']
+  middleware: ['auth-check', 'admin']
 })
 
 // Composables

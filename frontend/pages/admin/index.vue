@@ -2306,7 +2306,7 @@ useHead({
 
 // Protect this page with authentication
 definePageMeta({
-  middleware: ['auth-check']
+  middleware: ['auth-check', 'admin']
 })
 </script>
 
