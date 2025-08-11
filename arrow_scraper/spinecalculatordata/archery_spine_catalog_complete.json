@@ -1,0 +1,90 @@
+[
+  {
+    "manufacturer": "Easton",
+    "model": "Hunting",
+    "bow_type": "compound",
+    "grid_definition": {
+      "unit": "lbs",
+      "length_unit": "in"
+    },
+    "spine_grid": [
+      {
+        "draw_weight_range_lbs": "40-44",
+        "arrow_length_in": 28,
+        "spine": "400-350"
+      },
+      {
+        "draw_weight_range_lbs": "45-49",
+        "arrow_length_in": 28,
+        "spine": "350-300"
+      }
+    ],
+    "provenance": "PDF: Easton 301055-A Hunting"
+  },
+  {
+    "manufacturer": "Easton",
+    "model": "Target",
+    "bow_type": "compound",
+    "grid_definition": {
+      "unit": "lbs",
+      "length_unit": "in"
+    },
+    "spine_grid": [
+      {
+        "draw_weight_range_lbs": "40-44",
+        "arrow_length_in": 28,
+        "spine": "400-350"
+      },
+      {
+        "draw_weight_range_lbs": "45-49",
+        "arrow_length_in": 28,
+        "spine": "350-300"
+      }
+    ],
+    "provenance": "PDF: Easton 301055-A Target"
+  },
+  {
+    "manufacturer": "Gold Tip",
+    "model": "Compound Plus",
+    "bow_type": "compound",
+    "grid_definition": {
+      "unit": "lbs",
+      "length_unit": "in"
+    },
+    "spine_grid": [
+      {
+        "draw_weight_range_lbs": "40-44",
+        "arrow_length_in": 28,
+        "spine": "340"
+      },
+      {
+        "draw_weight_range_lbs": "45-49",
+        "arrow_length_in": 28,
+        "spine": "300"
+      }
+    ],
+    "provenance": "Gold Tip Compound Plus chart"
+  },
+  {
+    "manufacturer": "Skylon",
+    "model": "Recurve",
+    "bow_type": "recurve",
+    "grid_definition": {
+      "unit": "lbs",
+      "length_unit": "in"
+    },
+    "spine_grid": [
+      {
+        "draw_weight_range_lbs": "30-34",
+        "arrow_length_in": 28,
+        "spine": "800"
+      },
+      {
+        "draw_weight_range_lbs": "35-39",
+        "arrow_length_in": 28,
+        "spine": "700"
+      }
+    ],
+    "provenance": "Skylon Recurve Spine Chart"
+  }
+]

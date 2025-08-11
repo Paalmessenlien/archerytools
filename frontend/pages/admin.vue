@@ -94,6 +94,18 @@
           <i class="fas fa-database mr-2"></i>
           Backups
         </button>
+        <button
+          @click="activeTab = 'system'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'system' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-server mr-2"></i>
+          System
+        </button>
       </nav>
     </div>
 
@@ -277,6 +289,216 @@
         </md-elevated-card>
       </div>
       
+      <!-- System Tab -->
+      <div v-if="activeTab === 'system'">
+        <!-- System Information Panel -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-server mr-2 text-indigo-600"></i>
+                System Information
+              </h2>
+              <CustomButton
+                @click="loadSystemInfo"
+                variant="outlined"
+                size="small"
+                :disabled="isLoadingSystemInfo"
+                class="text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+              >
+                <i class="fas fa-refresh mr-2"></i>
+                Refresh
+              </CustomButton>
+            </div>
+
+            <!-- Loading State -->
+            <div v-if="isLoadingSystemInfo" class="text-center py-8">
+              <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+              <p class="text-gray-600 dark:text-gray-400">Loading system information...</p>
+            </div>
+
+            <!-- System Information Content -->
+            <div v-else-if="systemInfo" class="space-y-6">
+              <!-- Platform & Environment -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <div class="text-sm font-medium text-blue-800 dark:text-blue-200">Platform</div>
+                  <div class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ systemInfo.system.platform }}</div>
+                  <div class="text-xs text-blue-700 dark:text-blue-300">{{ systemInfo.system.architecture }}</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <div class="text-sm font-medium text-green-800 dark:text-green-200">Python Version</div>
+                  <div class="text-lg font-semibold text-green-600 dark:text-green-400">{{ systemInfo.system.python_version }}</div>
+                </div>
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                  <div class="text-sm font-medium text-purple-800 dark:text-purple-200">API Port</div>
+                  <div class="text-lg font-semibold text-purple-600 dark:text-purple-400">{{ systemInfo.environment.api_port }}</div>
+                </div>
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                  <div class="text-sm font-medium text-orange-800 dark:text-orange-200">SSL Status</div>
+                  <div class="text-lg font-semibold" :class="systemInfo.environment.ssl_enabled ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'">
+                    {{ systemInfo.environment.ssl_enabled ? 'Enabled' : 'Disabled' }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Resource Usage -->
+              <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  <i class="fas fa-chart-line mr-2 text-gray-600"></i>
+                  Resource Usage
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {{ systemInfo.resources.memory_usage_percent }}%
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Memory Usage</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                      {{ systemInfo.resources.memory_used_gb }} / {{ systemInfo.resources.memory_total_gb }} GB
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {{ systemInfo.resources.disk_usage_percent }}%
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Disk Usage</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                      {{ systemInfo.resources.disk_used_gb }} / {{ systemInfo.resources.disk_total_gb }} GB
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {{ systemInfo.resources.uptime_hours }}h
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Uptime</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                      {{ Math.floor(systemInfo.resources.uptime_hours / 24) }} days
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Database Information -->
+              <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  <i class="fas fa-database mr-2 text-gray-600"></i>
+                  Database Locations & Statistics
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <!-- Arrow Database -->
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      <i class="fas fa-bow-arrow mr-2 text-blue-600"></i>
+                      Arrow Database
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Location:</span>
+                        <span class="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">{{ systemInfo.databases.arrow_db.location }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Size:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ systemInfo.databases.arrow_db.size_mb }} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Total Arrows:</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-medium">{{ systemInfo.databases.arrow_db.stats.total_arrows || 0 }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Manufacturers:</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-medium">{{ systemInfo.databases.arrow_db.stats.total_manufacturers || 0 }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Status:</span>
+                        <span class="text-green-600 dark:text-green-400">{{ systemInfo.databases.arrow_db.exists ? 'Available' : 'Missing' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- User Database -->
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      <i class="fas fa-users mr-2 text-green-600"></i>
+                      User Database
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Location:</span>
+                        <span class="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">{{ systemInfo.databases.user_db.location }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Size:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ systemInfo.databases.user_db.size_mb }} MB</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Total Users:</span>
+                        <span class="text-green-600 dark:text-green-400 font-medium">{{ systemInfo.databases.user_db.stats.total_users || 0 }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Bow Setups:</span>
+                        <span class="text-green-600 dark:text-green-400 font-medium">{{ systemInfo.databases.user_db.stats.total_bow_setups || 0 }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Status:</span>
+                        <span class="text-green-600 dark:text-green-400">{{ systemInfo.databases.user_db.exists ? 'Available' : 'Missing' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Health Status -->
+              <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  <i class="fas fa-heartbeat mr-2 text-gray-600"></i>
+                  Health Status
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="text-center p-3 rounded-lg" :class="systemInfo.health.status === 'healthy' ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'">
+                    <div class="text-2xl font-bold" :class="systemInfo.health.status === 'healthy' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                      <i :class="systemInfo.health.status === 'healthy' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
+                    </div>
+                    <div class="text-sm font-medium mt-1" :class="systemInfo.health.status === 'healthy' ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
+                      System {{ systemInfo.health.status === 'healthy' ? 'Healthy' : 'Issues' }}
+                    </div>
+                  </div>
+                  <div class="text-center p-3 bg-gray-100 dark:bg-gray-900/20 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                      {{ systemInfo.health.response_time_ms }}ms
+                    </div>
+                    <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mt-1">
+                      Response Time
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div v-else-if="systemInfoError" class="text-center py-8">
+              <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+              <p class="text-gray-600 dark:text-gray-400">{{ systemInfoError }}</p>
+              <CustomButton
+                @click="loadSystemInfo"
+                variant="outlined"
+                size="small"
+                class="mt-4 text-red-600 border-red-600 dark:text-red-400 dark:border-red-400"
+              >
+                <i class="fas fa-refresh mr-2"></i>
+                Retry
+              </CustomButton>
+            </div>
+
+            <!-- Empty State (initial) -->
+            <div v-else class="text-center py-8">
+              <i class="fas fa-server text-4xl text-gray-400 mb-4"></i>
+              <p class="text-gray-500 dark:text-gray-400">Click "Refresh" to load system information</p>
+            </div>
+          </div>
+        </md-elevated-card>
+      </div>
+
       <!-- Backups Tab -->
       <div v-if="activeTab === 'backups'">
         <!-- Backup Creation -->
@@ -845,6 +1067,11 @@ const isRestoringBackup = ref(false)
 const showRestoreBackupModal = ref(false)
 const backupToRestore = ref(null)
 
+// System information state
+const systemInfo = ref(null)
+const isLoadingSystemInfo = ref(false)
+const systemInfoError = ref(null)
+
 const backupForm = ref({
   name: '',
   includeArrowDb: true,
@@ -1158,6 +1385,26 @@ const deleteArrow = async () => {
     showNotification(error.message || 'Failed to delete arrow', 'error')
   } finally {
     isDeletingArrow.value = false
+  }
+}
+
+// System information functions
+const loadSystemInfo = async () => {
+  if (!isAdmin.value) return
+  
+  try {
+    isLoadingSystemInfo.value = true
+    systemInfoError.value = null
+    
+    const response = await api.get('/admin/system-info')
+    systemInfo.value = response
+    
+    console.log('System information loaded:', response)
+  } catch (error) {
+    console.error('Error loading system info:', error)
+    systemInfoError.value = 'Failed to load system information: ' + error.message
+  } finally {
+    isLoadingSystemInfo.value = false
   }
 }
 
@@ -1491,6 +1738,9 @@ watch(user, () => {
 watch(activeTab, async (newTab) => {
   if (newTab === 'backups' && isAdmin.value && backups.value.length === 0) {
     await loadBackups()
+  }
+  if (newTab === 'system' && isAdmin.value && !systemInfo.value) {
+    await loadSystemInfo()
   }
 })
 

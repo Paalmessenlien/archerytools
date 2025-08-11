@@ -4189,6 +4189,156 @@ def upload_backup_file(current_user):
         print(f"❌ Upload restore error: {e}")
         return jsonify({'error': f'Failed to restore from uploaded file: {str(e)}'}), 500
 
+@app.route('/api/admin/system-info', methods=['GET'])
+@token_required
+@admin_required
+def get_system_info(current_user):
+    """Get comprehensive system information for admin panel"""
+    try:
+        import platform
+        import psutil
+        from arrow_database import ArrowDatabase
+        from user_database import UserDatabase
+        
+        # Get database information
+        arrow_db = ArrowDatabase()
+        arrow_db_path = str(arrow_db.db_path)
+        
+        user_db = UserDatabase()
+        user_db_path = str(user_db.db_path)
+        
+        # Get arrow database statistics
+        arrow_conn = arrow_db.get_connection()
+        arrow_cursor = arrow_conn.cursor()
+        
+        # Count arrows and manufacturers
+        arrow_cursor.execute("SELECT COUNT(*) FROM arrows")
+        arrow_count = arrow_cursor.fetchone()[0]
+        
+        arrow_cursor.execute("SELECT COUNT(DISTINCT manufacturer) FROM arrows")
+        manufacturer_count = arrow_cursor.fetchone()[0]
+        
+        # Count spine specifications
+        arrow_cursor.execute("SELECT COUNT(*) FROM spine_specifications")
+        spine_spec_count = arrow_cursor.fetchone()[0]
+        
+        # Get database file size
+        import os
+        arrow_db_size = os.path.getsize(arrow_db_path) if os.path.exists(arrow_db_path) else 0
+        
+        arrow_conn.close()
+        
+        # Get user database statistics
+        user_conn = user_db.get_connection()
+        user_cursor = user_conn.cursor()
+        
+        user_cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = user_cursor.fetchone()[0]
+        
+        user_cursor.execute("SELECT COUNT(*) FROM bow_setups")
+        bow_setup_count = user_cursor.fetchone()[0]
+        
+        user_cursor.execute("SELECT COUNT(*) FROM setup_arrows")
+        setup_arrow_count = user_cursor.fetchone()[0]
+        
+        # Get user database file size
+        user_db_size = os.path.getsize(user_db_path) if os.path.exists(user_db_path) else 0
+        
+        user_conn.close()
+        
+        # Get system information
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        # Calculate uptime in hours
+        import time
+        start_time_value = globals().get('start_time', time.time())
+        uptime_seconds = time.time() - start_time_value
+        uptime_hours = round(uptime_seconds / 3600, 1)
+        
+        # Environment information
+        environment = os.environ.get('NODE_ENV', 'development')
+        api_port = os.environ.get('API_PORT', '5000')
+        domain = os.environ.get('DOMAIN_NAME', 'localhost')
+        ssl_enabled = os.environ.get('SSL_ENABLED', 'false').lower() == 'true'
+        
+        # Calculate response time (simple estimate)
+        request_start_time = time.time()
+        response_time_ms = round((time.time() - request_start_time) * 1000, 1)
+        
+        system_info = {
+            'system': {
+                'platform': platform.system(),
+                'platform_release': platform.release(),
+                'platform_version': platform.version(),
+                'architecture': platform.machine(),
+                'processor': platform.processor(),
+                'python_version': platform.python_version(),
+                'hostname': platform.node()
+            },
+            'resources': {
+                'memory_total_gb': round(memory.total / (1024**3), 2),
+                'memory_used_gb': round((memory.total - memory.available) / (1024**3), 2),
+                'memory_usage_percent': round(memory.percent, 1),
+                'disk_total_gb': round(disk.total / (1024**3), 2),
+                'disk_used_gb': round(disk.used / (1024**3), 2),
+                'disk_free_gb': round(disk.free / (1024**3), 2),
+                'disk_usage_percent': round(disk.percent, 1),
+                'uptime_hours': uptime_hours
+            },
+            'environment': {
+                'node_env': environment,
+                'api_port': api_port,
+                'domain_name': domain,
+                'ssl_enabled': ssl_enabled,
+                'api_base_url': f"{'https' if ssl_enabled else 'http'}://{domain}:{api_port}" if domain != 'localhost' else f"http://localhost:{api_port}"
+            },
+            'databases': {
+                'arrow_db': {
+                    'location': arrow_db_path,
+                    'size_bytes': arrow_db_size,
+                    'size_mb': round(arrow_db_size / (1024 * 1024), 2),
+                    'exists': os.path.exists(arrow_db_path),
+                    'readable': os.access(arrow_db_path, os.R_OK) if os.path.exists(arrow_db_path) else False,
+                    'writable': os.access(arrow_db_path, os.W_OK) if os.path.exists(arrow_db_path) else False,
+                    'stats': {
+                        'total_arrows': arrow_count,
+                        'total_manufacturers': manufacturer_count,
+                        'total_specifications': spine_spec_count
+                    }
+                },
+                'user_db': {
+                    'location': user_db_path,
+                    'size_bytes': user_db_size,
+                    'size_mb': round(user_db_size / (1024 * 1024), 2),
+                    'exists': os.path.exists(user_db_path),
+                    'readable': os.access(user_db_path, os.R_OK) if os.path.exists(user_db_path) else False,
+                    'writable': os.access(user_db_path, os.W_OK) if os.path.exists(user_db_path) else False,
+                    'stats': {
+                        'total_users': user_count,
+                        'total_bow_setups': bow_setup_count,
+                        'total_setup_arrows': setup_arrow_count
+                    }
+                }
+            },
+            'health': {
+                'status': 'healthy',
+                'timestamp': datetime.now().isoformat(),
+                'response_time_ms': response_time_ms
+            }
+        }
+        
+        return jsonify(system_info)
+        
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to get system information: {str(e)}',
+            'health': {
+                'status': 'error',
+                'timestamp': datetime.now().isoformat()
+            }
+        }), 500
+
 # Run the app
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))
