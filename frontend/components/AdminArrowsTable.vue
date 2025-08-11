@@ -24,6 +24,15 @@
         </select>
         
         <CustomButton
+          @click="showColumnSettings = true"
+          variant="outlined"
+          class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 whitespace-nowrap"
+        >
+          <i class="fas fa-columns mr-2"></i>
+          Columns
+        </CustomButton>
+        
+        <CustomButton
           @click="openCreateModal"
           variant="filled"
           class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 whitespace-nowrap"
@@ -46,22 +55,22 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.arrow" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Arrow
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.material" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Material
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.type" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Type
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.spineRange" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Spine Range
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.lengthStatus" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Length Status
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th v-if="visibleColumns.updated" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Updated
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -71,7 +80,7 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-for="arrow in arrows" :key="arrow.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td v-if="visibleColumns.arrow" class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <img 
                     v-if="arrow.primary_image_url" 
@@ -93,28 +102,28 @@
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td v-if="visibleColumns.material" class="px-6 py-4 whitespace-nowrap">
                 <span v-if="arrow.material" :class="getMaterialBadgeClass(arrow.material)" 
                       class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
                   {{ arrow.material }}
                 </span>
                 <span v-else class="text-gray-400 text-sm">N/A</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td v-if="visibleColumns.type" class="px-6 py-4 whitespace-nowrap">
                 <span v-if="arrow.arrow_type" :class="getTypeBadgeClass(arrow.arrow_type)" 
                       class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
                   {{ formatArrowType(arrow.arrow_type) }}
                 </span>
                 <span v-else class="text-gray-400 text-sm">N/A</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td v-if="visibleColumns.spineRange" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 <div v-if="arrow.spine_count > 0">
                   <span class="font-medium">{{ arrow.min_spine }}-{{ arrow.max_spine }}</span>
                   <span class="text-gray-500 dark:text-gray-400 ml-1">({{ arrow.spine_count }} spines)</span>
                 </div>
                 <span v-else class="text-gray-400">No spines</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <td v-if="visibleColumns.lengthStatus" class="px-6 py-4 whitespace-nowrap text-sm">
                 <div class="flex items-center">
                   <span :class="getLengthStatusBadgeClass(arrow.length_status)" 
                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
@@ -125,7 +134,7 @@
                   </span>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              <td v-if="visibleColumns.updated" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {{ formatDate(arrow.created_at) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -234,6 +243,68 @@
         </div>
       </div>
     </div>
+
+    <!-- Column Settings Modal -->
+    <div v-if="showColumnSettings" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            <i class="fas fa-columns mr-2 text-indigo-600"></i>
+            Column Settings
+          </h3>
+          <button @click="showColumnSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+          Choose which columns to display in the arrows table. Changes are saved automatically.
+        </p>
+
+        <div class="space-y-3">
+          <div v-for="column in columnOptions" :key="column.key" class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i :class="column.icon" class="text-gray-500 dark:text-gray-400 mr-3 w-4"></i>
+              <div>
+                <div class="font-medium text-gray-900 dark:text-gray-100">{{ column.label }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ column.description }}</div>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                v-model="visibleColumns[column.key]"
+                @change="saveColumnSettings"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-between">
+          <CustomButton
+            @click="resetColumns"
+            variant="outlined"
+            size="small"
+            class="text-gray-600 border-gray-300 dark:text-gray-300 dark:border-gray-600"
+          >
+            <i class="fas fa-undo mr-2"></i>
+            Reset to Default
+          </CustomButton>
+
+          <div class="space-x-2">
+            <CustomButton
+              @click="showColumnSettings = false"
+              variant="outlined"
+              class="text-gray-700 dark:text-gray-200"
+            >
+              Close
+            </CustomButton>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -278,6 +349,7 @@ const manufacturers = ref<string[]>([]);
 const isLoading = ref(false);
 const searchQuery = ref('');
 const selectedManufacturer = ref('');
+const showColumnSettings = ref(false);
 
 const pagination = ref<Pagination>({
   page: 1,
@@ -291,6 +363,57 @@ const message = ref({
   text: '',
   type: 'success' as 'success' | 'error'
 });
+
+// Column management
+const defaultColumns = {
+  arrow: true,
+  material: true,
+  type: true,
+  spineRange: true,
+  lengthStatus: true,
+  updated: false
+};
+
+const visibleColumns = ref({ ...defaultColumns });
+
+const columnOptions = [
+  {
+    key: 'arrow',
+    label: 'Arrow Info',
+    description: 'Name, manufacturer and image',
+    icon: 'fas fa-bow-arrow'
+  },
+  {
+    key: 'material',
+    label: 'Material',
+    description: 'Arrow shaft material',
+    icon: 'fas fa-layer-group'
+  },
+  {
+    key: 'type',
+    label: 'Type',
+    description: 'Hunting, target, 3D, etc.',
+    icon: 'fas fa-tag'
+  },
+  {
+    key: 'spineRange',
+    label: 'Spine Range',
+    description: 'Min-max spine with count',
+    icon: 'fas fa-ruler-horizontal'
+  },
+  {
+    key: 'lengthStatus',
+    label: 'Length Status',
+    description: 'Completeness of length data',
+    icon: 'fas fa-check-circle'
+  },
+  {
+    key: 'updated',
+    label: 'Updated Date',
+    description: 'When arrow was last modified',
+    icon: 'fas fa-calendar'
+  }
+];
 
 // Debounced search
 let searchTimeout: NodeJS.Timeout;
@@ -469,6 +592,35 @@ const handleImageError = (event: Event) => {
   img.style.display = 'none';
 };
 
+// Column management functions
+const saveColumnSettings = () => {
+  if (process.client) {
+    localStorage.setItem('admin-arrows-columns', JSON.stringify(visibleColumns.value));
+  }
+};
+
+const loadColumnSettings = () => {
+  if (process.client) {
+    try {
+      const saved = localStorage.getItem('admin-arrows-columns');
+      if (saved) {
+        const savedColumns = JSON.parse(saved);
+        // Merge saved settings with defaults to handle new columns
+        visibleColumns.value = { ...defaultColumns, ...savedColumns };
+      }
+    } catch (error) {
+      console.warn('Failed to load column settings:', error);
+      visibleColumns.value = { ...defaultColumns };
+    }
+  }
+};
+
+const resetColumns = () => {
+  visibleColumns.value = { ...defaultColumns };
+  saveColumnSettings();
+  showMessage('Column settings reset to default', 'success');
+};
+
 // Expose refresh method
 defineExpose({
   loadArrows,
@@ -477,6 +629,7 @@ defineExpose({
 
 // Initialize
 onMounted(() => {
+  loadColumnSettings();
   loadArrows();
   loadManufacturers();
 });

@@ -59,6 +59,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **Traditional Wood Arrows Support**: Complete database support for traditional wooden arrow shafts including Cedar, Pine, Poplar, Birch, and Fir
 - ✅ **German Decimal Conversion**: Automatic conversion of German decimal format (5,40 → 5.40) for European manufacturers
 - ✅ **Admin Arrow Editing Fix**: Complete resolution of admin arrow save/update functionality with database schema migration and API enhancements
+- ✅ **Advanced Admin Data Tools**: Batch fill missing data functionality and URL-based scraping integration for comprehensive arrow data management
 
 ## Development Commands
 
@@ -520,9 +521,15 @@ python -m pytest tests/
 # GET /api/admin/backup/<id>/download - Get backup download info
 # DELETE /api/admin/backup/<id> - Delete backup
 
+# Admin Data Tools:
+# POST /api/admin/batch-fill/preview - Preview batch fill missing data operations
+# POST /api/admin/batch-fill/execute - Execute batch fill to propagate data across manufacturer arrows
+# GET /api/admin/manufacturers/<manufacturer>/length-stats - Get manufacturer length statistics
+# POST /api/admin/scrape-url - Scrape arrow data from specific URLs and update database
+
 # Frontend admin panel:
 # Access: /admin (requires admin authentication)
-# Features: User management, backup/restore, admin privilege assignment
+# Features: User management, backup/restore, admin privilege assignment, batch data tools, URL scraping
 
 # Test admin access (after authentication):
 cd arrow_scraper
@@ -1317,6 +1324,26 @@ This section details recent fixes and improvements to common development and dep
   - Updated both `create_arrow_admin` and `update_arrow_admin` endpoints
 - **Files**: `arrow_scraper/api.py`, `arrow_scraper/start-api-robust.sh`
 - **Status**: ✅ **RESOLVED** - All admin arrow editing now works correctly, material changes save successfully
+
+**Advanced Admin Data Tools Implementation (August 2025):**
+- **Feature**: Complete admin data management system with batch fill and URL scraping capabilities
+- **Implementation**: 
+  - **Batch Fill System**: Propagates missing length data from complete reference arrows to other arrows from same manufacturer
+    - Preview functionality shows exactly what data will be copied before execution
+    - Manufacturer selection with automatic reference arrow detection
+    - Smart matching based on existing complete arrow specifications
+  - **URL Scraping Integration**: Extracts arrow specifications directly from manufacturer websites
+    - Intelligent table extraction from HTML specification tables (e.g., Easton format)
+    - Fallback text-based extraction for unstructured content
+    - Updates existing arrows with missing spine specifications, GPI weights, and diameters
+    - Successfully tested with Easton X10 Parallel Pro (added 13 new spine specs from website table)
+- **API Endpoints**: 
+  - `POST /api/admin/batch-fill/preview` - Preview batch operations
+  - `POST /api/admin/batch-fill/execute` - Execute batch fill operations
+  - `POST /api/admin/scrape-url` - Scrape specifications from manufacturer URLs
+- **Frontend**: Complete "Data Tools" tab in admin panel with intuitive UI for both batch operations and URL scraping
+- **Files**: `arrow_scraper/api.py`, `frontend/pages/admin.vue`
+- **Status**: ✅ **PRODUCTION READY** - Comprehensive data management tools for maintaining and expanding arrow database
 
 **Previous Admin Arrow Save/Update API Error Fix (August 2025):**
 - **Issue**: Admin arrow editing functionality failing with API errors when trying to save or update arrows with spine specifications

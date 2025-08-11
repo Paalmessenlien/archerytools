@@ -83,6 +83,18 @@
           Manufacturers
         </button>
         <button
+          @click="activeTab = 'datatools'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'datatools' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-tools mr-2"></i>
+          Data Tools
+        </button>
+        <button
           @click="activeTab = 'backups'"
           :class="[
             'py-2 px-1 border-b-2 font-medium text-sm',
@@ -285,6 +297,366 @@
               @refresh-stats="loadManufacturerStats"
               @show-notification="showNotification"
             />
+          </div>
+        </md-elevated-card>
+      </div>
+      
+      <!-- Data Tools Tab -->
+      <div v-if="activeTab === 'datatools'">
+        <!-- Batch Fill Missing Data -->
+        <md-elevated-card class="light-surface light-elevation mb-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <i class="fas fa-fill-drip mr-2 text-blue-600"></i>
+                  Batch Fill Missing Length Data
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  Fill missing length data for arrows using a reference arrow from the same manufacturer
+                </p>
+              </div>
+            </div>
+            
+            <!-- Manufacturer Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Select Manufacturer
+                </label>
+                <select 
+                  v-model="batchFill.selectedManufacturer" 
+                  @change="loadManufacturerLengthStats"
+                  class="form-select w-full"
+                >
+                  <option value="">Choose a manufacturer...</option>
+                  <option v-for="manufacturer in manufacturers" :key="manufacturer.name" :value="manufacturer.name">
+                    {{ manufacturer.name }} ({{ manufacturer.arrow_count }} arrows)
+                  </option>
+                </select>
+              </div>
+              
+              <div v-if="batchFill.lengthStats">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Length Data Statistics
+                </label>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm">
+                  <div class="flex justify-between">
+                    <span>Complete:</span>
+                    <span class="font-medium text-green-600">{{ batchFill.lengthStats.statistics.fully_complete }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Partial:</span>
+                    <span class="font-medium text-yellow-600">{{ batchFill.lengthStats.statistics.partially_complete }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Missing:</span>
+                    <span class="font-medium text-red-600">{{ batchFill.lengthStats.statistics.completely_missing }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Reference Arrow Selection -->
+            <div v-if="batchFill.lengthStats && batchFill.lengthStats.reference_candidates.length > 0" class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Reference Arrow (Complete Length Data)
+              </label>
+              <select v-model="batchFill.selectedReferenceArrow" class="form-select w-full">
+                <option value="">Choose reference arrow...</option>
+                <option 
+                  v-for="arrow in batchFill.lengthStats.reference_candidates" 
+                  :key="arrow.id" 
+                  :value="arrow.id"
+                >
+                  {{ arrow.model_name }} ({{ arrow.complete_lengths }}/{{ arrow.total_spines }} spines complete)
+                </option>
+              </select>
+            </div>
+            
+            <!-- No Reference Arrows Warning -->
+            <div v-else-if="batchFill.lengthStats && batchFill.lengthStats.reference_candidates.length === 0" class="mb-6">
+              <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div class="flex items-center">
+                  <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-3"></i>
+                  <div>
+                    <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">No Complete Reference Arrows</h4>
+                    <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      No arrows from {{ batchFill.selectedManufacturer }} have complete length data to use as reference.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div v-if="batchFill.selectedReferenceArrow" class="mb-6">
+              <div class="flex gap-4">
+                <CustomButton
+                  @click="previewBatchFill"
+                  :disabled="batchFill.isLoading"
+                  variant="outlined"
+                  class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                >
+                  <i class="fas fa-eye mr-2"></i>
+                  {{ batchFill.isLoading ? 'Loading...' : 'Preview Changes' }}
+                </CustomButton>
+                
+                <CustomButton
+                  v-if="batchFill.previewData"
+                  @click="executeBatchFill"
+                  :disabled="batchFill.isExecuting"
+                  variant="filled"
+                  class="bg-green-600 text-white hover:bg-green-700"
+                >
+                  <i class="fas fa-play mr-2"></i>
+                  {{ batchFill.isExecuting ? 'Executing...' : 'Execute Batch Fill' }}
+                </CustomButton>
+              </div>
+            </div>
+            
+            <!-- Preview Results -->
+            <div v-if="batchFill.previewData" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Batch Fill Preview</h4>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p><strong>Reference:</strong> {{ batchFill.previewData.reference_arrow.model_name }}</p>
+                  <p><strong>Manufacturer:</strong> {{ batchFill.previewData.summary.manufacturer }}</p>
+                  <p><strong>Arrows to update:</strong> {{ batchFill.previewData.summary.arrows_to_update }}</p>
+                  <p><strong>Spine specifications to fill:</strong> {{ batchFill.previewData.summary.total_spine_updates }}</p>
+                </div>
+              </div>
+              
+              <div class="max-h-64 overflow-y-auto">
+                <div v-for="arrow in batchFill.previewData.target_arrows" :key="arrow.arrow_id" class="p-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="font-medium text-gray-900 dark:text-gray-100">{{ arrow.model_name }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ arrow.fillable_count }} of {{ arrow.missing_lengths }} missing lengths can be filled
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400">
+                      Spines: {{ arrow.fillable_spines.map(s => s.spine).join(', ') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </md-elevated-card>
+        
+        <!-- Length Data Overview -->
+        <md-elevated-card class="light-surface light-elevation" v-if="batchFill.lengthStats">
+          <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
+              {{ batchFill.selectedManufacturer }} - Length Data Overview
+            </h3>
+            
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Arrow Model
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Completion
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Progress
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr v-for="arrow in batchFill.lengthStats.arrows" :key="arrow.id">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {{ arrow.model_name }}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ arrow.complete_lengths }}/{{ arrow.total_spines }} spines
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
+                          <div 
+                            :class="[
+                              'h-2 rounded-full',
+                              arrow.completion_percentage === 100 ? 'bg-green-500' :
+                              arrow.completion_percentage > 0 ? 'bg-yellow-500' : 'bg-red-500'
+                            ]"
+                            :style="{ width: arrow.completion_percentage + '%' }"
+                          ></div>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ arrow.completion_percentage }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </md-elevated-card>
+        
+        <!-- URL Scraping Tool -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <i class="fas fa-globe mr-2 text-green-600"></i>
+                  URL Scraper & Database Updater
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  Extract arrow data from specific URLs or update existing arrows with missing spine specifications
+                </p>
+              </div>
+            </div>
+            
+            <!-- Manufacturer Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Manufacturer to Scrape
+                </label>
+                <select 
+                  v-model="scraping.manufacturer" 
+                  class="form-select w-full"
+                  :disabled="scraping.isLoading"
+                >
+                  <option value="">Choose a manufacturer...</option>
+                  <option value="easton">Easton Archery</option>
+                  <option value="goldtip">Gold Tip</option>
+                  <option value="victory">Victory Archery</option>
+                  <option value="carbonexpress">Carbon Express</option>
+                  <option value="nijora">Nijora Archery</option>
+                  <option value="aurel">Aurel Archery</option>
+                  <option value="bigarchery">BigArchery/Cross-X</option>
+                  <option value="fivics">Fivics</option>
+                  <option value="pandarus">Pandarus Archery</option>
+                  <option value="skylon">Skylon Archery</option>
+                </select>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Select from configured manufacturers with known URL patterns
+                </p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Specific Arrow URL (Optional)
+                </label>
+                <input 
+                  v-model="scraping.url" 
+                  type="url"
+                  placeholder="https://eastonarchery.com/arrows_/x10-parallel-pro/"
+                  class="form-input w-full"
+                  :disabled="scraping.isLoading"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Direct link to arrow product page - will extract spine specs and update existing arrows
+                </p>
+              </div>
+            </div>
+            
+            <!-- Scraping Controls -->
+            <div class="flex gap-4 mb-6">
+              <CustomButton
+                @click="startScraping"
+                :disabled="!scraping.manufacturer || scraping.isLoading"
+                variant="filled"
+                class="bg-green-600 text-white hover:bg-green-700"
+              >
+                <i class="fas fa-play mr-2"></i>
+                {{ scraping.isLoading ? 'Running Scraper...' : 'Run Manufacturer Scraper' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="scraping.lastResult"
+                @click="clearScrapingResults"
+                variant="outlined"
+                class="text-gray-600 border-gray-300"
+              >
+                <i class="fas fa-trash mr-2"></i>
+                Clear Results
+              </CustomButton>
+            </div>
+            
+            <!-- Loading Progress -->
+            <div v-if="scraping.isLoading" class="mb-6">
+              <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div class="flex items-center">
+                  <i class="fas fa-spinner fa-spin text-blue-600 dark:text-blue-400 mr-3"></i>
+                  <div>
+                    <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Manufacturer Scraper Running</h4>
+                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      Running the manufacturer scraper to update arrow database... This may take up to 2 minutes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Results Display -->
+            <div v-if="scraping.lastResult" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Scraping Results</h4>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p><strong>Status:</strong> 
+                    <span :class="scraping.lastResult.success ? 'text-green-600' : 'text-red-600'">
+                      {{ scraping.lastResult.success ? 'Success' : 'Failed' }}
+                    </span>
+                  </p>
+                  <p><strong>URL:</strong> <a :href="scraping.lastResult.url" target="_blank" class="text-blue-600 hover:underline">{{ scraping.lastResult.url }}</a></p>
+                  <p><strong>Manufacturer:</strong> {{ scraping.lastResult.manufacturer }}</p>
+                  <p v-if="scraping.lastResult.success"><strong>Message:</strong> {{ scraping.lastResult.message }}</p>
+                  <p v-else><strong>Error:</strong> {{ scraping.lastResult.error }}</p>
+                </div>
+              </div>
+              
+              <!-- Success Details -->
+              <div v-if="scraping.lastResult.success && scraping.lastResult.data" class="p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded">
+                    <div class="font-medium text-green-800 dark:text-green-200">Arrows Added</div>
+                    <div class="text-2xl font-bold text-green-600">{{ scraping.lastResult.data.arrows_added }}</div>
+                  </div>
+                  <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+                    <div class="font-medium text-blue-800 dark:text-blue-200">Spine Specs</div>
+                    <div class="text-2xl font-bold text-blue-600">{{ scraping.lastResult.data.spine_specs_added }}</div>
+                  </div>
+                </div>
+                
+                <!-- Arrow Models -->
+                <div v-if="scraping.lastResult.data.arrow_models && scraping.lastResult.data.arrow_models.length > 0" class="mt-4">
+                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Extracted Arrow Models:</h5>
+                  <div class="flex flex-wrap gap-2">
+                    <span 
+                      v-for="model in scraping.lastResult.data.arrow_models" 
+                      :key="model"
+                      class="inline-flex px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded"
+                    >
+                      {{ model }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tips and Guidelines -->
+            <div class="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>
+                Scraping Tips
+              </h4>
+              <ul class="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                <li>• Use direct product pages with detailed specifications</li>
+                <li>• Avoid category pages or general product listings</li>
+                <li>• Ensure the page contains spine values, diameters, and weights</li>
+                <li>• Pages with tables or structured data work best</li>
+                <li>• Scraping may take 30-60 seconds for complex pages</li>
+              </ul>
+            </div>
           </div>
         </md-elevated-card>
       </div>
@@ -1059,6 +1431,9 @@ const arrowStats = ref({
   withImages: 0
 })
 
+// Manufacturers data
+const manufacturers = ref([])
+
 // Backup management state
 const backups = ref([])
 const isLoadingBackups = ref(false)
@@ -1089,6 +1464,24 @@ const isUploadingBackup = ref(false)
 const uploadForm = ref({
   restoreArrowDb: true,
   restoreUserDb: true
+})
+
+// Batch fill state
+const batchFill = ref({
+  selectedManufacturer: '',
+  selectedReferenceArrow: null,
+  lengthStats: null,
+  previewData: null,
+  isLoading: false,
+  isExecuting: false
+})
+
+// Scraping state
+const scraping = ref({
+  url: '',
+  manufacturer: '',
+  isLoading: false,
+  lastResult: null
 })
 
 // Notification state
@@ -1724,6 +2117,150 @@ onMounted(() => {
   checkAndLoadAdminData()
 })
 
+// Batch Fill Methods
+const loadManufacturerLengthStats = async () => {
+  console.log('loadManufacturerLengthStats called with:', batchFill.value.selectedManufacturer)
+  
+  if (!batchFill.value.selectedManufacturer) {
+    batchFill.value.lengthStats = null
+    batchFill.value.selectedReferenceArrow = null
+    batchFill.value.previewData = null
+    return
+  }
+  
+  try {
+    batchFill.value.isLoading = true
+    console.log('Loading stats for manufacturer:', batchFill.value.selectedManufacturer)
+    const response = await api.get(`/admin/manufacturers/${encodeURIComponent(batchFill.value.selectedManufacturer)}/length-stats`)
+    console.log('Length stats response:', response)
+    batchFill.value.lengthStats = response
+    batchFill.value.selectedReferenceArrow = null
+    batchFill.value.previewData = null
+  } catch (error) {
+    console.error('Error loading manufacturer length stats:', error)
+    showNotification('Failed to load manufacturer statistics: ' + error.message, 'error')
+  } finally {
+    batchFill.value.isLoading = false
+  }
+}
+
+const previewBatchFill = async () => {
+  if (!batchFill.value.selectedManufacturer || !batchFill.value.selectedReferenceArrow) {
+    return
+  }
+  
+  try {
+    batchFill.value.isLoading = true
+    const response = await api.post('/admin/batch-fill/preview', {
+      manufacturer: batchFill.value.selectedManufacturer,
+      reference_arrow_id: batchFill.value.selectedReferenceArrow
+    })
+    batchFill.value.previewData = response
+    showNotification(`Preview ready: ${response.summary.arrows_to_update} arrows can be updated`, 'success')
+  } catch (error) {
+    console.error('Error previewing batch fill:', error)
+    showNotification('Failed to preview batch fill: ' + error.message, 'error')
+  } finally {
+    batchFill.value.isLoading = false
+  }
+}
+
+const executeBatchFill = async () => {
+  if (!batchFill.value.selectedManufacturer || !batchFill.value.selectedReferenceArrow) {
+    return
+  }
+  
+  try {
+    batchFill.value.isExecuting = true
+    const response = await api.post('/admin/batch-fill/execute', {
+      manufacturer: batchFill.value.selectedManufacturer,
+      reference_arrow_id: batchFill.value.selectedReferenceArrow,
+      confirm: true
+    })
+    
+    showNotification(`Batch fill completed: ${response.summary.updated_spine_specs} spine specifications updated across ${response.summary.updated_arrows_count} arrows`, 'success')
+    
+    // Reset form
+    batchFill.value.selectedManufacturer = ''
+    batchFill.value.selectedReferenceArrow = null
+    batchFill.value.lengthStats = null
+    batchFill.value.previewData = null
+    
+    // Refresh arrow stats
+    await loadArrowStats()
+    
+  } catch (error) {
+    console.error('Error executing batch fill:', error)
+    showNotification('Failed to execute batch fill: ' + error.message, 'error')
+  } finally {
+    batchFill.value.isExecuting = false
+  }
+}
+
+const loadManufacturersList = async () => {
+  try {
+    console.log('Loading manufacturers list...')
+    const response = await api.get('/admin/manufacturers')
+    console.log('Manufacturers response:', response)
+    manufacturers.value = response.manufacturers
+    console.log('Manufacturers loaded:', manufacturers.value)
+  } catch (error) {
+    console.error('Error loading manufacturers:', error)
+    showNotification('Failed to load manufacturers', 'error')
+  }
+}
+
+// Manufacturer Scraping Methods
+const startScraping = async () => {
+  if (!scraping.value.manufacturer) {
+    return
+  }
+  
+  try {
+    scraping.value.isLoading = true
+    scraping.value.lastResult = null
+    
+    const response = await api.post('/admin/scrape-url', {
+      url: scraping.value.url,
+      manufacturer: scraping.value.manufacturer
+    })
+    
+    scraping.value.lastResult = {
+      success: true,
+      message: response.message,
+      url: scraping.value.url,
+      manufacturer: scraping.value.manufacturer,
+      data: response.data
+    }
+    
+    showNotification(`Successfully scraped ${response.data.arrows_added} arrow(s) from URL`, 'success')
+    
+    // Refresh arrow stats
+    await loadArrowStats()
+    
+  } catch (error) {
+    console.error('Error scraping URL:', error)
+    
+    scraping.value.lastResult = {
+      success: false,
+      error: error.message,
+      url: scraping.value.url,
+      manufacturer: scraping.value.manufacturer
+    }
+    
+    showNotification('Failed to scrape URL: ' + error.message, 'error')
+    
+  } finally {
+    scraping.value.isLoading = false
+  }
+}
+
+const clearScrapingResults = () => {
+  scraping.value.lastResult = null
+  scraping.value.url = ''
+  scraping.value.manufacturer = ''
+}
+
 // Watch for user changes
 watch(user, () => {
   if (user.value) {
@@ -1741,6 +2278,9 @@ watch(activeTab, async (newTab) => {
   }
   if (newTab === 'system' && isAdmin.value && !systemInfo.value) {
     await loadSystemInfo()
+  }
+  if (newTab === 'datatools' && isAdmin.value && manufacturers.value.length === 0) {
+    await loadManufacturersList()
   }
 })
 

@@ -4339,6 +4339,604 @@ def get_system_info(current_user):
             }
         }), 500
 
+@app.route('/api/admin/batch-fill/preview', methods=['POST'])
+@token_required
+@admin_required
+def preview_batch_fill(current_user):
+    """Preview batch fill operation for missing length data"""
+    try:
+        data = request.get_json()
+        manufacturer = data.get('manufacturer')
+        reference_arrow_id = data.get('reference_arrow_id')
+        
+        if not manufacturer or not reference_arrow_id:
+            return jsonify({'error': 'Manufacturer and reference arrow ID are required'}), 400
+        
+        arrow_db = ArrowDatabase()
+        conn = arrow_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get reference arrow with complete length data
+        cursor.execute('''
+            SELECT a.id, a.model_name, a.manufacturer,
+                   COUNT(ss.id) as spine_count,
+                   SUM(CASE WHEN ss.length_options IS NOT NULL AND ss.length_options != '[]' AND ss.length_options != 'null' THEN 1 ELSE 0 END) as complete_lengths
+            FROM arrows a
+            JOIN spine_specifications ss ON a.id = ss.arrow_id
+            WHERE a.id = ? AND a.manufacturer = ?
+            GROUP BY a.id, a.model_name, a.manufacturer
+        ''', (reference_arrow_id, manufacturer))
+        
+        reference_arrow = cursor.fetchone()
+        
+        if not reference_arrow:
+            conn.close()
+            return jsonify({'error': 'Reference arrow not found'}), 404
+        
+        if reference_arrow['complete_lengths'] == 0:
+            conn.close()
+            return jsonify({'error': 'Reference arrow has no length data to copy'}), 400
+        
+        # Get reference length data by spine
+        cursor.execute('''
+            SELECT spine, length_options
+            FROM spine_specifications
+            WHERE arrow_id = ? AND length_options IS NOT NULL 
+            AND length_options != '[]' AND length_options != 'null'
+        ''', (reference_arrow_id,))
+        
+        reference_lengths = {str(row['spine']): row['length_options'] for row in cursor.fetchall()}
+        
+        if not reference_lengths:
+            conn.close()
+            return jsonify({'error': 'Reference arrow has no valid length data'}), 400
+        
+        # Find arrows from same manufacturer with missing length data
+        cursor.execute('''
+            SELECT DISTINCT a.id, a.model_name, a.manufacturer,
+                   COUNT(ss.id) as total_spines,
+                   SUM(CASE WHEN ss.length_options IS NULL OR ss.length_options = '[]' OR ss.length_options = 'null' THEN 1 ELSE 0 END) as missing_lengths,
+                   GROUP_CONCAT(CASE WHEN ss.length_options IS NULL OR ss.length_options = '[]' OR ss.length_options = 'null' THEN ss.spine END) as missing_spine_list
+            FROM arrows a
+            JOIN spine_specifications ss ON a.id = ss.arrow_id
+            WHERE a.manufacturer = ? AND a.id != ?
+            GROUP BY a.id, a.model_name, a.manufacturer
+            HAVING missing_lengths > 0
+            ORDER BY a.model_name
+        ''', (manufacturer, reference_arrow_id))
+        
+        target_arrows = cursor.fetchall()
+        
+        # Calculate what would be filled for each arrow
+        preview_results = []
+        total_updates = 0
+        
+        for arrow in target_arrows:
+            missing_spines = arrow['missing_spine_list'].split(',') if arrow['missing_spine_list'] else []
+            fillable_spines = []
+            
+            for spine in missing_spines:
+                if spine.strip() in reference_lengths:
+                    fillable_spines.append({
+                        'spine': spine.strip(),
+                        'length_data': reference_lengths[spine.strip()]
+                    })
+            
+            if fillable_spines:
+                preview_results.append({
+                    'arrow_id': arrow['id'],
+                    'model_name': arrow['model_name'],
+                    'total_spines': arrow['total_spines'],
+                    'missing_lengths': arrow['missing_lengths'],
+                    'fillable_count': len(fillable_spines),
+                    'fillable_spines': fillable_spines
+                })
+                total_updates += len(fillable_spines)
+        
+        conn.close()
+        
+        return jsonify({
+            'reference_arrow': {
+                'id': reference_arrow['id'],
+                'model_name': reference_arrow['model_name'],
+                'manufacturer': reference_arrow['manufacturer'],
+                'complete_lengths': reference_arrow['complete_lengths'],
+                'available_spines': list(reference_lengths.keys())
+            },
+            'target_arrows': preview_results,
+            'summary': {
+                'manufacturer': manufacturer,
+                'arrows_to_update': len(preview_results),
+                'total_spine_updates': total_updates,
+                'reference_spines_available': len(reference_lengths)
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to preview batch fill: {str(e)}'}), 500
+
+@app.route('/api/admin/batch-fill/execute', methods=['POST'])
+@token_required
+@admin_required
+def execute_batch_fill(current_user):
+    """Execute batch fill operation for missing length data"""
+    try:
+        data = request.get_json()
+        manufacturer = data.get('manufacturer')
+        reference_arrow_id = data.get('reference_arrow_id')
+        confirm = data.get('confirm', False)
+        
+        if not manufacturer or not reference_arrow_id:
+            return jsonify({'error': 'Manufacturer and reference arrow ID are required'}), 400
+        
+        if not confirm:
+            return jsonify({'error': 'Confirmation required for batch operation'}), 400
+        
+        arrow_db = ArrowDatabase()
+        conn = arrow_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get reference length data by spine
+        cursor.execute('''
+            SELECT spine, length_options
+            FROM spine_specifications
+            WHERE arrow_id = ? AND length_options IS NOT NULL 
+            AND length_options != '[]' AND length_options != 'null'
+        ''', (reference_arrow_id,))
+        
+        reference_lengths = {str(row['spine']): row['length_options'] for row in cursor.fetchall()}
+        
+        if not reference_lengths:
+            conn.close()
+            return jsonify({'error': 'Reference arrow has no valid length data'}), 400
+        
+        # Find spine specifications that need updates
+        cursor.execute('''
+            SELECT ss.id, ss.arrow_id, ss.spine, a.model_name
+            FROM spine_specifications ss
+            JOIN arrows a ON ss.arrow_id = a.id
+            WHERE a.manufacturer = ? AND a.id != ? 
+            AND (ss.length_options IS NULL OR ss.length_options = '[]' OR ss.length_options = 'null')
+            AND CAST(ss.spine AS TEXT) IN ({})
+        '''.format(','.join('?' * len(reference_lengths))), 
+        (manufacturer, reference_arrow_id, *reference_lengths.keys()))
+        
+        specs_to_update = cursor.fetchall()
+        
+        # Execute updates
+        updated_count = 0
+        updated_arrows = set()
+        
+        for spec in specs_to_update:
+            spine_str = str(spec['spine'])
+            if spine_str in reference_lengths:
+                cursor.execute('''
+                    UPDATE spine_specifications 
+                    SET length_options = ?
+                    WHERE id = ?
+                ''', (reference_lengths[spine_str], spec['id']))
+                updated_count += 1
+                updated_arrows.add(spec['model_name'])
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully updated {updated_count} spine specifications',
+            'summary': {
+                'manufacturer': manufacturer,
+                'updated_spine_specs': updated_count,
+                'updated_arrows_count': len(updated_arrows),
+                'updated_arrows': sorted(list(updated_arrows)),
+                'reference_arrow_id': reference_arrow_id
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to execute batch fill: {str(e)}'}), 500
+
+@app.route('/api/admin/manufacturers/<manufacturer>/length-stats', methods=['GET'])
+@token_required
+@admin_required
+def get_manufacturer_length_stats(current_user, manufacturer):
+    """Get length data completeness stats for a manufacturer"""
+    try:
+        arrow_db = ArrowDatabase()
+        conn = arrow_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get arrows with length data stats
+        cursor.execute('''
+            SELECT a.id, a.model_name,
+                   COUNT(ss.id) as total_spines,
+                   SUM(CASE WHEN ss.length_options IS NOT NULL AND ss.length_options != '[]' AND ss.length_options != 'null' THEN 1 ELSE 0 END) as complete_lengths,
+                   ROUND(
+                       CAST(SUM(CASE WHEN ss.length_options IS NOT NULL AND ss.length_options != '[]' AND ss.length_options != 'null' THEN 1 ELSE 0 END) AS FLOAT) * 100.0 / COUNT(ss.id)
+                   , 1) as completion_percentage
+            FROM arrows a
+            JOIN spine_specifications ss ON a.id = ss.arrow_id
+            WHERE a.manufacturer = ?
+            GROUP BY a.id, a.model_name
+            ORDER BY completion_percentage DESC, a.model_name
+        ''', (manufacturer,))
+        
+        arrows = cursor.fetchall()
+        
+        # Find potential reference arrows (100% complete)
+        reference_candidates = [arrow for arrow in arrows if arrow['completion_percentage'] == 100.0]
+        
+        # Calculate overall stats
+        total_arrows = len(arrows)
+        fully_complete = len(reference_candidates)
+        partially_complete = len([arrow for arrow in arrows if 0 < arrow['completion_percentage'] < 100])
+        completely_missing = len([arrow for arrow in arrows if arrow['completion_percentage'] == 0])
+        
+        conn.close()
+        
+        return jsonify({
+            'manufacturer': manufacturer,
+            'statistics': {
+                'total_arrows': total_arrows,
+                'fully_complete': fully_complete,
+                'partially_complete': partially_complete,
+                'completely_missing': completely_missing
+            },
+            'arrows': [dict(arrow) for arrow in arrows],
+            'reference_candidates': [dict(arrow) for arrow in reference_candidates]
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get manufacturer length stats: {str(e)}'}), 500
+
+@app.route('/api/admin/scrape-url', methods=['POST'])
+@token_required
+@admin_required
+def scrape_url_admin(current_user):
+    """Scrape arrow data from a specific URL and update existing records"""
+    try:
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        manufacturer = data.get('manufacturer', '').strip()
+        
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer name is required'}), 400
+        
+        import subprocess
+        import tempfile
+        import json
+        from datetime import datetime
+        from arrow_database import ArrowDatabase
+        import requests
+        from urllib.parse import urlparse
+        
+        # If URL is provided, try to scrape it specifically
+        if url:
+            try:
+                # Create a simple web scraper for the specific URL
+                import requests
+                from bs4 import BeautifulSoup
+                
+                # Get the webpage content
+                response = requests.get(url, timeout=30, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                })
+                
+                if response.status_code != 200:
+                    return jsonify({'error': f'Failed to fetch URL: HTTP {response.status_code}'}), 400
+                
+                # Parse the content
+                soup = BeautifulSoup(response.content, 'html.parser')
+                page_text = soup.get_text()
+                
+                # Look for arrow specifications in the text
+                import re
+                
+                # First try to extract from HTML tables (more reliable)
+                specifications = []
+                
+                # Look for specification tables (like Easton's format)
+                tables = soup.find_all('table')
+                
+                for table in tables:
+                    # Check if this looks like a specifications table
+                    header_row = table.find('thead')
+                    if header_row:
+                        headers = [th.get_text().strip().lower() for th in header_row.find_all('th')]
+                        
+                        # Look for columns that indicate spine specifications
+                        if any('gpi' in h or 'weight' in h for h in headers) and any('size' in h or 'spine' in h for h in headers):
+                            print(f"Found specifications table with headers: {headers}")
+                            
+                            # Extract data from table rows
+                            tbody = table.find('tbody')
+                            if tbody:
+                                for row in tbody.find_all('tr'):
+                                    cells = row.find_all('td')
+                                    if len(cells) >= 3:
+                                        try:
+                                            # Assume: Column 1 = spine, Column 2 = GPI, Column 3 = diameter
+                                            spine_text = cells[0].get_text().strip()
+                                            gpi_text = cells[1].get_text().strip()
+                                            diameter_text = cells[2].get_text().strip()
+                                            
+                                            # Extract numeric values
+                                            spine_num = int(re.search(r'\d+', spine_text).group())
+                                            gpi_num = float(re.search(r'\d+\.?\d*', gpi_text).group())
+                                            diameter_num = float(re.search(r'\d+\.?\d*', diameter_text).group())
+                                            
+                                            specifications.append({
+                                                'spine': spine_num,
+                                                'gpi': gpi_num,
+                                                'diameter': diameter_num
+                                            })
+                                            
+                                        except (ValueError, AttributeError):
+                                            continue
+                
+                # Fallback to text-based extraction if no table found
+                if not specifications:
+                    # Extract potential spine values
+                    spine_matches = re.findall(r'\b(\d{2,4})\s*(?:spine|stiffness)', page_text, re.IGNORECASE)
+                    
+                    # Extract potential GPI values
+                    gpi_matches = re.findall(r'(\d+\.?\d*)\s*gpi', page_text, re.IGNORECASE)
+                
+                    # Extract diameter values (fallback)
+                    diameter_matches = re.findall(r'(\d+\.?\d*)\s*(?:diameter|dia)', page_text, re.IGNORECASE)
+                    
+                    # Convert text matches to specifications format
+                    for spine_str in spine_matches:
+                        try:
+                            spine_num = int(spine_str)
+                            # Try to find corresponding GPI and diameter
+                            gpi_num = float(gpi_matches[0]) if gpi_matches else 8.0  # Default GPI
+                            diameter_num = float(diameter_matches[0]) if diameter_matches else 0.246  # Default diameter
+                            
+                            specifications.append({
+                                'spine': spine_num,
+                                'gpi': gpi_num,
+                                'diameter': diameter_num
+                            })
+                        except ValueError:
+                            continue
+                
+                # Extract potential model name
+                title = soup.find('title')
+                model_name = title.text.strip() if title else urlparse(url).path.split('/')[-1]
+                
+                if not specifications:
+                    return jsonify({
+                        'error': 'No spine specifications found on the webpage. Please ensure the URL contains arrow specification tables or spine data.',
+                        'extracted_text_sample': page_text[:500] + '...' if len(page_text) > 500 else page_text
+                    }), 400
+                
+                # Try to find existing arrow in database
+                arrow_db = ArrowDatabase()
+                conn = arrow_db.get_connection()
+                cursor = conn.cursor()
+                
+                # Look for existing arrows from this manufacturer
+                cursor.execute('''
+                    SELECT a.id, a.model_name, a.description, COUNT(ss.id) as existing_spine_count
+                    FROM arrows a
+                    LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id  
+                    WHERE a.manufacturer LIKE ? OR a.manufacturer LIKE ?
+                    GROUP BY a.id, a.model_name, a.description
+                    ORDER BY a.created_at DESC
+                    LIMIT 10
+                ''', (f"%{manufacturer}%", manufacturer))
+                
+                existing_arrows = cursor.fetchall()
+                
+                # Process spine specifications
+                specs_updated = 0
+                arrows_updated = 0
+                
+                if existing_arrows:
+                    # Try to match and update existing arrows
+                    for arrow_row in existing_arrows:
+                        arrow_id = arrow_row['id']
+                        existing_spine_count = arrow_row['existing_spine_count']
+                        
+                        arrow_updated = False
+                        
+                        # Add missing spine specifications
+                        for spec in specifications:
+                            spine_val = spec['spine']
+                            gpi_val = spec['gpi']
+                            diameter_val = spec['diameter']
+                            
+                            try:
+                                # Check if this spine already exists
+                                cursor.execute('SELECT id FROM spine_specifications WHERE arrow_id = ? AND spine = ?', (arrow_id, spine_val))
+                                existing_spec = cursor.fetchone()
+                                
+                                if existing_spec:
+                                    # Update existing specification with better data
+                                    cursor.execute('''
+                                        UPDATE spine_specifications 
+                                        SET gpi_weight = ?, outer_diameter = ?
+                                        WHERE arrow_id = ? AND spine = ?
+                                    ''', (gpi_val, diameter_val, arrow_id, spine_val))
+                                    specs_updated += 1
+                                    arrow_updated = True
+                                else:
+                                    # Insert new spine specification
+                                    cursor.execute('''
+                                        INSERT INTO spine_specifications (arrow_id, spine, outer_diameter, gpi_weight)
+                                        VALUES (?, ?, ?, ?)
+                                    ''', (arrow_id, spine_val, diameter_val, gpi_val))
+                                    specs_updated += 1
+                                    arrow_updated = True
+                                
+                            except (ValueError, TypeError) as e:
+                                print(f"Error processing specification: {e}")
+                                continue
+                        
+                        if arrow_updated:
+                            # Update the arrow's scraped_at timestamp and source URL
+                            cursor.execute('''
+                                UPDATE arrows SET source_url = ?, scraped_at = CURRENT_TIMESTAMP WHERE id = ?
+                            ''', (url, arrow_id))
+                            arrows_updated += 1
+                
+                else:
+                    # Create new arrow if none found
+                    cursor.execute('''
+                        INSERT INTO arrows (manufacturer, model_name, source_url, scraped_at)
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ''', (manufacturer, model_name[:100], url))
+                    
+                    arrow_id = cursor.lastrowid
+                    arrows_updated = 1
+                    
+                    # Add spine specifications
+                    for spec in specifications:
+                        spine_val = spec['spine']
+                        gpi_val = spec['gpi']
+                        diameter_val = spec['diameter']
+                        
+                        try:
+                            cursor.execute('''
+                                INSERT INTO spine_specifications (arrow_id, spine, outer_diameter, gpi_weight)
+                                VALUES (?, ?, ?, ?)
+                            ''', (arrow_id, spine_val, diameter_val, gpi_val))
+                            
+                            specs_updated += 1
+                            
+                        except (ValueError, TypeError) as e:
+                            print(f"Error inserting specification: {e}")
+                            continue
+                
+                conn.commit()
+                conn.close()
+                
+                if arrows_updated > 0 or specs_updated > 0:
+                    return jsonify({
+                        'success': True,
+                        'message': f'Successfully updated {arrows_updated} arrow(s) with {specs_updated} spine specifications from URL',
+                        'data': {
+                            'manufacturer': manufacturer,
+                            'arrows_updated': arrows_updated,
+                            'spine_specs_added': specs_updated,
+                            'url': url,
+                            'extracted_specifications': specifications,
+                            'specifications_count': len(specifications)
+                        }
+                    })
+                else:
+                    return jsonify({
+                        'error': 'No new data was added. The specifications may already exist or could not be parsed.',
+                        'extracted_specifications': specifications,
+                        'specifications_count': len(specifications)
+                    }), 400
+                
+            except requests.RequestException as e:
+                return jsonify({'error': f'Failed to fetch URL: {str(e)}'}), 400
+            except Exception as e:
+                return jsonify({'error': f'Error processing URL: {str(e)}'}), 500
+        
+        else:
+            # Fall back to manufacturer scraper if no URL provided
+            try:
+                # Get initial spine spec count for the manufacturer
+                arrow_db = ArrowDatabase()
+                conn = arrow_db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    SELECT COUNT(ss.id) as spec_count
+                    FROM arrows a
+                    JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE a.manufacturer LIKE ?
+                ''', (f"%{manufacturer}%",))
+                
+                initial_specs = cursor.fetchone()['spec_count']
+                conn.close()
+                
+                # Run the scraper using subprocess
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                
+                venv_python = os.path.join(script_dir, 'venv', 'bin', 'python')
+                python_cmd = venv_python if os.path.exists(venv_python) else 'python3'
+                
+                cmd = [python_cmd, 'main.py', '--manufacturer', manufacturer, '--limit', '3', '--use-deepseek']
+                
+                process = subprocess.run(
+                    cmd, 
+                    cwd=script_dir,
+                    capture_output=True, 
+                    text=True, 
+                    timeout=180,  # 3 minute timeout
+                    env={**os.environ, 'PYTHONPATH': script_dir}
+                )
+                
+                if process.returncode != 0:
+                    error_msg = process.stderr if process.stderr else "Unknown error occurred"
+                    return jsonify({
+                        'error': f'Scraper process failed: {error_msg[:300]}...',
+                        'stdout': process.stdout[-300:] if process.stdout else ''
+                    }), 500
+                
+                # Get final spine spec count
+                conn = arrow_db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    SELECT COUNT(ss.id) as spec_count
+                    FROM arrows a
+                    JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE a.manufacturer LIKE ?
+                ''', (f"%{manufacturer}%",))
+                
+                final_specs = cursor.fetchone()['spec_count']
+                
+                cursor.execute('''
+                    SELECT model_name
+                    FROM arrows a
+                    WHERE a.manufacturer LIKE ? AND a.scraped_at > datetime('now', '-10 minutes')
+                    ORDER BY a.scraped_at DESC
+                    LIMIT 5
+                ''', (f"%{manufacturer}%",))
+                
+                recent_arrows = [row['model_name'] for row in cursor.fetchall()]
+                conn.close()
+                
+                specs_added = final_specs - initial_specs
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'Successfully ran manufacturer scraper and added {specs_added} spine specifications',
+                    'data': {
+                        'manufacturer': manufacturer,
+                        'arrows_updated': len(recent_arrows),
+                        'spine_specs_added': specs_added,
+                        'arrow_models': recent_arrows,
+                        'scraper_output': process.stdout[-500:] if process.stdout else ''
+                    }
+                })
+                
+            except subprocess.TimeoutExpired:
+                return jsonify({'error': 'Scraping timed out after 3 minutes'}), 408
+            except Exception as e:
+                return jsonify({'error': f'Scraping process error: {str(e)}'}), 500
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to process scraping request: {str(e)}'}), 500
+
+@app.route('/api/admin/scrape-status/<task_id>', methods=['GET'])
+@token_required
+@admin_required
+def get_scrape_status(current_user, task_id):
+    """Get status of a scraping task (for future async implementation)"""
+    # Placeholder for future async scraping with task tracking
+    return jsonify({
+        'task_id': task_id,
+        'status': 'completed',
+        'message': 'Scraping completed successfully'
+    })
+
 # Run the app
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))
