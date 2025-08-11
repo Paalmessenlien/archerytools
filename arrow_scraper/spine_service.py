@@ -6,9 +6,11 @@ all parts of the system use the same calculation logic as the calculator page.
 All spine calculations across the system should use this service.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 import json
+import sqlite3
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
+from arrow_database import ArrowDatabase
 
 
 class UnifiedSpineService:
@@ -19,6 +21,8 @@ class UnifiedSpineService:
     
     def __init__(self):
         self.spine_calculator = SpineCalculator()
+        self.db = ArrowDatabase()
+        self._cache = {}  # Cache for calculation parameters
     
     def calculate_spine(
         self,
@@ -191,6 +195,274 @@ class UnifiedSpineService:
         except Exception as e:
             print(f"Spine calculation failed for bow setup: {e}")
             return None
+    
+    def get_calculation_parameters(self, parameter_group: str = None) -> Dict[str, Any]:
+        """Get calculation parameters from database"""
+        cache_key = f"params_{parameter_group or 'all'}"
+        
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if parameter_group:
+                cursor.execute("""
+                    SELECT parameter_name, parameter_value, parameter_unit, description
+                    FROM calculation_parameters 
+                    WHERE parameter_group = ? AND is_active = 1
+                """, (parameter_group,))
+            else:
+                cursor.execute("""
+                    SELECT parameter_group, parameter_name, parameter_value, parameter_unit, description
+                    FROM calculation_parameters 
+                    WHERE is_active = 1
+                """)
+            
+            params = {}
+            for row in cursor.fetchall():
+                if parameter_group:
+                    params[row[0]] = {
+                        'value': float(row[1]),
+                        'unit': row[2],
+                        'description': row[3]
+                    }
+                else:
+                    group = row[0]
+                    if group not in params:
+                        params[group] = {}
+                    params[group][row[1]] = {
+                        'value': float(row[2]),
+                        'unit': row[3],
+                        'description': row[4]
+                    }
+            
+            self._cache[cache_key] = params
+            return params
+            
+        except sqlite3.Error as e:
+            print(f"Error getting calculation parameters: {e}")
+            return {}
+        finally:
+            if conn:
+                conn.close()
+    
+    def get_material_properties(self, material_name: str = None) -> Dict[str, Any]:
+        """Get arrow material properties from database"""
+        cache_key = f"materials_{material_name or 'all'}"
+        
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if material_name:
+                cursor.execute("""
+                    SELECT * FROM arrow_material_properties 
+                    WHERE material_name = ? AND is_active = 1
+                """, (material_name,))
+                row = cursor.fetchone()
+                if row:
+                    # Convert sqlite3.Row to dict
+                    result = dict(row)
+                    self._cache[cache_key] = result
+                    return result
+            else:
+                cursor.execute("""
+                    SELECT * FROM arrow_material_properties 
+                    WHERE is_active = 1
+                """)
+                materials = {}
+                for row in cursor.fetchall():
+                    materials[row['material_name']] = dict(row)
+                self._cache[cache_key] = materials
+                return materials
+            
+            return {}
+            
+        except sqlite3.Error as e:
+            print(f"Error getting material properties: {e}")
+            return {}
+        finally:
+            if conn:
+                conn.close()
+    
+    def get_manufacturer_spine_recommendations(self, manufacturer: str, bow_type: str, 
+                                             draw_weight: float, arrow_length: float) -> List[Dict[str, Any]]:
+        """Get manufacturer-specific spine recommendations"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM manufacturer_spine_charts 
+                WHERE manufacturer = ? AND bow_type = ? 
+                AND draw_weight_min <= ? AND draw_weight_max >= ?
+                AND arrow_length_min <= ? AND arrow_length_max >= ?
+                AND is_active = 1
+                ORDER BY confidence_rating DESC
+            """, (manufacturer, bow_type, draw_weight, draw_weight, arrow_length, arrow_length))
+            
+            recommendations = []
+            for row in cursor.fetchall():
+                recommendations.append(dict(row))
+                
+            return recommendations
+            
+        except sqlite3.Error as e:
+            print(f"Error getting manufacturer recommendations: {e}")
+            return []
+        finally:
+            if conn:
+                conn.close()
+    
+    def get_flight_problem_diagnostics(self, problem_category: str = None) -> Dict[str, Any]:
+        """Get flight problem diagnostics and solutions"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if problem_category:
+                cursor.execute("""
+                    SELECT * FROM flight_problem_diagnostics 
+                    WHERE problem_category = ? AND is_active = 1
+                """, (problem_category,))
+            else:
+                cursor.execute("""
+                    SELECT * FROM flight_problem_diagnostics 
+                    WHERE is_active = 1
+                """)
+            
+            problems = {}
+            for row in cursor.fetchall():
+                category = row['problem_category']
+                if category not in problems:
+                    problems[category] = {}
+                problems[category][row['problem_name']] = dict(row)
+                
+            return problems
+            
+        except sqlite3.Error as e:
+            print(f"Error getting flight problem diagnostics: {e}")
+            return {}
+        finally:
+            if conn:
+                conn.close()
+    
+    def calculate_enhanced_spine(
+        self,
+        draw_weight: float,
+        arrow_length: float,
+        point_weight: float = 125.0,
+        bow_type: str = 'compound',
+        material_preference: str = None,
+        manufacturer_preference: str = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Enhanced spine calculation using comprehensive database data
+        """
+        try:
+            # Get enhanced calculation parameters from database
+            base_params = self.get_calculation_parameters('base_calculation')
+            bow_adjustments = self.get_calculation_parameters('bow_adjustments')
+            safety_factors = self.get_calculation_parameters('safety_factors')
+            
+            # Use database parameters or fall back to defaults
+            draw_weight_factor = base_params.get('draw_weight_factor', {}).get('value', 12.5)
+            length_adjustment_factor = base_params.get('length_adjustment_factor', {}).get('value', 25.0)
+            point_weight_factor = base_params.get('point_weight_factor', {}).get('value', 0.5)
+            
+            # Enhanced base calculation
+            base_spine = draw_weight * draw_weight_factor
+            
+            # Length adjustment with database parameters
+            length_adjustment = (arrow_length - 28) * length_adjustment_factor
+            base_spine += length_adjustment
+            
+            # Point weight adjustment with database parameters
+            point_adjustment = (point_weight - 125) * point_weight_factor
+            base_spine += point_adjustment
+            
+            # Bow type adjustments from database
+            bow_type_adjustment = 0
+            if bow_type == 'recurve':
+                bow_type_adjustment = bow_adjustments.get('recurve_spine_adjustment', {}).get('value', 50.0)
+            elif bow_type == 'traditional':
+                bow_type_adjustment = bow_adjustments.get('traditional_spine_adjustment', {}).get('value', 100.0)
+            
+            base_spine += bow_type_adjustment
+            
+            # Material adjustments if material preference is specified
+            material_factor = 1.0
+            material_info = {}
+            if material_preference:
+                material_data = self.get_material_properties(material_preference.lower())
+                if material_data:
+                    material_factor = material_data.get('spine_adjustment_factor', 1.0)
+                    material_info = {
+                        'material': material_preference,
+                        'density': material_data.get('density'),
+                        'strength_factor': material_data.get('strength_factor'),
+                        'description': material_data.get('description')
+                    }
+            
+            calculated_spine = round(base_spine * material_factor)
+            
+            # Get spine tolerance from database
+            spine_tolerance = safety_factors.get('spine_tolerance_range', {}).get('value', 25.0)
+            
+            # Check for manufacturer-specific recommendations
+            manufacturer_recommendations = []
+            if manufacturer_preference:
+                manufacturer_recommendations = self.get_manufacturer_spine_recommendations(
+                    manufacturer_preference, bow_type, draw_weight, arrow_length
+                )
+            
+            # Enhanced result with comprehensive data
+            result = {
+                'calculated_spine': calculated_spine,
+                'spine_range': {
+                    'minimum': calculated_spine - spine_tolerance,
+                    'optimal': calculated_spine,
+                    'maximum': calculated_spine + spine_tolerance
+                },
+                'calculations': {
+                    'base_spine': base_spine / material_factor,
+                    'adjustments': {
+                        'length_adjustment': length_adjustment,
+                        'point_weight_adjustment': point_adjustment,
+                        'bow_type_adjustment': bow_type_adjustment,
+                        'material_factor': material_factor
+                    },
+                    'parameters_used': {
+                        'draw_weight_factor': draw_weight_factor,
+                        'length_adjustment_factor': length_adjustment_factor,
+                        'point_weight_factor': point_weight_factor,
+                        'spine_tolerance': spine_tolerance
+                    },
+                    'bow_type': bow_type,
+                    'confidence': 'high' if manufacturer_recommendations else 'medium'
+                },
+                'material_info': material_info,
+                'manufacturer_recommendations': manufacturer_recommendations,
+                'notes': ['Enhanced calculation using comprehensive spine database'],
+                'source': 'enhanced_database_calculator'
+            }
+            
+            return result
+            
+        except Exception as e:
+            print(f"Enhanced spine calculation failed: {e}")
+            # Fall back to standard calculation
+            return self.calculate_spine(draw_weight, arrow_length, point_weight, bow_type, **kwargs)
 
 
 # Global instance for easy import
@@ -217,7 +489,6 @@ def calculate_unified_spine(
         bow_type=bow_type,
         **kwargs
     )
-
 
 def calculate_spine_for_setup(bow_setup_data: Dict[str, Any], arrow_data: Dict[str, Any]) -> Optional[int]:
     """

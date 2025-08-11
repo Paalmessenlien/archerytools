@@ -1,0 +1,91 @@
+{
+  "calculation_formulas": {
+    "description": "Mathematical formulas and adjustments for calculating proper arrow spine based on bow setup variations",
+    "base_conditions": {
+      "standard_arrow_length": 28,
+      "standard_point_weight": 125,
+      "standard_bow_speed": "301-320 FPS",
+      "standard_release": "mechanical",
+      "standard_nock_weight": 10,
+      "standard_fletching_weight": 25
+    },
+    "adjustment_formulas": {
+      "arrow_length_adjustment": {
+        "description": "Adjust spine for arrow length different from 28 inches",
+        "formula": "For every 1 inch longer than 28: add 5 lbs to bow weight calculation",
+        "calculation": "adjusted_bow_weight = actual_bow_weight + ((arrow_length - 28) * 5)"
+      },
+      "point_weight_adjustment": {
+        "description": "Adjust spine for point weight different from 125 grains",
+        "formula": "For every 25 grains heavier than 125: add 5 lbs to bow weight",
+        "calculation": "adjusted_bow_weight = actual_bow_weight + (((point_weight - 125) / 25) * 5)"
+      }
+    }
+  },
+  "materials": {
+    "carbon": {
+      "density": 1.6,
+      "elasticity_modulus": 230.0,
+      "strength_factor": 1.0,
+      "spine_adjustment_factor": 1.0,
+      "temperature_coefficient": 0.0001,
+      "humidity_resistance_rating": 9,
+      "description": "High-performance carbon fiber arrows with excellent consistency",
+      "typical_use": "Target and hunting"
+    },
+    "aluminum": {
+      "density": 2.7,
+      "elasticity_modulus": 69.0,
+      "strength_factor": 0.85,
+      "spine_adjustment_factor": 0.95,
+      "temperature_coefficient": 0.0002,
+      "humidity_resistance_rating": 7,
+      "description": "Durable aluminum arrows with good straightness",
+      "typical_use": "Target and recreational"
+    }
+  },
+  "flight_problems": {
+    "left_right_tears": {
+      "paper_tune_left": {
+        "symptoms": "Paper shows tear to the left",
+        "root_causes": "Arrow spine too weak, nocking point too high, arrow rest too far left",
+        "solutions": "Move to stiffer spine, lower nocking point, move rest right",
+        "difficulty_level": "intermediate"
+      },
+      "paper_tune_right": {
+        "symptoms": "Paper shows tear to the right", 
+        "root_causes": "Arrow spine too stiff, nocking point too low, arrow rest too far right",
+        "solutions": "Move to weaker spine, raise nocking point, move rest left",
+        "difficulty_level": "intermediate"
+      }
+    }
+  },
+  "tuning_methods": {
+    "paper_tuning": {
+      "bare_shaft_tuning": {
+        "method_category": "paper_tuning",
+        "bow_types_applicable": "compound,recurve",
+        "skill_level_required": "intermediate",
+        "time_estimate_minutes": 45,
+        "equipment_needed": "Paper frame, bare shafts, fletched arrows",
+        "step_by_step_guide": "1. Set up paper frame 2. Shoot bare shaft 3. Analyze tear 4. Make adjustments",
+        "expected_outcomes": "Clean bullet hole through paper"
+      }
+    }
+  },
+  "manufacturer_charts": {
+    "easton": {
+      "compound": [
+        {
+          "draw_weight_min": 40,
+          "draw_weight_max": 50,
+          "arrow_length_min": 27,
+          "arrow_length_max": 29,
+          "recommended_spine": 400,
+          "point_weight_range": "100-150gr",
+          "confidence_rating": 90
+        }
+      ]
+    }
+  }
+}
