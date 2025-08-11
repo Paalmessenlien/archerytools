@@ -600,15 +600,15 @@ async function loadSpineData() {
   
   try {
     // Load parameters
-    const paramsResponse = await api.get('/api/admin/spine-data/parameters')
+    const paramsResponse = await api.get('/admin/spine-data/parameters')
     parameters.value = paramsResponse.data
     
     // Load materials
-    const materialsResponse = await api.get('/api/admin/spine-data/materials')
+    const materialsResponse = await api.get('/admin/spine-data/materials')
     materials.value = materialsResponse.data.materials
     
     // Load manufacturer charts
-    const chartsResponse = await api.get('/api/admin/spine-data/manufacturer-charts')
+    const chartsResponse = await api.get('/admin/spine-data/manufacturer-charts')
     charts.value = chartsResponse.data.charts
     
   } catch (err) {
@@ -620,7 +620,7 @@ async function loadSpineData() {
 
 async function updateParameter(groupName: string, paramName: string, value: string) {
   try {
-    await api.put(`/api/admin/spine-data/parameters/${groupName}/${paramName}`, {
+    await api.put(`/admin/spine-data/parameters/${groupName}/${paramName}`, {
       value: parseFloat(value)
     })
     
@@ -655,14 +655,14 @@ async function saveMaterial() {
   try {
     if (showNewMaterialModal.value) {
       // Create new material
-      await api.post('/api/admin/spine-data/materials', editingMaterial.value)
+      await api.post('/admin/spine-data/materials', editingMaterial.value)
     } else {
       // Update existing material
-      await api.put(`/api/admin/spine-data/materials/${editingMaterialName.value}`, editingMaterial.value)
+      await api.put(`/admin/spine-data/materials/${editingMaterialName.value}`, editingMaterial.value)
     }
     
     // Reload materials
-    const materialsResponse = await api.get('/api/admin/spine-data/materials')
+    const materialsResponse = await api.get('/admin/spine-data/materials')
     materials.value = materialsResponse.data.materials
     
     closeEditMaterialModal()
@@ -677,7 +677,7 @@ async function runTest() {
   testing.value = true
   
   try {
-    const response = await api.post('/api/admin/spine-data/test-calculation', testParams.value)
+    const response = await api.post('/admin/spine-data/test-calculation', testParams.value)
     testResults.value = response.data
   } catch (err) {
     error.value = 'Failed to run test: ' + (err.response?.data?.error || err.message)
