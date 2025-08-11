@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
       <!-- Modal Header -->
-      <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+      <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between sm:justify-start">
@@ -37,14 +37,6 @@
           </CustomButton>
         </div>
         
-        <!-- Debug Info (temporary for production troubleshooting) -->
-        <div class="mt-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-200" v-if="arrowSetup">
-          <strong>Debug:</strong> 
-          calculated_spine: {{ arrowSetup.calculated_spine || 'none' }} | 
-          selectedSpine: {{ selectedSpine || 'none' }} |
-          availableSpines: {{ availableSpines.length }} spines |
-          showSpineSelector: {{ !!(selectedSpine && availableSpines.length > 1) }}
-        </div>
         
         <!-- Spine Selection Section -->
         <div class="mt-4" v-if="selectedSpine && availableSpines.length > 1">
