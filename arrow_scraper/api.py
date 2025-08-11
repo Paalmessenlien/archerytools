@@ -1173,6 +1173,7 @@ def add_arrow_to_setup(current_user, setup_id):
             arrow_association_id = cursor.lastrowid
         
         conn.commit()
+        print(f"🔍 [add_arrow_to_setup] Created arrow association with ID={arrow_association_id} for setup_id={setup_id}")
         
         # Get arrow details from arrow database
         arrow_conn = get_arrow_db()
@@ -1268,6 +1269,12 @@ def get_setup_arrows(current_user, setup_id):
         ''', (setup_id,))
         
         rows = cursor.fetchall()
+        print(f"🔍 [get_setup_arrows] Found {len(rows)} arrows for setup_id {setup_id}")
+        for i, row in enumerate(rows):
+            if hasattr(row, 'keys'):
+                print(f"  - Arrow {i+1}: ID={row['id']}, arrow_id={row['arrow_id']}, created_at={row.get('created_at', 'unknown')}")
+            else:
+                print(f"  - Arrow {i+1}: ID={row[0] if len(row) > 0 else 'unknown'}")
         conn.close()
         
         # Get arrow details from arrow database
