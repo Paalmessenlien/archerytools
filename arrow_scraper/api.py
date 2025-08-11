@@ -1272,7 +1272,9 @@ def get_setup_arrows(current_user, setup_id):
         print(f"🔍 [get_setup_arrows] Found {len(rows)} arrows for setup_id {setup_id}")
         for i, row in enumerate(rows):
             if hasattr(row, 'keys'):
-                print(f"  - Arrow {i+1}: ID={row['id']}, arrow_id={row['arrow_id']}, created_at={row.get('created_at', 'unknown')}")
+                # sqlite3.Row objects have keys but not .get() method
+                created_at = row['created_at'] if 'created_at' in row.keys() else 'unknown'
+                print(f"  - Arrow {i+1}: ID={row['id']}, arrow_id={row['arrow_id']}, created_at={created_at}")
             else:
                 print(f"  - Arrow {i+1}: ID={row[0] if len(row) > 0 else 'unknown'}")
         conn.close()
