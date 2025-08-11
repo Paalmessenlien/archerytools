@@ -126,8 +126,8 @@ def get_arrow_db():
         # UNIFIED DATABASE PATH RESOLUTION - NEW ARCHITECTURE (August 2025)
         db_paths = [
             '/app/databases/arrow_database.db',                    # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
-            '../databases/arrow_database.db',                      # 🔴 UNIFIED local path (PRODUCTION READY)
-            'databases/arrow_database.db',                         # 🟡 Legacy unified subfolder
+            'databases/arrow_database.db',                         # 🔴 LOCAL subfolder (DEVELOPMENT - HIGHEST LOCAL PRIORITY)
+            '../databases/arrow_database.db',                      # 🟡 UNIFIED parent folder path 
             '/app/arrow_data/arrow_database.db',                   # 🟡 Legacy Docker volume path
             '/app/arrow_database.db',                              # 🟡 Legacy Docker path
             'arrow_database.db',                                   # 🔴 Legacy current folder (LOWEST PRIORITY)
@@ -147,6 +147,7 @@ def get_arrow_db():
                     
                     if count > 0:
                         database_path = db_path
+                        print(f"[get_arrow_db] Selected database: {db_path} with {count} arrows")  # Debug log
                         break
                 except Exception as e:
                     continue
