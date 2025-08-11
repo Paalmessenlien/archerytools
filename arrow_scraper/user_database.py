@@ -24,8 +24,8 @@ class UserDatabase:
         # Unified database paths - NEW UNIFIED ARCHITECTURE (August 2025)
         possible_paths = [
             Path("/app/databases") / db_path,  # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
-            Path(__file__).parent.parent / "databases" / db_path,  # 🔴 UNIFIED local path (PRODUCTION READY)
-            Path(__file__).parent / "databases" / db_path,  # 🟡 Legacy local unified path
+            Path(__file__).parent / "databases" / db_path,  # 🔴 LOCAL development path (HIGHEST LOCAL PRIORITY)
+            Path(__file__).parent.parent / "databases" / db_path,  # 🟡 UNIFIED parent path
             Path("/app/user_data") / db_path,  # 🟡 Legacy Docker volume path
             Path("/app") / db_path,  # 🟡 Legacy Docker path
             Path(__file__).parent / db_path,  # 🔴 Legacy local path (LOWEST PRIORITY)
