@@ -397,6 +397,8 @@ const handleUpdateArrow = async (updatedArrow) => {
 };
 
 const duplicateArrow = async (arrowSetup) => {
+  console.log('🔄 Duplicate arrow function called with:', arrowSetup);
+  
   // Check authentication first
   const token = process.client ? localStorage.getItem('token') : null;
   
@@ -404,6 +406,8 @@ const duplicateArrow = async (arrowSetup) => {
     alert('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
     return;
   }
+  
+  console.log('✅ Authentication check passed, proceeding with duplication');
   
   try {
     // Create a duplicate arrow configuration with the same settings
@@ -420,10 +424,17 @@ const duplicateArrow = async (arrowSetup) => {
       notes: `Duplicate of ${arrowSetup.arrow?.manufacturer || 'Unknown'} ${arrowSetup.arrow?.model_name || 'Arrow'}`
     };
     
-    console.log('Duplicating arrow:', arrowSetup.arrow?.manufacturer, arrowSetup.arrow?.model_name);
+    console.log('🚀 Making API call to duplicate arrow:', arrowSetup.arrow?.manufacturer, arrowSetup.arrow?.model_name);
+    console.log('📤 Duplicate data payload:', duplicateData);
+    console.log('🎯 API endpoint:', `/bow-setups/${bowSetup.value.id}/arrows`);
+    
     const response = await api.post(`/bow-setups/${bowSetup.value.id}/arrows`, duplicateData);
     
+    console.log('📥 API response received:', response);
+    
     await fetchSetupArrows();
+    
+    console.log('🔄 Setup arrows refreshed after duplication');
     
     // Show success message in console only (no popup)
     console.log('✅ Arrow duplicated successfully:', {
