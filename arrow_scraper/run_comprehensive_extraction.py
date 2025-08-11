@@ -244,8 +244,11 @@ class DirectLLMExtractor:
         - Find HTML tables with columns: SPINE, GPI, OD, LENGTH
         - Spine values are integers (300, 340, 400, 500, etc.)
         - GPI values are decimal (7.3, 8.2, 8.9, etc.)
-        - Diameters in format like .291", .295" (already in inches, remove quotes)
-        - Lengths in format like 30", 32" (remove quotes, convert to float)
+        - Diameters may be HTML encoded: .291&quot; or .291" (already in inches, decode &quot; to " and remove quotes)
+        - Lengths may be HTML encoded: 30&quot; or 30" (decode &quot; to " and remove quotes, convert to float)
+        - IMPORTANT: Each spine should have its own length_options array with the LENGTH value from that row
+        - Example: spine 500 with length 30" should have "length_options": [30.0]
+        - Example: spine 400 with length 32" should have "length_options": [32.0]
         """
         elif "victoryarchery.com" in url.lower():
             manufacturer_hints = """
@@ -310,9 +313,10 @@ class DirectLLMExtractor:
         1. Look for tables, specifications, or structured data about arrow models
         2. Find data for: Spine/Stiffness values, Weight (GPI/grains per inch), Diameter, Lengths
         3. Find image URLs for arrow product photos (look for img tags with arrow/product images)
-        4. Each spine value should have its own specification entry
-        5. Return ONLY valid JSON, no markdown formatting
-        6. If no spine-specific data is found, return empty arrows array
+        4. Each spine value should have its own specification entry with its own length_options array
+        5. Handle HTML entities: decode &quot; to ", &amp; to &, etc. before parsing values
+        6. Return ONLY valid JSON, no markdown formatting
+        7. If no spine-specific data is found, return empty arrows array
         
         {manufacturer_hints}
         

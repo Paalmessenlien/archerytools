@@ -42,10 +42,14 @@ export const useAuth = () => {
                 if (data.token) {
                   setToken(data.token);
                   await fetchUser();
-                  // Handle redirection if needed
+                  const router = useRouter();
+                  
+                  // Handle redirection based on profile completion status
                   if (data.needs_profile_completion) {
-                    const router = useRouter();
                     router.push('/register');
+                  } else {
+                    // Redirect to user's page after successful login
+                    router.push('/my-setup');
                   }
                 } else {
                   console.error('Failed to get token from backend:', data.error);
