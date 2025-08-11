@@ -214,7 +214,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
@@ -267,11 +267,22 @@ const fetchSetupArrows = async () => {
   try {
     loadingArrows.value = true;
     const response = await api.get(`/bow-setups/${route.params.id}/arrows`);
-    console.log('Fetched arrows response:', response);
+    console.log('🔍 Fetched arrows response:', response);
+    console.log('🔍 Response.arrows:', response.arrows);
+    console.log('🔍 Response.arrows length:', response.arrows?.length || 0);
+    
     if (bowSetup.value) {
-      // Extract arrows array from response object
-      bowSetup.value.arrows = response.arrows || [];
-      console.log('Bow setup arrows after assignment:', bowSetup.value.arrows);
+      // Force reactivity by creating a new array reference
+      const newArrows = response.arrows || [];
+      bowSetup.value.arrows = [...newArrows];
+      
+      console.log('🔍 Bow setup arrows after assignment:', bowSetup.value.arrows);
+      console.log('🔍 New arrows count:', bowSetup.value.arrows.length);
+      
+      // Force a reactive update
+      nextTick(() => {
+        console.log('🔍 After nextTick - arrows count:', bowSetup.value?.arrows?.length || 0);
+      });
     }
   } catch (err) {
     console.error('Error fetching setup arrows:', err);
@@ -431,6 +442,9 @@ const duplicateArrow = async (arrowSetup) => {
     const response = await api.post(`/bow-setups/${bowSetup.value.id}/arrows`, duplicateData);
     
     console.log('📥 API response received:', response);
+    
+    // Add a small delay to ensure database is updated
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     await fetchSetupArrows();
     
