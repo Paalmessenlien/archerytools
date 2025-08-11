@@ -122,6 +122,19 @@
                             </NuxtLink>
                             
                             <NuxtLink
+                              to="/info"
+                              @click="closeDesktopMenu"
+                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path.startsWith('/info') }"
+                            >
+                              <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 w-5"></i>
+                              <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Information Center</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Materials & guides</div>
+                              </div>
+                            </NuxtLink>
+                            
+                            <NuxtLink
                               v-if="user"
                               to="/my-setup"
                               @click="closeDesktopMenu"

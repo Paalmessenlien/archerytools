@@ -3,7 +3,11 @@
   "permissions": {
     "allow": [
       "Bash(git commit:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npm run dev:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(./start-local-dev.sh:*)"
     ],
     "deny": []
   }

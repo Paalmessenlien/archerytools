@@ -118,6 +118,18 @@
           <i class="fas fa-server mr-2"></i>
           System
         </button>
+        <NuxtLink
+          to="/admin/spine-data"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            $route.path === '/admin/spine-data'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-calculator mr-2"></i>
+          Spine Data
+        </NuxtLink>
       </nav>
     </div>
 

@@ -33,6 +33,7 @@ from spine_calculator import BowConfiguration, BowType
 from tuning_calculator import TuningGoal, ArrowType
 from arrow_database import ArrowDatabase
 from component_database import ComponentDatabase
+from spine_service import UnifiedSpineService
 from compatibility_engine import CompatibilityEngine
 
 # Create Flask app
@@ -57,6 +58,7 @@ CORS(app,
 tuning_system = None
 database = None
 component_database = None
+spine_service = None
 compatibility_engine = None
 
 # In-memory session storage (use Redis in production)
@@ -181,6 +183,17 @@ def get_component_database():
             import traceback
             component_database = None
     return component_database
+
+def get_spine_service():
+    """Get spine service with lazy initialization"""
+    global spine_service
+    if spine_service is None:
+        try:
+            spine_service = UnifiedSpineService()
+        except Exception as e:
+            print(f"Error initializing spine service: {e}")
+            spine_service = None
+    return spine_service
 
 def get_compatibility_engine():
     """Get compatibility engine with lazy initialization"""
@@ -4946,6 +4959,280 @@ def get_scrape_status(current_user, task_id):
         'status': 'completed',
         'message': 'Scraping completed successfully'
     })
+
+# ================================
+# SPINE DATA MANAGEMENT ENDPOINTS
+# ================================
+
+@app.route('/api/admin/spine-data/parameters', methods=['GET'])
+@token_required
+@admin_required
+def get_spine_calculation_parameters(current_user):
+    """Get all spine calculation parameters"""
+    try:
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        # Get parameters by group
+        base_params = spine_service.get_calculation_parameters('base_calculation')
+        bow_adjustments = spine_service.get_calculation_parameters('bow_adjustments')
+        safety_factors = spine_service.get_calculation_parameters('safety_factors')
+        material_factors = spine_service.get_calculation_parameters('material_factors')
+        
+        return jsonify({
+            'base_calculation': base_params,
+            'bow_adjustments': bow_adjustments,
+            'safety_factors': safety_factors,
+            'material_factors': material_factors
+        })
+    except Exception as e:
+        print(f"Error getting spine calculation parameters: {e}")
+        return jsonify({'error': 'Failed to get spine calculation parameters'}), 500
+
+@app.route('/api/admin/spine-data/parameters/<parameter_group>/<parameter_name>', methods=['PUT'])
+@token_required
+@admin_required
+def update_spine_calculation_parameter(current_user, parameter_group, parameter_name):
+    """Update a spine calculation parameter"""
+    try:
+        data = request.get_json()
+        new_value = data.get('value')
+        
+        if new_value is None:
+            return jsonify({'error': 'Parameter value is required'}), 400
+        
+        # Update parameter in database
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE calculation_parameters 
+            SET parameter_value = ?, updated_at = CURRENT_TIMESTAMP, last_modified_by = ?
+            WHERE parameter_group = ? AND parameter_name = ?
+        """, (new_value, current_user['id'], parameter_group, parameter_name))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Parameter not found'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        # Clear cache to force refresh
+        spine_service = get_spine_service()
+        if spine_service:
+            cache_key = f"params_{parameter_group}"
+            if cache_key in spine_service._cache:
+                del spine_service._cache[cache_key]
+        
+        return jsonify({'message': 'Parameter updated successfully'})
+    except Exception as e:
+        print(f"Error updating spine calculation parameter: {e}")
+        return jsonify({'error': 'Failed to update parameter'}), 500
+
+@app.route('/api/admin/spine-data/materials', methods=['GET'])
+@token_required
+@admin_required
+def get_spine_materials(current_user):
+    """Get all arrow material properties"""
+    try:
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        materials = spine_service.get_material_properties()
+        return jsonify({'materials': materials})
+    except Exception as e:
+        print(f"Error getting spine materials: {e}")
+        return jsonify({'error': 'Failed to get material properties'}), 500
+
+@app.route('/api/admin/spine-data/materials/<material_name>', methods=['PUT'])
+@token_required
+@admin_required
+def update_spine_material(current_user, material_name):
+    """Update arrow material properties"""
+    try:
+        data = request.get_json()
+        
+        # Update material in database
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Build update query dynamically
+        update_fields = []
+        params = []
+        
+        for field in ['density', 'elasticity_modulus', 'strength_factor', 'spine_adjustment_factor',
+                     'temperature_coefficient', 'humidity_resistance_rating', 'description', 'typical_use']:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                params.append(data[field])
+        
+        if not update_fields:
+            return jsonify({'error': 'No valid fields to update'}), 400
+        
+        params.append(material_name)
+        
+        cursor.execute(f"""
+            UPDATE arrow_material_properties 
+            SET {', '.join(update_fields)}
+            WHERE material_name = ?
+        """, params)
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Material not found'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        # Clear cache to force refresh
+        spine_service = get_spine_service()
+        if spine_service:
+            cache_key = f"materials_{material_name.lower()}"
+            if cache_key in spine_service._cache:
+                del spine_service._cache[cache_key]
+            if "materials_all" in spine_service._cache:
+                del spine_service._cache["materials_all"]
+        
+        return jsonify({'message': 'Material updated successfully'})
+    except Exception as e:
+        print(f"Error updating spine material: {e}")
+        return jsonify({'error': 'Failed to update material'}), 500
+
+@app.route('/api/admin/spine-data/materials', methods=['POST'])
+@token_required
+@admin_required
+def create_spine_material(current_user):
+    """Create new arrow material properties"""
+    try:
+        data = request.get_json()
+        material_name = data.get('material_name')
+        
+        if not material_name:
+            return jsonify({'error': 'Material name is required'}), 400
+        
+        # Insert new material in database
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO arrow_material_properties 
+            (material_name, density, elasticity_modulus, strength_factor, spine_adjustment_factor,
+             temperature_coefficient, humidity_resistance_rating, description, typical_use)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            material_name,
+            data.get('density', 1.0),
+            data.get('elasticity_modulus', 100.0),
+            data.get('strength_factor', 1.0),
+            data.get('spine_adjustment_factor', 1.0),
+            data.get('temperature_coefficient', 0.0001),
+            data.get('humidity_resistance_rating', 5),
+            data.get('description', f'Properties for {material_name} arrows'),
+            data.get('typical_use', 'General use')
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        # Clear cache to force refresh
+        spine_service = get_spine_service()
+        if spine_service:
+            if "materials_all" in spine_service._cache:
+                del spine_service._cache["materials_all"]
+        
+        return jsonify({'message': 'Material created successfully'}), 201
+    except Exception as e:
+        print(f"Error creating spine material: {e}")
+        return jsonify({'error': 'Failed to create material'}), 500
+
+@app.route('/api/admin/spine-data/manufacturer-charts', methods=['GET'])
+@token_required
+@admin_required
+def get_manufacturer_spine_charts(current_user):
+    """Get all manufacturer spine charts"""
+    try:
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT * FROM manufacturer_spine_charts 
+            WHERE is_active = 1 
+            ORDER BY manufacturer, bow_type, draw_weight_min
+        """)
+        
+        charts = []
+        for row in cursor.fetchall():
+            charts.append(dict(row))
+        
+        conn.close()
+        return jsonify({'charts': charts})
+    except Exception as e:
+        print(f"Error getting manufacturer spine charts: {e}")
+        return jsonify({'error': 'Failed to get manufacturer spine charts'}), 500
+
+@app.route('/api/admin/spine-data/flight-problems', methods=['GET'])
+@token_required
+@admin_required
+def get_flight_problems(current_user):
+    """Get all flight problem diagnostics"""
+    try:
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        problems = spine_service.get_flight_problem_diagnostics()
+        return jsonify({'problems': problems})
+    except Exception as e:
+        print(f"Error getting flight problems: {e}")
+        return jsonify({'error': 'Failed to get flight problem diagnostics'}), 500
+
+@app.route('/api/admin/spine-data/test-calculation', methods=['POST'])
+@token_required
+@admin_required
+def test_spine_calculation(current_user):
+    """Test spine calculation with current parameters"""
+    try:
+        data = request.get_json()
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        # Test both standard and enhanced calculations
+        standard_result = spine_service.calculate_spine(
+            draw_weight=data.get('draw_weight', 50.0),
+            arrow_length=data.get('arrow_length', 29.0),
+            point_weight=data.get('point_weight', 125.0),
+            bow_type=data.get('bow_type', 'compound')
+        )
+        
+        enhanced_result = spine_service.calculate_enhanced_spine(
+            draw_weight=data.get('draw_weight', 50.0),
+            arrow_length=data.get('arrow_length', 29.0),
+            point_weight=data.get('point_weight', 125.0),
+            bow_type=data.get('bow_type', 'compound'),
+            material_preference=data.get('material_preference'),
+            manufacturer_preference=data.get('manufacturer_preference')
+        )
+        
+        return jsonify({
+            'standard_calculation': standard_result,
+            'enhanced_calculation': enhanced_result
+        })
+    except Exception as e:
+        print(f"Error testing spine calculation: {e}")
+        return jsonify({'error': 'Failed to test spine calculation'}), 500
 
 # Run the app
 if __name__ == '__main__':

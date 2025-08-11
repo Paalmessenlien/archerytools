@@ -1401,6 +1401,13 @@ This section details recent fixes and improvements to common development and dep
 - **Files**: `frontend/layouts/default.vue`
 - **Status**: ✅ **ADDED** - Calculator now accessible from all pages
 
+**Admin Spine Data Navigation Fix (August 2025):**
+- **Issue**: Spine data link in admin panel navigation not working, resulting in 404 or navigation failures
+- **Root Cause**: Nuxt 3 routing conflict between `admin.vue` and `admin/spine-data.vue` - having both a page file and directory with the same name prevents nested routes from being accessible
+- **Solution**: Moved `admin.vue` to `admin/index.vue` to resolve routing conflict and enable proper nested admin route structure
+- **Files**: `frontend/pages/admin.vue` → `frontend/pages/admin/index.vue`
+- **Status**: ✅ **RESOLVED** - Admin spine data navigation now works correctly with proper nested routing
+
 ### Legacy Fixes & Enhancements (July 2025)
 
 **GitHub Issue #16 - Bow Configuration Form Fixes:**
