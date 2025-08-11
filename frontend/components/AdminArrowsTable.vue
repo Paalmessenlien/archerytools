@@ -59,6 +59,9 @@
                 Spine Range
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Length Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Updated
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -110,6 +113,17 @@
                   <span class="text-gray-500 dark:text-gray-400 ml-1">({{ arrow.spine_count }} spines)</span>
                 </div>
                 <span v-else class="text-gray-400">No spines</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <div class="flex items-center">
+                  <span :class="getLengthStatusBadgeClass(arrow.length_status)" 
+                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                    {{ arrow.length_status || 'Unknown' }}
+                  </span>
+                  <span v-if="arrow.length_info" class="text-gray-500 dark:text-gray-400 ml-2 text-xs">
+                    {{ arrow.length_info }}
+                  </span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {{ formatDate(arrow.created_at) }}
@@ -236,7 +250,8 @@ interface Arrow {
   min_spine: number;
   max_spine: number;
   created_at: string;
-  created_at: string;
+  length_status?: string;
+  length_info?: string;
 }
 
 interface Pagination {
@@ -436,6 +451,17 @@ const getTypeBadgeClass = (type: string) => {
     'recreational': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
   };
   return classes[type as keyof typeof classes] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+};
+
+const getLengthStatusBadgeClass = (status: string) => {
+  const classes = {
+    'Complete': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    'Missing': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    'Partial': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    'No Spines': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400',
+    'Unknown': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+  };
+  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 };
 
 const handleImageError = (event: Event) => {

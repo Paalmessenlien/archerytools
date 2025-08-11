@@ -1,0 +1,1216 @@
+{
+  "manufacturer": "Gold Tip",
+  "total_arrows": 32,
+  "scraped_at": "2025-08-11T14:51:03.768040",
+  "extraction_method": "comprehensive_update",
+  "arrows": [
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "X-Cutter Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.38,
+          "gpi_weight": 7.8,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Gold Tip X-Cutter Pro is the most popular shaft in 3D archery, look to the winner's podium and you'll see why. Large diameter and lightweight construction give it an almost unfair advantage.",
+      "source_url": "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-pro-target-arrows/GT-XCPROSN.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw9036ecdf/images/large/Target_Shafts/GT_Xcutter_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Pierce Tour Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 9.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.24,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.234,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.229,
+          "gpi_weight": 7.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.222,
+          "gpi_weight": 6.6,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.219,
+          "gpi_weight": 6.2,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 700,
+          "outer_diameter": 0.213,
+          "gpi_weight": 5.5,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Pierce Tour is specifically engineered for outstanding performance in outdoor archery conditions where long distances rule and unpredictable winds abound.",
+      "source_url": "https://www.goldtip.com/target-arrows/pierce-series/kinetic-pierce-tour-target-arrows/PG3399578.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw6707b1aa/images/large/GT_Kinetic_Pierce_Tour_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "22 Series Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.338,
+          "gpi_weight": 7.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Series 22 is the arrow for archers that don't want to bring a knife to a gunfight; big enough to cut the line, yet light enough for lower draw weights and draw lengths. Components sold separately.",
+      "source_url": "https://www.goldtip.com/target-arrows/22-series/22-series-pro-target-arrows/GT-22PROSN.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw1ed66b68/images/large/GT_Series_22_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Triple X Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 100,
+          "outer_diameter": 0.421,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Triple X Pro is the big brother you wished you had. Large and in charge, barely keeping it legal. Big enough and stiff enough to handle the fastest bows, yet precise enough to shoot a 900 in Vegas. Components are sold separately.",
+      "source_url": "https://www.goldtip.com/target-arrows/triple-x-series/triple-x-pro-target-arrows/GT-TXPROSN.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwd027b6c0/images/large/Target_Shafts/GT_Triple_X_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Nine.3 Max Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.365,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The answer to consumer demand for a product that not only pushes the maximum allowable diameter for indoor World Archery/ FITA events but is also durable enough to maintain pinpoint accuracy shot after shot.",
+      "source_url": "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-pro-target-arrows/GT-93MAXPROSN.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwcc161894/images/large/Target_Shafts/GT_Nine_Max_Pros_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "X-Cutter Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.38,
+          "gpi_weight": 7.8,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Gold Tip X-Cutter is the most popular shaft in 3D archery, look to the winner's podium and you'll see why. Large diameter and lightweight construction give it an almost unfair advantage. Components sold separately.",
+      "source_url": "https://www.goldtip.com/target-arrows/x-cutter-series/x-cutter-plus-target-arrows/GT-XCSPLUS.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dweedfb4a8/images/large/Target_Shafts/GT_Xcutter_Plus_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Triple X Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 100,
+          "outer_diameter": 0.421,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Triple X is the big brother you wished you had. Large and in charge, barely keeping it legal. Big enough and stiff enough to handle the fastest bows, yet precise enough to shoot a 900 in Vegas.",
+      "source_url": "https://www.goldtip.com/target-arrows/triple-x-series/triple-x--plus-target-arrows/GT-TXSPLUS.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw5cb3c9dc/images/large/Target_Shafts/GT_Triple_X_Plus_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "30X Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 150,
+          "outer_diameter": 0.399,
+          "gpi_weight": 8.5,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The 30X is the 3D king. Big enough and stiff enough to handle the fastest bows. Its large diameter will snag the scoring ring when you need it most. Components are sold separately.",
+      "source_url": "https://www.goldtip.com/target-arrows/30x-series/30x-plus-target-arrows/GT-30XSPLUS.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw44590405/images/large/Target_Shafts/GT_30X_Plus_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Nine.3 Max Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.365,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The answer to consumer demand for a product that not only pushes the maximum allowable diameter for indoor World Archery/ FITA events but is also durable enough to maintain pinpoint accuracy shot after shot.",
+      "source_url": "https://www.goldtip.com/target-arrows/nine.3-series/nine.3-max-plus-target-arrows/GT-93MAXSPLUS.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw42b7024d/images/large/Target_Shafts/GT_Nine_Max_Plus_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "22 Series Plus Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.338,
+          "gpi_weight": 7.3,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The Series 22 is the arrow for archers that don't want to bring a knife to a gun fight; big enough to cut the line, yet light enough for lower draw weights and draw lengths.",
+      "source_url": "https://www.goldtip.com/target-arrows/22-series/22-series-plus-target-arrows/GT-22SPLUS.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw5b90e385/images/large/GT_Series_22_Plus_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "30X Pro Target Arrows",
+      "spine_specifications": [
+        {
+          "spine": 150,
+          "outer_diameter": 0.399,
+          "gpi_weight": 8.5,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "target",
+      "description": "The 30X Pro is the 3D king. Ultra-tight tolerances will keep your focus on the win, not your arrows. Big enough and stiff enough to handle the fastest bows. Its large diameter will snag the scoring ring when you need it most.",
+      "source_url": "https://www.goldtip.com/target-arrows/30x-series/30x-pro-target-arrows/GT-30XPROSN.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw1915d044/images/large/Target_Shafts/GT_30X_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.309,
+          "gpi_weight": 10.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.3,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "The Gold Tip Hunter XT is based on the most versatile arrow ever made, the original that put Gold Tip on the map. If you had to pick one arrow to last the rest of your life, a Hunter series would be it.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-xt-hunting-arrows/P01272.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw86dc0f68/images/large/GT_Hunter_XT_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.3,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "The Gold Tip Hunter is based on the most versatile arrow ever made, the original that put Gold Tip on the map. If you had to pick one arrow to last the rest of your life, a Hunter series would be it.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-hunting-arrows/P01268.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw1f1e1991/images/large/GT_Hunter_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Ted Nugent Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.313,
+          "gpi_weight": 10.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.301,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.297,
+          "gpi_weight": 8.4,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Ted Nugent doesn’t do anything half way. And when he asked Gold Tip to make his Signature Series arrows, he told us the same. They needed to be stronger, faster, and harder hitting.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/specialty-series/ted-nugent-hunting-arrows/P01279.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw096253d3/images/large/GT_Ted_Nugent_White_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Hunter™ PRO Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.3,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "The Gold Tip Hunter Pro is based on the most versatile arrow ever made, the original that put Gold Tip on the map. If you had to pick one arrow to last the rest of your life, a Hunter series would be it.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/hunter-series/hunter-pro-hunting-arrows/P01271.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwa4929b59/images/large/GT_Hunter_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Airstrike Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.269,
+          "gpi_weight": 9.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.262,
+          "gpi_weight": 8.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.258,
+          "gpi_weight": 7.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.254,
+          "gpi_weight": 7.2,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "high modulus carbon construction",
+      "arrow_type": "hunting",
+      "description": "Gold Tip introduces Airstrike™, featuring an ultra-light .204 inside diameter profile with an extreme front of center design, high modulus carbon construction, and exclusive Dyna-Tek Slick Shield® coating.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/airstrike-series/airstrike-hunting-arrows/PG3398796.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw302e88a3/images/large/GT_Airstrike_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Twister® Flu Flu Hunting Arrow",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.274,
+          "gpi_weight": 10.4,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.27,
+          "gpi_weight": 9.5,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.258,
+          "gpi_weight": 7.6,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Gold Tip®’s spirally-wrapped \"Twister®\" is a feather-fletched, flu-flu arrow designed to minimize flight distance to ensure arrow recovery when hunting small game or shooting aerial targets.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/specialty-series/twister-flu-flu-hunting-arrow/P01283.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw2275dde1/images/large/GT_Twister_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic KAOS Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 200,
+          "outer_diameter": 0.282,
+          "gpi_weight": 11.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.274,
+          "gpi_weight": 10.4,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.272,
+          "gpi_weight": 9.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.27,
+          "gpi_weight": 9.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.258,
+          "gpi_weight": 7.6,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "For bowhunters looking for a durable, hard-hitting, small diameter shaft that still provides unmatched straightness retention, the Kinetic family of arrows meets the challenge.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-kaos-hunting-arrows/P01276.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw100ee836/images/large/GT_Kinetic_Kaos_Group_2.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Kinetic Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 200,
+          "outer_diameter": 0.282,
+          "gpi_weight": 11.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.274,
+          "gpi_weight": 10.4,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.272,
+          "gpi_weight": 9.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.27,
+          "gpi_weight": 9.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.258,
+          "gpi_weight": 7.6,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "For bowhunters looking for a durable, hard-hitting, small diameter shaft that still provides unmatched straightness retention, the Kinetic family of arrows meets the challenge. If you're hunting larger game or striving to increase your accuracy in wind and inclement weather, the Kinetic shafts are engineered to deliver maximum kinetic energy.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/kinetic-series/kinetic-hunting-arrows/P01275.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwd01dfa87/images/large/GT_Kinetic_Group_new_1.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce Platinum Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 9.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.24,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.234,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.229,
+          "gpi_weight": 7.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.222,
+          "gpi_weight": 6.6,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "If you're looking for an arrow that surgically penetrates with blistering speed and will stand up to real-world abuse, you've found it.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-platinum-hunting-arrows/PG4342808.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw45e17fa0/images/large/GT_Pierce_Platinum_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Force F.O.C.™ Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.304,
+          "gpi_weight": 9.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.296,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.4,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Bowhunting is 100% about penetration at impact, and the FORCE F.O.C. from Gold Tip is built to deliver. With an extremely lightweight, high F.O.C. design in a configuration that’s easy for any hunter to use, it makes every shot a show of FORCE.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/force-foc-high-front-of-center/force-f.o.c.-hunting-arrows/PG3398798.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw106ea896/images/large/GT_Force_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.296,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.4,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.3,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 5.9,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% Carbon Technology",
+      "arrow_type": "hunting",
+      "description": "Gold Tip Velocity XT makes slow bows fast and fast bows faster. String jumping game has met its match with the Velocity XT. Constructed of Gold Tip's legendary 100% Carbon Technology for unmatched durability and straightness retention.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-xt-hunting-arrows/P01286.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw99547953/images/large/GT_Velocity_XT_Group_2.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.296,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.4,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.3,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 5.9,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% Carbon Technology",
+      "arrow_type": "hunting",
+      "description": "Gold Tip Velocity makes slow bows fast and fast bows faster. The Velocity is the affordable way to speed. Constructed of Gold Tip's legendary 100% Carbon Technology for unmatched durability and straightness retention.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-hunting-arrows/P01284.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw5a5d58cf/images/large/GT_Velocity_Group_3.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 9.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.24,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.234,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.229,
+          "gpi_weight": 7.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.222,
+          "gpi_weight": 6.6,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "If you're looking for an arrow that surgically penetrates with blistering speed and will stand up to real-world abuse, you've found it.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-hunting-arrows/PG4392856.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw9aafa84c/images/large/GT_Pierce_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Velocity PRO Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.299,
+          "gpi_weight": 8.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.296,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.291,
+          "gpi_weight": 7.4,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.285,
+          "gpi_weight": 6.3,
+          "length_options": [
+            30.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.283,
+          "gpi_weight": 5.9,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% Carbon Technology",
+      "arrow_type": "hunting",
+      "description": "Gold Tip Velocity Pro makes slow bows fast and fast bows faster. The tight tolerance Velocity Pro is the pinnacle of high speed arrows. Constructed of Gold Tip's legendary 100% Carbon Technology for unmatched durability and straightness retention.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/velocity-series/velocity-pro-hunting-arrows/P01285.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw4608718a/images/large/GT_Velocity_Pro_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 340,
+          "outer_diameter": 0.308,
+          "gpi_weight": 10.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.295,
+          "gpi_weight": 7.8,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% carbon construction",
+      "arrow_type": "hunting",
+      "description": "Gold Tip®’s Traditional Series combines the elegant look of classic wood-grained cedar with the proven performance and durability of 100% carbon construction.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-hunting-arrows/P01281.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw44942496/images/large/GT_Traditional_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Classic Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 340,
+          "outer_diameter": 0.287,
+          "gpi_weight": 12.0,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.282,
+          "gpi_weight": 11.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.274,
+          "gpi_weight": 10.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.269,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "Carbon",
+      "arrow_type": "hunting",
+      "description": "Gold Tip®’s Traditional Classic is built of a heavyweight, small diameter carbon shaft that comes equipped with stainless steel inserts. The strength and durability, coupled with the look of a custom footed-shaft makes it the perfect choice for any traditional archer that demands hard-hitting kinetic energy.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-hunting-arrows/P01368.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dwf687e1bd/images/large/GT_Traditional_Classic_Group_2.jpg"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 340,
+          "outer_diameter": 0.308,
+          "gpi_weight": 10.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.6,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.295,
+          "gpi_weight": 7.8,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "100% carbon construction",
+      "arrow_type": "hunting",
+      "description": "Gold Tip®’s Traditional Series combines the elegant look of classic wood-grained cedar with the proven performance and durability of 100% carbon construction.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-xt-hunting-arrows/P01282.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw55d758cc/images/large/GT_Traditional_Group_2.jpg"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Traditional Classic XT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 340,
+          "outer_diameter": 0.287,
+          "gpi_weight": 12.0,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.282,
+          "gpi_weight": 11.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.274,
+          "gpi_weight": 10.2,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 600,
+          "outer_diameter": 0.269,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Gold Tip’s Traditional Classic XT is built of a heavyweight, small diameter carbon shaft that comes equipped with stainless steel inserts and reinforced Ballistic Collars.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/traditional-series/traditional-classic-xt-hunting-arrows/P01369.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw46920e18/images/large/GT_Traditional_Classic_XT_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Pierce LRT Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.245,
+          "gpi_weight": 9.8,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.24,
+          "gpi_weight": 9.1,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.234,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.229,
+          "gpi_weight": 7.5,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 500,
+          "outer_diameter": 0.223,
+          "gpi_weight": 6.6,
+          "length_options": [
+            30.0
+          ]
+        }
+      ],
+      "material": "Smart Carbon Technology",
+      "arrow_type": "hunting",
+      "description": "Built from the proven Pierce shaft now with tighter tolerances and improved components, the Pierce LRT is our most advanced long-range tactical hunting arrow ever. Micro diameter for better penetration and less wind drift at extended range. The one-piece component system is easy to install perfectly straight every time. Dyna-Tek Slick Shield™ coating aids in penetration and target removal. Simply put, this is the baddest hunting arrow we have ever built.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/pierce-lrt-hunting-arrows/PG3997784.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw9223dd02/images/large/GT_Pierce_LRT_Group.jpg"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Black Label Quantum Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 250,
+          "outer_diameter": 0.268,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 300,
+          "outer_diameter": 0.2605,
+          "gpi_weight": 8.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.257,
+          "gpi_weight": 7.7,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.2525,
+          "gpi_weight": 7.0,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Gold Tip's Quantum, the newest addition to the Black Label Family, is built for freight train penetrations, and with a micro-diameter .204 design, it lessens the sideways drift compared to larger-diameter arrows.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-quantum-hunting-arrows/PG3398799.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw572832b9/images/large/GT_Black_Label_Quantum_Group.jpg?sw=800&sh=800&sm=fit"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model_name": "Black Label Hunting Arrows",
+      "spine_specifications": [
+        {
+          "spine": 300,
+          "outer_diameter": 0.302,
+          "gpi_weight": 9.3,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 340,
+          "outer_diameter": 0.3,
+          "gpi_weight": 8.9,
+          "length_options": [
+            32.0
+          ]
+        },
+        {
+          "spine": 400,
+          "outer_diameter": 0.295,
+          "gpi_weight": 8.2,
+          "length_options": [
+            32.0
+          ]
+        }
+      ],
+      "material": "100% pure carbon",
+      "arrow_type": "hunting",
+      "description": "Gold Tip's new Black Label goes beyond straightness standards to go beyond your expectations. Every Black Label is laser-sorted at multiple points along the shaft to assure straightness along the full length, not just the ends.",
+      "source_url": "https://www.goldtip.com/hunting-arrows/black-label-series/black-label-hunting-arrows/PG3398797.html",
+      "primary_image_url": "https://www.goldtip.com/dw/image/v2/BDBJ_PRD/on/demandware.static/-/Sites-shootAccessory-master-catalog/default/dw88a7d0ca/images/large/GT_Black_Label_Group.jpg?sw=800&sh=800&sm=fit"
+    }
+  ]
+}

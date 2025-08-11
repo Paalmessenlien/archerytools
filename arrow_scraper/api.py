@@ -3472,6 +3472,7 @@ def get_bunny_cdn_backups():
     
     if not access_key:
         print("❌ Bunny CDN access key not configured")
+        print("ℹ️  Set BUNNY_ACCESS_KEY environment variable to enable CDN backup listing")
         return []
     
     # Determine API endpoint based on region
@@ -3501,6 +3502,8 @@ def get_bunny_cdn_backups():
     try:
         print(f"🌐 Fetching backups from Bunny CDN: {api_url}")
         response = requests.get(api_url, headers=headers, timeout=10)
+        
+        print(f"📡 Bunny CDN response status: {response.status_code}")
         
         if response.status_code == 200:
             files = response.json()
@@ -3533,6 +3536,10 @@ def get_bunny_cdn_backups():
             print(f"✅ Found {len(cdn_backups)} backup files on Bunny CDN")
             return cdn_backups
             
+        elif response.status_code == 404:
+            print(f"⚠️  Bunny CDN backups directory not found: {api_url}")
+            print("ℹ️  This is normal if no backups have been uploaded yet")
+            return []
         else:
             print(f"❌ Bunny CDN API error: {response.status_code} - {response.text}")
             return []
@@ -3556,18 +3563,32 @@ def get_database_cdn_backups():
             SELECT bm.*, u.name as created_by_name, u.email as created_by_email
             FROM backup_metadata bm
             LEFT JOIN users u ON bm.created_by = u.id
+            WHERE bm.cdn_url IS NOT NULL
             ORDER BY bm.created_at DESC
         ''')
         
         cdn_backups = []
-        for row in cursor.fetchall():
+        rows = cursor.fetchall()
+        print(f"📊 Found {len(rows)} backups in database metadata")
+        
+        for row in rows:
             backup_info = dict(row)
             # Ensure database backups have consistent ID format
             if 'id' not in backup_info or not backup_info['id']:
                 backup_info['id'] = f"db_{backup_info.get('backup_name', 'unknown')}"
+            
+            # Ensure consistent field names
+            if 'name' not in backup_info and 'backup_name' in backup_info:
+                backup_info['name'] = backup_info['backup_name']
+            
             # Add status based on whether local file still exists
             backup_info['local_exists'] = os.path.exists(backup_info['local_path']) if backup_info['local_path'] else False
             backup_info['is_cdn_direct'] = False  # Flag to indicate this came from database
+            
+            # Add file size if missing (database backups might not have it)
+            if 'file_size_mb' not in backup_info:
+                backup_info['file_size_mb'] = backup_info.get('file_size_mb', 0.0)
+            
             cdn_backups.append(backup_info)
         
         return cdn_backups
@@ -3588,15 +3609,18 @@ def list_backups(current_user):
         # Get local backups
         backup_manager = BackupManager()
         local_backups = backup_manager.list_backups()
+        print(f"📁 Found {len(local_backups)} local backups")
         
         # Get CDN backups directly from Bunny CDN Storage API
         cdn_backups = []
         try:
             cdn_backups = get_bunny_cdn_backups()
+            print(f"🌐 Retrieved {len(cdn_backups)} backups from Bunny CDN API")
         except Exception as cdn_error:
             print(f"⚠️  Could not fetch CDN backups: {cdn_error}")
             # Fallback to database metadata if CDN API fails
             cdn_backups = get_database_cdn_backups()
+            print(f"📊 Using {len(cdn_backups)} backups from database metadata")
         
         # No need to close connection here since it's handled in helper functions
         
@@ -3627,6 +3651,8 @@ def list_backups(current_user):
         # Combine and sort by creation date for unified display
         all_backups = local_backups + cdn_backups
         all_backups.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        print(f"✅ Total backups found: {len(all_backups)} ({len(local_backups)} local, {len(cdn_backups)} CDN)")
         
         return jsonify({
             'success': True,

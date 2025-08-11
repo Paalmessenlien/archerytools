@@ -364,6 +364,9 @@ async def scrape_manufacturer(manufacturer: str, deepseek_api_key: str = None, u
                                 "outer_diameter": spine_spec.outer_diameter,
                                 "gpi_weight": spine_spec.gpi_weight
                             }
+                            # Include length_options if available
+                            if hasattr(spine_spec, 'length_options') and spine_spec.length_options:
+                                spine_dict["length_options"] = spine_spec.length_options
                             arrow_dict["spine_specifications"].append(spine_dict)
                         
                         # Add optional fields if they exist
@@ -946,6 +949,9 @@ async def update_all_manufacturers(deepseek_api_key: str, force_update: bool = F
                                         "outer_diameter": spine_spec.outer_diameter,
                                         "gpi_weight": spine_spec.gpi_weight
                                     }
+                                    # Include length_options if available
+                                    if hasattr(spine_spec, 'length_options') and spine_spec.length_options:
+                                        spine_dict["length_options"] = spine_spec.length_options
                                     arrow_dict["spine_specifications"].append(spine_dict)
                                 except Exception as e:
                                     print(f"⚠️  Error serializing spine spec: {e}")

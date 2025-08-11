@@ -225,16 +225,21 @@ def import_from_json_files():
                     # Insert spine specifications
                     spine_specs = arrow.get('spine_specifications', [])
                     for spec in spine_specs:
+                        # Handle length_options - convert list to JSON string for database storage
+                        length_options = spec.get('length_options', [])
+                        length_options_json = json.dumps(length_options) if length_options else None
+                        
                         cursor.execute('''
                             INSERT INTO spine_specifications (
-                                arrow_id, spine, outer_diameter, inner_diameter, gpi_weight
-                            ) VALUES (?, ?, ?, ?, ?)
+                                arrow_id, spine, outer_diameter, inner_diameter, gpi_weight, length_options
+                            ) VALUES (?, ?, ?, ?, ?, ?)
                         ''', (
                             arrow_id,
                             spec.get('spine', 0),
                             spec.get('outer_diameter', 0.0),
                             spec.get('inner_diameter', 0.0),
-                            spec.get('gpi_weight', 0.0)
+                            spec.get('gpi_weight', 0.0),
+                            length_options_json
                         ))
                         specs_in_file += 1
                     

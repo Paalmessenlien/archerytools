@@ -30,5 +30,21 @@
     "last_used": "2025-08-03T21:24:57.117592",
     "confidence_score": 1.0,
     "sample_content": "rrows-245-id-clearance/)\n    * [ Brands ](https://blackeaglearrows.com/brands/)\n### Brands\n[Shop All](https://blackeaglearrows.com/brands/)\n      * [ Black Eagle Arrows ](https://blackeaglearrows.com/"
+  },
+  "18365d2d2a47b6d0": {
+    "domain": "www.goldtip.com",
+    "manufacturer": "Gold Tip",
+    "pattern_type": "goldtip_specs_table",
+    "start_marker": "spine",
+    "end_marker": "length",
+    "content_slice": [
+      -25000,
+      -1000
+    ],
+    "extraction_method": "text",
+    "success_count": 34,
+    "last_used": "2025-08-11T14:50:37.626736",
+    "confidence_score": 1.0,
+    "sample_content": "SPINE | GPI | OD | LENGTH\n300 | 8.2 | .291\" | 30\"\n400 | 7.5 | .291\" | 32\""
   }
 }

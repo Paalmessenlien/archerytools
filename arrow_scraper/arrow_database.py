@@ -608,11 +608,14 @@ class ArrowDatabase:
         query = '''
         SELECT DISTINCT 
             a.id, a.manufacturer, a.model_name, a.material, a.arrow_type, 
-            a.description, a.image_url,
+            a.description, a.image_url, a.created_at,
             COUNT(s.id) as spine_count,
             MIN(s.spine) as min_spine, MAX(s.spine) as max_spine,
             MIN(s.gpi_weight) as min_gpi, MAX(s.gpi_weight) as max_gpi,
-            MIN(s.outer_diameter) as min_diameter, MAX(s.outer_diameter) as max_diameter
+            MIN(s.outer_diameter) as min_diameter, MAX(s.outer_diameter) as max_diameter,
+            COUNT(CASE WHEN s.length_options IS NOT NULL AND s.length_options != '' AND s.length_options != '[]' 
+                  THEN 1 END) as spines_with_length,
+            GROUP_CONCAT(DISTINCT s.length_options) as all_length_options
         FROM arrows a
         LEFT JOIN spine_specifications s ON a.id = s.arrow_id
         WHERE 1=1
@@ -705,6 +708,40 @@ class ArrowDatabase:
             result = dict(row)
             # Add formatted spine display for wood arrows
             result['spine_display'] = self._format_spine_display(result)
+            
+            # Add length status information
+            spines_with_length = result.get('spines_with_length', 0)
+            spine_count = result.get('spine_count', 0)
+            all_length_options = result.get('all_length_options', '')
+            
+            if spine_count == 0:
+                result['length_status'] = 'No Spines'
+                result['length_info'] = 'N/A'
+            elif spines_with_length == 0:
+                result['length_status'] = 'Missing'
+                result['length_info'] = 'No length data'
+            elif spines_with_length == spine_count:
+                result['length_status'] = 'Complete'
+                # Parse and combine all length options
+                unique_lengths = set()
+                if all_length_options:
+                    for length_json in all_length_options.split(','):
+                        try:
+                            import json
+                            lengths = json.loads(length_json.strip())
+                            if isinstance(lengths, list):
+                                unique_lengths.update(lengths)
+                        except:
+                            continue
+                if unique_lengths:
+                    sorted_lengths = sorted(unique_lengths)
+                    result['length_info'] = f"{len(sorted_lengths)} lengths available"
+                else:
+                    result['length_info'] = 'Available'
+            else:
+                result['length_status'] = 'Partial'
+                result['length_info'] = f"{spines_with_length}/{spine_count} spines"
+            
             results.append(result)
         
         return results

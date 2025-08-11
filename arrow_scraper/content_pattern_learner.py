@@ -206,9 +206,10 @@ class ContentPatternLearner:
             slice_start = max(0, start_pos + best_pattern.content_slice[0] - start_pos)
             slice_end = min(len(content), start_pos + best_pattern.content_slice[1] - best_pattern.content_slice[0])
         else:
-            # Use absolute positioning
-            slice_start = max(0, best_pattern.content_slice[0])
-            slice_end = min(len(content), best_pattern.content_slice[1])
+            # Use negative positioning (from end of content)
+            content_len = len(content)
+            slice_start = max(0, content_len + best_pattern.content_slice[0])  # e.g., len + (-25000)
+            slice_end = min(content_len, content_len + best_pattern.content_slice[1])  # e.g., len + (-1000)
         
         print(f"🎯 Using learned pattern: {best_pattern.pattern_type} (used {best_pattern.success_count} times)")
         print(f"🎯 Optimized slice: {slice_end - slice_start} chars (vs default ~15000)")
