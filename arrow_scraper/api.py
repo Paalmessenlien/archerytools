@@ -5783,6 +5783,319 @@ def create_manufacturer_override(current_user, chart_id):
         print(f"Error creating manufacturer override: {e}")
         return jsonify({'error': 'Failed to create manufacturer override'}), 500
 
+# Database Migration Management API Endpoints
+
+@app.route('/api/admin/migrations/status', methods=['GET'])
+@token_required
+@admin_required
+def get_migration_status(current_user):
+    """Get comprehensive migration status"""
+    try:
+        from database_migration_manager import DatabaseMigrationManager
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Initialize migration manager
+        manager = DatabaseMigrationManager(db_path)
+        status = manager.get_migration_status()
+        
+        return jsonify(status), 200
+    except Exception as e:
+        print(f"Error getting migration status: {e}")
+        return jsonify({'error': 'Failed to get migration status'}), 500
+
+@app.route('/api/admin/migrations/run', methods=['POST'])
+@token_required
+@admin_required
+def run_migrations(current_user):
+    """Run pending database migrations"""
+    try:
+        from database_migration_manager import DatabaseMigrationManager
+        
+        data = request.get_json() or {}
+        target_version = data.get('target_version')
+        dry_run = data.get('dry_run', False)
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Initialize migration manager
+        manager = DatabaseMigrationManager(db_path)
+        
+        # Get pending migrations first
+        pending = manager.get_pending_migrations()
+        if not pending:
+            return jsonify({
+                'success': True,
+                'message': 'No pending migrations',
+                'applied_count': 0,
+                'applied_migrations': []
+            }), 200
+        
+        # Run migrations
+        success = manager.migrate(target_version, dry_run)
+        
+        # Get status after migration
+        status = manager.get_migration_status()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'Successfully {"simulated" if dry_run else "applied"} {len(pending)} migrations',
+                'applied_count': len(pending) if not dry_run else 0,
+                'applied_migrations': [m.version for m in pending],
+                'status': status,
+                'dry_run': dry_run
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Some migrations failed',
+                'status': status
+            }), 500
+    except Exception as e:
+        print(f"Error running migrations: {e}")
+        return jsonify({'error': f'Failed to run migrations: {str(e)}'}), 500
+
+@app.route('/api/admin/migrations/history', methods=['GET'])
+@token_required
+@admin_required
+def get_migration_history(current_user):
+    """Get migration history and details"""
+    try:
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if migrations table exists
+        cursor.execute("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='database_migrations'
+        """)
+        
+        if not cursor.fetchone():
+            return jsonify({
+                'history': [],
+                'total_count': 0
+            }), 200
+        
+        # Get migration history
+        cursor.execute("""
+            SELECT version, name, applied_at, applied_by, environment, 
+                   success, error_message, checksum
+            FROM database_migrations
+            ORDER BY applied_at DESC
+        """)
+        
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                'version': row[0],
+                'name': row[1],
+                'applied_at': row[2],
+                'applied_by': row[3],
+                'environment': row[4],
+                'success': bool(row[5]),
+                'error_message': row[6],
+                'checksum': row[7]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'history': history,
+            'total_count': len(history)
+        }), 200
+    except Exception as e:
+        print(f"Error getting migration history: {e}")
+        return jsonify({'error': 'Failed to get migration history'}), 500
+
+@app.route('/api/admin/migrations/<version>/details', methods=['GET'])
+@token_required
+@admin_required
+def get_migration_details(current_user, version):
+    """Get detailed information about a specific migration"""
+    try:
+        from database_migration_manager import DatabaseMigrationManager
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Initialize migration manager
+        manager = DatabaseMigrationManager(db_path)
+        details = manager.get_migration_details(version)
+        
+        if details:
+            return jsonify(details), 200
+        else:
+            return jsonify({'error': f'Migration {version} not found'}), 404
+    except Exception as e:
+        print(f"Error getting migration details: {e}")
+        return jsonify({'error': 'Failed to get migration details'}), 500
+
+@app.route('/api/admin/migrations/validate', methods=['GET'])
+@token_required
+@admin_required
+def validate_migrations(current_user):
+    """Validate migration sequence and dependencies"""
+    try:
+        from database_migration_manager import DatabaseMigrationManager
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Initialize migration manager
+        manager = DatabaseMigrationManager(db_path)
+        validation_results = manager.validate_migration_sequence()
+        
+        return jsonify(validation_results), 200
+    except Exception as e:
+        print(f"Error validating migrations: {e}")
+        return jsonify({'error': 'Failed to validate migrations'}), 500
+
+# Database Health Management API Endpoints
+
+@app.route('/api/admin/database/health', methods=['GET'])
+@token_required
+@admin_required
+def get_database_health(current_user):
+    """Get comprehensive database health report"""
+    try:
+        from database_health_checker import run_health_check
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run health check
+        health_report = run_health_check(db_path)
+        
+        return jsonify(health_report), 200
+    except Exception as e:
+        print(f"Error getting database health: {e}")
+        return jsonify({'error': f'Failed to get database health: {str(e)}'}), 500
+
+@app.route('/api/admin/database/optimize', methods=['POST'])
+@token_required
+@admin_required
+def optimize_database(current_user):
+    """Run database optimization operations"""
+    try:
+        from database_health_checker import DatabaseHealthChecker
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run optimization
+        checker = DatabaseHealthChecker(db_path)
+        optimization_results = checker.run_database_optimization()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Database optimization completed',
+            'results': optimization_results
+        }), 200
+    except Exception as e:
+        print(f"Error optimizing database: {e}")
+        return jsonify({'error': f'Failed to optimize database: {str(e)}'}), 500
+
+@app.route('/api/admin/database/schema-verify', methods=['GET'])
+@token_required
+@admin_required
+def verify_database_schema(current_user):
+    """Verify database schema integrity"""
+    try:
+        from database_health_checker import DatabaseHealthChecker
+        
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Verify schema
+        checker = DatabaseHealthChecker(db_path)
+        verification_results = checker.verify_schema_integrity()
+        
+        return jsonify(verification_results), 200
+    except Exception as e:
+        print(f"Error verifying database schema: {e}")
+        return jsonify({'error': f'Failed to verify database schema: {str(e)}'}), 500
+
+@app.route('/api/admin/database/vacuum', methods=['POST'])
+@token_required
+@admin_required
+def vacuum_database(current_user):
+    """Run VACUUM command to reclaim space"""
+    try:
+        # Find database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        import sqlite3
+        import time
+        from pathlib import Path
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Get size before
+        size_before = Path(db_path).stat().st_size
+        
+        # Run VACUUM
+        start_time = time.time()
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("VACUUM")
+        conn.close()
+        
+        # Get size after
+        size_after = Path(db_path).stat().st_size
+        execution_time = (time.time() - start_time) * 1000
+        
+        space_reclaimed_mb = (size_before - size_after) / (1024 * 1024)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Database VACUUM completed',
+            'execution_time_ms': round(execution_time, 2),
+            'space_reclaimed_mb': round(space_reclaimed_mb, 2),
+            'size_before_mb': round(size_before / (1024 * 1024), 2),
+            'size_after_mb': round(size_after / (1024 * 1024), 2)
+        }), 200
+    except Exception as e:
+        print(f"Error running VACUUM: {e}")
+        return jsonify({'error': f'Failed to run VACUUM: {str(e)}'}), 500
+
 # Helper functions for enhanced spine calculations
 
 def calculate_effective_bow_weight(draw_weight, arrow_length, point_weight, bow_config):

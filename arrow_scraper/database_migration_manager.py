@@ -355,6 +355,47 @@ class DatabaseMigrationManager:
         applied_migrations = self.get_applied_migrations()
         pending_migrations = self.get_pending_migrations()
         
+        # Get detailed migration info
+        applied_details = []
+        pending_details = []
+        
+        # Get applied migration details from database
+        try:
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT version, name, applied_at, environment, success, error_message
+                FROM database_migrations
+                WHERE success = 1
+                ORDER BY applied_at DESC
+            """)
+            
+            for row in cursor.fetchall():
+                applied_details.append({
+                    'version': row[0],
+                    'name': row[1],
+                    'applied_at': row[2],
+                    'environment': row[3],
+                    'success': bool(row[4]),
+                    'error_message': row[5]
+                })
+            
+            conn.close()
+        except Exception:
+            # If migrations table doesn't exist or other error
+            pass
+        
+        # Get pending migration details
+        for migration in pending_migrations:
+            pending_details.append({
+                'version': migration.version,
+                'description': migration.description or migration.__class__.__name__,
+                'dependencies': migration.dependencies,
+                'environments': migration.environments,
+                'can_run': migration.can_run_in_environment(self.environment)
+            })
+        
         return {
             "database_path": self.database_path,
             "environment": self.environment,
@@ -363,8 +404,121 @@ class DatabaseMigrationManager:
             "pending_count": len(pending_migrations),
             "applied_versions": applied_migrations,
             "pending_versions": [m.version for m in pending_migrations],
-            "last_migration": applied_migrations[-1] if applied_migrations else None
+            "last_migration": applied_migrations[-1] if applied_migrations else None,
+            "applied_details": applied_details,
+            "pending_details": pending_details,
+            "database_exists": os.path.exists(self.database_path),
+            "migrations_table_exists": self._migrations_table_exists()
         }
+    
+    def _migrations_table_exists(self) -> bool:
+        """Check if migrations tracking table exists"""
+        try:
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='database_migrations'
+            """)
+            exists = cursor.fetchone() is not None
+            conn.close()
+            return exists
+        except Exception:
+            return False
+    
+    def get_migration_details(self, version: str) -> Optional[Dict[str, Any]]:
+        """Get detailed information about a specific migration"""
+        try:
+            # First check available migrations
+            all_migrations = self.discover_migrations()
+            if version in all_migrations:
+                migration = all_migrations[version]
+                
+                # Get execution history from database
+                execution_history = []
+                try:
+                    conn = sqlite3.connect(self.database_path)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT applied_at, applied_by, environment, success, error_message
+                        FROM database_migrations
+                        WHERE version = ?
+                        ORDER BY applied_at DESC
+                    """, (version,))
+                    
+                    for row in cursor.fetchall():
+                        execution_history.append({
+                            'applied_at': row[0],
+                            'applied_by': row[1],
+                            'environment': row[2],
+                            'success': bool(row[3]),
+                            'error_message': row[4]
+                        })
+                    
+                    conn.close()
+                except Exception:
+                    pass
+                
+                return {
+                    'version': migration.version,
+                    'description': migration.description or migration.__class__.__name__,
+                    'dependencies': migration.dependencies,
+                    'environments': migration.environments,
+                    'can_run_in_environment': migration.can_run_in_environment(self.environment),
+                    'checksum': migration.get_checksum(),
+                    'is_applied': version in self.get_applied_migrations(),
+                    'execution_history': execution_history
+                }
+            
+            return None
+        except Exception as e:
+            self.logger.error(f"❌ Failed to get migration details for {version}: {e}")
+            return None
+    
+    def validate_migration_sequence(self) -> Dict[str, Any]:
+        """Validate that all migrations can be applied in correct order"""
+        try:
+            all_migrations = self.discover_migrations()
+            applied_migrations = set(self.get_applied_migrations())
+            
+            validation_results = {
+                'valid': True,
+                'issues': [],
+                'warnings': []
+            }
+            
+            # Check for missing dependencies
+            for version, migration in all_migrations.items():
+                if version not in applied_migrations:
+                    for dep in migration.dependencies:
+                        if dep not in applied_migrations and dep not in all_migrations:
+                            validation_results['valid'] = False
+                            validation_results['issues'].append(
+                                f"Migration {version} depends on {dep} which is not available"
+                            )
+                        elif dep not in applied_migrations:
+                            validation_results['warnings'].append(
+                                f"Migration {version} depends on {dep} which is not yet applied"
+                            )
+            
+            # Check for environment compatibility
+            incompatible = []
+            for version, migration in all_migrations.items():
+                if not migration.can_run_in_environment(self.environment):
+                    incompatible.append(version)
+            
+            if incompatible:
+                validation_results['warnings'].append(
+                    f"Migrations not compatible with environment '{self.environment}': {', '.join(incompatible)}"
+                )
+            
+            return validation_results
+        except Exception as e:
+            return {
+                'valid': False,
+                'issues': [f"Validation failed: {str(e)}"],
+                'warnings': []
+            }
     
     def _record_migration(self, migration: BaseMigration, success: bool, error: str = None):
         """Record migration application in the database"""

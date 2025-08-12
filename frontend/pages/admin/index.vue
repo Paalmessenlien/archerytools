@@ -119,6 +119,18 @@
           Backups
         </button>
         <button
+          @click="activeTab = 'maintenance'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'maintenance' 
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-wrench mr-2"></i>
+          Maintenance
+        </button>
+        <button
           @click="activeTab = 'system'"
           :class="[
             'py-2 px-1 border-b-2 font-medium text-sm',
@@ -668,6 +680,326 @@
                 <li>• Pages with tables or structured data work best</li>
                 <li>• Scraping may take 30-60 seconds for complex pages</li>
               </ul>
+            </div>
+          </div>
+        </md-elevated-card>
+      </div>
+      
+      <!-- Maintenance Tab -->
+      <div v-if="activeTab === 'maintenance'">
+        <!-- Database Migrations -->
+        <md-elevated-card class="light-surface light-elevation mb-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-code-branch mr-2 text-indigo-600"></i>
+                Database Migrations
+              </h2>
+              <div class="flex space-x-2">
+                <CustomButton
+                  @click="refreshMigrationStatus"
+                  variant="outlined"
+                  class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-800"
+                >
+                  <i class="fas fa-sync mr-2"></i>
+                  Refresh
+                </CustomButton>
+                <CustomButton
+                  @click="runMigrations(false)"
+                  variant="filled"
+                  class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                  :disabled="migrationStatus?.pending_count === 0"
+                >
+                  <i class="fas fa-play mr-2"></i>
+                  Run Migrations
+                </CustomButton>
+              </div>
+            </div>
+
+            <!-- Migration Status Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {{ migrationStatus?.total_migrations || 0 }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Total Migrations</div>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {{ migrationStatus?.applied_count || 0 }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Applied</div>
+              </div>
+              <div class="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {{ migrationStatus?.pending_count || 0 }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Pending</div>
+              </div>
+              <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Environment</div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {{ migrationStatus?.environment || 'Unknown' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Migrations -->
+            <div v-if="migrationStatus?.pending_count > 0" class="mb-4">
+              <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Pending Migrations
+              </h3>
+              <div class="space-y-2">
+                <div
+                  v-for="migration in migrationStatus.pending_details"
+                  :key="migration.version"
+                  class="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg"
+                >
+                  <div>
+                    <span class="font-mono text-sm text-yellow-800 dark:text-yellow-300">
+                      {{ migration.version }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400 ml-2">
+                      {{ migration.description }}
+                    </span>
+                  </div>
+                  <span class="text-xs px-2 py-1 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded">
+                    Pending
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Applied Migrations History -->
+            <div v-if="migrationStatus?.applied_count > 0" class="mb-4">
+              <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Recent Applied Migrations
+              </h3>
+              <div class="space-y-2 max-h-60 overflow-y-auto">
+                <div
+                  v-for="migration in migrationStatus.applied_details.slice(0, 5)"
+                  :key="migration.version"
+                  class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
+                >
+                  <div>
+                    <span class="font-mono text-sm text-green-800 dark:text-green-300">
+                      {{ migration.version }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400 ml-2">
+                      {{ migration.name }}
+                    </span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs px-2 py-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded">
+                      Applied
+                    </span>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {{ new Date(migration.applied_at).toLocaleDateString() }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </md-elevated-card>
+
+        <!-- Database Health -->
+        <md-elevated-card class="light-surface light-elevation mb-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                <i class="fas fa-heart-pulse mr-2 text-red-600"></i>
+                Database Health
+              </h2>
+              <div class="flex space-x-2">
+                <CustomButton
+                  @click="refreshDatabaseHealth"
+                  variant="outlined"
+                  class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-800"
+                >
+                  <i class="fas fa-sync mr-2"></i>
+                  Check Health
+                </CustomButton>
+                <CustomButton
+                  @click="optimizeDatabase"
+                  variant="filled"
+                  class="bg-green-600 text-white hover:bg-green-700"
+                  :disabled="isOptimizing"
+                >
+                  <i class="fas fa-tools mr-2"></i>
+                  {{ isOptimizing ? 'Optimizing...' : 'Optimize' }}
+                </CustomButton>
+              </div>
+            </div>
+
+            <!-- Health Status Overview -->
+            <div v-if="databaseHealth" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {{ databaseHealth.database_size_mb }}MB
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Database Size</div>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {{ databaseHealth.total_tables }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Tables</div>
+              </div>
+              <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {{ databaseHealth.total_indexes }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Indexes</div>
+              </div>
+              <div class="text-center p-4 rounded-lg"
+                   :class="{
+                     'bg-green-50 dark:bg-green-900/20': databaseHealth.performance_score >= 80,
+                     'bg-yellow-50 dark:bg-yellow-900/20': databaseHealth.performance_score >= 60 && databaseHealth.performance_score < 80,
+                     'bg-red-50 dark:bg-red-900/20': databaseHealth.performance_score < 60
+                   }">
+                <div class="text-2xl font-bold"
+                     :class="{
+                       'text-green-600 dark:text-green-400': databaseHealth.performance_score >= 80,
+                       'text-yellow-600 dark:text-yellow-400': databaseHealth.performance_score >= 60 && databaseHealth.performance_score < 80,
+                       'text-red-600 dark:text-red-400': databaseHealth.performance_score < 60
+                     }">
+                  {{ databaseHealth.performance_score }}/100
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Health Score</div>
+              </div>
+            </div>
+
+            <!-- Health Recommendations -->
+            <div v-if="databaseHealth?.recommendations?.length" class="mb-4">
+              <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Recommendations
+              </h3>
+              <div class="space-y-2">
+                <div
+                  v-for="(recommendation, index) in databaseHealth.recommendations"
+                  :key="index"
+                  class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+                >
+                  <div class="flex items-start">
+                    <i class="fas fa-lightbulb text-blue-600 dark:text-blue-400 mr-2 mt-1"></i>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                      {{ recommendation }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Integrity Status -->
+            <div v-if="databaseHealth" class="p-4 rounded-lg"
+                 :class="{
+                   'bg-green-50 dark:bg-green-900/20': databaseHealth.integrity_status === 'HEALTHY',
+                   'bg-red-50 dark:bg-red-900/20': databaseHealth.integrity_status !== 'HEALTHY'
+                 }">
+              <div class="flex items-center">
+                <i :class="[
+                     'fas mr-2',
+                     {
+                       'fa-check-circle text-green-600 dark:text-green-400': databaseHealth.integrity_status === 'HEALTHY',
+                       'fa-exclamation-triangle text-red-600 dark:text-red-400': databaseHealth.integrity_status !== 'HEALTHY'
+                     }
+                   ]"></i>
+                <span class="font-medium"
+                      :class="{
+                        'text-green-800 dark:text-green-200': databaseHealth.integrity_status === 'HEALTHY',
+                        'text-red-800 dark:text-red-200': databaseHealth.integrity_status !== 'HEALTHY'
+                      }">
+                  Database Integrity: {{ databaseHealth.integrity_status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </md-elevated-card>
+
+        <!-- Maintenance Operations -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-tools mr-2 text-orange-600"></i>
+              Maintenance Operations
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- VACUUM Database -->
+              <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 class="font-medium text-gray-900 dark:text-gray-100">VACUUM Database</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Reclaim unused space and defragment</p>
+                  </div>
+                  <CustomButton
+                    @click="vacuumDatabase"
+                    variant="outlined"
+                    class="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400"
+                    :disabled="isVacuuming"
+                  >
+                    <i class="fas fa-compress mr-2"></i>
+                    {{ isVacuuming ? 'Running...' : 'VACUUM' }}
+                  </CustomButton>
+                </div>
+              </div>
+
+              <!-- Schema Verification -->
+              <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 class="font-medium text-gray-900 dark:text-gray-100">Schema Verification</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Verify database schema integrity</p>
+                  </div>
+                  <CustomButton
+                    @click="verifySchema"
+                    variant="outlined"
+                    class="text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400"
+                    :disabled="isVerifying"
+                  >
+                    <i class="fas fa-check-double mr-2"></i>
+                    {{ isVerifying ? 'Checking...' : 'Verify' }}
+                  </CustomButton>
+                </div>
+              </div>
+            </div>
+
+            <!-- Last Maintenance Operations -->
+            <div v-if="lastMaintenanceResults.length" class="mt-6">
+              <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Recent Operations
+              </h3>
+              <div class="space-y-2 max-h-40 overflow-y-auto">
+                <div
+                  v-for="(result, index) in lastMaintenanceResults"
+                  :key="index"
+                  class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="font-medium text-sm text-gray-900 dark:text-gray-100">
+                        {{ result.operation }}
+                      </span>
+                      <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        {{ result.message }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xs px-2 py-1 rounded"
+                            :class="{
+                              'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200': result.success,
+                              'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200': !result.success
+                            }">
+                        {{ result.success ? 'Success' : 'Failed' }}
+                      </span>
+                      <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {{ new Date(result.timestamp).toLocaleTimeString() }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </md-elevated-card>
@@ -1628,6 +1960,14 @@ const scraping = ref({
   lastResult: null
 })
 
+// Maintenance state
+const migrationStatus = ref(null)
+const databaseHealth = ref(null)
+const isOptimizing = ref(false)
+const isVacuuming = ref(false)
+const isVerifying = ref(false)
+const lastMaintenanceResults = ref([])
+
 // Notification state
 const notification = ref({
   show: false,
@@ -2405,6 +2745,174 @@ const clearScrapingResults = () => {
   scraping.value.manufacturer = ''
 }
 
+// Maintenance functions
+const refreshMigrationStatus = async () => {
+  try {
+    const { data } = await $fetch('/api/admin/migrations/status')
+    migrationStatus.value = data
+  } catch (error) {
+    console.error('Error fetching migration status:', error)
+    showNotification('Failed to fetch migration status', 'error')
+  }
+}
+
+const runMigrations = async (dryRun = false) => {
+  try {
+    const { data } = await $fetch('/api/admin/migrations/run', {
+      method: 'POST',
+      body: { dry_run: dryRun }
+    })
+    
+    if (data.success) {
+      showNotification(data.message, 'success')
+      await refreshMigrationStatus() // Refresh status after running migrations
+    } else {
+      showNotification(data.error || 'Migration failed', 'error')
+    }
+  } catch (error) {
+    console.error('Error running migrations:', error)
+    showNotification('Failed to run migrations', 'error')
+  }
+}
+
+const refreshDatabaseHealth = async () => {
+  try {
+    const { data } = await $fetch('/api/admin/database/health')
+    databaseHealth.value = data
+  } catch (error) {
+    console.error('Error fetching database health:', error)
+    showNotification('Failed to fetch database health', 'error')
+  }
+}
+
+const optimizeDatabase = async () => {
+  isOptimizing.value = true
+  try {
+    const { data } = await $fetch('/api/admin/database/optimize', {
+      method: 'POST'
+    })
+    
+    if (data.success) {
+      const result = {
+        operation: 'Database Optimization',
+        message: data.message,
+        success: true,
+        timestamp: new Date().toISOString()
+      }
+      lastMaintenanceResults.value.unshift(result)
+      
+      showNotification(data.message, 'success')
+      await refreshDatabaseHealth() // Refresh health after optimization
+    } else {
+      const result = {
+        operation: 'Database Optimization',
+        message: data.error || 'Optimization failed',
+        success: false,
+        timestamp: new Date().toISOString()
+      }
+      lastMaintenanceResults.value.unshift(result)
+      
+      showNotification(data.error || 'Optimization failed', 'error')
+    }
+  } catch (error) {
+    console.error('Error optimizing database:', error)
+    
+    const result = {
+      operation: 'Database Optimization',
+      message: 'Failed to optimize database',
+      success: false,
+      timestamp: new Date().toISOString()
+    }
+    lastMaintenanceResults.value.unshift(result)
+    
+    showNotification('Failed to optimize database', 'error')
+  } finally {
+    isOptimizing.value = false
+  }
+}
+
+const vacuumDatabase = async () => {
+  isVacuuming.value = true
+  try {
+    const { data } = await $fetch('/api/admin/database/vacuum', {
+      method: 'POST'
+    })
+    
+    if (data.success) {
+      const result = {
+        operation: 'VACUUM Database',
+        message: `${data.message}. Reclaimed: ${data.space_reclaimed_mb}MB`,
+        success: true,
+        timestamp: new Date().toISOString()
+      }
+      lastMaintenanceResults.value.unshift(result)
+      
+      showNotification(`${data.message}. Reclaimed ${data.space_reclaimed_mb}MB`, 'success')
+      await refreshDatabaseHealth() // Refresh health after vacuum
+    } else {
+      const result = {
+        operation: 'VACUUM Database',
+        message: data.error || 'VACUUM failed',
+        success: false,
+        timestamp: new Date().toISOString()
+      }
+      lastMaintenanceResults.value.unshift(result)
+      
+      showNotification(data.error || 'VACUUM failed', 'error')
+    }
+  } catch (error) {
+    console.error('Error running VACUUM:', error)
+    
+    const result = {
+      operation: 'VACUUM Database',
+      message: 'Failed to run VACUUM',
+      success: false,
+      timestamp: new Date().toISOString()
+    }
+    lastMaintenanceResults.value.unshift(result)
+    
+    showNotification('Failed to run VACUUM', 'error')
+  } finally {
+    isVacuuming.value = false
+  }
+}
+
+const verifySchema = async () => {
+  isVerifying.value = true
+  try {
+    const { data } = await $fetch('/api/admin/database/schema-verify')
+    
+    const result = {
+      operation: 'Schema Verification',
+      message: data.schema_valid ? 'Schema is valid' : `Issues found: ${data.missing_tables.length + data.missing_columns.length}`,
+      success: data.schema_valid,
+      timestamp: new Date().toISOString()
+    }
+    lastMaintenanceResults.value.unshift(result)
+    
+    if (data.schema_valid) {
+      showNotification('Database schema is valid', 'success')
+    } else {
+      const issues = [...data.missing_tables, ...data.missing_columns]
+      showNotification(`Schema issues found: ${issues.join(', ')}`, 'warning')
+    }
+  } catch (error) {
+    console.error('Error verifying schema:', error)
+    
+    const result = {
+      operation: 'Schema Verification',
+      message: 'Failed to verify schema',
+      success: false,
+      timestamp: new Date().toISOString()
+    }
+    lastMaintenanceResults.value.unshift(result)
+    
+    showNotification('Failed to verify schema', 'error')
+  } finally {
+    isVerifying.value = false
+  }
+}
+
 // Watch for user changes
 watch(user, () => {
   if (user.value) {
@@ -2425,6 +2933,14 @@ watch(activeTab, async (newTab) => {
   }
   if (newTab === 'datatools' && isAdmin.value && manufacturers.value.length === 0) {
     await loadManufacturersList()
+  }
+  if (newTab === 'maintenance' && isAdmin.value) {
+    if (!migrationStatus.value) {
+      await refreshMigrationStatus()
+    }
+    if (!databaseHealth.value) {
+      await refreshDatabaseHealth()
+    }
   }
 })
 
