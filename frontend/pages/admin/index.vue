@@ -2748,7 +2748,7 @@ const clearScrapingResults = () => {
 // Maintenance functions
 const refreshMigrationStatus = async () => {
   try {
-    const { data } = await $fetch('/api/admin/migrations/status')
+    const data = await api.get('/admin/migrations/status')
     migrationStatus.value = data
   } catch (error) {
     console.error('Error fetching migration status:', error)
@@ -2758,10 +2758,7 @@ const refreshMigrationStatus = async () => {
 
 const runMigrations = async (dryRun = false) => {
   try {
-    const { data } = await $fetch('/api/admin/migrations/run', {
-      method: 'POST',
-      body: { dry_run: dryRun }
-    })
+    const data = await api.post('/admin/migrations/run', { dry_run: dryRun })
     
     if (data.success) {
       showNotification(data.message, 'success')
@@ -2777,7 +2774,7 @@ const runMigrations = async (dryRun = false) => {
 
 const refreshDatabaseHealth = async () => {
   try {
-    const { data } = await $fetch('/api/admin/database/health')
+    const data = await api.get('/admin/database/health')
     databaseHealth.value = data
   } catch (error) {
     console.error('Error fetching database health:', error)
@@ -2788,9 +2785,7 @@ const refreshDatabaseHealth = async () => {
 const optimizeDatabase = async () => {
   isOptimizing.value = true
   try {
-    const { data } = await $fetch('/api/admin/database/optimize', {
-      method: 'POST'
-    })
+    const data = await api.post('/admin/database/optimize')
     
     if (data.success) {
       const result = {
@@ -2834,9 +2829,7 @@ const optimizeDatabase = async () => {
 const vacuumDatabase = async () => {
   isVacuuming.value = true
   try {
-    const { data } = await $fetch('/api/admin/database/vacuum', {
-      method: 'POST'
-    })
+    const data = await api.post('/admin/database/vacuum')
     
     if (data.success) {
       const result = {
@@ -2880,7 +2873,7 @@ const vacuumDatabase = async () => {
 const verifySchema = async () => {
   isVerifying.value = true
   try {
-    const { data } = await $fetch('/api/admin/database/schema-verify')
+    const data = await api.get('/admin/database/schema-verify')
     
     const result = {
       operation: 'Schema Verification',

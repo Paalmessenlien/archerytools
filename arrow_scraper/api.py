@@ -6402,19 +6402,42 @@ def get_migration_status(current_user):
     """Get comprehensive migration status"""
     try:
         from database_migration_manager import DatabaseMigrationManager
+        import json
         
-        # Find database path
+        # Find database path and ensure it's a string
         db = get_database()
         if not db:
             return jsonify({'error': 'Database not available'}), 500
         
-        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        # Always convert Path objects to strings
+        if hasattr(db, 'db_path'):
+            db_path = str(db.db_path)
+        else:
+            db_path = 'arrow_database.db'
         
         # Initialize migration manager
         manager = DatabaseMigrationManager(db_path)
         status = manager.get_migration_status()
         
-        return jsonify(status), 200
+        # Ensure all paths are strings for JSON serialization
+        def convert_paths_to_strings(obj):
+            if isinstance(obj, dict):
+                return {k: convert_paths_to_strings(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_paths_to_strings(item) for item in obj]
+            elif hasattr(obj, '__fspath__'):  # Path objects
+                return str(obj)
+            elif str(type(obj)).find('Path') != -1:  # Various Path types
+                return str(obj)
+            elif hasattr(obj, '__str__') and 'Path' in str(type(obj)):  # Additional Path check
+                return str(obj)
+            else:
+                return obj
+        
+        # Clean the status to ensure JSON serialization
+        clean_status = convert_paths_to_strings(status)
+        
+        return jsonify(clean_status), 200
     except Exception as e:
         print(f"Error getting migration status: {e}")
         return jsonify({'error': 'Failed to get migration status'}), 500
@@ -6426,17 +6449,22 @@ def run_migrations(current_user):
     """Run pending database migrations"""
     try:
         from database_migration_manager import DatabaseMigrationManager
+        import json
         
         data = request.get_json() or {}
         target_version = data.get('target_version')
         dry_run = data.get('dry_run', False)
         
-        # Find database path
+        # Find database path and ensure it's a string
         db = get_database()
         if not db:
             return jsonify({'error': 'Database not available'}), 500
         
-        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        # Always convert Path objects to strings
+        if hasattr(db, 'db_path'):
+            db_path = str(db.db_path)
+        else:
+            db_path = 'arrow_database.db'
         
         # Initialize migration manager
         manager = DatabaseMigrationManager(db_path)
@@ -6457,21 +6485,41 @@ def run_migrations(current_user):
         # Get status after migration
         status = manager.get_migration_status()
         
+        # Ensure all paths are strings for JSON serialization
+        def convert_paths_to_strings(obj):
+            if isinstance(obj, dict):
+                return {k: convert_paths_to_strings(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_paths_to_strings(item) for item in obj]
+            elif hasattr(obj, '__fspath__'):  # Path objects
+                return str(obj)
+            elif str(type(obj)).find('Path') != -1:  # Various Path types
+                return str(obj)
+            elif hasattr(obj, '__str__') and 'Path' in str(type(obj)):  # Additional Path check
+                return str(obj)
+            else:
+                return obj
+        
+        # Clean the status to ensure JSON serialization
+        clean_status = convert_paths_to_strings(status)
+        
         if success:
-            return jsonify({
+            response_data = {
                 'success': True,
                 'message': f'Successfully {"simulated" if dry_run else "applied"} {len(pending)} migrations',
                 'applied_count': len(pending) if not dry_run else 0,
                 'applied_migrations': [m.version for m in pending],
-                'status': status,
+                'status': clean_status,
                 'dry_run': dry_run
-            }), 200
+            }
+            return jsonify(convert_paths_to_strings(response_data)), 200
         else:
-            return jsonify({
+            response_data = {
                 'success': False,
                 'error': 'Some migrations failed',
-                'status': status
-            }), 500
+                'status': clean_status
+            }
+            return jsonify(convert_paths_to_strings(response_data)), 500
     except Exception as e:
         print(f"Error running migrations: {e}")
         return jsonify({'error': f'Failed to run migrations: {str(e)}'}), 500
@@ -6593,18 +6641,41 @@ def get_database_health(current_user):
     """Get comprehensive database health report"""
     try:
         from database_health_checker import run_health_check
+        import json
         
-        # Find database path
+        # Find database path and ensure it's a string
         db = get_database()
         if not db:
             return jsonify({'error': 'Database not available'}), 500
         
-        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        # Always convert Path objects to strings
+        if hasattr(db, 'db_path'):
+            db_path = str(db.db_path)
+        else:
+            db_path = 'arrow_database.db'
         
         # Run health check
         health_report = run_health_check(db_path)
         
-        return jsonify(health_report), 200
+        # Ensure all paths are strings for JSON serialization
+        def convert_paths_to_strings(obj):
+            if isinstance(obj, dict):
+                return {k: convert_paths_to_strings(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_paths_to_strings(item) for item in obj]
+            elif hasattr(obj, '__fspath__'):  # Path objects
+                return str(obj)
+            elif str(type(obj)).find('Path') != -1:  # Various Path types
+                return str(obj)
+            elif hasattr(obj, '__str__') and 'Path' in str(type(obj)):  # Additional Path check
+                return str(obj)
+            else:
+                return obj
+        
+        # Clean the report to ensure JSON serialization
+        clean_report = convert_paths_to_strings(health_report)
+        
+        return jsonify(clean_report), 200
     except Exception as e:
         print(f"Error getting database health: {e}")
         return jsonify({'error': f'Failed to get database health: {str(e)}'}), 500
