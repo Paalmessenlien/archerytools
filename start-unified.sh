@@ -505,8 +505,46 @@ ensure_unified_databases() {
         print_message "$YELLOW" "⚠️  User database will be created on first run"
     fi
     
-    # Run spine data migration if needed
-    ensure_spine_data_migration
+    # Run database migrations
+    run_database_migrations
+}
+
+# Function to run database migrations
+run_database_migrations() {
+    print_message "$BLUE" "🔄 Running database migrations..."
+    
+    # Check if migration runner exists
+    if [[ -f "arrow_scraper/run_migrations.py" ]]; then
+        cd arrow_scraper
+        
+        # Set environment variables for migration
+        export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+        export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        
+        # Try to run migrations with Python
+        if command -v python3 &> /dev/null; then
+            print_message "$BLUE" "🔧 Running migrations with Python 3..."
+            
+            if python3 run_migrations.py --status-only; then
+                # Show migration status and run if needed
+                if python3 run_migrations.py; then
+                    print_message "$GREEN" "✅ Database migrations completed successfully"
+                else
+                    print_message "$YELLOW" "⚠️  Some migrations failed, but continuing startup"
+                fi
+            else
+                print_message "$YELLOW" "⚠️  Could not check migration status, but continuing startup"
+            fi
+        else
+            print_message "$YELLOW" "⚠️  Python 3 not available, skipping migrations"
+        fi
+        
+        cd "$SCRIPT_DIR"
+    else
+        print_message "$YELLOW" "⚠️  Migration runner not found, falling back to legacy migration"
+        # Fall back to legacy spine data migration
+        ensure_spine_data_migration
+    fi
 }
 
 # Function to ensure spine calculation data migration

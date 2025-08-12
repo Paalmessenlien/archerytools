@@ -59,13 +59,14 @@ class DatabaseMigrationManager:
             database_path: Path to the SQLite database
             migrations_dir: Directory containing migration files
         """
+        # Set up logging first
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        
+        # Now initialize other attributes
         self.database_path = self._resolve_database_path(database_path)
         self.migrations_dir = Path(migrations_dir)
         self.environment = self._detect_environment()
-        
-        # Set up logging
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         
         # Ensure migrations table exists
         self._ensure_migrations_table()
