@@ -33,6 +33,14 @@ Complete development workflow documentation:
 - **Development Workflows**: Feature development, testing, and deployment
 - **Troubleshooting**: Common issues and solutions
 
+#### [Spine Data System Documentation](SPINE_DATA_SYSTEM.md)
+Comprehensive spine calculation system documentation:
+- **Database Schema**: 7 specialized tables for calculation parameters and material properties
+- **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
+- **Service Integration**: Unified spine service architecture and API endpoints
+- **Automatic Migration**: Startup script integration and data initialization
+- **Usage Examples**: Frontend and backend integration patterns
+
 ---
 
 ## Quick Reference
@@ -47,6 +55,7 @@ Complete development workflow documentation:
 - **User Profile**: `GET /api/user`
 - **Bow Setups**: `GET /api/bow-setups`
 - **Spine Calculation**: `POST /api/tuning/calculate-spine`
+- **Admin Spine Data**: `GET /api/admin/spine-data/parameters`
 
 ### Development Commands
 ```bash
@@ -79,6 +88,12 @@ curl https://yourdomain.com/api/health
 - **spine_specifications**: Detailed spine data for each arrow
 - **components**: Arrow components (nocks, inserts, points)
 - **component_categories**: Component organization
+- **Spine Calculation Tables**: 7 tables for advanced spine calculations
+  - `calculation_parameters`: Admin-configurable calculation coefficients
+  - `arrow_material_properties`: Material characteristics and factors
+  - `manufacturer_spine_charts`: Brand-specific recommendations
+  - `flight_problem_diagnostics`: Troubleshooting guidance
+  - `tuning_methodologies`: Step-by-step tuning procedures
 
 ### User Database (`user_data.db`)
 - **users**: User accounts and preferences
@@ -93,7 +108,8 @@ curl https://yourdomain.com/api/health
 
 ### Core Functionality
 - **Arrow Database**: 1,143+ arrows from 13 manufacturers
-- **Professional Calculations**: Industry-standard spine calculations
+- **Professional Calculations**: Industry-standard spine calculations with advanced parameter system
+- **Spine Data System**: Admin-configurable calculation parameters and material properties
 - **Intelligent Matching**: Arrow recommendations with compatibility scoring
 - **User Management**: Google OAuth + JWT authentication
 - **Bow Setup Management**: Personal equipment configurations
