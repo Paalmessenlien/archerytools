@@ -2759,11 +2759,15 @@ def create_manufacturer_admin(current_user):
         
         manufacturer_id = cursor.lastrowid
         
-        # Set up default equipment category mappings
-        equipment_categories = ['arrows', 'strings', 'sights', 'stabilizers', 'arrow_rests', 'weights']
+        # Set up default equipment and bow category mappings
+        all_categories = [
+            'arrows', 'strings', 'sights', 'stabilizers', 'arrow_rests', 'weights',
+            'compound_bows', 'recurve_risers', 'recurve_limbs', 'traditional_risers', 
+            'traditional_limbs', 'longbows'
+        ]
         default_supported_categories = data.get('equipment_categories', ['arrows'])  # Default to arrows only
         
-        for category in equipment_categories:
+        for category in all_categories:
             is_supported = category in default_supported_categories
             cursor.execute("""
                 INSERT INTO manufacturer_equipment_categories 
@@ -2902,43 +2906,81 @@ def update_manufacturer_equipment_categories(current_user, manufacturer_id):
 def get_available_equipment_categories(current_user):
     """Get all available equipment categories (admin only)"""
     try:
-        # Return standard equipment categories
+        # Return all equipment and bow categories
         categories = [
+            # Equipment Categories
             {
                 'name': 'arrows',
                 'display_name': 'Arrows',
                 'description': 'Arrow shafts and complete arrows',
-                'icon': 'fa-crosshairs'
+                'icon': 'fas fa-crosshairs'
             },
             {
                 'name': 'strings',
                 'display_name': 'Strings & Cables',
                 'description': 'Bow strings, cables, and serving materials',
-                'icon': 'fa-grip-lines'
+                'icon': 'fas fa-grip-lines'
             },
             {
                 'name': 'sights',
                 'display_name': 'Sights',
                 'description': 'Bow sights, pins, and aiming systems',
-                'icon': 'fa-bullseye'
+                'icon': 'fas fa-bullseye'
             },
             {
                 'name': 'stabilizers',
                 'display_name': 'Stabilizers',
                 'description': 'Front stabilizers, side rods, and balance systems',
-                'icon': 'fa-balance-scale'
+                'icon': 'fas fa-balance-scale'
             },
             {
                 'name': 'arrow_rests',
                 'display_name': 'Arrow Rests',
                 'description': 'Drop-away, containment, and launcher rests',
-                'icon': 'fa-hand-paper'
+                'icon': 'fas fa-hand-paper'
             },
             {
                 'name': 'weights',
                 'display_name': 'Weights',
                 'description': 'Stabilizer weights, balance bars, and dampeners',
-                'icon': 'fa-weight-hanging'
+                'icon': 'fas fa-weight-hanging'
+            },
+            # Bow Categories
+            {
+                'name': 'compound_bows',
+                'display_name': 'Compound Bows',
+                'description': 'Complete compound bow manufacturing',
+                'icon': 'fas fa-bow-arrow'
+            },
+            {
+                'name': 'recurve_risers',
+                'display_name': 'Recurve Risers',
+                'description': 'Recurve bow riser manufacturing',
+                'icon': 'fas fa-mountain'
+            },
+            {
+                'name': 'recurve_limbs',
+                'display_name': 'Recurve Limbs',
+                'description': 'Recurve bow limb manufacturing',
+                'icon': 'fas fa-bezier-curve'
+            },
+            {
+                'name': 'traditional_risers',
+                'display_name': 'Traditional Risers',
+                'description': 'Traditional bow riser manufacturing',
+                'icon': 'fas fa-tree'
+            },
+            {
+                'name': 'traditional_limbs',
+                'display_name': 'Traditional Limbs',
+                'description': 'Traditional bow limb manufacturing',
+                'icon': 'fas fa-leaf'
+            },
+            {
+                'name': 'longbows',
+                'display_name': 'Longbows',
+                'description': 'Complete longbow manufacturing',
+                'icon': 'fas fa-archway'
             }
         ]
         
@@ -2956,29 +2998,13 @@ def get_available_equipment_categories(current_user):
 def get_equipment_categories():
     """Get all equipment categories with their schemas"""
     try:
-        conn = sqlite3.connect(get_db_path())
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, name, description, icon, specifications_schema
-            FROM equipment_categories
-            ORDER BY name
-        ''')
-        
-        categories = []
-        for row in cursor.fetchall():
-            category = dict(row)
-            # Parse JSON schema
-            if category['specifications_schema']:
-                try:
-                    category['specifications_schema'] = json.loads(category['specifications_schema'])
-                except json.JSONDecodeError:
-                    category['specifications_schema'] = {}
-            categories.append(category)
-        
-        conn.close()
-        return jsonify(categories), 200
+        return jsonify([
+            {'name': 'String', 'icon': 'fas fa-link'},
+            {'name': 'Sight', 'icon': 'fas fa-crosshairs'},
+            {'name': 'Stabilizer', 'icon': 'fas fa-balance-scale'},
+            {'name': 'Arrow Rest', 'icon': 'fas fa-hand-paper'},
+            {'name': 'Weight', 'icon': 'fas fa-weight-hanging'}
+        ]), 200
         
     except Exception as e:
         print(f"Error getting equipment categories: {e}")
@@ -2992,9 +3018,8 @@ def search_equipment():
         manufacturer = request.args.get('manufacturer') 
         keywords = request.args.get('keywords', '')
         
-        conn = sqlite3.connect(get_db_path())
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        db = get_database()
+        cursor = db.get_connection().cursor()
         
         query = '''
             SELECT e.*, ec.name as category_name, ec.icon as category_icon
@@ -3035,7 +3060,6 @@ def search_equipment():
                     item['compatibility_rules'] = {}
             equipment.append(item)
         
-        conn.close()
         return jsonify(equipment), 200
         
     except Exception as e:
@@ -3059,32 +3083,55 @@ def get_bow_equipment(current_user, setup_id):
             conn.close()
             return jsonify({'error': 'Setup not found or access denied'}), 404
         
-        # Get equipment with details
+        # Get equipment with details from both databases
+        # First get bow_equipment from user database
         cursor.execute('''
-            SELECT be.*, e.manufacturer, e.model_name, e.specifications, 
-                   e.weight_grams, e.image_url, e.description,
-                   ec.name as category_name, ec.icon as category_icon
-            FROM bow_equipment be
-            JOIN equipment e ON be.equipment_id = e.id
-            JOIN equipment_categories ec ON e.category_id = ec.id
-            WHERE be.bow_setup_id = ? AND be.is_active = 1
-            ORDER BY ec.name, e.manufacturer, e.model_name
+            SELECT * FROM bow_equipment 
+            WHERE bow_setup_id = ? AND is_active = 1
         ''', (setup_id,))
         
-        equipment = []
-        for row in cursor.fetchall():
-            item = dict(row)
-            # Parse JSON fields
-            for field in ['specifications', 'custom_specifications']:
-                if item.get(field):
-                    try:
-                        item[field] = json.loads(item[field])
-                    except json.JSONDecodeError:
-                        item[field] = {}
-            equipment.append(item)
-        
+        bow_equipment_rows = cursor.fetchall()
         conn.close()
-        return jsonify(equipment), 200
+        
+        # Now get equipment details from arrow database
+        arrow_db = get_database()
+        arrow_cursor = arrow_db.get_connection().cursor()
+        
+        equipment = []
+        for be_row in bow_equipment_rows:
+            be_item = dict(be_row)
+            
+            # Get equipment details from arrow database
+            arrow_cursor.execute('''
+                SELECT e.*, ec.name as category_name, ec.icon as category_icon
+                FROM equipment e
+                JOIN equipment_categories ec ON e.category_id = ec.id
+                WHERE e.id = ?
+            ''', (be_item['equipment_id'],))
+            
+            equipment_row = arrow_cursor.fetchone()
+            if equipment_row:
+                equipment_item = dict(equipment_row)
+                # Merge bow_equipment data with equipment data
+                equipment_item.update({
+                    'bow_equipment_id': be_item['id'],
+                    'installation_date': be_item['installation_date'],
+                    'installation_notes': be_item['installation_notes'],
+                    'custom_specifications': be_item['custom_specifications'],
+                    'is_active': be_item['is_active']
+                })
+                
+                # Parse JSON fields
+                for field in ['specifications', 'custom_specifications']:
+                    if equipment_item.get(field):
+                        try:
+                            equipment_item[field] = json.loads(equipment_item[field])
+                        except json.JSONDecodeError:
+                            equipment_item[field] = {}
+                
+                equipment.append(equipment_item)
+        
+        return jsonify({'equipment': equipment}), 200
         
     except Exception as e:
         print(f"Error getting bow equipment: {e}")

@@ -144,6 +144,15 @@
         <p class="text-gray-700 dark:text-gray-300">{{ bowSetup.description }}</p>
       </div>
 
+      <!-- Equipment Section -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+        <BowEquipmentManager
+          :bow-setup="bowSetup"
+          @equipment-updated="handleEquipmentUpdated"
+          @show-notification="showNotification"
+        />
+      </div>
+
       <!-- Selected Arrows Section -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -211,6 +220,7 @@ import { useRoute } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
 import { useApi } from '~/composables/useApi';
 import EditArrowModal from '~/components/EditArrowModal.vue';
+import BowEquipmentManager from '~/components/BowEquipmentManager.vue';
 
 const route = useRoute();
 const api = useApi();
@@ -510,6 +520,20 @@ const duplicateArrow = async (arrowSetup) => {
     } else {
       alert('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
     }
+  }
+};
+
+// Equipment management handlers
+const handleEquipmentUpdated = () => {
+  // Refresh bow setup data if needed
+  console.log('Equipment updated for bow setup');
+};
+
+const showNotification = (message, type = 'info') => {
+  // Simple notification system - could be enhanced with toast notifications
+  if (process.client) {
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    alert(`${icon} ${message}`);
   }
 };
 

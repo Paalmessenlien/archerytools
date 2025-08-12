@@ -227,8 +227,8 @@ const loadUnifiedManufacturers = async (categoryName) => {
 
 const loadCategories = async () => {
   try {
-    const { $fetch } = useNuxtApp()
-    categories.value = await $fetch('/api/equipment/categories')
+    const response = await api.get('/equipment/categories')
+    categories.value = Array.isArray(response) ? response : response.categories || []
     
     // Set default category
     if (categories.value.length > 0) {
@@ -242,7 +242,6 @@ const loadCategories = async () => {
 const loadEquipment = async () => {
   loading.value = true
   try {
-    const { $fetch } = useNuxtApp()
     const params = new URLSearchParams()
     
     if (selectedCategory.value) {
@@ -255,7 +254,8 @@ const loadEquipment = async () => {
       params.append('keywords', searchKeywords.value)
     }
 
-    equipment.value = await $fetch(`/api/equipment/search?${params.toString()}`)
+    const response = await api.get(`/equipment/search?${params.toString()}`)
+    equipment.value = Array.isArray(response) ? response : response.equipment || []
   } catch (error) {
     console.error('Error loading equipment:', error)
     equipment.value = []

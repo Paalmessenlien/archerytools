@@ -161,6 +161,21 @@ class UserDatabase:
                 )
             """)
             
+            # Create bow_equipment table for tracking equipment added to bow setups
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS bow_equipment (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    bow_setup_id INTEGER NOT NULL,
+                    equipment_id INTEGER NOT NULL,
+                    installation_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                    installation_notes TEXT,
+                    custom_specifications TEXT,
+                    is_active BOOLEAN DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (bow_setup_id) REFERENCES bow_setups (id) ON DELETE CASCADE
+                )
+            """)
+            
             # Create tuning_history table for tracking changes over time
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS tuning_history (
