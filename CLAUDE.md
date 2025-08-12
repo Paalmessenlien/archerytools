@@ -11,6 +11,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **[Database Schema Documentation](docs/DATABASE_SCHEMA.md)** - Complete database structure, tables, relationships
 - **[API Endpoints Documentation](docs/API_ENDPOINTS.md)** - All REST endpoints with request/response examples  
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Architecture, workflows, and troubleshooting
+- **[Database Migrations Documentation](docs/DATABASE_MIGRATIONS.md)** - Complete migration system guide with examples
 - **[Spine Data System Documentation](docs/SPINE_DATA_SYSTEM.md)** - Advanced spine calculation system and admin interface
 - **[Spine Chart Management Documentation](docs/SPINE_CHART_MANAGEMENT.md)** - Professional spine chart management with editing capabilities
 

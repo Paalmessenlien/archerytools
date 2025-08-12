@@ -41,6 +41,15 @@ Comprehensive spine calculation system documentation:
 - **Automatic Migration**: Startup script integration and data initialization
 - **Usage Examples**: Frontend and backend integration patterns
 
+#### [Database Migrations Documentation](DATABASE_MIGRATIONS.md)
+Complete guide to the database migration system:
+- **Migration Architecture**: Versioned migrations with dependency management
+- **Creating Migrations**: Step-by-step guide for new migrations
+- **User vs Arrow Database**: Target-specific migration patterns
+- **Production Deployment**: Safe migration procedures and rollback strategies
+- **Admin Integration**: Web-based migration management and monitoring
+- **Best Practices**: Schema changes, data migrations, and error handling
+
 ---
 
 ## Quick Reference
