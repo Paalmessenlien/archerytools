@@ -82,7 +82,7 @@ ensure_spine_data_migration() {
     # Check if spine calculation tables exist
     if command -v sqlite3 &> /dev/null; then
         # Check if spine tables exist in the arrow database
-        SPINE_TABLES_COUNT=$(sqlite3 "databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('calculation_parameters', 'arrow_material_properties', 'manufacturer_spine_charts');" 2>/dev/null || echo "0")
+        SPINE_TABLES_COUNT=$(sqlite3 "${ARROW_DATABASE_PATH}" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('calculation_parameters', 'arrow_material_properties', 'manufacturer_spine_charts');" 2>/dev/null || echo "0")
         
         if [[ "$SPINE_TABLES_COUNT" == "3" ]]; then
             success "✅ Spine calculation tables already exist"
