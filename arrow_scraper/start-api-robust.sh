@@ -355,9 +355,36 @@ else
     echo "✅ Disk space OK ($DISK_USAGE% used)"
 fi
 
+# Run database migrations
+echo ""
+echo "🔄 Step 6: Database Migrations"
+echo "=============================="
+echo "🗄️ Running database migrations..."
+
+# Set environment variables for migrations
+export ARROW_DATABASE_PATH="$ARROW_DB"
+export USER_DATABASE_PATH="$USER_DB"
+
+# Run migrations if migration runner exists
+if [ -f "run_migrations.py" ]; then
+    echo "🔧 Running migrations with migration runner..."
+    
+    if python3 run_migrations.py --status-only > /dev/null 2>&1; then
+        if python3 run_migrations.py; then
+            echo "✅ Database migrations completed successfully"
+        else
+            echo "⚠️  Some migrations failed, but continuing startup"
+        fi
+    else
+        echo "⚠️  Could not check migration status, but continuing startup"
+    fi
+else
+    echo "⚠️  Migration runner not found, skipping migrations"
+fi
+
 # Start the application
 echo ""
-echo "🚀 Step 6: Starting Flask API Server"
+echo "🚀 Step 7: Starting Flask API Server"
 echo "=================================="
 echo "🌐 All checks passed, starting Flask API server..."
 echo "📊 Arrow database: $ARROW_DB"
