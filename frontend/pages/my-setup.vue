@@ -206,6 +206,34 @@
                         {{ setup.arrows.length }} {{ setup.arrows.length === 1 ? 'arrow' : 'arrows' }} selected
                       </span>
                     </div>
+
+                    <!-- Equipment Count Badge -->
+                    <div v-if="setup.equipment && setup.equipment.length > 0" class="mt-2">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        <i class="fas fa-cogs mr-1"></i>
+                        {{ setup.equipment.length }} {{ setup.equipment.length === 1 ? 'equipment' : 'equipment items' }}
+                      </span>
+                    </div>
+
+                    <!-- Equipment Summary -->
+                    <div v-if="setup.equipment && setup.equipment.length > 0" class="mt-2">
+                      <div class="flex flex-wrap gap-1">
+                        <span 
+                          v-for="equipment in setup.equipment.slice(0, 3)" 
+                          :key="equipment.id"
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                        >
+                          <i :class="getCategoryIcon(equipment.category_name)" class="mr-1 text-xs"></i>
+                          {{ equipment.category_name }}
+                        </span>
+                        <span 
+                          v-if="setup.equipment.length > 3"
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                        >
+                          +{{ setup.equipment.length - 3 }} more
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   
                   <!-- Quick Actions -->
@@ -760,6 +788,18 @@ const formatBowUsage = (usage) => {
     'outdoor': 'Outdoor'
   };
   return usageMap[usage] || usage;
+};
+
+// Helper function to get equipment category icons
+const getCategoryIcon = (categoryName) => {
+  const iconMap = {
+    'String': 'fas fa-link',
+    'Sight': 'fas fa-crosshairs',
+    'Stabilizer': 'fas fa-balance-scale',
+    'Arrow Rest': 'fas fa-hand-paper',
+    'Weight': 'fas fa-weight-hanging'
+  };
+  return iconMap[categoryName] || 'fas fa-cog';
 };
 
 // Profile picture upload handlers

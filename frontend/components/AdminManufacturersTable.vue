@@ -17,7 +17,7 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
         <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ manufacturers.length }}</div>
         <div class="text-sm text-gray-600 dark:text-gray-400">Total Manufacturers</div>
@@ -25,6 +25,10 @@
       <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
         <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ totalArrows }}</div>
         <div class="text-sm text-gray-600 dark:text-gray-400">Total Arrows</div>
+      </div>
+      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ totalEquipment }}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Total Equipment</div>
       </div>
       <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
         <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ averageArrowsPerManufacturer }}</div>
@@ -47,13 +51,13 @@
               Manufacturer
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Arrow Count
+              Product Count
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              First Added
+              Equipment Categories
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Last Updated
+              Status
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Actions
@@ -63,7 +67,7 @@
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           <tr 
             v-for="manufacturer in manufacturers" 
-            :key="manufacturer.name"
+            :key="manufacturer.id"
             class="hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <td class="px-6 py-4 whitespace-nowrap">
@@ -73,19 +77,46 @@
                   <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {{ manufacturer.name }}
                   </div>
+                  <div v-if="manufacturer.country" class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ manufacturer.country }}
+                  </div>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                {{ manufacturer.arrow_count }} arrows
+              <div class="space-y-1">
+                <span v-if="manufacturer.arrow_count > 0" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  {{ manufacturer.arrow_count }} arrows
+                </span>
+                <span v-if="manufacturer.equipment_count > 0" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                  {{ manufacturer.equipment_count }} equipment
+                </span>
+                <span v-if="manufacturer.arrow_count === 0 && manufacturer.equipment_count === 0" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
+                  No products
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="category in getSupportedCategories(manufacturer)"
+                  :key="category.name"
+                  class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                  :class="getCategoryBadgeClass(category.name)"
+                >
+                  <i :class="getCategoryIcon(category.name)" class="mr-1"></i>
+                  {{ getCategoryDisplayName(category.name) }}
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span 
+                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                :class="manufacturer.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'"
+              >
+                <i :class="manufacturer.is_active ? 'fas fa-check' : 'fas fa-times'" class="mr-1"></i>
+                {{ manufacturer.is_active ? 'Active' : 'Inactive' }}
               </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-              {{ formatDate(manufacturer.first_added) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-              {{ formatDate(manufacturer.last_added) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
               <CustomButton
@@ -96,6 +127,15 @@
               >
                 <i class="fas fa-edit mr-1"></i>
                 Edit
+              </CustomButton>
+              <CustomButton
+                @click="openCategoriesModal(manufacturer)"
+                variant="outlined"
+                size="small"
+                class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400"
+              >
+                <i class="fas fa-cogs mr-1"></i>
+                Categories
               </CustomButton>
               <CustomButton
                 @click="confirmDelete(manufacturer)"
@@ -134,27 +174,110 @@
           {{ isEditing ? 'Edit Manufacturer' : 'Add New Manufacturer' }}
         </h3>
         
-        <form @submit.prevent="saveManufacturer">
-          <div class="mb-4">
-            <label for="manufacturerName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Manufacturer Name
+        <form @submit.prevent="saveManufacturer" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="manufacturerName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Manufacturer Name *
+              </label>
+              <input 
+                type="text" 
+                id="manufacturerName" 
+                v-model="formData.name" 
+                class="form-input w-full" 
+                required 
+                :placeholder="isEditing ? 'Enter new manufacturer name' : 'Enter manufacturer name'"
+              />
+            </div>
+            
+            <div>
+              <label for="country" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Country
+              </label>
+              <input 
+                type="text" 
+                id="country" 
+                v-model="formData.country" 
+                class="form-input w-full" 
+                placeholder="e.g., United States, Germany"
+              />
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Website URL
+              </label>
+              <input 
+                type="url" 
+                id="website" 
+                v-model="formData.website_url" 
+                class="form-input w-full" 
+                placeholder="https://example.com"
+              />
+            </div>
+            
+            <div>
+              <label for="establishedYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Established Year
+              </label>
+              <input 
+                type="number" 
+                id="establishedYear" 
+                v-model="formData.established_year" 
+                class="form-input w-full" 
+                placeholder="e.g., 1980"
+                min="1800"
+                max="2030"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label for="logoUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Logo URL
             </label>
             <input 
-              type="text" 
-              id="manufacturerName" 
-              v-model="formData.name" 
+              type="url" 
+              id="logoUrl" 
+              v-model="formData.logo_url" 
               class="form-input w-full" 
-              required 
-              :placeholder="isEditing ? 'Enter new manufacturer name' : 'Enter manufacturer name'"
+              placeholder="https://example.com/logo.png"
             />
           </div>
           
-          <div v-if="isEditing" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea 
+              id="description" 
+              v-model="formData.description" 
+              class="form-input w-full" 
+              rows="3"
+              placeholder="Brief description of the manufacturer..."
+            ></textarea>
+          </div>
+          
+          <div class="flex items-center">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                v-model="formData.is_active"
+                class="sr-only peer"
+              >
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Active Manufacturer</span>
+            </label>
+          </div>
+          
+          <div v-if="isEditing" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div class="flex items-start">
-              <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 mr-2"></i>
-              <div class="text-sm text-yellow-700 dark:text-yellow-300">
-                <p class="font-medium">Important:</p>
-                <p>This will update the manufacturer name for <strong>{{ selectedManufacturer?.arrow_count }} arrows</strong>.</p>
+              <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+              <div class="text-sm text-blue-700 dark:text-blue-300">
+                <p class="font-medium">Updating manufacturer:</p>
+                <p>{{ selectedManufacturer?.arrow_count || 0 }} arrows and {{ selectedManufacturer?.equipment_count || 0 }} equipment items</p>
               </div>
             </div>
           </div>
@@ -204,8 +327,10 @@
                 <p class="font-medium">This action cannot be undone!</p>
                 <p>This will permanently delete:</p>
                 <ul class="list-disc list-inside mt-1">
-                  <li><strong>{{ manufacturerToDelete?.arrow_count }} arrows</strong></li>
+                  <li><strong>{{ manufacturerToDelete?.arrow_count || 0 }} arrows</strong></li>
+                  <li><strong>{{ manufacturerToDelete?.equipment_count || 0 }} equipment items</strong></li>
                   <li>All associated spine specifications</li>
+                  <li>All equipment category mappings</li>
                   <li>All manufacturer data</li>
                 </ul>
               </div>
@@ -238,6 +363,81 @@
         </div>
       </div>
     </div>
+
+    <!-- Equipment Categories Modal -->
+    <div v-if="showCategoriesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <i class="fas fa-cogs mr-2 text-purple-600"></i>
+          Equipment Categories - {{ selectedManufacturer?.name }}
+        </h3>
+        
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Configure which equipment categories this manufacturer supports. This will determine what equipment types can be assigned to this manufacturer.
+        </p>
+        
+        <div v-if="loadingCategories" class="text-center py-8">
+          <i class="fas fa-spinner fa-spin text-2xl text-purple-600 mb-2"></i>
+          <p class="text-gray-600 dark:text-gray-400">Loading categories...</p>
+        </div>
+        
+        <div v-else class="space-y-4">
+          <div 
+            v-for="category in availableCategories" 
+            :key="category.name"
+            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
+          >
+            <div class="flex items-center space-x-3">
+              <i :class="category.icon" class="text-lg text-gray-600 dark:text-gray-400"></i>
+              <div>
+                <div class="font-medium text-gray-900 dark:text-gray-100">
+                  {{ category.display_name }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ category.description }}
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  :checked="isCategorySupported(category.name)"
+                  @change="toggleCategorySupport(category.name, $event.target.checked)"
+                  class="sr-only peer"
+                >
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <CustomButton
+            @click="closeCategoriesModal"
+            variant="outlined"
+            class="text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            @click="saveCategoryChanges"
+            variant="filled"
+            :disabled="isSavingCategories"
+            class="bg-purple-600 text-white hover:bg-purple-700"
+          >
+            <span v-if="isSavingCategories">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Saving...
+            </span>
+            <span v-else>
+              <i class="fas fa-save mr-2"></i>
+              Save Changes
+            </span>
+          </CustomButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -255,20 +455,35 @@ const loading = ref(false)
 const manufacturers = ref([])
 const showModal = ref(false)
 const showDeleteModal = ref(false)
+const showCategoriesModal = ref(false)
 const isSaving = ref(false)
 const isDeleting = ref(false)
+const isSavingCategories = ref(false)
+const loadingCategories = ref(false)
 const isEditing = ref(false)
 const selectedManufacturer = ref(null)
 const manufacturerToDelete = ref(null)
+const availableCategories = ref([])
+const categorySettings = ref({})
 
 // Form data
 const formData = ref({
-  name: ''
+  name: '',
+  website_url: '',
+  logo_url: '',
+  description: '',
+  country: '',
+  established_year: null,
+  is_active: true
 })
 
 // Computed properties
 const totalArrows = computed(() => {
-  return manufacturers.value.reduce((total, mfg) => total + mfg.arrow_count, 0)
+  return manufacturers.value.reduce((total, mfg) => total + (mfg.arrow_count || 0), 0)
+})
+
+const totalEquipment = computed(() => {
+  return manufacturers.value.reduce((total, mfg) => total + (mfg.equipment_count || 0), 0)
 })
 
 const averageArrowsPerManufacturer = computed(() => {
@@ -301,7 +516,15 @@ const openCreateModal = () => {
 const openEditModal = (manufacturer) => {
   isEditing.value = true
   selectedManufacturer.value = manufacturer
-  formData.value = { name: manufacturer.name }
+  formData.value = {
+    name: manufacturer.name,
+    website_url: manufacturer.website_url || '',
+    logo_url: manufacturer.logo_url || '',
+    description: manufacturer.description || '',
+    country: manufacturer.country || '',
+    established_year: manufacturer.established_year || null,
+    is_active: manufacturer.is_active
+  }
   showModal.value = true
 }
 
@@ -309,7 +532,15 @@ const closeModal = () => {
   showModal.value = false
   isEditing.value = false
   selectedManufacturer.value = null
-  formData.value = { name: '' }
+  formData.value = {
+    name: '',
+    website_url: '',
+    logo_url: '',
+    description: '',
+    country: '',
+    established_year: null,
+    is_active: true
+  }
 }
 
 const saveManufacturer = async () => {
@@ -317,17 +548,12 @@ const saveManufacturer = async () => {
     isSaving.value = true
     
     if (isEditing.value) {
-      // Update manufacturer
-      const encodedName = encodeURIComponent(selectedManufacturer.value.name)
-      await api.put(`/admin/manufacturers/${encodedName}`, {
-        new_name: formData.value.name
-      })
+      // Update manufacturer using ID
+      await api.put(`/admin/manufacturers/${selectedManufacturer.value.id}`, formData.value)
       emit('show-notification', 'Manufacturer updated successfully', 'success')
     } else {
       // Create manufacturer
-      await api.post('/admin/manufacturers', {
-        name: formData.value.name
-      })
+      await api.post('/admin/manufacturers', formData.value)
       emit('show-notification', 'Manufacturer created successfully', 'success')
     }
     
@@ -349,9 +575,8 @@ const confirmDelete = (manufacturer) => {
 const deleteManufacturer = async () => {
   try {
     isDeleting.value = true
-    const encodedName = encodeURIComponent(manufacturerToDelete.value.name)
-    await api.delete(`/admin/manufacturers/${encodedName}`)
-    emit('show-notification', 'Manufacturer and all associated arrows deleted successfully', 'success')
+    await api.delete(`/admin/manufacturers/${manufacturerToDelete.value.id}`)
+    emit('show-notification', 'Manufacturer and all associated data deleted successfully', 'success')
     showDeleteModal.value = false
     manufacturerToDelete.value = null
     await loadManufacturers()
@@ -361,6 +586,126 @@ const deleteManufacturer = async () => {
   } finally {
     isDeleting.value = false
   }
+}
+
+// Equipment category management methods
+const openCategoriesModal = async (manufacturer) => {
+  selectedManufacturer.value = manufacturer
+  showCategoriesModal.value = true
+  loadingCategories.value = true
+  
+  try {
+    // Load available categories
+    const [categoriesResponse, manufacturerCategoriesResponse] = await Promise.all([
+      api.get('/admin/equipment-categories'),
+      api.get(`/admin/manufacturers/${manufacturer.id}/equipment-categories`)
+    ])
+    
+    availableCategories.value = categoriesResponse.categories || []
+    
+    // Set up category settings based on manufacturer's current settings
+    categorySettings.value = {}
+    const manufacturerCategories = manufacturerCategoriesResponse.equipment_categories || []
+    
+    for (const category of manufacturerCategories) {
+      categorySettings.value[category.category_name] = category.is_supported
+    }
+    
+    // Set defaults for any missing categories
+    for (const category of availableCategories.value) {
+      if (!(category.name in categorySettings.value)) {
+        categorySettings.value[category.name] = false
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error loading categories:', error)
+    emit('show-notification', 'Failed to load equipment categories', 'error')
+  } finally {
+    loadingCategories.value = false
+  }
+}
+
+const closeCategoriesModal = () => {
+  showCategoriesModal.value = false
+  selectedManufacturer.value = null
+  availableCategories.value = []
+  categorySettings.value = {}
+}
+
+const isCategorySupported = (categoryName) => {
+  return categorySettings.value[categoryName] || false
+}
+
+const toggleCategorySupport = (categoryName, isSupported) => {
+  categorySettings.value[categoryName] = isSupported
+}
+
+const saveCategoryChanges = async () => {
+  try {
+    isSavingCategories.value = true
+    
+    const categories = Object.keys(categorySettings.value).map(categoryName => ({
+      category_name: categoryName,
+      is_supported: categorySettings.value[categoryName],
+      notes: categorySettings.value[categoryName] ? 'Manually configured' : ''
+    }))
+    
+    await api.put(`/admin/manufacturers/${selectedManufacturer.value.id}/equipment-categories`, {
+      categories
+    })
+    
+    emit('show-notification', 'Equipment categories updated successfully', 'success')
+    closeCategoriesModal()
+    await loadManufacturers()
+  } catch (error) {
+    console.error('Error saving categories:', error)
+    emit('show-notification', error.message || 'Failed to save categories', 'error')
+  } finally {
+    isSavingCategories.value = false
+  }
+}
+
+// Utility methods for displaying categories
+const getSupportedCategories = (manufacturer) => {
+  if (!manufacturer.equipment_categories) return []
+  return manufacturer.equipment_categories.filter(cat => cat.is_supported)
+}
+
+const getCategoryDisplayName = (categoryName) => {
+  const displayNames = {
+    'arrows': 'Arrows',
+    'strings': 'Strings',
+    'sights': 'Sights',
+    'stabilizers': 'Stabilizers',
+    'arrow_rests': 'Arrow Rests',
+    'weights': 'Weights'
+  }
+  return displayNames[categoryName] || categoryName
+}
+
+const getCategoryIcon = (categoryName) => {
+  const icons = {
+    'arrows': 'fas fa-crosshairs',
+    'strings': 'fas fa-grip-lines',
+    'sights': 'fas fa-bullseye',
+    'stabilizers': 'fas fa-balance-scale',
+    'arrow_rests': 'fas fa-hand-paper',
+    'weights': 'fas fa-weight-hanging'
+  }
+  return icons[categoryName] || 'fas fa-cog'
+}
+
+const getCategoryBadgeClass = (categoryName) => {
+  const classes = {
+    'arrows': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    'strings': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    'sights': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    'stabilizers': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    'arrow_rests': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    'weights': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+  }
+  return classes[categoryName] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
 }
 
 const formatDate = (dateString) => {

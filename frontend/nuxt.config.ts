@@ -26,6 +26,14 @@ export default defineNuxtConfig({
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID
     }
   },
+
+  // Route Rules for API proxy in development
+  routeRules: {
+    '/api/**': { 
+      proxy: 'http://localhost:5000/api/**',
+      cors: true 
+    }
+  },
   
   // SSR Configuration
   ssr: true,

@@ -14,12 +14,27 @@ export const useApi = () => {
   const config = useRuntimeConfig()
   const baseURL = config.public.apiBase as string
 
+  // Debug: Log the actual API base URL being used
+  if (process.client && typeof window !== 'undefined') {
+    console.log('🔧 useApi Debug:', {
+      configuredBaseURL: baseURL,
+      runtimeConfig: config.public,
+      processClient: process.client,
+      windowLocation: window.location.href
+    })
+  }
+
   // Generic API request function
   const apiRequest = async <T>(
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> => {
     const url = `${baseURL}${endpoint}`
+    
+    // Debug: Log each API request URL
+    if (process.client) {
+      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`)
+    }
     
     // Get token from localStorage for authentication
     const token = process.client ? localStorage.getItem('token') : null

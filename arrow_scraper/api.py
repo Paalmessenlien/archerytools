@@ -2398,27 +2398,54 @@ def create_arrow_admin(current_user):
         db.get_connection().rollback()
         return jsonify({'error': str(e)}), 500
 
-# ===== MANUFACTURER MANAGEMENT API ENDPOINTS (ADMIN) =====
+# ===== UNIFIED MANUFACTURER MANAGEMENT API ENDPOINTS (ADMIN) =====
 
 @app.route('/api/admin/manufacturers', methods=['GET'])
 @token_required
 @admin_required
 def get_manufacturers_admin(current_user):
-    """Get all manufacturers with arrow counts (admin only)"""
+    """Get all manufacturers with statistics (admin only)"""
     try:
         db = get_database()
         cursor = db.get_connection().cursor()
         
-        # Get manufacturers with arrow counts
+        # Get manufacturers with arrow and equipment counts
         query = """
             SELECT 
-                manufacturer,
-                COUNT(*) as arrow_count,
-                MIN(created_at) as first_added,
-                MAX(created_at) as last_added
-            FROM arrows 
-            GROUP BY manufacturer 
-            ORDER BY manufacturer
+                m.id,
+                m.name,
+                m.website_url,
+                m.logo_url,
+                m.description,
+                m.country,
+                m.established_year,
+                m.is_active,
+                m.created_at,
+                m.updated_at,
+                COALESCE(arrow_stats.arrow_count, 0) as arrow_count,
+                COALESCE(equipment_stats.equipment_count, 0) as equipment_count,
+                arrow_stats.first_arrow_added,
+                arrow_stats.last_arrow_added
+            FROM manufacturers m
+            LEFT JOIN (
+                SELECT 
+                    manufacturer_id,
+                    COUNT(*) as arrow_count,
+                    MIN(created_at) as first_arrow_added,
+                    MAX(created_at) as last_arrow_added
+                FROM arrows 
+                WHERE manufacturer_id IS NOT NULL
+                GROUP BY manufacturer_id
+            ) arrow_stats ON m.id = arrow_stats.manufacturer_id
+            LEFT JOIN (
+                SELECT 
+                    manufacturer_id,
+                    COUNT(*) as equipment_count
+                FROM equipment 
+                WHERE manufacturer_id IS NOT NULL
+                GROUP BY manufacturer_id
+            ) equipment_stats ON m.id = equipment_stats.manufacturer_id
+            ORDER BY m.name
         """
         
         cursor.execute(query)
@@ -2426,11 +2453,38 @@ def get_manufacturers_admin(current_user):
         
         manufacturers = []
         for row in results:
+            # Get equipment categories for this manufacturer
+            cursor.execute("""
+                SELECT category_name, is_supported, notes 
+                FROM manufacturer_equipment_categories 
+                WHERE manufacturer_id = ?
+                ORDER BY category_name
+            """, (row[0],))
+            
+            categories = []
+            for cat_row in cursor.fetchall():
+                categories.append({
+                    'name': cat_row[0],
+                    'is_supported': bool(cat_row[1]),
+                    'notes': cat_row[2]
+                })
+            
             manufacturers.append({
-                'name': row[0],
-                'arrow_count': row[1],
-                'first_added': row[2],
-                'last_added': row[3]
+                'id': row[0],
+                'name': row[1],
+                'website_url': row[2],
+                'logo_url': row[3],
+                'description': row[4],
+                'country': row[5],
+                'established_year': row[6],
+                'is_active': bool(row[7]),
+                'created_at': row[8],
+                'updated_at': row[9],
+                'arrow_count': row[10],
+                'equipment_count': row[11],
+                'first_added': row[12],
+                'last_added': row[13],
+                'equipment_categories': categories
             })
         
         return jsonify({
@@ -2441,51 +2495,88 @@ def get_manufacturers_admin(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/admin/manufacturers/<manufacturer_name>', methods=['PUT'])
+@app.route('/api/admin/manufacturers/<int:manufacturer_id>', methods=['PUT'])
 @token_required
 @admin_required
-def update_manufacturer_admin(current_user, manufacturer_name):
-    """Update manufacturer name for all arrows (admin only)"""
+def update_manufacturer_admin(current_user, manufacturer_id):
+    """Update manufacturer details (admin only)"""
     try:
         data = request.get_json()
         
-        if not data or 'new_name' not in data:
-            return jsonify({'error': 'new_name is required'}), 400
-        
-        new_name = data['new_name'].strip()
-        if not new_name:
-            return jsonify({'error': 'new_name cannot be empty'}), 400
-        
-        # URL decode the manufacturer name
-        import urllib.parse
-        manufacturer_name = urllib.parse.unquote(manufacturer_name)
+        if not data:
+            return jsonify({'error': 'Request data is required'}), 400
         
         db = get_database()
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer exists
-        cursor.execute("SELECT COUNT(*) FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
-        if cursor.fetchone()[0] == 0:
+        cursor.execute("SELECT * FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        manufacturer = cursor.fetchone()
+        if not manufacturer:
             return jsonify({'error': 'Manufacturer not found'}), 404
         
-        # Check if new name already exists (case insensitive)
-        cursor.execute("SELECT COUNT(*) FROM arrows WHERE LOWER(manufacturer) = LOWER(?)", (new_name,))
-        if cursor.fetchone()[0] > 0 and new_name.lower() != manufacturer_name.lower():
-            return jsonify({'error': 'A manufacturer with this name already exists'}), 409
+        # Build update query dynamically based on provided fields
+        update_fields = []
+        update_values = []
         
-        # Update all arrows with this manufacturer
-        cursor.execute("""
-            UPDATE arrows 
-            SET manufacturer = ? 
-            WHERE manufacturer = ?
-        """, (new_name, manufacturer_name))
+        # Updatable fields
+        updatable_fields = ['name', 'website_url', 'logo_url', 'description', 'country', 'established_year', 'is_active']
         
-        affected_rows = cursor.rowcount
+        for field in updatable_fields:
+            if field in data:
+                if field == 'name':
+                    # Check if new name already exists (case insensitive)
+                    new_name = data[field].strip()
+                    if not new_name:
+                        return jsonify({'error': 'Manufacturer name cannot be empty'}), 400
+                    
+                    cursor.execute("SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?) AND id != ?", (new_name, manufacturer_id))
+                    if cursor.fetchone():
+                        return jsonify({'error': 'A manufacturer with this name already exists'}), 409
+                    
+                    update_fields.append('name = ?')
+                    update_values.append(new_name)
+                elif field == 'is_active':
+                    update_fields.append('is_active = ?')
+                    update_values.append(1 if data[field] else 0)
+                elif field == 'established_year':
+                    year = data[field]
+                    if year is not None and (not isinstance(year, int) or year < 1800 or year > 2030):
+                        return jsonify({'error': 'Established year must be between 1800 and 2030'}), 400
+                    update_fields.append('established_year = ?')
+                    update_values.append(year)
+                else:
+                    update_fields.append(f'{field} = ?')
+                    update_values.append(data[field])
+        
+        if update_fields:
+            # Add updated_at timestamp
+            update_fields.append('updated_at = CURRENT_TIMESTAMP')
+            update_values.append(manufacturer_id)
+            
+            query = f"UPDATE manufacturers SET {', '.join(update_fields)} WHERE id = ?"
+            cursor.execute(query, update_values)
+        
         db.get_connection().commit()
         
+        # Get updated manufacturer data
+        cursor.execute("SELECT * FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        updated_manufacturer = cursor.fetchone()
+        
         return jsonify({
-            'message': f'Successfully updated manufacturer from "{manufacturer_name}" to "{new_name}"',
-            'affected_arrows': affected_rows,
+            'message': 'Manufacturer updated successfully',
+            'manufacturer': {
+                'id': updated_manufacturer[0],
+                'name': updated_manufacturer[1],
+                'website_url': updated_manufacturer[2],
+                'logo_url': updated_manufacturer[3],
+                'description': updated_manufacturer[4],
+                'country': updated_manufacturer[5],
+                'established_year': updated_manufacturer[6],
+                'is_active': bool(updated_manufacturer[7]),
+                'created_at': updated_manufacturer[8],
+                'updated_at': updated_manufacturer[9]
+            },
             'updated_by': current_user['email']
         }), 200
         
@@ -2493,48 +2584,65 @@ def update_manufacturer_admin(current_user, manufacturer_name):
         db.get_connection().rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/admin/manufacturers/<manufacturer_name>', methods=['DELETE'])
+@app.route('/api/admin/manufacturers/<int:manufacturer_id>', methods=['DELETE'])
 @token_required
 @admin_required
-def delete_manufacturer_admin(current_user, manufacturer_name):
-    """Delete manufacturer and all associated arrows (admin only)"""
+def delete_manufacturer_admin(current_user, manufacturer_id):
+    """Delete manufacturer and all associated data (admin only)"""
     try:
-        # URL decode the manufacturer name
-        import urllib.parse
-        manufacturer_name = urllib.parse.unquote(manufacturer_name)
-        
         db = get_database()
         cursor = db.get_connection().cursor()
         
-        # Check if manufacturer exists and get arrow count
-        cursor.execute("SELECT COUNT(*) FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
-        arrow_count = cursor.fetchone()[0]
-        
-        if arrow_count == 0:
+        # Check if manufacturer exists and get statistics
+        cursor.execute("SELECT name FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        manufacturer = cursor.fetchone()
+        if not manufacturer:
             return jsonify({'error': 'Manufacturer not found'}), 404
         
+        manufacturer_name = manufacturer[0]
+        
+        # Get counts for reporting
+        cursor.execute("SELECT COUNT(*) FROM arrows WHERE manufacturer_id = ?", (manufacturer_id,))
+        arrow_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM equipment WHERE manufacturer_id = ?", (manufacturer_id,))
+        equipment_count = cursor.fetchone()[0]
+        
         # Get arrow IDs for spine specifications cleanup
-        cursor.execute("SELECT id FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        cursor.execute("SELECT id FROM arrows WHERE manufacturer_id = ?", (manufacturer_id,))
         arrow_ids = [row[0] for row in cursor.fetchall()]
         
         # Delete spine specifications first (foreign key constraint)
+        deleted_specs = 0
         if arrow_ids:
             placeholders = ','.join('?' * len(arrow_ids))
             cursor.execute(f"DELETE FROM spine_specifications WHERE arrow_id IN ({placeholders})", arrow_ids)
             deleted_specs = cursor.rowcount
-        else:
-            deleted_specs = 0
         
         # Delete arrows
-        cursor.execute("DELETE FROM arrows WHERE manufacturer = ?", (manufacturer_name,))
+        cursor.execute("DELETE FROM arrows WHERE manufacturer_id = ?", (manufacturer_id,))
         deleted_arrows = cursor.rowcount
+        
+        # Delete equipment
+        cursor.execute("DELETE FROM equipment WHERE manufacturer_id = ?", (manufacturer_id,))
+        deleted_equipment = cursor.rowcount
+        
+        # Delete equipment category mappings (CASCADE should handle this, but explicit is better)
+        cursor.execute("DELETE FROM manufacturer_equipment_categories WHERE manufacturer_id = ?", (manufacturer_id,))
+        deleted_categories = cursor.rowcount
+        
+        # Finally, delete the manufacturer
+        cursor.execute("DELETE FROM manufacturers WHERE id = ?", (manufacturer_id,))
         
         db.get_connection().commit()
         
         return jsonify({
             'message': f'Successfully deleted manufacturer "{manufacturer_name}" and all associated data',
             'deleted_arrows': deleted_arrows,
+            'deleted_equipment': deleted_equipment,
             'deleted_spine_specifications': deleted_specs,
+            'deleted_category_mappings': deleted_categories,
+            'manufacturer_name': manufacturer_name,
             'deleted_by': current_user['email']
         }), 200
         
@@ -2561,47 +2669,549 @@ def create_manufacturer_admin(current_user):
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer already exists (case insensitive)
-        cursor.execute("SELECT COUNT(*) FROM arrows WHERE LOWER(manufacturer) = LOWER(?)", (manufacturer_name,))
+        cursor.execute("SELECT COUNT(*) FROM manufacturers WHERE LOWER(name) = LOWER(?)", (manufacturer_name,))
         if cursor.fetchone()[0] > 0:
             return jsonify({'error': 'A manufacturer with this name already exists'}), 409
         
-        # Create a placeholder arrow for the manufacturer
-        # This ensures the manufacturer appears in the list
-        now = datetime.utcnow().isoformat()
+        # Create manufacturer record
         cursor.execute("""
-            INSERT INTO arrows 
-            (manufacturer, model_name, material, arrow_type, description, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO manufacturers 
+            (name, website_url, logo_url, description, country, established_year, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             manufacturer_name,
-            'Placeholder Model',
-            'TBD',
-            'TBD',
-            f'Placeholder arrow for {manufacturer_name} manufacturer. Replace with actual arrow data.',
-            now
+            data.get('website_url'),
+            data.get('logo_url'),
+            data.get('description'),
+            data.get('country'),
+            data.get('established_year'),
+            data.get('is_active', True)
         ))
         
-        arrow_id = cursor.lastrowid
+        manufacturer_id = cursor.lastrowid
         
-        # Add a basic spine specification for the placeholder
-        cursor.execute("""
-            INSERT INTO spine_specifications 
-            (arrow_id, spine, outer_diameter, gpi_weight)
-            VALUES (?, ?, ?, ?)
-        """, (arrow_id, 500, 0.246, 10.0))
+        # Set up default equipment category mappings
+        equipment_categories = ['arrows', 'strings', 'sights', 'stabilizers', 'arrow_rests', 'weights']
+        default_supported_categories = data.get('equipment_categories', ['arrows'])  # Default to arrows only
+        
+        for category in equipment_categories:
+            is_supported = category in default_supported_categories
+            cursor.execute("""
+                INSERT INTO manufacturer_equipment_categories 
+                (manufacturer_id, category_name, is_supported, notes)
+                VALUES (?, ?, ?, ?)
+            """, (manufacturer_id, category, is_supported, 'Manually configured' if is_supported else ''))
         
         db.get_connection().commit()
         
+        # Get the created manufacturer with all data
+        cursor.execute("SELECT * FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        created_manufacturer = cursor.fetchone()
+        
         return jsonify({
             'message': f'Successfully created manufacturer "{manufacturer_name}"',
-            'manufacturer_name': manufacturer_name,
-            'placeholder_arrow_id': arrow_id,
+            'manufacturer': {
+                'id': created_manufacturer[0],
+                'name': created_manufacturer[1],
+                'website_url': created_manufacturer[2],
+                'logo_url': created_manufacturer[3],
+                'description': created_manufacturer[4],
+                'country': created_manufacturer[5],
+                'established_year': created_manufacturer[6],
+                'is_active': bool(created_manufacturer[7]),
+                'created_at': created_manufacturer[8],
+                'updated_at': created_manufacturer[9]
+            },
             'created_by': current_user['email']
         }), 201
         
     except Exception as e:
         db.get_connection().rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/manufacturers/<int:manufacturer_id>/equipment-categories', methods=['GET'])
+@token_required
+@admin_required
+def get_manufacturer_equipment_categories(current_user, manufacturer_id):
+    """Get equipment categories for a manufacturer (admin only)"""
+    try:
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if manufacturer exists
+        cursor.execute("SELECT name FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        manufacturer = cursor.fetchone()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+        
+        # Get equipment categories
+        cursor.execute("""
+            SELECT category_name, is_supported, notes, created_at
+            FROM manufacturer_equipment_categories 
+            WHERE manufacturer_id = ?
+            ORDER BY category_name
+        """, (manufacturer_id,))
+        
+        categories = []
+        for row in cursor.fetchall():
+            categories.append({
+                'category_name': row[0],
+                'is_supported': bool(row[1]),
+                'notes': row[2],
+                'created_at': row[3]
+            })
+        
+        return jsonify({
+            'manufacturer_id': manufacturer_id,
+            'manufacturer_name': manufacturer[0],
+            'equipment_categories': categories
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/manufacturers/<int:manufacturer_id>/equipment-categories', methods=['PUT'])
+@token_required
+@admin_required
+def update_manufacturer_equipment_categories(current_user, manufacturer_id):
+    """Update equipment categories for a manufacturer (admin only)"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'categories' not in data:
+            return jsonify({'error': 'Categories data is required'}), 400
+        
+        db = get_database()
+        cursor = db.get_connection().cursor()
+        
+        # Check if manufacturer exists
+        cursor.execute("SELECT name FROM manufacturers WHERE id = ?", (manufacturer_id,))
+        manufacturer = cursor.fetchone()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+        
+        # Update each category
+        updated_categories = []
+        for category_data in data['categories']:
+            category_name = category_data.get('category_name')
+            is_supported = category_data.get('is_supported', False)
+            notes = category_data.get('notes', '')
+            
+            if not category_name:
+                continue
+            
+            # Update or insert category mapping
+            cursor.execute("""
+                INSERT OR REPLACE INTO manufacturer_equipment_categories 
+                (manufacturer_id, category_name, is_supported, notes)
+                VALUES (?, ?, ?, ?)
+            """, (manufacturer_id, category_name, is_supported, notes))
+            
+            updated_categories.append({
+                'category_name': category_name,
+                'is_supported': is_supported,
+                'notes': notes
+            })
+        
+        db.get_connection().commit()
+        
+        return jsonify({
+            'message': f'Successfully updated equipment categories for {manufacturer[0]}',
+            'manufacturer_id': manufacturer_id,
+            'manufacturer_name': manufacturer[0],
+            'updated_categories': updated_categories,
+            'updated_by': current_user['email']
+        }), 200
+        
+    except Exception as e:
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/equipment-categories', methods=['GET'])
+@token_required
+@admin_required
+def get_available_equipment_categories(current_user):
+    """Get all available equipment categories (admin only)"""
+    try:
+        # Return standard equipment categories
+        categories = [
+            {
+                'name': 'arrows',
+                'display_name': 'Arrows',
+                'description': 'Arrow shafts and complete arrows',
+                'icon': 'fa-crosshairs'
+            },
+            {
+                'name': 'strings',
+                'display_name': 'Strings & Cables',
+                'description': 'Bow strings, cables, and serving materials',
+                'icon': 'fa-grip-lines'
+            },
+            {
+                'name': 'sights',
+                'display_name': 'Sights',
+                'description': 'Bow sights, pins, and aiming systems',
+                'icon': 'fa-bullseye'
+            },
+            {
+                'name': 'stabilizers',
+                'display_name': 'Stabilizers',
+                'description': 'Front stabilizers, side rods, and balance systems',
+                'icon': 'fa-balance-scale'
+            },
+            {
+                'name': 'arrow_rests',
+                'display_name': 'Arrow Rests',
+                'description': 'Drop-away, containment, and launcher rests',
+                'icon': 'fa-hand-paper'
+            },
+            {
+                'name': 'weights',
+                'display_name': 'Weights',
+                'description': 'Stabilizer weights, balance bars, and dampeners',
+                'icon': 'fa-weight-hanging'
+            }
+        ]
+        
+        return jsonify({
+            'categories': categories,
+            'total_count': len(categories)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== EQUIPMENT MANAGEMENT API ENDPOINTS =====
+
+@app.route('/api/equipment/categories', methods=['GET'])
+def get_equipment_categories():
+    """Get all equipment categories with their schemas"""
+    try:
+        conn = sqlite3.connect(get_db_path())
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, description, icon, specifications_schema
+            FROM equipment_categories
+            ORDER BY name
+        ''')
+        
+        categories = []
+        for row in cursor.fetchall():
+            category = dict(row)
+            # Parse JSON schema
+            if category['specifications_schema']:
+                try:
+                    category['specifications_schema'] = json.loads(category['specifications_schema'])
+                except json.JSONDecodeError:
+                    category['specifications_schema'] = {}
+            categories.append(category)
+        
+        conn.close()
+        return jsonify(categories), 200
+        
+    except Exception as e:
+        print(f"Error getting equipment categories: {e}")
+        return jsonify({'error': 'Failed to get equipment categories'}), 500
+
+@app.route('/api/equipment/search', methods=['GET'])
+def search_equipment():
+    """Search equipment by category, manufacturer, or keywords"""
+    try:
+        category = request.args.get('category')
+        manufacturer = request.args.get('manufacturer') 
+        keywords = request.args.get('keywords', '')
+        
+        conn = sqlite3.connect(get_db_path())
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        query = '''
+            SELECT e.*, ec.name as category_name, ec.icon as category_icon
+            FROM equipment e
+            JOIN equipment_categories ec ON e.category_id = ec.id
+            WHERE 1=1
+        '''
+        params = []
+        
+        if category:
+            query += ' AND ec.name = ?'
+            params.append(category)
+            
+        if manufacturer:
+            query += ' AND e.manufacturer LIKE ?'
+            params.append(f'%{manufacturer}%')
+            
+        if keywords:
+            query += ' AND (e.model_name LIKE ? OR e.description LIKE ?)'
+            params.extend([f'%{keywords}%', f'%{keywords}%'])
+        
+        query += ' ORDER BY e.manufacturer, e.model_name'
+        
+        cursor.execute(query, params)
+        equipment = []
+        for row in cursor.fetchall():
+            item = dict(row)
+            # Parse JSON specifications
+            if item['specifications']:
+                try:
+                    item['specifications'] = json.loads(item['specifications'])
+                except json.JSONDecodeError:
+                    item['specifications'] = {}
+            if item['compatibility_rules']:
+                try:
+                    item['compatibility_rules'] = json.loads(item['compatibility_rules'])
+                except json.JSONDecodeError:
+                    item['compatibility_rules'] = {}
+            equipment.append(item)
+        
+        conn.close()
+        return jsonify(equipment), 200
+        
+    except Exception as e:
+        print(f"Error searching equipment: {e}")
+        return jsonify({'error': 'Failed to search equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment', methods=['GET'])
+@token_required
+def get_bow_equipment(current_user, setup_id):
+    """Get all equipment for a bow setup"""
+    try:
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the setup belongs to the current user
+        cursor.execute('SELECT user_id FROM bow_setups WHERE id = ?', (setup_id,))
+        setup = cursor.fetchone()
+        if not setup or setup['user_id'] != current_user['id']:
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+        
+        # Get equipment with details
+        cursor.execute('''
+            SELECT be.*, e.manufacturer, e.model_name, e.specifications, 
+                   e.weight_grams, e.image_url, e.description,
+                   ec.name as category_name, ec.icon as category_icon
+            FROM bow_equipment be
+            JOIN equipment e ON be.equipment_id = e.id
+            JOIN equipment_categories ec ON e.category_id = ec.id
+            WHERE be.bow_setup_id = ? AND be.is_active = 1
+            ORDER BY ec.name, e.manufacturer, e.model_name
+        ''', (setup_id,))
+        
+        equipment = []
+        for row in cursor.fetchall():
+            item = dict(row)
+            # Parse JSON fields
+            for field in ['specifications', 'custom_specifications']:
+                if item.get(field):
+                    try:
+                        item[field] = json.loads(item[field])
+                    except json.JSONDecodeError:
+                        item[field] = {}
+            equipment.append(item)
+        
+        conn.close()
+        return jsonify(equipment), 200
+        
+    except Exception as e:
+        print(f"Error getting bow equipment: {e}")
+        return jsonify({'error': 'Failed to get bow equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment', methods=['POST'])
+@token_required
+def add_bow_equipment(current_user, setup_id):
+    """Add equipment to a bow setup"""
+    try:
+        data = request.get_json()
+        if not data or 'equipment_id' not in data:
+            return jsonify({'error': 'Equipment ID is required'}), 400
+        
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the setup belongs to the current user
+        cursor.execute('SELECT user_id FROM bow_setups WHERE id = ?', (setup_id,))
+        setup = cursor.fetchone()
+        if not setup or setup['user_id'] != current_user['id']:
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+        
+        # Verify equipment exists
+        arrow_conn = sqlite3.connect(get_db_path())
+        arrow_cursor = arrow_conn.cursor()
+        arrow_cursor.execute('SELECT id FROM equipment WHERE id = ?', (data['equipment_id'],))
+        if not arrow_cursor.fetchone():
+            arrow_conn.close()
+            conn.close()
+            return jsonify({'error': 'Equipment not found'}), 404
+        arrow_conn.close()
+        
+        # Check if equipment is already added
+        cursor.execute('''
+            SELECT id FROM bow_equipment 
+            WHERE bow_setup_id = ? AND equipment_id = ? AND is_active = 1
+        ''', (setup_id, data['equipment_id']))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Equipment already added to this bow setup'}), 409
+        
+        # Add equipment to bow setup
+        cursor.execute('''
+            INSERT INTO bow_equipment (bow_setup_id, equipment_id, installation_notes, custom_specifications)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            setup_id,
+            data['equipment_id'],
+            data.get('installation_notes', ''),
+            json.dumps(data.get('custom_specifications', {}))
+        ))
+        
+        equipment_id = cursor.lastrowid
+        conn.commit()
+        
+        # Return the added equipment with details
+        cursor.execute('''
+            SELECT be.*, e.manufacturer, e.model_name, e.specifications,
+                   e.weight_grams, e.image_url, e.description,
+                   ec.name as category_name, ec.icon as category_icon
+            FROM bow_equipment be
+            JOIN equipment e ON be.equipment_id = e.id
+            JOIN equipment_categories ec ON e.category_id = ec.id
+            WHERE be.id = ?
+        ''', (equipment_id,))
+        
+        result = dict(cursor.fetchone())
+        # Parse JSON fields
+        for field in ['specifications', 'custom_specifications']:
+            if result.get(field):
+                try:
+                    result[field] = json.loads(result[field])
+                except json.JSONDecodeError:
+                    result[field] = {}
+        
+        conn.close()
+        return jsonify(result), 201
+        
+    except Exception as e:
+        print(f"Error adding bow equipment: {e}")
+        return jsonify({'error': 'Failed to add equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['PUT'])
+@token_required
+def update_bow_equipment(current_user, setup_id, equipment_id):
+    """Update equipment configuration in a bow setup"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the setup belongs to the current user and equipment exists
+        cursor.execute('''
+            SELECT be.id FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.bow_setup_id = ? AND be.equipment_id = ? 
+            AND bs.user_id = ? AND be.is_active = 1
+        ''', (setup_id, equipment_id, current_user['id']))
+        
+        bow_equipment = cursor.fetchone()
+        if not bow_equipment:
+            conn.close()
+            return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Update equipment configuration
+        updates = []
+        params = []
+        
+        if 'installation_notes' in data:
+            updates.append('installation_notes = ?')
+            params.append(data['installation_notes'])
+        
+        if 'custom_specifications' in data:
+            updates.append('custom_specifications = ?')
+            params.append(json.dumps(data['custom_specifications']))
+        
+        if updates:
+            params.append(bow_equipment['id'])
+            cursor.execute(f'''
+                UPDATE bow_equipment SET {', '.join(updates)}
+                WHERE id = ?
+            ''', params)
+            conn.commit()
+        
+        # Return updated equipment
+        cursor.execute('''
+            SELECT be.*, e.manufacturer, e.model_name, e.specifications,
+                   e.weight_grams, e.image_url, e.description,
+                   ec.name as category_name, ec.icon as category_icon
+            FROM bow_equipment be
+            JOIN equipment e ON be.equipment_id = e.id
+            JOIN equipment_categories ec ON e.category_id = ec.id
+            WHERE be.id = ?
+        ''', (bow_equipment['id'],))
+        
+        result = dict(cursor.fetchone())
+        # Parse JSON fields
+        for field in ['specifications', 'custom_specifications']:
+            if result.get(field):
+                try:
+                    result[field] = json.loads(result[field])
+                except json.JSONDecodeError:
+                    result[field] = {}
+        
+        conn.close()
+        return jsonify(result), 200
+        
+    except Exception as e:
+        print(f"Error updating bow equipment: {e}")
+        return jsonify({'error': 'Failed to update equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['DELETE'])
+@token_required
+def remove_bow_equipment(current_user, setup_id, equipment_id):
+    """Remove equipment from a bow setup"""
+    try:
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the setup belongs to the current user and equipment exists
+        cursor.execute('''
+            SELECT be.id FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.bow_setup_id = ? AND be.equipment_id = ? 
+            AND bs.user_id = ? AND be.is_active = 1
+        ''', (setup_id, equipment_id, current_user['id']))
+        
+        bow_equipment = cursor.fetchone()
+        if not bow_equipment:
+            conn.close()
+            return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Mark equipment as inactive (soft delete)
+        cursor.execute('''
+            UPDATE bow_equipment SET is_active = 0
+            WHERE id = ?
+        ''', (bow_equipment['id'],))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Equipment removed successfully'}), 200
+        
+    except Exception as e:
+        print(f"Error removing bow equipment: {e}")
+        return jsonify({'error': 'Failed to remove equipment'}), 500
 
 # ===== GUIDE WALKTHROUGH API ENDPOINTS =====
 
