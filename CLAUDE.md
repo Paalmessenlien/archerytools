@@ -12,6 +12,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **[API Endpoints Documentation](docs/API_ENDPOINTS.md)** - All REST endpoints with request/response examples  
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Architecture, workflows, and troubleshooting
 - **[Spine Data System Documentation](docs/SPINE_DATA_SYSTEM.md)** - Advanced spine calculation system and admin interface
+- **[Spine Chart Management Documentation](docs/SPINE_CHART_MANAGEMENT.md)** - Professional spine chart management with editing capabilities
 
 **🚀 For new developers**: Start with [Development Guide](docs/DEVELOPMENT_GUIDE.md) for environment setup and architecture overview.
 
@@ -61,6 +62,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **German Decimal Conversion**: Automatic conversion of German decimal format (5,40 → 5.40) for European manufacturers
 - ✅ **Admin Arrow Editing Fix**: Complete resolution of admin arrow save/update functionality with database schema migration and API enhancements
 - ✅ **Advanced Admin Data Tools**: Batch fill missing data functionality and URL-based scraping integration for comprehensive arrow data management
+- ✅ **Professional Spine Chart Management System**: Comprehensive manufacturer spine chart integration with editing capabilities, custom chart creation, and enhanced spine calculations using real manufacturer data (August 2025)
 
 ## Development Commands
 
