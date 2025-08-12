@@ -10,40 +10,7 @@
       </p>
     </div>
 
-    <!-- Comparison Bar -->
-    <div v-if="comparisonArrows.length > 0" class="mb-6">
-      <md-elevated-card class="!bg-blue-50 dark:!bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <div class="p-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <i class="fas fa-balance-scale text-blue-600 text-lg"></i>
-              <div>
-                <h3 class="font-medium text-blue-900 dark:text-blue-100">
-                  {{ comparisonArrows.length }} Arrow{{ comparisonArrows.length > 1 ? 's' : '' }} Selected for Comparison
-                </h3>
-                <p class="text-sm text-blue-700 dark:text-blue-300">
-                  {{ comparisonArrows.map(a => `${a.manufacturer} ${a.model_name}`).join(', ') }}
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <md-filled-button 
-                @click="openComparison"
-                :disabled="comparisonArrows.length < 2"
-                class="bg-blue-600 text-white hover:bg-blue-700"
-              >
-                <i class="fas fa-chart-bar" style="margin-right: 6px;"></i>
-                Compare ({{ comparisonArrows.length }})
-              </md-filled-button>
-              <md-text-button @click="clearComparison" class="text-blue-600 hover:bg-blue-100">
-                <i class="fas fa-times" style="margin-right: 6px;"></i>
-                Clear
-              </md-text-button>
-            </div>
-          </div>
-        </div>
-      </md-elevated-card>
-    </div>
+    <!-- Comparison Bar removed per requirements -->
 
     <!-- Loading State -->
     <div v-if="pending" class="space-y-4">
@@ -187,9 +154,6 @@
                 </md-select-option>
                 <md-select-option value="material">
                   <div slot="headline">Material</div>
-                </md-select-option>
-                <md-select-option value="price">
-                  <div slot="headline">Price</div>
                 </md-select-option>
               </md-filled-select>
             </div>
@@ -413,18 +377,7 @@
                     <i class="fas fa-eye" style="margin-right: 6px;"></i>
                     View Details
                   </md-filled-button>
-                  <md-text-button 
-                    size="small" 
-                    @click="addToComparison(recommendation)"
-                    :class="{ 'text-blue-600 dark:text-blue-400': isInComparison(recommendation.arrow) }"
-                  >
-                    <i 
-                      class="fas" 
-                      :class="isInComparison(recommendation.arrow) ? 'fa-check-circle' : 'fa-plus-circle'" 
-                      style="margin-right: 6px;"
-                    ></i>
-                    {{ isInComparison(recommendation.arrow) ? 'Added to Compare' : 'Add to Compare' }}
-                  </md-text-button>
+                  <!-- Compare button removed per requirements -->
                 </div>
                 
                 <!-- Match Score -->
@@ -440,14 +393,7 @@
                       class="w-20 mx-auto sm:mx-0"
                     ></md-linear-progress>
                   </div>
-                  
-                  <!-- Price -->
-                  <div class="text-center sm:text-right">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price Range</div>
-                    <p class="font-semibold text-gray-900 dark:text-gray-100">
-                      {{ recommendation.arrow.price_range || 'Varies' }}
-                    </p>
-                  </div>
+                  <!-- Price removed per requirements -->
                 </div>
               </div>
             </div>
@@ -456,7 +402,7 @@
       </div>
       
       <!-- Load More Button -->
-      <div v-if="hasMoreResults && filteredRecommendations.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div v-if="hasMoreResults && filteredRecommendations.length > 0" class="flex flex-col items-center justify-center mt-8 mb-24 md:mb-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Showing <span class="font-semibold text-gray-900 dark:text-gray-100">{{ paginatedRecommendations.length }}</span> of <span class="font-semibold text-gray-900 dark:text-gray-100">{{ filteredRecommendations.length }}</span> arrows
         </div>
@@ -490,136 +436,7 @@
       </div>
     </div> <!-- End Filters & Controls (Always Visible) -->
 
-    <!-- Arrow Comparison Modal -->
-    <div v-if="showComparisonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <!-- Modal Header -->
-        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
-          <div class="flex justify-between items-center">
-            <div>
-              <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                <i class="fas fa-balance-scale mr-2 text-blue-600"></i>
-                Arrow Comparison
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Comparing {{ comparisonArrows.length }} arrows side by side
-              </p>
-            </div>
-            <md-text-button @click="closeComparison" class="text-gray-600 hover:bg-gray-100">
-              <i class="fas fa-times"></i>
-            </md-text-button>
-          </div>
-        </div>
-
-        <!-- Comparison Content -->
-        <div class="p-6">
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-max">
-              <thead>
-                <tr class="border-b border-gray-200 dark:border-gray-700">
-                  <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Specification</th>
-                  <th v-for="arrow in comparisonArrows" :key="arrow.id" class="text-center py-3 px-4 min-w-48">
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {{ arrow.manufacturer }}
-                    </div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ arrow.model_name }}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                <!-- Match Score -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Match Score</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-match`" class="py-3 px-4 text-center">
-                    <div class="text-lg font-bold text-blue-600">
-                      {{ arrow.recommendation_data?.match_percentage || 0 }}%
-                    </div>
-                    <div class="w-16 mx-auto mt-1">
-                      <md-linear-progress 
-                        :value="(arrow.recommendation_data?.match_percentage || 0) / 100"
-                      ></md-linear-progress>
-                    </div>
-                  </td>
-                </tr>
-                
-                <!-- Spine Range -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Spine Range</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-spine`" class="py-3 px-4 text-center text-sm">
-                    {{ getSpineDisplay(arrow) }}
-                  </td>
-                </tr>
-                
-                <!-- Diameter -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Diameter</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-diameter`" class="py-3 px-4 text-center text-sm">
-                    {{ getDiameterDisplay(arrow) }}"
-                  </td>
-                </tr>
-                
-                <!-- Weight (GPI) -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Weight (GPI)</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-weight`" class="py-3 px-4 text-center text-sm">
-                    {{ getWeightDisplay(arrow) }}
-                  </td>
-                </tr>
-                
-                <!-- Material -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Material</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-material`" class="py-3 px-4 text-center text-sm">
-                    {{ arrow.material || 'N/A' }}
-                  </td>
-                </tr>
-                
-                <!-- Arrow Type -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Arrow Type</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-type`" class="py-3 px-4 text-center text-sm">
-                    {{ arrow.arrow_type || 'N/A' }}
-                  </td>
-                </tr>
-                
-                <!-- Price Range -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Price Range</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-price`" class="py-3 px-4 text-center text-sm">
-                    {{ arrow.price_range || 'N/A' }}
-                  </td>
-                </tr>
-                
-                <!-- Compatibility Reasons -->
-                <tr>
-                  <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Why It Matches</td>
-                  <td v-for="arrow in comparisonArrows" :key="`${arrow.id}-reasons`" class="py-3 px-4 text-center">
-                    <div class="text-xs text-gray-600 dark:text-gray-400 max-w-36 mx-auto">
-                      {{ arrow.recommendation_data?.reasons?.join(', ') || 'Compatible with your setup' }}
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Actions -->
-          <div class="mt-6 flex justify-between items-center">
-            <md-text-button @click="clearComparison" class="text-red-600 hover:bg-red-50">
-              <i class="fas fa-trash mr-2"></i>
-              Clear All
-            </md-text-button>
-            <div class="flex space-x-3">
-              <md-outlined-button @click="closeComparison">
-                Close
-              </md-outlined-button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Comparison removed -->
   </div>
 </template>
 
@@ -864,15 +681,7 @@ const filteredRecommendations = computed(() => {
           return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
         }
         return materialComparison
-      case 'price':
-        const priceA = a.arrow.price_range || 'ZZZ' // Put nulls at end
-        const priceB = b.arrow.price_range || 'ZZZ'
-        const priceComparison = priceA.localeCompare(priceB)
-        // Secondary sort by match score if prices are equal
-        if (priceComparison === 0) {
-          return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
-        }
-        return priceComparison
+      // price sorting removed
       default:
         return 0
     }

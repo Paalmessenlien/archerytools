@@ -197,17 +197,17 @@
     </md-elevated-card>
 
     <!-- Results Header -->
-    <div class="flex items-center justify-between mb-4">
-      <p class="text-sm text-gray-600">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <p class="text-sm text-gray-600 order-2 sm:order-1">
         {{ searchPerformed ? `Showing ${arrows.length} of ${totalArrows} arrows` : `${totalArrows} arrows available` }}
       </p>
-      <div class="flex items-center space-x-2">
-        <label for="per-page" class="text-sm text-gray-600">Show:</label>
+      <div class="flex items-center space-x-2 order-1 sm:order-2 w-full sm:w-auto">
+        <label for="per-page" class="text-sm text-gray-600 whitespace-nowrap">Show:</label>
         <select 
           id="per-page"
           v-model="perPage" 
           @change="searchArrows"
-          class="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          class="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full sm:w-24"
         >
           <option :value="10">10</option>
           <option :value="20">20</option>
@@ -283,23 +283,20 @@
             <h3 class="text-lg font-semibold text-gray-900">
               {{ arrow.manufacturer }} {{ arrow.model_name }}
             </h3>
-            <p class="text-gray-600">
-              Spine: {{ getSpineDisplay(arrow) }}
-            </p>
           </div>
           
           <div class="text-right">
-            <p class="font-semibold text-blue-600">
-              {{ arrow.price_range || 'Price varies' }}
-            </p>
             <div v-if="arrow.arrow_type" class="text-xs text-gray-500 mt-1">
               {{ arrow.arrow_type }} arrow
             </div>
           </div>
         </div>
         
-          <!-- Arrow Specifications as Chips -->
+          <!-- Arrow Specifications as Chips (align with calculator) -->
           <md-chip-set class="mb-4">
+            <md-assist-chip :label="'Spine: ' + getSpineDisplay(arrow)">
+              <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
+            </md-assist-chip>
             <md-assist-chip :label="'⌀ ' + getDiameterRange(arrow) + '&quot;'">
               <i class="fas fa-dot-circle fa-icon" slot="icon" style="color: #dc2626;"></i>
             </md-assist-chip>
@@ -309,7 +306,7 @@
             <md-assist-chip :label="arrow.material || 'Not specified'">
               <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #059669;"></i>
             </md-assist-chip>
-            <md-assist-chip :label="arrow.straightness_tolerance || 'Not specified'">
+            <md-assist-chip v-if="arrow.straightness_tolerance" :label="arrow.straightness_tolerance">
               <i class="fas fa-crosshairs fa-icon" slot="icon" style="color: #7c3aed;"></i>
             </md-assist-chip>
           </md-chip-set>
@@ -321,6 +318,9 @@
 
           <!-- Tags -->
           <div class="flex flex-wrap gap-2">
+            <span v-if="arrow.arrow_type" class="badge bg-gray-100 text-gray-800">
+              {{ arrow.arrow_type }}
+            </span>
             <span v-if="arrow.recommended_use" class="badge bg-blue-100 text-blue-800">
               {{ Array.isArray(arrow.recommended_use) ? arrow.recommended_use.join(', ') : arrow.recommended_use }}
             </span>

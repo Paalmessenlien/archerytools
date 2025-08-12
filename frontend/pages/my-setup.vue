@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">My Setup</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">My Setup</h1>
     
     <div v-if="isLoadingUser" class="text-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
@@ -34,60 +34,58 @@
     <div v-else-if="user">
       <!-- Compact Profile Header -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-        <div class="flex items-center justify-between">
-          <!-- Profile Summary -->
-          <div class="flex items-center space-x-4">
-            <!-- Profile Picture - Smaller -->
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                <img 
-                  v-if="user.profile_picture_url" 
-                  :src="user.profile_picture_url" 
-                  :alt="user.name || 'Profile picture'" 
-                  class="w-12 h-12 rounded-full object-cover"
-                />
-                <span v-else class="text-lg">
-                  {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
-                </span>
-              </div>
-            </div>
-            
-            <!-- Basic Info -->
-            <div>
-              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-                {{ user.name || 'Archer' }}
-              </h2>
-              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span>Draw: {{ user.draw_length || 28.0 }}"</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                      :class="getSkillLevelClass(user.skill_level)">
-                  {{ formatSkillLevel(user.skill_level) }}
-                </span>
-              </div>
+        <!-- Profile Content -->
+        <div class="flex items-center space-x-4 mb-4">
+          <!-- Profile Picture -->
+          <div class="flex-shrink-0">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+              <img 
+                v-if="user.profile_picture_url" 
+                :src="user.profile_picture_url" 
+                :alt="user.name || 'Profile picture'" 
+                class="w-12 h-12 rounded-full object-cover"
+              />
+              <span v-else class="text-lg">
+                {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
+              </span>
             </div>
           </div>
           
-          <!-- Action Buttons -->
-          <div class="flex space-x-2">
-            <CustomButton
-              @click="openEditModal"
-              variant="outlined"
-              size="small"
-              class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900"
-            >
-              <i class="fas fa-edit mr-1"></i>
-              Edit
-            </CustomButton>
-            <CustomButton
-              @click="logout"
-              variant="outlined"
-              size="small"
-              class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
-            >
-              <i class="fas fa-sign-out-alt mr-1"></i>
-              Logout
-            </CustomButton>
+          <!-- Basic Info -->
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {{ user.name || 'Archer' }}
+            </h2>
+            <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+              <span>Draw: {{ user.draw_length || 28.0 }}"</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                    :class="getSkillLevelClass(user.skill_level)">
+                {{ formatSkillLevel(user.skill_level) }}
+              </span>
+            </div>
           </div>
+        </div>
+        
+        <!-- Action Buttons - Full Width -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <CustomButton
+            @click="openEditModal"
+            variant="outlined"
+            size="small"
+            class="flex-1 text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900"
+          >
+            <i class="fas fa-edit mr-2"></i>
+            Edit Profile
+          </CustomButton>
+          <CustomButton
+            @click="logout"
+            variant="outlined"
+            size="small"
+            class="flex-1 text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
+          >
+            <i class="fas fa-sign-out-alt mr-2"></i>
+            Logout
+          </CustomButton>
         </div>
       </div>
 
@@ -103,23 +101,15 @@
 
       <!-- Bow Setups Dashboard Section -->
       <div class="mt-6">
-        <div class="flex items-center justify-between mb-6">
+        <div class="mb-6">
           <div>
             <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">My Bow Setups</h3>
             <p class="text-gray-600 dark:text-gray-400">Manage your bow configurations and arrow selections</p>
           </div>
-          <CustomButton
-            @click="openAddSetupModal"
-            variant="filled"
-            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
-          >
-            <i class="fas fa-plus mr-2"></i>
-            Add New Setup
-          </CustomButton>
         </div>
 
-        <!-- Quick Stats -->
-        <div v-if="bowSetups.length > 0" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <!-- Quick Stats - Hidden on Mobile -->
+        <div v-if="bowSetups.length > 0" class="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
             <div class="flex items-center">
               <i class="fas fa-bow-arrow text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
@@ -157,6 +147,17 @@
           </div>
 
           <div v-else>
+            <!-- Add New Setup Button -->
+            <div class="flex justify-center mb-6">
+              <CustomButton
+                @click="openAddSetupModal"
+                variant="filled"
+                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+              >
+                <i class="fas fa-plus mr-2"></i>
+                Add New Setup
+              </CustomButton>
+            </div>
             <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div 
                 v-for="setup in bowSetups" 
@@ -325,6 +326,7 @@
         </div>
         <!-- End of Arrow Removal Confirmation Modal -->
 
+
       </div>
       <!-- End of Bow Setups Section -->
     </div>
@@ -389,6 +391,7 @@ const arrowRemovalConfirm = ref({
   arrowSetupId: null,
   arrowName: ''
 });
+
 
 const newSetup = ref({
   name: '',
@@ -569,6 +572,7 @@ const navigateToArrowCalculator = (setup) => {
   // Navigate to the arrow calculator page
   navigateTo('/calculator');
 };
+
 
 // Edit arrow modal methods
 const openEditArrowModal = (arrowSetup) => {
@@ -827,12 +831,19 @@ onMounted(async () => {
   if (user.value) {
     await loadBowSetups();
   }
+  
+  // Check if we should open the add setup modal
+  const route = useRoute();
+  if (route.query.add === 'true') {
+    openAddSetupModal();
+  }
 });
 
 // Navigation methods
 const navigateToBowDetail = (setupId) => {
   navigateTo(`/bow/${setupId}`);
 };
+
 
 const formatBowType = (bowType) => {
   if (!bowType) return 'Unknown';

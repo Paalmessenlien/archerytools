@@ -56,7 +56,7 @@
                 {{ arrow.manufacturer }} {{ arrow.model_name }}
               </h4>
               <p class="text-sm text-gray-600">
-                {{ arrow.material }} • Spine: {{ getSpineDisplay(arrow) }} • {{ arrow.price_range || 'Price varies' }}
+                {{ arrow.material }} • Spine: {{ getSpineDisplay(arrow) }}
               </p>
             </div>
             

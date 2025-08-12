@@ -13,12 +13,6 @@
         <span class="text-xs font-medium">{{ menuOpen ? 'Close' : 'Menu' }}</span>
       </button>
 
-      <!-- Bow Setup Picker -->
-      <div class="flex items-center justify-center">
-        <BowSetupPicker v-if="user" :is-mobile="true" />
-        <div v-else class="w-16 h-16"></div>
-      </div>
-
       <!-- My Setup / Login -->
       <NuxtLink
         v-if="user"
@@ -193,6 +187,7 @@ const handleLogout = async () => {
     console.error('Logout failed:', error)
   }
 }
+
 
 // Close menu when route changes
 watch(() => route.path, () => {

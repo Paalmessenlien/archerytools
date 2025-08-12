@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
+  <div class="container mx-auto px-4 py-4 sm:py-8 max-w-6xl">
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-4"></div>
@@ -28,10 +28,10 @@
       </div>
 
       <!-- Bow Header -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-        <div class="flex items-start justify-between">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ bowSetup.name }}</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">{{ bowSetup.name }}</h1>
             
             <!-- Bow Type Badge -->
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-4"
@@ -81,7 +81,7 @@
                 <i class="fas fa-bullseye mr-2 text-blue-600 dark:text-blue-400"></i>
                 Draw Specifications
               </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-3">
                 <div class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <span class="text-gray-600 dark:text-gray-400">Draw Weight</span>
                   <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bowSetup.draw_weight }} lbs</span>
@@ -102,16 +102,8 @@
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="flex space-x-3">
-            <CustomButton
-              @click="navigateToArrowCalculator"
-              variant="filled"
-              class="bg-green-600 text-white hover:bg-green-700"
-            >
-              <i class="fas fa-calculator mr-2"></i>
-              Find Arrows
-            </CustomButton>
+          <!-- Action Buttons - Mobile Responsive -->
+          <div class="flex justify-end w-full lg:w-auto lg:flex-shrink-0">
             <CustomButton
               @click="openEditModal"
               variant="outlined"
@@ -125,7 +117,7 @@
       </div>
 
       <!-- Component Weights -->
-      <div v-if="hasComponentWeights" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div v-if="hasComponentWeights" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           <i class="fas fa-weight mr-2 text-purple-600 dark:text-purple-400"></i>
           Component Weights
@@ -147,14 +139,14 @@
       </div>
 
       <!-- Description -->
-      <div v-if="bowSetup.description" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div v-if="bowSetup.description" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Description</h2>
         <p class="text-gray-700 dark:text-gray-300">{{ bowSetup.description }}</p>
       </div>
 
       <!-- Selected Arrows Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div class="flex items-center justify-between mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
             <i class="fas fa-location-arrow mr-2 text-orange-600 dark:text-orange-400"></i>
             Selected Arrows
@@ -162,7 +154,7 @@
           <CustomButton
             @click="openArrowSearchModal"
             variant="filled"
-            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 w-full sm:w-auto"
           >
             <i class="fas fa-plus mr-2"></i>
             Add Arrow
@@ -222,6 +214,7 @@ import EditArrowModal from '~/components/EditArrowModal.vue';
 
 const route = useRoute();
 const api = useApi();
+const { user, token, fetchUser } = useAuth();
 
 // State
 const bowSetup = ref(null);
@@ -249,6 +242,23 @@ const fetchBowSetup = async () => {
     loading.value = true;
     error.value = null;
     
+    // Check authentication first
+    if (!user.value) {
+      console.log('No user found, attempting to fetch user data...');
+      await fetchUser();
+      
+      if (!user.value) {
+        error.value = 'Please log in to view your bow setups';
+        return navigateTo('/');
+      }
+    }
+    
+    // Check if token exists
+    if (!token.value && process.client && !localStorage.getItem('token')) {
+      error.value = 'Authentication required. Please log in again.';
+      return navigateTo('/');
+    }
+    
     const response = await api.get(`/bow-setups/${route.params.id}`);
     console.log('Fetched bow setup:', response);
     bowSetup.value = response;
@@ -257,6 +267,19 @@ const fetchBowSetup = async () => {
     await fetchSetupArrows();
   } catch (err) {
     console.error('Error fetching bow setup:', err);
+    
+    // Handle specific auth errors
+    if (err.message.includes('401') || err.message.includes('Token is missing')) {
+      error.value = 'Please log in to view your bow setups';
+      // Clear invalid token
+      if (process.client) {
+        localStorage.removeItem('token');
+      }
+      token.value = null;
+      user.value = null;
+      return navigateTo('/');
+    }
+    
     error.value = err.message || 'Failed to load bow setup';
   } finally {
     loading.value = false;
@@ -286,6 +309,16 @@ const fetchSetupArrows = async () => {
     }
   } catch (err) {
     console.error('Error fetching setup arrows:', err);
+    
+    // Handle auth errors for arrows endpoint too
+    if (err.message.includes('401') || err.message.includes('Token is missing')) {
+      console.log('Auth error fetching arrows, user needs to log in again');
+      // Don't redirect here since this is a secondary request
+      // Just set empty arrows array
+      if (bowSetup.value) {
+        bowSetup.value.arrows = [];
+      }
+    }
   } finally {
     loadingArrows.value = false;
   }
@@ -545,5 +578,10 @@ const getUsageIcon = (usage) => {
 // Lifecycle
 onMounted(() => {
   fetchBowSetup();
+});
+
+// Define page meta to require authentication
+definePageMeta({
+  middleware: ['auth-check']
 });
 </script>

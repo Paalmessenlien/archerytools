@@ -5,10 +5,12 @@
 @layer base {
   html {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
   }
   
   body {
     @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900 leading-relaxed transition-colors duration-300;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
   }
   
   /* Dark mode body */
@@ -116,6 +118,26 @@
   @media (max-width: 640px) {
     .btn-primary, .btn-secondary {
       @apply px-6 py-3 text-base;
+    }
+
+    /* Make Material buttons full-width on small screens for better tap targets */
+    md-filled-button,
+    md-outlined-button,
+    md-text-button {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* Reduce large paddings/margins for tighter mobile layout */
+    .p-6 { padding: 1rem !important; }
+    .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+    .py-6 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    .mb-8 { margin-bottom: 1.25rem !important; }
+    .mt-8 { margin-top: 1.25rem !important; }
+
+    /* Common action rows wrap on small screens */
+    .button-row, .actions, .action-row {
+      @apply flex flex-wrap gap-2;
     }
   }
   
@@ -300,6 +322,17 @@ md-slider {
   --md-slider-active-track-height: 6px;
   --md-slider-inactive-track-height: 4px;
   width: 100%;
+  touch-action: pan-y; /* Allow vertical scroll to pass through; adjust slider only on horizontal move */
+}
+
+/* Larger, more touch-friendly slider on phones */
+@media (max-width: 640px) {
+  md-slider {
+    --md-slider-handle-height: 28px;
+    --md-slider-handle-width: 28px;
+    --md-slider-active-track-height: 8px;
+    --md-slider-inactive-track-height: 6px;
+  }
 }
 
 md-elevated-card {
