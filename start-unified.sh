@@ -517,42 +517,71 @@ ensure_spine_data_migration() {
     if command -v sqlite3 &> /dev/null; then
         cd arrow_scraper
         
-        # Check if spine tables exist in the arrow database
-        SPINE_TABLES_COUNT=$(sqlite3 "../databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('calculation_parameters', 'arrow_material_properties', 'manufacturer_spine_charts');" 2>/dev/null || echo "0")
+        # Check if enhanced spine tables exist in the arrow database
+        SPINE_TABLES_COUNT=$(sqlite3 "../databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('manufacturer_spine_charts_enhanced', 'custom_spine_charts', 'spine_conversion_tables');" 2>/dev/null || echo "0")
         
         if [[ "$SPINE_TABLES_COUNT" == "3" ]]; then
-            print_message "$GREEN" "✅ Spine calculation tables already exist"
-        else
-            print_message "$YELLOW" "⚠️  Spine calculation tables missing, running migration..."
+            print_message "$GREEN" "✅ Enhanced spine calculation tables already exist"
             
-            # Run spine data migration
-            if [[ -f "migrate_spine_calculation_data.py" ]]; then
-                # Set database path to unified location
-                export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
-                
-                if python3 migrate_spine_calculation_data.py; then
-                    print_message "$GREEN" "✅ Spine calculation migration completed"
-                    
-                    # Import sample data if available
-                    if [[ -f "import_spine_calculator_data.py" ]]; then
-                        print_message "$BLUE" "📊 Importing spine calculation sample data..."
-                        if python3 import_spine_calculator_data.py; then
-                            print_message "$GREEN" "✅ Spine calculation data imported successfully"
-                        else
-                            print_message "$YELLOW" "⚠️  Warning: Spine data import failed, but migration completed"
-                        fi
-                    fi
-                else
-                    print_message "$YELLOW" "⚠️  Warning: Spine calculation migration failed, continuing anyway"
-                fi
+            # Check if we have spine chart data
+            SPINE_CHARTS_COUNT=$(sqlite3 "../databases/arrow_database.db" "SELECT COUNT(*) FROM manufacturer_spine_charts_enhanced;" 2>/dev/null || echo "0")
+            if [[ "$SPINE_CHARTS_COUNT" == "0" ]]; then
+                print_message "$YELLOW" "⚠️  Spine tables exist but no data found, importing data..."
+                run_spine_data_import
             else
-                print_message "$YELLOW" "⚠️  Warning: Spine migration script not found"
+                print_message "$GREEN" "✅ Found $SPINE_CHARTS_COUNT spine charts in database"
             fi
+        else
+            print_message "$YELLOW" "⚠️  Enhanced spine calculation tables missing, running migration..."
+            run_spine_data_import
         fi
         
         cd "$SCRIPT_DIR"
     else
         print_message "$YELLOW" "⚠️  sqlite3 not available, skipping spine data check"
+    fi
+}
+
+# Function to run spine data import
+run_spine_data_import() {
+    if [[ -f "spine_calculator_data_importer.py" ]]; then
+        # Set database path to unified location
+        export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+        
+        print_message "$BLUE" "📊 Running comprehensive spine calculator data import..."
+        if python3 spine_calculator_data_importer.py; then
+            print_message "$GREEN" "✅ Spine calculator data import completed successfully"
+            
+            # Verify import
+            SPINE_CHARTS_COUNT=$(sqlite3 "../databases/arrow_database.db" "SELECT COUNT(*) FROM manufacturer_spine_charts_enhanced;" 2>/dev/null || echo "0")
+            print_message "$GREEN" "✅ Imported $SPINE_CHARTS_COUNT manufacturer spine charts"
+            
+        else
+            print_message "$YELLOW" "⚠️  Warning: Spine calculator data import failed, continuing anyway"
+            
+            # Fall back to legacy migration if available
+            if [[ -f "migrate_spine_calculation_data.py" ]]; then
+                print_message "$YELLOW" "🔄 Trying legacy spine data migration..."
+                if python3 migrate_spine_calculation_data.py; then
+                    print_message "$GREEN" "✅ Legacy spine calculation migration completed"
+                else
+                    print_message "$YELLOW" "⚠️  Warning: All spine migration attempts failed"
+                fi
+            fi
+        fi
+    else
+        print_message "$YELLOW" "⚠️  Warning: spine_calculator_data_importer.py not found"
+        
+        # Fall back to legacy migration
+        if [[ -f "migrate_spine_calculation_data.py" ]]; then
+            print_message "$YELLOW" "🔄 Using legacy spine data migration..."
+            export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+            if python3 migrate_spine_calculation_data.py; then
+                print_message "$GREEN" "✅ Legacy spine calculation migration completed"
+            else
+                print_message "$YELLOW" "⚠️  Warning: Legacy spine migration failed"
+            fi
+        fi
     fi
 }
 
