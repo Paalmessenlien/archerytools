@@ -458,6 +458,75 @@ def get_manufacturers():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Bow Equipment Manufacturers API
+@app.route('/api/bow-equipment/manufacturers', methods=['GET'])
+def get_bow_equipment_manufacturers():
+    """Get manufacturers organized by bow equipment categories"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        # Get category filter from query params
+        category_filter = request.args.get('category')
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Define bow and equipment categories
+        bow_categories = ['compound_bows', 'recurve_risers', 'recurve_limbs', 'traditional_risers', 'traditional_limbs', 'longbows']
+        equipment_categories = ['strings', 'sights', 'stabilizers', 'arrow_rests', 'weights']
+        all_categories = bow_categories + equipment_categories
+        
+        # Get manufacturers with equipment categories
+        if category_filter:
+            cursor.execute('''
+                SELECT m.name, mec.category_name
+                FROM manufacturers m
+                JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
+                WHERE mec.is_supported = 1 
+                AND mec.category_name = ?
+                ORDER BY m.name
+            ''', (category_filter,))
+        else:
+            cursor.execute('''
+                SELECT m.name, mec.category_name
+                FROM manufacturers m
+                JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
+                WHERE mec.is_supported = 1 
+                AND mec.category_name IN ({})
+                ORDER BY m.name, mec.category_name
+            '''.format(','.join(['?' for _ in all_categories])), all_categories)
+        
+        # Organize by category
+        manufacturers_by_category = {}
+        
+        for row in cursor.fetchall():
+            manufacturer_name = row['name']
+            category_name = row['category_name']
+            
+            if category_name not in manufacturers_by_category:
+                manufacturers_by_category[category_name] = []
+            
+            if manufacturer_name not in manufacturers_by_category[category_name]:
+                manufacturers_by_category[category_name].append(manufacturer_name)
+        
+        # If specific category requested, return just that list
+        if category_filter:
+            return jsonify({
+                'category': category_filter,
+                'manufacturers': manufacturers_by_category.get(category_filter, [])
+            })
+        
+        # Return all categories
+        return jsonify({
+            'categories': manufacturers_by_category
+        })
+        
+    except Exception as e:
+        print(f"Error getting bow equipment manufacturers: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/materials', methods=['GET'])
 def get_materials():
     """Get list of all materials with arrow counts"""

@@ -75,15 +75,14 @@
                   class="form-select"
                 >
                   <option value="">Select Brand</option>
-                  <option value="Hoyt">Hoyt</option>
-                  <option value="Mathews">Mathews</option>
-                  <option value="PSE">PSE</option>
-                  <option value="Bowtech">Bowtech</option>
-                  <option value="Prime">Prime</option>
-                  <option value="Elite">Elite</option>
-                  <option value="Bear">Bear</option>
-                  <option value="Diamond">Diamond</option>
-                  <option value="Mission">Mission</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option 
+                    v-for="manufacturer in manufacturerData.compound_bows" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
+                  >
+                    {{ manufacturer }}
+                  </option>
                   <option value="Other">Other</option>
                 </select>
 
@@ -133,14 +132,14 @@
                   class="form-select"
                 >
                   <option value="">Select Riser Brand</option>
-                  <option value="Hoyt">Hoyt</option>
-                  <option value="Win&Win">Win&Win</option>
-                  <option value="Uukha">Uukha</option>
-                  <option value="Samick">Samick</option>
-                  <option value="Bernardini">Bernardini</option>
-                  <option value="Border">Border</option>
-                  <option value="Mybo">Mybo</option>
-                  <option value="Fivics">Fivics</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option 
+                    v-for="manufacturer in manufacturerData.recurve_risers" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
+                  >
+                    {{ manufacturer }}
+                  </option>
                   <option value="Other">Other</option>
                 </select>
 
@@ -200,14 +199,14 @@
                   class="form-select"
                 >
                   <option value="">Select Limb Brand</option>
-                  <option value="Hoyt">Hoyt</option>
-                  <option value="Win&Win">Win&Win</option>
-                  <option value="Uukha">Uukha</option>
-                  <option value="Border">Border</option>
-                  <option value="Samick">Samick</option>
-                  <option value="SF Archery">SF Archery</option>
-                  <option value="Core">Core</option>
-                  <option value="Fivics">Fivics</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option 
+                    v-for="manufacturer in manufacturerData.recurve_limbs" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
+                  >
+                    {{ manufacturer }}
+                  </option>
                   <option value="Other">Other</option>
                 </select>
 
@@ -287,12 +286,14 @@
                     class="form-select"
                   >
                     <option value="">Select Riser Brand</option>
-                    <option value="Samick">Samick</option>
-                    <option value="Bear">Bear</option>
-                    <option value="PSE">PSE</option>
-                    <option value="Martin">Martin</option>
-                    <option value="Black Widow">Black Widow</option>
-                    <option value="Sage">Sage</option>
+                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                    <option 
+                      v-for="manufacturer in manufacturerData.traditional_risers" 
+                      :key="manufacturer" 
+                      :value="manufacturer"
+                    >
+                      {{ manufacturer }}
+                    </option>
                     <option value="Other">Other</option>
                   </select>
 
@@ -343,12 +344,14 @@
                     class="form-select"
                   >
                     <option value="">Select Limb Brand</option>
-                    <option value="Samick">Samick</option>
-                    <option value="Bear">Bear</option>
-                    <option value="PSE">PSE</option>
-                    <option value="Martin">Martin</option>
-                    <option value="Black Widow">Black Widow</option>
-                    <option value="Sage">Sage</option>
+                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                    <option 
+                      v-for="manufacturer in manufacturerData.traditional_limbs" 
+                      :key="manufacturer" 
+                      :value="manufacturer"
+                    >
+                      {{ manufacturer }}
+                    </option>
                     <option value="Other">Other</option>
                   </select>
 
@@ -408,14 +411,14 @@
                 class="form-select"
               >
                 <option value="">Select Brand/Maker</option>
-                <option value="Howard Hill">Howard Hill</option>
-                <option value="Bear">Bear</option>
-                <option value="Bodnik">Bodnik</option>
-                <option value="Black Widow">Black Widow</option>
-                <option value="Great Plains">Great Plains</option>
-                <option value="Three Rivers Archery">Three Rivers Archery</option>
-                <option value="Martin">Martin</option>
-                <option value="Samick">Samick</option>
+                <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                <option 
+                  v-for="manufacturer in manufacturerData.longbows" 
+                  :key="manufacturer" 
+                  :value="manufacturer"
+                >
+                  {{ manufacturer }}
+                </option>
                 <option value="Other">Other</option>
               </select>
 
@@ -483,7 +486,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
+import { useApi } from '~/composables/useApi';
 
 const props = defineProps({
   modelValue: Object, // Represents newSetup object
@@ -524,6 +528,22 @@ const setupData = ref({
 });
 
 const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
+
+// API composable
+const api = useApi();
+
+// Reactive manufacturer data
+const manufacturerData = ref({
+  compound_bows: [],
+  recurve_risers: [],
+  recurve_limbs: [],
+  traditional_risers: [],
+  traditional_limbs: [],
+  longbows: []
+});
+
+const loadingManufacturers = ref(true);
+const manufacturerError = ref('');
 
 const toggleUsage = (usage) => {
   const index = setupData.value.bow_usage.indexOf(usage);
@@ -602,6 +622,42 @@ const clearOtherValue = (fieldName) => {
   }
 };
 
+// Load manufacturers from API
+const loadManufacturers = async () => {
+  try {
+    loadingManufacturers.value = true;
+    manufacturerError.value = '';
+    
+    const response = await api.get('/bow-equipment/manufacturers');
+    
+    if (response && response.categories) {
+      manufacturerData.value = {
+        compound_bows: response.categories.compound_bows || [],
+        recurve_risers: response.categories.recurve_risers || [],
+        recurve_limbs: response.categories.recurve_limbs || [],
+        traditional_risers: response.categories.traditional_risers || [],
+        traditional_limbs: response.categories.traditional_limbs || [],
+        longbows: response.categories.longbows || []
+      };
+    }
+  } catch (error) {
+    console.error('Error loading manufacturers:', error);
+    manufacturerError.value = 'Failed to load manufacturers';
+    
+    // Fallback to hardcoded manufacturers if API fails
+    manufacturerData.value = {
+      compound_bows: ['Hoyt', 'Mathews', 'PSE', 'Bowtech', 'Prime', 'Elite', 'Bear', 'Diamond', 'Mission'],
+      recurve_risers: ['Hoyt', 'Win&Win', 'Uukha', 'Samick', 'Bernardini', 'Border', 'Mybo'],
+      recurve_limbs: ['Hoyt', 'Win&Win', 'Uukha', 'Border', 'Samick', 'SF Archery', 'Core', 'Fivics'],
+      traditional_risers: ['Samick', 'Bear', 'PSE', 'Martin', 'Black Widow'],
+      traditional_limbs: ['Samick', 'Bear', 'PSE', 'Martin', 'Black Widow'],
+      longbows: ['Howard Hill', 'Bear', 'Bodnik', 'Black Widow', 'Great Plains', 'Three Rivers Archery', 'Martin', 'Samick']
+    };
+  } finally {
+    loadingManufacturers.value = false;
+  }
+};
+
 const saveBowSetup = () => {
   // Explicitly define the payload to ensure only correct fields are sent
   const payload = {
@@ -640,6 +696,11 @@ const saveBowSetup = () => {
   // This will ensure nock_weight and other extraneous fields are not sent
   emit('save', payload);
 };
+
+// Load manufacturers on component mount
+onMounted(() => {
+  loadManufacturers();
+});
 </script>
 
 <style scoped>

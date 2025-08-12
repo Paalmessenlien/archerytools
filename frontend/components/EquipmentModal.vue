@@ -156,13 +156,45 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Manufacturer *
                 </label>
+                <select
+                  v-if="!showCustomManufacturer"
+                  @change="handleManufacturerSelection($event.target.value)"
+                  :value="customEquipment.manufacturer"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                  required
+                >
+                  <option value="">Select Manufacturer</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option v-if="!loadingManufacturers && customEquipment.category && availableManufacturers.length === 0" disabled>No manufacturers found</option>
+                  <option 
+                    v-for="manufacturer in availableManufacturers" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
+                  >
+                    {{ manufacturer }}
+                  </option>
+                  <option v-if="availableManufacturers.length > 0" value="Other">Other</option>
+                </select>
+                
+                <!-- Custom manufacturer input -->
                 <input
+                  v-if="showCustomManufacturer"
                   v-model="customEquipment.manufacturer"
                   type="text"
                   required
                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                  placeholder="e.g., Trophy Ridge, Easton"
+                  placeholder="Enter custom manufacturer name..."
                 />
+                
+                <!-- Back to dropdown button -->
+                <button
+                  v-if="showCustomManufacturer"
+                  @click="showCustomManufacturer = false; customEquipment.manufacturer = ''"
+                  type="button"
+                  class="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                >
+                  ← Back to manufacturer list
+                </button>
               </div>
 
               <div>
@@ -262,7 +294,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useApi } from '~/composables/useApi'
 
 const props = defineProps({
   mode: {
@@ -298,6 +331,12 @@ const customEquipment = ref({
   description: '',
   installation_notes: ''
 })
+
+// API composable and manufacturer data
+const api = useApi()
+const availableManufacturers = ref([])
+const loadingManufacturers = ref(false)
+const showCustomManufacturer = ref(false)
 
 // Computed
 const canSave = computed(() => {
@@ -356,6 +395,59 @@ const getSpecOptions = (key) => {
 const formatSpecKey = (key) => {
   return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
+
+// Load manufacturers for a specific equipment category
+const loadManufacturersForCategory = async (category) => {
+  if (!category) {
+    availableManufacturers.value = []
+    return
+  }
+  
+  try {
+    loadingManufacturers.value = true
+    
+    // Map equipment category names to API category names
+    const categoryMapping = {
+      'String': 'strings',
+      'Sight': 'sights', 
+      'Stabilizer': 'stabilizers',
+      'Arrow Rest': 'arrow_rests',
+      'Weight': 'weights'
+    }
+    
+    const apiCategory = categoryMapping[category]
+    if (!apiCategory) {
+      availableManufacturers.value = []
+      return
+    }
+    
+    const response = await api.get(`/bow-equipment/manufacturers?category=${apiCategory}`)
+    availableManufacturers.value = response?.manufacturers || []
+  } catch (error) {
+    console.error('Error loading manufacturers:', error)
+    availableManufacturers.value = []
+  } finally {
+    loadingManufacturers.value = false
+  }
+}
+
+// Handle manufacturer selection
+const handleManufacturerSelection = (value) => {
+  if (value === 'Other') {
+    showCustomManufacturer.value = true
+    customEquipment.value.manufacturer = ''
+  } else {
+    showCustomManufacturer.value = false
+    customEquipment.value.manufacturer = value
+  }
+}
+
+// Watch for category changes to load manufacturers
+watch(() => customEquipment.value.category, (newCategory) => {
+  customEquipment.value.manufacturer = ''
+  showCustomManufacturer.value = false
+  loadManufacturersForCategory(newCategory)
+})
 
 const saveEquipment = async () => {
   if (!canSave.value) return

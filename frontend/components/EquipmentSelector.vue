@@ -131,6 +131,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useApi } from '~/composables/useApi'
 
 const emit = defineEmits(['select'])
 
@@ -141,6 +142,11 @@ const loading = ref(false)
 const selectedCategory = ref('')
 const searchKeywords = ref('')
 const selectedManufacturer = ref('')
+
+// API and unified manufacturer system
+const api = useApi()
+const unifiedManufacturers = ref([])
+const loadingUnifiedManufacturers = ref(false)
 
 // Computed
 const filteredEquipment = computed(() => {
@@ -172,11 +178,53 @@ const filteredEquipment = computed(() => {
 })
 
 const manufacturers = computed(() => {
-  const unique = [...new Set(equipment.value.map(item => item.manufacturer))]
-  return unique.sort()
+  // Get manufacturers from loaded equipment
+  const equipmentManufacturers = [...new Set(equipment.value.map(item => item.manufacturer))]
+  
+  // Combine with unified manufacturers for the current category (if available)
+  const categoryManufacturers = unifiedManufacturers.value
+  
+  // Merge and deduplicate
+  const allManufacturers = [...new Set([...equipmentManufacturers, ...categoryManufacturers])]
+  
+  return allManufacturers.filter(Boolean).sort()
 })
 
 // Methods
+const loadUnifiedManufacturers = async (categoryName) => {
+  if (!categoryName) {
+    unifiedManufacturers.value = []
+    return
+  }
+  
+  try {
+    loadingUnifiedManufacturers.value = true
+    
+    // Map equipment category names to API category names
+    const categoryMapping = {
+      'String': 'strings',
+      'Sight': 'sights',
+      'Stabilizer': 'stabilizers', 
+      'Arrow Rest': 'arrow_rests',
+      'Weight': 'weights'
+    }
+    
+    const apiCategory = categoryMapping[categoryName]
+    if (!apiCategory) {
+      unifiedManufacturers.value = []
+      return
+    }
+    
+    const response = await api.get(`/bow-equipment/manufacturers?category=${apiCategory}`)
+    unifiedManufacturers.value = response?.manufacturers || []
+  } catch (error) {
+    console.error('Error loading unified manufacturers:', error)
+    unifiedManufacturers.value = []
+  } finally {
+    loadingUnifiedManufacturers.value = false
+  }
+}
+
 const loadCategories = async () => {
   try {
     const { $fetch } = useNuxtApp()
@@ -269,10 +317,17 @@ watch([selectedCategory, selectedManufacturer, searchKeywords], () => {
   loadEquipment()
 }, { deep: true })
 
+watch(selectedCategory, (newCategory) => {
+  loadUnifiedManufacturers(newCategory)
+})
+
 // Lifecycle
 onMounted(async () => {
   await loadCategories()
   await loadEquipment()
+  if (selectedCategory.value) {
+    await loadUnifiedManufacturers(selectedCategory.value)
+  }
 })
 </script>
 
