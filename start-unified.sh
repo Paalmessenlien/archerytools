@@ -513,7 +513,25 @@ ensure_unified_databases() {
 run_database_migrations() {
     print_message "$BLUE" "🔄 Running database migrations..."
     
-    # Check if migration runner exists
+    # Check if we're running with Docker containers
+    if command -v docker &> /dev/null && docker ps &> /dev/null; then
+        print_message "$BLUE" "🐳 Detected Docker environment, using Docker migration runner..."
+        
+        # Give containers a moment to start if they're just starting up
+        sleep 3
+        
+        # Use Docker migration runner if available
+        if [[ -f "docker-migration-runner.sh" ]]; then
+            if ./docker-migration-runner.sh migrate; then
+                print_message "$GREEN" "✅ Database migrations completed successfully in Docker"
+                return 0
+            else
+                print_message "$YELLOW" "⚠️  Docker migrations had issues, trying fallback..."
+            fi
+        fi
+    fi
+    
+    # Fallback: Check if migration runner exists for host execution
     if [[ -f "arrow_scraper/run_migrations.py" ]]; then
         cd arrow_scraper
         
@@ -523,7 +541,7 @@ run_database_migrations() {
         
         # Try to run migrations with Python
         if command -v python3 &> /dev/null; then
-            print_message "$BLUE" "🔧 Running migrations with Python 3..."
+            print_message "$BLUE" "🔧 Running migrations with Python 3 on host..."
             
             if python3 run_migrations.py --status-only; then
                 # Show migration status and run if needed

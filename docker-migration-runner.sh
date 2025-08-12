@@ -88,6 +88,22 @@ copy_migrations_to_container() {
         }
     fi
     
+    # Copy database import manager if it exists
+    if [ -f "./arrow_scraper/database_import_manager.py" ]; then
+        docker cp ./arrow_scraper/database_import_manager.py "$container_name:/app/" || {
+            print_message "$YELLOW" "⚠️  Could not copy database import manager"
+        }
+    fi
+    
+    # Copy processed data directory for JSON imports if it exists
+    if [ -d "./arrow_scraper/data/processed" ]; then
+        # Create data directory in container first
+        docker exec "$container_name" mkdir -p /app/data 2>/dev/null || true
+        docker cp ./arrow_scraper/data/processed "$container_name:/app/data/" || {
+            print_message "$YELLOW" "⚠️  Could not copy processed data directory"
+        }
+    fi
+    
     print_message "$GREEN" "✅ Migration files copied to container"
     return 0
 }
