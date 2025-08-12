@@ -1,0 +1,90 @@
+{
+  "archery_spine_catalog": {
+    "description": "Comprehensive archery spine calculation and arrow selection reference",
+    "version": "1.0",
+    "last_updated": "2025-01-12",
+    "structure": {
+      "note": "This catalog has been split into multiple files for better organization and maintainability",
+      "files": {
+        "calculation_formulas.json": {
+          "description": "Mathematical formulas and adjustments for calculating proper arrow spine",
+          "contains": [
+            "Base conditions and measurement units",
+            "Adjustment formulas for length, point weight, bow speed, release type",
+            "Complete calculation formula and examples",
+            "Bow type specific notes"
+          ]
+        },
+        "conversion_tables.json": {
+          "description": "Conversion tables between different spine systems and measurement units",
+          "contains": [
+            "Spine equivalents between carbon, aluminum, and wood systems",
+            "Weight conversions (grains, grams, ounces)",
+            "Length conversions (inches, cm, mm)",
+            "Diameter conversions and common sizes"
+          ]
+        },
+        "spine_charts.json": {
+          "description": "Comprehensive spine charts from various manufacturers",
+          "contains": [
+            "Easton spine charts (target, hunting, aluminum)",
+            "Gold Tip spine charts (compound, recurve)",
+            "Victory spine charts (various models)",
+            "Skylon spine charts",
+            "Wood arrow spine charts (POC, Pine, Douglas Fir, Birch)",
+            "Generic carbon arrow references"
+          ]
+        },
+        "materials_and_components.json": {
+          "description": "Arrow materials, component specifications, and building guidelines",
+          "contains": [
+            "Carbon, aluminum, and wood arrow properties",
+            "Point, nock, and fletching specifications",
+            "Insert specifications and weight options",
+            "Cutting and assembly guidelines"
+          ]
+        },
+        "tuning_and_safety.json": {
+          "description": "Tuning methods and safety considerations",
+          "contains": [
+            "Bare shaft tuning procedures",
+            "Paper tuning methods",
+            "Group tuning guidelines",
+            "Safety considerations for all arrow types",
+            "Arrow weight minimums"
+          ]
+        },
+        "troubleshooting_and_resources.json": {
+          "description": "Troubleshooting guide and manufacturer resources",
+          "contains": [
+            "Common spine problems and solutions",
+            "Flight pattern diagnosis",
+            "Manufacturer websites and resources",
+            "Technical support information"
+          ]
+        }
+      }
+    },
+    "usage_notes": {
+      "getting_started": "Begin with calculation_formulas.json to understand spine calculation basics",
+      "spine_selection": "Use spine_charts.json to find appropriate spine for your setup",
+      "conversions": "Reference conversion_tables.json for spine equivalents and unit conversions",
+      "building_arrows": "Consult materials_and_components.json for component specifications",
+      "tuning": "Follow procedures in tuning_and_safety.json for optimal arrow flight",
+      "troubleshooting": "Use troubleshooting_and_resources.json to diagnose and fix issues"
+    },
+    "important_disclaimers": [
+      "Always consult manufacturer charts for the most current recommendations",
+      "Spine calculations are approximations - fine-tuning may be required",
+      "Safety should always be the top priority when selecting arrows",
+      "Different manufacturers may have variations in spine values",
+      "Environmental conditions can affect arrow performance"
+    ],
+    "file_format": {
+      "encoding": "UTF-8",
+      "format": "JSON",
+      "validation": "All files should be valid JSON format",
+      "compatibility": "Compatible with standard JSON parsers and archery calculation software"
+    }
+  }
+}

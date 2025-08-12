@@ -1,0 +1,91 @@
+{
+  "troubleshooting_guide": {
+    "common_spine_problems": {
+      "arrows_grouping_left": {
+        "right_handed_archer": "Arrow too weak - try stiffer spine or heavier point",
+        "left_handed_archer": "Arrow too stiff - try weaker spine or lighter point",
+        "other_causes": ["Rest positioned too far left", "Grip torque"]
+      },
+      "arrows_grouping_right": {
+        "right_handed_archer": "Arrow too stiff - try weaker spine or lighter point",
+        "left_handed_archer": "Arrow too weak - try stiffer spine or heavier point",
+        "other_causes": ["Rest positioned too far right", "Bow hand pressure"]
+      },
+      "inconsistent_groups": {
+        "possible_causes": [
+          "Mixed spine arrows in set",
+          "Varying point weights",
+          "Damaged arrows",
+          "Inconsistent shooting form",
+          "Bow tuning issues"
+        ],
+        "solutions": [
+          "Check all arrows for consistency",
+          "Verify point weights match",
+          "Inspect arrows for damage",
+          "Work on shooting form",
+          "Re-tune bow setup"
+        ]
+      },
+      "arrows_hitting_high": {
+        "causes": ["Nocking point too low", "Arrow too weak", "Overdraw"],
+        "solutions": ["Raise nocking point", "Try stiffer spine", "Check draw length"]
+      },
+      "arrows_hitting_low": {
+        "causes": ["Nocking point too high", "Arrow too stiff", "Underdraw"],
+        "solutions": ["Lower nocking point", "Try weaker spine", "Check form"]
+      }
+    },
+    "flight_pattern_diagnosis": {
+      "fishtailing": {
+        "description": "Arrow oscillates side to side in flight",
+        "causes": ["Incorrect spine", "Poor release", "Arrow rest issues"],
+        "solutions": ["Adjust spine selection", "Work on release technique", "Tune arrow rest"]
+      },
+      "porpoising": {
+        "description": "Arrow oscillates up and down in flight",
+        "causes": ["Nocking point issues", "Vertical rest alignment", "Release problems"],
+        "solutions": ["Adjust nocking point", "Check rest alignment", "Improve release"]
+      },
+      "erratic_flight": {
+        "description": "Arrow flight is unpredictable",
+        "causes": ["Damaged fletching", "Bent arrow", "Loose components"],
+        "solutions": ["Check fletching condition", "Verify arrow straightness", "Tighten all components"]
+      }
+    }
+  },
+  "manufacturer_resources": {
+    "easton": {
+      "website": "eastonarchery.com",
+      "spine_calculator": "Available on website - comprehensive calculator",
+      "technical_support": "Extensive documentation and phone support available",
+      "notable_features": "Industry leader with most comprehensive spine charts"
+    },
+    "gold_tip": {
+      "website": "goldtip.com",
+      "spine_calculator": "Available on website",
+      "specialties": "Hunting arrows and traditional archery options"
+    },
+    "victory": {
+      "website": "victoryarchery.com",
+      "spine_calculator": "Available on website",
+      "specialties": "High-performance hunting and target arrows"
+    },
+    "black_eagle": {
+      "website": "blackeaglearrows.com",
+      "spine_calculator": "Available on website",
+      "specialties": "Premium hunting arrows"
+    },
+    "carbon_express": {
+      "website": "carbonexpressarrows.com",
+      "spine_calculator": "Available on website",
+      "note": "Uses different spine marking system - verify with charts"
+    },
+    "skylon": {
+      "website": "skylonarchery.com",
+      "spine_calculator": "Limited online resources",
+      "note": "Uses proprietary spine designations - see conversion charts"
+    },
+    "general_note": "Always consult manufacturer resources for the most current spine charts and recommendations. Online calculators are helpful but may not account for all variables."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "tuning_guidelines": {
+    "bare_shaft_tuning": {
+      "description": "Method to verify correct spine selection by shooting unfletched arrows",
+      "procedure": "Shoot bare shafts alongside fletched arrows at 20 yards to check spine",
+      "setup": "Use same point weight and arrow length as fletched arrows",
+      "indicators": {
+        "bare_shaft_left_of_group": "Arrow too weak (right-handed archer) - try stiffer spine",
+        "bare_shaft_right_of_group": "Arrow too stiff (right-handed archer) - try weaker spine",
+        "bare_shaft_low": "Nocking point too high or arrow too stiff",
+        "bare_shaft_high": "Nocking point too low or arrow too weak",
+        "bare_shaft_with_group": "Correct spine selection"
+      },
+      "distance_recommendations": {
+        "initial_tuning": "10-15 yards",
+        "fine_tuning": "20-30 yards",
+        "verification": "40+ yards"
+      }
+    },
+    "paper_tuning": {
+      "description": "Method to check arrow flight through paper to diagnose spine issues",
+      "setup": "Shoot through paper frame at 3-6 feet from bow",
+      "ideal_result": "Bullet hole through paper with minimal tear",
+      "common_tears": {
+        "tail_left": "Arrow too weak or rest too far left (right-handed archer)",
+        "tail_right": "Arrow too stiff or rest too far right (right-handed archer)",
+        "tail_high": "Nocking point too low or arrow spine issues",
+        "tail_low": "Nocking point too high or arrow spine issues",
+        "diagonal_tears": "Combination of horizontal and vertical issues"
+      },
+      "adjustment_sequence": [
+        "1. Fix nocking point height first",
+        "2. Adjust arrow rest windage",
+        "3. Fine-tune with spine selection",
+        "4. Verify with bare shaft tuning"
+      ]
+    },
+    "group_tuning": {
+      "description": "Fine-tuning for best accuracy at longer distances",
+      "procedure": "Shoot groups at various distances to verify consistency",
+      "distances": ["20 yards", "40 yards", "60+ yards"],
+      "indicators": {
+        "groups_open_with_distance": "Possible spine or rest issues",
+        "consistent_groups": "Good tune achieved",
+        "erratic_patterns": "Check arrow consistency and bow setup"
+      }
+    }
+  },
+  "safety_considerations": {
+    "carbon_arrows": [
+      "Inspect for cracks before each use - especially around nock and point ends",
+      "Never shoot damaged carbon arrows - they can shatter catastrophically",
+      "Carbon fragments can cause serious injury",
+      "Use proper carbon arrow saw with fine-tooth blade for cutting",
+      "Check for delamination or splintering",
+      "Replace arrows with any visible damage immediately"
+    ],
+    "aluminum_arrows": [
+      "Check for bends and straighten as needed using arrow straightener",
+      "Inspect for cracks at nock end and point insert",
+      "Replace if dented or cracked - bent arrows affect accuracy",
+      "Check for loose points or inserts",
+      "Aluminum arrows can be repaired if not severely damaged"
+    ],
+    "wood_arrows": [
+      "Check for grain run-out that could cause breakage",
+      "Inspect for cracks along grain lines",
+      "Ensure proper moisture content - too dry arrows crack easily",
+      "Sand smooth any rough spots that could cause splinters",
+      "Check fletching attachment regularly",
+      "Store in consistent humidity environment"
+    ],
+    "general_safety": [
+      "Never dry fire a bow - always use proper arrow",
+      "Always use arrows appropriate for bow draw weight",
+      "Minimum arrow weight: 5 grains per pound of draw weight",
+      "Check arrow rest clearance to prevent contact",
+      "Ensure proper nocking point location",
+      "Never shoot an arrow that falls off the rest",
+      "Always inspect equipment before shooting",
+      "Use appropriate backstop for your shooting environment",
+      "Never shoot at hard surfaces that could cause ricochets"
+    ],
+    "arrow_weight_minimums": {
+      "compound_bows": "5 grains per pound minimum (6+ grains recommended)",
+      "recurve_bows": "8 grains per pound minimum",
+      "longbows": "10 grains per pound minimum",
+      "note": "Lighter arrows can damage bow and are dangerous"
+    }
+  }
+}

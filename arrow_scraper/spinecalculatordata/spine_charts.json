@@ -1,0 +1,498 @@
+{
+  "spine_charts": [
+    {
+      "manufacturer": "Easton",
+      "model": "Target A/C All-Carbon",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "17-23", "arrow_length_in": 28, "spine": "800-700"},
+        {"draw_weight_range_lbs": "24-28", "arrow_length_in": 28, "spine": "720-625"},
+        {"draw_weight_range_lbs": "29-34", "arrow_length_in": 28, "spine": "675-600"},
+        {"draw_weight_range_lbs": "35-39", "arrow_length_in": 28, "spine": "640-570"},
+        {"draw_weight_range_lbs": "40-44", "arrow_length_in": 28, "spine": "575-500"},
+        {"draw_weight_range_lbs": "45-49", "arrow_length_in": 28, "spine": "525-450"},
+        {"draw_weight_range_lbs": "50-54", "arrow_length_in": 28, "spine": "475-400"},
+        {"draw_weight_range_lbs": "55-59", "arrow_length_in": 28, "spine": "440-370"},
+        {"draw_weight_range_lbs": "60-64", "arrow_length_in": 28, "spine": "400-340"},
+        {"draw_weight_range_lbs": "65-69", "arrow_length_in": 28, "spine": "370-310"},
+        {"draw_weight_range_lbs": "70-76", "arrow_length_in": 28, "spine": "340-300"}
+      ],
+      "provenance": "PDF: Easton 301055-A Target"
+    },
+    {
+      "manufacturer": "Easton",
+      "model": "Target A/C All-Carbon",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "17-23", "arrow_length_in": 28, "spine": "800-700"},
+        {"draw_weight_range_lbs": "24-28", "arrow_length_in": 28, "spine": "720-625"},
+        {"draw_weight_range_lbs": "29-34", "arrow_length_in": 28, "spine": "675-600"},
+        {"draw_weight_range_lbs": "35-39", "arrow_length_in": 28, "spine": "640-570"},
+        {"draw_weight_range_lbs": "40-44", "arrow_length_in": 28, "spine": "575-500"},
+        {"draw_weight_range_lbs": "45-49", "arrow_length_in": 28, "spine": "525-450"},
+        {"draw_weight_range_lbs": "50-54", "arrow_length_in": 28, "spine": "475-400"},
+        {"draw_weight_range_lbs": "55-59", "arrow_length_in": 28, "spine": "440-370"},
+        {"draw_weight_range_lbs": "60-64", "arrow_length_in": 28, "spine": "400-340"},
+        {"draw_weight_range_lbs": "65-69", "arrow_length_in": 28, "spine": "370-310"},
+        {"draw_weight_range_lbs": "70-76", "arrow_length_in": 28, "spine": "340-300"}
+      ],
+      "provenance": "PDF: Easton 301055-A Target Recurve"
+    },
+    {
+      "manufacturer": "Easton",
+      "model": "Hunting",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "22-26", "arrow_length_in": 28, "spine": "500-400"},
+        {"draw_weight_range_lbs": "27-31", "arrow_length_in": 28, "spine": "500-400"},
+        {"draw_weight_range_lbs": "32-36", "arrow_length_in": 28, "spine": "500-400"},
+        {"draw_weight_range_lbs": "37-41", "arrow_length_in": 28, "spine": "400-350"},
+        {"draw_weight_range_lbs": "42-46", "arrow_length_in": 28, "spine": "400-350"},
+        {"draw_weight_range_lbs": "47-51", "arrow_length_in": 28, "spine": "400-350"},
+        {"draw_weight_range_lbs": "52-56", "arrow_length_in": 28, "spine": "350-300"},
+        {"draw_weight_range_lbs": "57-61", "arrow_length_in": 28, "spine": "350-300"},
+        {"draw_weight_range_lbs": "62-66", "arrow_length_in": 28, "spine": "350-300"},
+        {"draw_weight_range_lbs": "67-72", "arrow_length_in": 28, "spine": "300-250"},
+        {"draw_weight_range_lbs": "73-78", "arrow_length_in": 28, "spine": "300-250"},
+        {"draw_weight_range_lbs": "79-84", "arrow_length_in": 28, "spine": "300-250"},
+        {"draw_weight_range_lbs": "85-90", "arrow_length_in": 28, "spine": "250-200"}
+      ],
+      "provenance": "PDF: Easton Hunting Arrow Selection"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model": "Compound 315+ FPS",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "30-34", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "35-39", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "40-44", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "45-49", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "50-54", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "55-59", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "60-64", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "65-69", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "70-74", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "75-79", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "80-84", "arrow_length_in": 28, "spine": "250"}
+      ],
+      "provenance": "PDF: Gold Tip Compound 315+ FPS"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model": "Compound 315- FPS",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "30-34", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "35-39", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "40-44", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "45-49", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "50-54", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "55-59", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "60-64", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "65-69", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "70-74", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "75-79", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "80-84", "arrow_length_in": 28, "spine": "250"}
+      ],
+      "provenance": "PDF: Gold Tip Compound 315- FPS"
+    },
+    {
+      "manufacturer": "Gold Tip",
+      "model": "Recurve",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "30-34", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "35-39", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "40-44", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "45-49", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "50-54", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "55-59", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "60-64", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "65-69", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "70-74", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "75-79", "arrow_length_in": 28, "spine": "300"}
+      ],
+      "provenance": "PDF: Gold Tip Recurve"
+    },
+    {
+      "manufacturer": "Victory",
+      "model": "Recurve",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "12-14", "arrow_length_in": 28, "spine": "900"},
+        {"draw_weight_range_lbs": "14-16", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "16-18", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "18-22", "arrow_length_in": 28, "spine": "700"},
+        {"draw_weight_range_lbs": "22-26", "arrow_length_in": 28, "spine": "700"},
+        {"draw_weight_range_lbs": "27-31", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "32-36", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "37-41", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "42-46", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "47-51", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "52-56", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "57-61", "arrow_length_in": 28, "spine": "350"}
+      ],
+      "provenance": "PDF: Victory Archery Recurve Spine Chart"
+    },
+    {
+      "manufacturer": "Victory",
+      "model": "VF/RIP XV",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "32-36", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "37-41", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "42-46", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "47-51", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "52-56", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "57-61", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "62-66", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "67-72", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "73-78", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "79-84", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "85-90", "arrow_length_in": 28, "spine": "250"},
+        {"draw_weight_range_lbs": "90-95", "arrow_length_in": 28, "spine": "250"},
+        {"draw_weight_range_lbs": "95-100", "arrow_length_in": 28, "spine": "200"}
+      ],
+      "provenance": "PDF: Victory VF/RIP XV Spine Chart"
+    },
+    {
+      "manufacturer": "Victory",
+      "model": "VAP/VAP TKO/VAP SS/RIP/RIP TKO/RIP SS",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "32-36", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "37-41", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "42-46", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "47-51", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "52-56", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "57-61", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "62-66", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "67-72", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "73-78", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "79-84", "arrow_length_in": 28, "spine": "250/235"},
+        {"draw_weight_range_lbs": "85-90", "arrow_length_in": 28, "spine": "250/235"},
+        {"draw_weight_range_lbs": "90-95", "arrow_length_in": 28, "spine": "200"},
+        {"draw_weight_range_lbs": "95-100", "arrow_length_in": 28, "spine": "175"}
+      ],
+      "provenance": "PDF: Victory VAP/RIP Series Spine Chart"
+    },
+    {
+      "manufacturer": "Skylon",
+      "model": "Compound",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "29-35", "arrow_length_in": 28, "spine": "1200"},
+        {"draw_weight_range_lbs": "35-40", "arrow_length_in": 28, "spine": "1000"},
+        {"draw_weight_range_lbs": "40-45", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "45-50", "arrow_length_in": 28, "spine": "700-650"},
+        {"draw_weight_range_lbs": "50-55", "arrow_length_in": 28, "spine": "600-550"},
+        {"draw_weight_range_lbs": "55-60", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "60-65", "arrow_length_in": 28, "spine": "450"},
+        {"draw_weight_range_lbs": "65-70", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "70-76", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "76-82", "arrow_length_in": 28, "spine": "300"}
+      ],
+      "provenance": "PDF: Skylon Archery Compound Spine Chart (A2=1200, A3=1000, A4=800, A5=700-650, A6=600-550, A7=500, A8=450, A9=400, A10=350, A11=300)"
+    },
+    {
+      "manufacturer": "Skylon",
+      "model": "Recurve",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "16-19", "arrow_length_in": 28, "spine": "2000"},
+        {"draw_weight_range_lbs": "20-23", "arrow_length_in": 28, "spine": "1200"},
+        {"draw_weight_range_lbs": "24-29", "arrow_length_in": 28, "spine": "700-650"},
+        {"draw_weight_range_lbs": "30-35", "arrow_length_in": 28, "spine": "600-550"},
+        {"draw_weight_range_lbs": "36-40", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "41-45", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "46-50", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "51-55", "arrow_length_in": 28, "spine": "275"},
+        {"draw_weight_range_lbs": "56-60", "arrow_length_in": 28, "spine": "250"},
+        {"draw_weight_range_lbs": "61-65", "arrow_length_in": 28, "spine": "250"},
+        {"draw_weight_range_lbs": "66-70", "arrow_length_in": 28, "spine": "250"}
+      ],
+      "provenance": "PDF: Skylon Archery Recurve Spine Chart (Y4=2000, A2=1200, A5=700-650, A6=600-550, A9=400, A10=350, A11=300, A12=275, A13=250)"
+    },
+    {
+      "manufacturer": "Port Orford Cedar",
+      "model": "Traditional Wood Arrows",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "wood_spine_range",
+        "note": "Wood spine measured with 2lb weight on 26 inch centers, 125gr point standard"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "26-30", "arrow_length_in": 28, "spine": "55-60"},
+        {"draw_weight_range_lbs": "31-35", "arrow_length_in": 28, "spine": "50-55"},
+        {"draw_weight_range_lbs": "36-40", "arrow_length_in": 28, "spine": "45-50"},
+        {"draw_weight_range_lbs": "41-45", "arrow_length_in": 28, "spine": "40-45"},
+        {"draw_weight_range_lbs": "46-50", "arrow_length_in": 28, "spine": "35-40"},
+        {"draw_weight_range_lbs": "51-55", "arrow_length_in": 28, "spine": "30-35"},
+        {"draw_weight_range_lbs": "56-60", "arrow_length_in": 28, "spine": "26-30"},
+        {"draw_weight_range_lbs": "61-65", "arrow_length_in": 28, "spine": "21-25"},
+        {"draw_weight_range_lbs": "66-70", "arrow_length_in": 28, "spine": "16-20"}
+      ],
+      "provenance": "3 Rivers Archery Wood Arrow Spine Chart - Recurve/Center Shot Longbow"
+    },
+    {
+      "manufacturer": "Port Orford Cedar",
+      "model": "Traditional Wood Arrows",
+      "bow_type": "longbow",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "wood_spine_range",
+        "note": "Wood spine measured with 2lb weight on 26 inch centers, 125gr point standard"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "29-34", "arrow_length_in": 28, "spine": "55-60"},
+        {"draw_weight_range_lbs": "35-40", "arrow_length_in": 28, "spine": "50-55"},
+        {"draw_weight_range_lbs": "41-46", "arrow_length_in": 28, "spine": "45-50"},
+        {"draw_weight_range_lbs": "47-52", "arrow_length_in": 28, "spine": "40-45"},
+        {"draw_weight_range_lbs": "53-58", "arrow_length_in": 28, "spine": "35-40"},
+        {"draw_weight_range_lbs": "59-64", "arrow_length_in": 28, "spine": "30-35"},
+        {"draw_weight_range_lbs": "65-70", "arrow_length_in": 28, "spine": "26-30"},
+        {"draw_weight_range_lbs": "71-76", "arrow_length_in": 28, "spine": "21-25"},
+        {"draw_weight_range_lbs": "77-82", "arrow_length_in": 28, "spine": "16-20"}
+      ],
+      "provenance": "3 Rivers Archery Wood Arrow Spine Chart - Longbow/Self Bow"
+    },
+    {
+      "manufacturer": "Pine",
+      "model": "Premium Pine Wood Arrows",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "wood_spine_range",
+        "note": "Pine wood arrows, typically heavier than POC, spine measured with 2lb weight on 26 inch centers"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "15-20", "arrow_length_in": 28, "spine": "75-80"},
+        {"draw_weight_range_lbs": "20-25", "arrow_length_in": 28, "spine": "70-75"},
+        {"draw_weight_range_lbs": "25-30", "arrow_length_in": 28, "spine": "65-70"},
+        {"draw_weight_range_lbs": "30-35", "arrow_length_in": 28, "spine": "60-65"},
+        {"draw_weight_range_lbs": "35-40", "arrow_length_in": 28, "spine": "55-60"},
+        {"draw_weight_range_lbs": "40-45", "arrow_length_in": 28, "spine": "50-55"},
+        {"draw_weight_range_lbs": "45-50", "arrow_length_in": 28, "spine": "45-50"},
+        {"draw_weight_range_lbs": "50-55", "arrow_length_in": 28, "spine": "40-45"},
+        {"draw_weight_range_lbs": "55-60", "arrow_length_in": 28, "spine": "35-40"}
+      ],
+      "provenance": "Based on Pine arrow characteristics - typically weaker spine than POC for same weight"
+    },
+    {
+      "manufacturer": "Douglas Fir",
+      "model": "Traditional Wood Arrows",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "wood_spine_range",
+        "note": "Douglas Fir wood arrows, typically denser and stiffer than POC"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "30-35", "arrow_length_in": 28, "spine": "50-55"},
+        {"draw_weight_range_lbs": "35-40", "arrow_length_in": 28, "spine": "45-50"},
+        {"draw_weight_range_lbs": "40-45", "arrow_length_in": 28, "spine": "40-45"},
+        {"draw_weight_range_lbs": "45-50", "arrow_length_in": 28, "spine": "35-40"},
+        {"draw_weight_range_lbs": "50-55", "arrow_length_in": 28, "spine": "30-35"},
+        {"draw_weight_range_lbs": "55-60", "arrow_length_in": 28, "spine": "26-30"},
+        {"draw_weight_range_lbs": "60-65", "arrow_length_in": 28, "spine": "21-25"},
+        {"draw_weight_range_lbs": "65-70", "arrow_length_in": 28, "spine": "16-20"},
+        {"draw_weight_range_lbs": "70-75", "arrow_length_in": 28, "spine": "12-16"}
+      ],
+      "provenance": "Based on Douglas Fir characteristics - stiffer than POC, similar to traditional spine charts"
+    },
+    {
+      "manufacturer": "Birch",
+      "model": "Laminated Birch Wood Arrows",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "wood_spine_range",
+        "note": "Laminated birch arrows, very stiff and strong, higher spine weights"
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "40-45", "arrow_length_in": 28, "spine": "35-40"},
+        {"draw_weight_range_lbs": "45-50", "arrow_length_in": 28, "spine": "30-35"},
+        {"draw_weight_range_lbs": "50-55", "arrow_length_in": 28, "spine": "26-30"},
+        {"draw_weight_range_lbs": "55-60", "arrow_length_in": 28, "spine": "21-25"},
+        {"draw_weight_range_lbs": "60-65", "arrow_length_in": 28, "spine": "16-20"},
+        {"draw_weight_range_lbs": "65-70", "arrow_length_in": 28, "spine": "12-16"},
+        {"draw_weight_range_lbs": "70-75", "arrow_length_in": 28, "spine": "10-15"},
+        {"draw_weight_range_lbs": "75-80", "arrow_length_in": 28, "spine": "8-12"},
+        {"draw_weight_range_lbs": "80-85", "arrow_length_in": 28, "spine": "6-10"}
+      ],
+      "provenance": "Based on Laminated Birch characteristics - very stiff wood, high spine weights"
+    },
+    {
+      "manufacturer": "Easton",
+      "model": "Aluminum Arrows (XX75/XX78)",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "standard_deflection",
+        "note": "Aluminum arrow nomenclature: first 2 digits = diameter in 1/64 inch, last 2 digits = wall thickness in 1/1000 inch. 28 inch arrows with 125 grain points standard."
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "35-42", "arrow_length_in": 28, "spine": "500-550", "arrow_size": "1816"},
+        {"draw_weight_range_lbs": "43-52", "arrow_length_in": 28, "spine": "450-500", "arrow_size": "1916"},
+        {"draw_weight_range_lbs": "53-60", "arrow_length_in": 28, "spine": "531", "arrow_size": "2016"},
+        {"draw_weight_range_lbs": "61-70", "arrow_length_in": 28, "spine": "407", "arrow_size": "2117"},
+        {"draw_weight_range_lbs": "65-75", "arrow_length_in": 28, "spine": "342", "arrow_size": "2315"},
+        {"draw_weight_range_lbs": "71-80", "arrow_length_in": 28, "spine": "376", "arrow_size": "2216"},
+        {"draw_weight_range_lbs": "75-85", "arrow_length_in": 28, "spine": "297", "arrow_size": "2317"},
+        {"draw_weight_range_lbs": "81-90", "arrow_length_in": 28, "spine": "337", "arrow_size": "2219"},
+        {"draw_weight_range_lbs": "85-95", "arrow_length_in": 28, "spine": "290", "arrow_size": "2413"}
+      ],
+      "provenance": "Compiled from Easton aluminum arrow charts and archery forum data - Compound bow recommendations"
+    },
+    {
+      "manufacturer": "Easton",
+      "model": "Aluminum Arrows (XX75/XX78)",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "standard_deflection",
+        "note": "Aluminum arrow nomenclature: first 2 digits = diameter in 1/64 inch, last 2 digits = wall thickness in 1/1000 inch. 28 inch arrows with 125 grain points standard. Traditional bows typically need weaker spine."
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "18-23", "arrow_length_in": 28, "spine": "700-800", "arrow_size": "1516"},
+        {"draw_weight_range_lbs": "24-27", "arrow_length_in": 28, "spine": "600-700", "arrow_size": "1616"},
+        {"draw_weight_range_lbs": "28-33", "arrow_length_in": 28, "spine": "550-600", "arrow_size": "1716"},
+        {"draw_weight_range_lbs": "34-42", "arrow_length_in": 28, "spine": "500-550", "arrow_size": "1816"},
+        {"draw_weight_range_lbs": "43-52", "arrow_length_in": 28, "spine": "450-500", "arrow_size": "1916"},
+        {"draw_weight_range_lbs": "53-60", "arrow_length_in": 28, "spine": "531", "arrow_size": "2016"},
+        {"draw_weight_range_lbs": "61-70", "arrow_length_in": 28, "spine": "407", "arrow_size": "2117"},
+        {"draw_weight_range_lbs": "71-80", "arrow_length_in": 28, "spine": "376", "arrow_size": "2216"}
+      ],
+      "provenance": "Based on Shooting the Stickbow aluminum arrow guide and traditional archery recommendations"
+    },
+    {
+      "manufacturer": "Generic",
+      "model": "Carbon Arrows - Universal Reference",
+      "bow_type": "compound",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "standard_deflection",
+        "note": "Generic carbon arrow spine reference for manufacturers not listed. Based on industry standard spine values. 28 inch arrows with 100-125 grain points. Adjust for specific manufacturer variations."
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "15-25", "arrow_length_in": 28, "spine": "1000"},
+        {"draw_weight_range_lbs": "20-30", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "25-35", "arrow_length_in": 28, "spine": "700"},
+        {"draw_weight_range_lbs": "30-40", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "35-45", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "40-50", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "45-55", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "50-60", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "55-65", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "60-70", "arrow_length_in": 28, "spine": "250"},
+        {"draw_weight_range_lbs": "65-75", "arrow_length_in": 28, "spine": "200"},
+        {"draw_weight_range_lbs": "70-80", "arrow_length_in": 28, "spine": "150"}
+      ],
+      "provenance": "Generic carbon arrow spine reference based on industry standards and common spine progressions"
+    },
+    {
+      "manufacturer": "Generic",
+      "model": "Carbon Arrows - Universal Reference",
+      "bow_type": "recurve",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "standard_deflection",
+        "note": "Generic carbon arrow spine reference for manufacturers not listed. Based on industry standard spine values for traditional archery. 28 inch arrows with 100-125 grain points. Recurve bows typically need weaker spine than compound bows."
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "15-20", "arrow_length_in": 28, "spine": "1200"},
+        {"draw_weight_range_lbs": "18-25", "arrow_length_in": 28, "spine": "1000"},
+        {"draw_weight_range_lbs": "22-30", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "26-35", "arrow_length_in": 28, "spine": "700"},
+        {"draw_weight_range_lbs": "30-40", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "35-45", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "40-50", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "45-55", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "50-60", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "55-65", "arrow_length_in": 28, "spine": "300"},
+        {"draw_weight_range_lbs": "60-70", "arrow_length_in": 28, "spine": "250"}
+      ],
+      "provenance": "Generic carbon arrow spine reference for traditional archery based on industry standards"
+    },
+    {
+      "manufacturer": "Generic",
+      "model": "Carbon Arrows - Universal Reference",
+      "bow_type": "longbow",
+      "grid_definition": {
+        "unit": "lbs",
+        "length_unit": "in",
+        "spine_system": "standard_deflection",
+        "note": "Generic carbon arrow spine reference for traditional longbows and self bows. Based on industry standards. 28 inch arrows with 100-125 grain points. Longbows typically need the weakest spine arrows."
+      },
+      "spine_grid": [
+        {"draw_weight_range_lbs": "15-20", "arrow_length_in": 28, "spine": "1400"},
+        {"draw_weight_range_lbs": "18-25", "arrow_length_in": 28, "spine": "1200"},
+        {"draw_weight_range_lbs": "22-30", "arrow_length_in": 28, "spine": "1000"},
+        {"draw_weight_range_lbs": "26-35", "arrow_length_in": 28, "spine": "800"},
+        {"draw_weight_range_lbs": "30-40", "arrow_length_in": 28, "spine": "700"},
+        {"draw_weight_range_lbs": "35-45", "arrow_length_in": 28, "spine": "600"},
+        {"draw_weight_range_lbs": "40-50", "arrow_length_in": 28, "spine": "500"},
+        {"draw_weight_range_lbs": "45-55", "arrow_length_in": 28, "spine": "400"},
+        {"draw_weight_range_lbs": "50-60", "arrow_length_in": 28, "spine": "350"},
+        {"draw_weight_range_lbs": "55-65", "arrow_length_in": 28, "spine": "340"},
+        {"draw_weight_range_lbs": "60-70", "arrow_length_in": 28, "spine": "300"}
+      ],
+      "provenance": "Generic carbon arrow spine reference for traditional longbows based on industry standards"
+    }
+  ]
+}

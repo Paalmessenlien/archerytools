@@ -1,0 +1,65 @@
+{
+  "conversion_tables": {
+    "spine_equivalents": {
+      "description": "Approximate spine equivalents between carbon and aluminum systems",
+      "note": "These are approximations - always verify with manufacturer charts",
+      "disclaimer": "Spine values can vary between manufacturers even for same nominal spine",
+      "carbon_to_aluminum_approximate": {
+        "150": "2413 or stiffer",
+        "200": "2317-2413",
+        "250": "2216-2317",
+        "300": "2117-2216",
+        "340": "2016-2117",
+        "400": "1916-2016",
+        "500": "1816-1916",
+        "600": "1716-1816",
+        "700": "1616-1716",
+        "800": "1516-1616",
+        "1000": "1416-1516"
+      },
+      "wood_spine_to_carbon_approximate": {
+        "25-30": "~600-700 carbon",
+        "30-35": "~500-600 carbon",
+        "35-40": "~400-500 carbon",
+        "40-45": "~350-400 carbon",
+        "45-50": "~300-350 carbon",
+        "50-55": "~250-300 carbon"
+      }
+    },
+    "weight_conversions": {
+      "grains_to_grams": "1 grain = 0.0648 grams",
+      "grams_to_grains": "1 gram = 15.432 grains",
+      "ounces_to_grains": "1 ounce = 437.5 grains",
+      "pounds_to_grains": "1 pound = 7000 grains",
+      "common_conversions": {
+        "100_grains": "6.48 grams",
+        "125_grains": "8.10 grams",
+        "150_grains": "9.72 grams"
+      }
+    },
+    "length_conversions": {
+      "inches_to_cm": "1 inch = 2.54 cm",
+      "cm_to_inches": "1 cm = 0.3937 inches",
+      "inches_to_mm": "1 inch = 25.4 mm",
+      "common_arrow_lengths": {
+        "26_inches": "66.04 cm",
+        "28_inches": "71.12 cm",
+        "30_inches": "76.20 cm",
+        "32_inches": "81.28 cm"
+      }
+    },
+    "diameter_conversions": {
+      "64ths_to_decimal": {
+        "5/64": "0.078 inches (1.98mm)",
+        "19/64": "0.297 inches (7.54mm)",
+        "21/64": "0.328 inches (8.33mm)",
+        "23/64": "0.359 inches (9.12mm)"
+      },
+      "common_carbon_diameters": {
+        "micro_diameter": "0.166 inches (4.2mm)",
+        "standard_diameter": "0.246 inches (6.2mm)",
+        "large_diameter": "0.300+ inches (7.6mm+)"
+      }
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "arrow_material_properties": {
+    "carbon": {
+      "advantages": ["Lightweight", "Consistent", "Durable", "Weather resistant", "Easy to tune"],
+      "disadvantages": ["More expensive", "Can shatter dangerously", "Difficult to repair"],
+      "typical_weight_range_gpi": "5-12 grains per inch",
+      "straightness_tolerance": "±0.001 to ±0.006 inches",
+      "best_for": ["Target archery", "Hunting", "3D archery", "Competition"],
+      "characteristics": "Modern synthetic material with excellent consistency and performance"
+    },
+    "aluminum": {
+      "advantages": ["Consistent", "Repairable", "Cost effective", "Proven performance"],
+      "disadvantages": ["Heavier than carbon", "Can bend", "Limited spine options"],
+      "typical_weight_range_gpi": "8-15 grains per inch",
+      "straightness_tolerance": "±0.003 to ±0.006 inches",
+      "best_for": ["Target archery", "Hunting", "Training", "Traditional setups"],
+      "characteristics": "Traditional metal arrows with reliable performance and repairability"
+    },
+    "wood": {
+      "advantages": ["Traditional", "Quiet", "Natural", "Self-repairing", "Affordable"],
+      "disadvantages": ["Inconsistent", "Weather sensitive", "Requires maintenance", "Limited spine options"],
+      "typical_weight_range_gpi": "8-20 grains per inch",
+      "straightness_tolerance": "±0.010 to ±0.025 inches",
+      "best_for": ["Traditional archery", "Historical recreation", "Teaching basics"],
+      "characteristics": "Natural material requiring more maintenance but offering traditional appeal"
+    }
+  },
+  "component_specifications": {
+    "points": {
+      "field_points": {
+        "weight_range": "60-300 grains",
+        "purpose": "Practice and target shooting",
+        "characteristics": "Simple, aerodynamic design for accuracy"
+      },
+      "broadheads": {
+        "weight_range": "85-200 grains",
+        "purpose": "Hunting",
+        "note": "May require spine adjustment due to different aerodynamics",
+        "types": ["Fixed blade", "Mechanical", "Hybrid"]
+      },
+      "bullet_points": {
+        "weight_range": "100-200 grains",
+        "purpose": "3D archery and foam targets",
+        "characteristics": "Rounded tip prevents damage to targets"
+      },
+      "blunt_points": {
+        "weight_range": "100-150 grains",
+        "purpose": "Small game hunting",
+        "characteristics": "Flat or rounded tip for stunning small game"
+      }
+    },
+    "nocks": {
+      "standard_nocks": {
+        "weight_range": "6-12 grains",
+        "note": "Most common type",
+        "sizes": ["Small groove", "Large groove", "Pin nock"]
+      },
+      "lighted_nocks": {
+        "weight_range": "20-35 grains",
+        "note": "May affect spine slightly due to extra weight",
+        "types": ["LED", "Chemical light", "Mechanical activation"]
+      },
+      "pin_nocks": {
+        "weight_range": "8-15 grains",
+        "note": "Used with insert systems",
+        "advantages": ["Replaceable", "Consistent", "Multiple color options"]
+      }
+    },
+    "fletching": {
+      "plastic_vanes": {
+        "weight_range": "15-40 grains",
+        "characteristics": "Durable, consistent, weather resistant",
+        "sizes": ["2 inch", "3 inch", "4 inch", "Blazer style"]
+      },
+      "feathers": {
+        "weight_range": "8-25 grains",
+        "characteristics": "Forgiving, traditional, self-correcting",
+        "types": ["Shield cut", "Parabolic", "Full length"]
+      },
+      "blazer_vanes": {
+        "weight_range": "5-10 grains",
+        "characteristics": "Low profile, fast, minimal wind drift",
+        "note": "Popular for hunting and 3D archery"
+      }
+    }
+  },
+  "arrow_building_specifications": {
+    "insert_specifications": {
+      "standard_inserts": {
+        "weight_range": "12-25 grains",
+        "materials": ["Aluminum", "Brass", "Steel"],
+        "thread_sizes": ["8-32", "5/16-24"]
+      },
+      "heavyweight_inserts": {
+        "weight_range": "50-300 grains",
+        "purpose": "Increase arrow weight without changing point weight",
+        "effect_on_spine": "Heavier inserts make arrow act slightly stiffer"
+      },
+      "outserts": {
+        "weight_range": "15-40 grains",
+        "purpose": "External weight system, easier to change point weights",
+        "compatibility": "Requires specific arrow shaft preparation"
+      }
+    },
+    "cutting_specifications": {
+      "tolerance": "±1/32 inch for most applications",
+      "tools_required": {
+        "carbon_arrows": "Fine-tooth saw or arrow cutoff wheel",
+        "aluminum_arrows": "Tube cutter or fine-tooth saw",
+        "wood_arrows": "Fine-tooth saw, sandpaper for finishing"
+      },
+      "safety_notes": [
+        "Always wear eye protection when cutting",
+        "Secure arrow firmly before cutting",
+        "Deburr cut ends before assembly",
+        "Check for cracks after cutting"
+      ]
+    },
+    "assembly_guidelines": {
+      "point_installation": [
+        "Clean shaft end thoroughly",
+        "Apply appropriate adhesive",
+        "Insert point with slight twisting motion",
+        "Ensure point is fully seated",
+        "Allow proper cure time"
+      ],
+      "nock_installation": [
+        "Check nock fit - should snap on firmly but not too tight",
+        "Align nock with rest",
+        "Use nock pliers for adjustment",
+        "Check for cracks around nock groove"
+      ],
+      "fletching_installation": [
+        "Clean shaft with alcohol",
+        "Use fletching jig for consistency",
+        "Apply even pressure during cure",
+        "Check helical or offset as desired",
+        "Allow full cure time before shooting"
+      ]
+    }
+  }
+}

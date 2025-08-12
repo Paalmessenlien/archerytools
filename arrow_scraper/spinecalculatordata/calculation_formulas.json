@@ -1,0 +1,124 @@
+{
+  "calculation_formulas": {
+    "description": "Mathematical formulas and adjustments for calculating proper arrow spine based on bow setup variations",
+    "base_conditions": {
+      "standard_arrow_length": 28,
+      "standard_point_weight": 125,
+      "standard_bow_speed": "301-320 FPS",
+      "standard_release": "mechanical",
+      "standard_nock_weight": 10,
+      "standard_fletching_weight": 25,
+      "measurement_units": {
+        "length": "inches",
+        "weight": "grains",
+        "draw_weight": "pounds",
+        "speed": "feet per second"
+      }
+    },
+    "adjustment_formulas": {
+      "arrow_length_adjustment": {
+        "description": "Adjust spine for arrow length different from 28 inches",
+        "formula": "For every 1 inch longer than 28: add 5 lbs to bow weight calculation. For every 1 inch shorter than 28: subtract 5 lbs from bow weight calculation",
+        "calculation": "adjusted_bow_weight = actual_bow_weight + ((arrow_length - 28) * 5)",
+        "example": "30 inch arrow on 50 lb bow: 50 + ((30-28) * 5) = 60 lb equivalent spine needed"
+      },
+      "point_weight_adjustment": {
+        "description": "Adjust spine for point weight different from 125 grains",
+        "formula": "For every 25 grains heavier than 125: add 5 lbs to bow weight. For every 25 grains lighter than 125: subtract 5 lbs from bow weight",
+        "calculation": "adjusted_bow_weight = actual_bow_weight + (((point_weight - 125) / 25) * 5)",
+        "example": "150 grain point on 50 lb bow: 50 + (((150-125) / 25) * 5) = 55 lb equivalent spine needed"
+      },
+      "bow_speed_adjustment": {
+        "description": "Adjust spine based on bow speed rating (IBO/ATA speed)",
+        "compound_bow_adjustments": {
+          "up_to_275_fps": "-10 lbs from bow weight",
+          "276_300_fps": "-5 lbs from bow weight",
+          "301_320_fps": "No adjustment (baseline)",
+          "321_340_fps": "+5 lbs to bow weight",
+          "341_350_fps": "+10 lbs to bow weight",
+          "351_fps_or_higher": "+15 lbs to bow weight"
+        },
+        "calculation": "adjusted_bow_weight = actual_bow_weight + speed_adjustment",
+        "example": "280 FPS bow at 50 lbs: 50 + (-5) = 45 lb equivalent spine needed"
+      },
+      "release_type_adjustment": {
+        "description": "Adjust spine based on release method",
+        "adjustments": {
+          "mechanical_release": "No adjustment (baseline)",
+          "finger_release": "+5 lbs to bow weight"
+        },
+        "calculation": "adjusted_bow_weight = actual_bow_weight + release_adjustment",
+        "example": "Finger release on 50 lb bow: 50 + 5 = 55 lb equivalent spine needed"
+      },
+      "nock_weight_adjustment": {
+        "description": "Adjust for nock weight variations from standard 10 grains",
+        "formula": "Generally minimal impact, but heavy nocks (>20 grains) may require slightly stiffer spine",
+        "calculation": "For nocks >20 grains: add 1-2 lbs to bow weight",
+        "example": "25 grain lighted nock: add 2 lbs to bow weight calculation"
+      },
+      "fletching_weight_adjustment": {
+        "description": "Adjust for fletching weight variations from standard 25 grains",
+        "formula": "Heavy fletching may require slightly stiffer spine",
+        "calculation": "For fletching >40 grains: add 1-3 lbs to bow weight",
+        "example": "50 grain heavy fletching: add 3 lbs to bow weight calculation"
+      }
+    },
+    "total_calculation_formula": {
+      "description": "Complete formula for calculating effective bow weight for spine selection",
+      "formula": "effective_bow_weight = actual_bow_weight + length_adj + point_adj + speed_adj + release_adj + nock_adj + fletching_adj",
+      "steps": [
+        "1. Start with actual bow draw weight at archer's draw length",
+        "2. Apply arrow length adjustment",
+        "3. Apply point weight adjustment",
+        "4. Apply bow speed adjustment",
+        "5. Apply release type adjustment",
+        "6. Apply nock weight adjustment (if significant)",
+        "7. Apply fletching weight adjustment (if significant)",
+        "8. Use final effective bow weight to select spine from charts"
+      ]
+    },
+    "bow_type_specific_notes": {
+      "compound_bow": {
+        "description": "Modern compound bows with cams and mechanical release",
+        "characteristics": "More efficient energy transfer, typically need stiffer spine arrows",
+        "additional_factors": ["cam timing", "draw length", "let-off percentage"]
+      },
+      "recurve_bow": {
+        "description": "Traditional recurve bows, typically finger release",
+        "characteristics": "Less efficient than compound, typically need weaker spine than compound bows of same draw weight",
+        "additional_factors": ["brace height", "string material", "arrow rest type"]
+      },
+      "longbow_selfbow": {
+        "description": "Traditional straight-limbed bows",
+        "characteristics": "Least efficient design, need weakest spine arrows for given draw weight",
+        "additional_factors": ["bow length", "string material", "shooting style"]
+      }
+    },
+    "calculation_examples": {
+      "example_1": {
+        "setup": "Compound bow, 60 lbs, 29 inch arrows, 150 grain points, 330 FPS, mechanical release",
+        "calculations": {
+          "base_weight": 60,
+          "length_adjustment": "+5 (29-28=1, 1*5=5)",
+          "point_adjustment": "+5 (150-125=25, 25/25*5=5)",
+          "speed_adjustment": "+5 (330 FPS = +5)",
+          "release_adjustment": "0 (mechanical)",
+          "effective_weight": "60+5+5+5+0 = 75 lbs",
+          "recommended_spine": "Check 75 lb range in compound bow chart"
+        }
+      },
+      "example_2": {
+        "setup": "Recurve bow, 45 lbs, 28 inch arrows, 125 grain points, finger release",
+        "calculations": {
+          "base_weight": 45,
+          "length_adjustment": "0 (28 inch standard)",
+          "point_adjustment": "0 (125 grain standard)",
+          "speed_adjustment": "N/A (recurve)",
+          "release_adjustment": "0 (finger release is standard for recurve)",
+          "effective_weight": "45 lbs",
+          "recommended_spine": "Check 45 lb range in recurve bow chart"
+        }
+      }
+    }
+  }
+}
