@@ -89,9 +89,9 @@ run_migrations() {
     echo "📦 Running database migrations..."
     
     # Check for migration runner
-    if [ -f "/app/run-migrations.py" ]; then
+    if [ -f "/app/run_migrations.py" ]; then
         echo "🔄 Running comprehensive migration script..."
-        python3 /app/run-migrations.py
+        python3 /app/run_migrations.py
     else
         echo "⚠️  Migration runner not found, running individual migrations..."
         
