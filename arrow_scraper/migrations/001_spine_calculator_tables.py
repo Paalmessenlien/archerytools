@@ -165,7 +165,7 @@ class SpineCalculatorTablesMigration(BaseMigration):
                     
                     # Run importer
                     importer = SpineCalculatorDataImporter(db_path)
-                    importer.run_import()
+                    importer.import_all_data()
                     
                     # Reconnect
                     conn = sqlite3.connect(db_path)

@@ -51,23 +51,19 @@ class JsonDataImportMigration(BaseMigration):
                 
                 print(f"🔄 Found {len(json_files)} JSON files to import")
                 
-                # Import each file
-                imported_count = 0
-                for file_path, mod_time, manufacturer in json_files:
-                    try:
-                        if importer.should_import_file(file_path, mod_time):
-                            success = importer.import_manufacturer_data(file_path, manufacturer)
-                            if success:
-                                imported_count += 1
-                                print(f"✅ Imported {manufacturer} data")
-                            else:
-                                print(f"⚠️  Failed to import {manufacturer} data")
-                        else:
-                            print(f"⏭️  Skipping {manufacturer} (already up to date)")
-                    
-                    except Exception as file_error:
-                        print(f"⚠️  Error importing {manufacturer}: {file_error}")
-                        # Continue with other files
+                # Use the import_all_json_files method instead of manual iteration
+                result = importer.import_all_json_files(force_update=False)
+                
+                imported_count = result.get('imported_files', 0)
+                skipped_count = result.get('skipped_files', 0)
+                error_count = result.get('failed_files', 0)
+                
+                if imported_count > 0:
+                    print(f"✅ Imported {imported_count} manufacturer data files")
+                if skipped_count > 0:
+                    print(f"⏭️  Skipped {skipped_count} files (already up to date)")  
+                if error_count > 0:
+                    print(f"⚠️  Failed to import {error_count} files")
                 
                 print(f"✅ JSON data import completed: {imported_count}/{len(json_files)} files imported")
                 return True
