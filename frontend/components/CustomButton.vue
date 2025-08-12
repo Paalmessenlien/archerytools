@@ -51,7 +51,14 @@ const buttonClasses = computed(() => {
     'border',
     'focus:outline-none',
     'focus:ring-2',
-    'focus:ring-offset-2'
+    'focus:ring-offset-2',
+    // Mobile-first responsiveness
+    'w-full',            // Full width by default on mobile
+    'sm:w-auto',         // Auto width on small screens and up
+    'max-w-full',        // Prevent overflow
+    'min-w-0',           // Allow shrinking inside flex rows
+    'text-center',       // Center label on full-width buttons
+    'whitespace-normal'  // Allow wrapping to avoid overflow
   ]
 
   // Size classes

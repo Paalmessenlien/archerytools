@@ -94,7 +94,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end mt-4 space-x-2">
+          <div class="flex flex-col sm:flex-row gap-2 sm:justify-end mt-4">
             <CustomButton @click="editSetup(setup)" variant="outlined" size="small">
               Edit
             </CustomButton>

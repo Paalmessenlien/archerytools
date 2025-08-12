@@ -224,6 +224,9 @@
 
     <!-- Bow Setup Picker - Desktop Only -->
     <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block sticky top-16 z-30" />
+    
+    <!-- Global Mobile Bow Picker -->
+    <GlobalBowPicker />
 
     <!-- Main Content -->
     <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-20 md:pb-6">
@@ -246,6 +249,7 @@
 <script setup>
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useAuth } from '~/composables/useAuth'
+import GlobalBowPicker from '~/components/GlobalBowPicker.vue'
 
 const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)

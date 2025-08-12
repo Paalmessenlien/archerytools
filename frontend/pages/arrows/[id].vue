@@ -72,20 +72,39 @@
         class="mb-6"
       />
       <!-- Header -->
-      <div class="flex items-start justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             {{ arrow.manufacturer }} {{ arrow.model_name }}
           </h1>
-          <p v-if="arrow.arrow_type" class="text-gray-600 dark:text-gray-300 mt-2">
+          <p v-if="arrow.arrow_type" class="text-gray-600 dark:text-gray-300 mt-1">
             {{ arrow.arrow_type && arrow.arrow_type.length > 0 ? arrow.arrow_type.charAt(0).toUpperCase() + arrow.arrow_type.slice(1) : 'Unknown' }} Arrow
           </p>
         </div>
         
-        <NuxtLink to="/database" class="btn-secondary">
+        <NuxtLink to="/database" class="btn-secondary w-full sm:w-auto">
           ← Back to Database
         </NuxtLink>
       </div>
+
+      <!-- Quick Specs (chips) -->
+      <md-chip-set class="mb-4 mt-2">
+        <md-assist-chip :label="'Spine: ' + getSpineRange()">
+          <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
+        </md-assist-chip>
+        <md-assist-chip :label="'⌀ ' + getDiameterRange()">
+          <i class="fas fa-dot-circle fa-icon" slot="icon" style="color: #dc2626;"></i>
+        </md-assist-chip>
+        <md-assist-chip :label="getGPIRange() + ' GPI'">
+          <i class="fas fa-weight-hanging fa-icon" slot="icon" style="color: #7c2d12;"></i>
+        </md-assist-chip>
+        <md-assist-chip :label="arrow.material || 'Material N/A'">
+          <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #059669;"></i>
+        </md-assist-chip>
+        <md-assist-chip v-if="arrow.straightness_tolerance" :label="arrow.straightness_tolerance">
+          <i class="fas fa-crosshairs fa-icon" slot="icon" style="color: #7c3aed;"></i>
+        </md-assist-chip>
+      </md-chip-set>
 
       <!-- Arrow Image -->
       <div v-if="arrow.primary_image_url" class="card">
