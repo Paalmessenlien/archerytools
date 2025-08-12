@@ -1061,21 +1061,58 @@
         <!-- Backup Management -->
         <md-elevated-card class="light-surface light-elevation">
           <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                <i class="fas fa-history mr-2 text-indigo-600"></i>
-                Available Backups
-              </h2>
-              <CustomButton
-                @click="loadBackups"
-                variant="outlined"
-                size="small"
-                :disabled="isLoadingBackups"
-                class="text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-              >
-                <i class="fas fa-refresh mr-2"></i>
-                Refresh
-              </CustomButton>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div>
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <i class="fas fa-history mr-2 text-indigo-600"></i>
+                  Available Backups
+                </h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Cross-platform backup access from all environments
+                </p>
+              </div>
+              
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <!-- Environment Filter -->
+                <div class="flex items-center gap-2">
+                  <label class="text-sm text-gray-700 dark:text-gray-300">Environment:</label>
+                  <select 
+                    v-model="backupFilter.environment" 
+                    class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300"
+                  >
+                    <option value="">All</option>
+                    <option value="production">Production</option>
+                    <option value="development">Development</option>
+                    <option value="staging">Staging</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                </div>
+                
+                <!-- Source Filter -->
+                <div class="flex items-center gap-2">
+                  <label class="text-sm text-gray-700 dark:text-gray-300">Source:</label>
+                  <select 
+                    v-model="backupFilter.source" 
+                    class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300"
+                  >
+                    <option value="">All</option>
+                    <option value="cdn">CDN</option>
+                    <option value="local">Local</option>
+                  </select>
+                </div>
+                
+                <!-- Refresh Button -->
+                <CustomButton
+                  @click="loadBackups"
+                  variant="outlined"
+                  size="small"
+                  :disabled="isLoadingBackups"
+                  class="text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                >
+                  <i class="fas fa-refresh mr-2"></i>
+                  Refresh
+                </CustomButton>
+              </div>
             </div>
 
             <!-- Loading State -->
@@ -1086,27 +1123,95 @@
 
             <!-- Backup List -->
             <div v-else-if="backups.length > 0" class="space-y-4">
+              <!-- Filtered Results Info -->
+              <div v-if="filteredBackups.length !== backups.length" class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <i class="fas fa-filter mr-2"></i>
+                Showing {{ filteredBackups.length }} of {{ backups.length }} backups
+                <button 
+                  v-if="backupFilter.environment || backupFilter.source" 
+                  @click="backupFilter.environment = ''; backupFilter.source = ''"
+                  class="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                >
+                  Clear filters
+                </button>
+              </div>
+              
+              <!-- No Results Message -->
+              <div v-if="filteredBackups.length === 0" class="text-center py-8">
+                <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600 dark:text-gray-400">No backups match your filter criteria</p>
+                <button 
+                  @click="backupFilter.environment = ''; backupFilter.source = ''"
+                  class="mt-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                >
+                  Clear all filters
+                </button>
+              </div>
+              
+              <!-- Backup Items -->
               <div 
-                v-for="backup in backups" 
+                v-for="backup in filteredBackups" 
                 :key="backup.id" 
                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
                 <div class="flex justify-between items-start">
                   <div class="flex-1">
-                    <div class="flex items-center mb-2">
+                    <div class="flex items-center flex-wrap gap-2 mb-2">
                       <h3 class="font-medium text-gray-900 dark:text-gray-100">
-                        {{ backup.backup_name }}
+                        {{ backup.name || backup.backup_name }}
                       </h3>
-                      <span v-if="backup.cdn_type" class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      
+                      <!-- Environment Badge -->
+                      <span 
+                        v-if="backup.environment"
+                        class="px-2 py-1 text-xs font-medium rounded-full"
+                        :class="{
+                          'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': backup.environment === 'production',
+                          'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': backup.environment === 'development',
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': backup.environment === 'staging',
+                          'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300': !['production', 'development', 'staging'].includes(backup.environment)
+                        }"
+                      >
+                        <i class="fas fa-server mr-1 text-xs"></i>
+                        {{ backup.environment.charAt(0).toUpperCase() + backup.environment.slice(1) }}
+                      </span>
+                      
+                      <!-- Backup Type Badge -->
+                      <span 
+                        v-if="backup.backup_type && backup.backup_type !== 'full'"
+                        class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                      >
+                        <i class="fas fa-layer-group mr-1 text-xs"></i>
+                        {{ backup.backup_type.replace('_', ' ').toUpperCase() }}
+                      </span>
+                      
+                      <!-- CDN Provider Badge -->
+                      <span 
+                        v-if="backup.cdn_type" 
+                        class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                      >
+                        <i class="fas fa-cloud mr-1 text-xs"></i>
                         {{ backup.cdn_type.toUpperCase() }}
                       </span>
+                      
+                      <!-- Source Badge -->
                       <span 
-                        class="ml-2 px-2 py-1 text-xs rounded-full"
-                        :class="backup.source === 'cdn' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'"
+                        class="px-2 py-1 text-xs rounded-full"
+                        :class="{
+                          'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': backup.source === 'cdn' && backup.is_cdn_direct,
+                          'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300': backup.source === 'cdn' && !backup.is_cdn_direct,
+                          'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300': backup.source === 'local'
+                        }"
                       >
-                        {{ backup.source_description || (backup.source === 'cdn' ? 'Production/CDN' : 'Local Development') }}
+                        <i 
+                          class="mr-1 text-xs"
+                          :class="{
+                            'fas fa-cloud-download-alt': backup.source === 'cdn' && backup.is_cdn_direct,
+                            'fas fa-database': backup.source === 'cdn' && !backup.is_cdn_direct,
+                            'fas fa-laptop': backup.source === 'local'
+                          }"
+                        ></i>
+                        {{ backup.source_description || (backup.source === 'cdn' ? 'CDN' : 'Local') }}
                       </span>
                     </div>
                     
@@ -1459,6 +1564,27 @@ const isCreatingBackup = ref(false)
 const isRestoringBackup = ref(false)
 const showRestoreBackupModal = ref(false)
 const backupToRestore = ref(null)
+
+// Backup filtering
+const backupFilter = ref({
+  environment: '',
+  source: ''
+})
+
+// Filtered backups computed property
+const filteredBackups = computed(() => {
+  let filtered = backups.value
+  
+  if (backupFilter.value.environment) {
+    filtered = filtered.filter(backup => backup.environment === backupFilter.value.environment)
+  }
+  
+  if (backupFilter.value.source) {
+    filtered = filtered.filter(backup => backup.source === backupFilter.value.source)
+  }
+  
+  return filtered
+})
 
 // System information state
 const systemInfo = ref(null)

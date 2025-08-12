@@ -3412,22 +3412,68 @@ def create_backup(current_user):
         if not local_backup_path or not os.path.exists(local_backup_path):
             return jsonify({'error': 'Failed to create local backup'}), 500
         
-        # Upload to CDN
-        cdn_type = os.getenv('CDN_TYPE', 'bunnycdn')
+        # Upload to CDN using centralized CDN backup manager
+        cdn_url = None
         try:
-            uploader = CDNUploader(cdn_type)
+            from cdn_backup_manager import CDNBackupManager
+            
+            cdn_manager = CDNBackupManager()
+            
+            # Create environment-aware backup filename
+            environment = os.getenv('FLASK_ENV', 'development')
+            backup_type = 'full'
+            if not include_arrow_db:
+                backup_type = 'user_only'
+            elif not include_user_db:
+                backup_type = 'arrow_only'
+            
+            # Generate structured filename: {env}_{type}_{timestamp}.tar.gz
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            structured_filename = f"{environment}_{backup_type}_{timestamp}.tar.gz"
+            
+            cdn_url = cdn_manager.upload_backup(local_backup_path, structured_filename)
+            
+            if cdn_url:
+                print(f"✅ Backup uploaded to CDN: {cdn_url}")
+                cdn_type = os.getenv('CDN_TYPE', 'bunnycdn')
+                result = {
+                    'success': True,
+                    'url': cdn_url,
+                    'cdn_type': cdn_type,
+                    'filename': structured_filename
+                }
+            else:
+                # Fallback to legacy CDN uploader
+                raise Exception("CDN backup manager upload failed")
+                
         except Exception as e:
-            print(f"CDN initialization failed, using local storage: {e}")
-            uploader = CDNUploader('local')
-            cdn_type = 'local'
-        
-        # Upload backup to CDN  
-        result = uploader.upload_from_file(
-            local_backup_path,
-            manufacturer="backups",  # Use 'backups' as manufacturer to simplify path
-            model_name=backup_name,  # Just the backup name without extra path
-            image_type="backup"
-        )
+            print(f"❌ CDN backup manager upload failed: {e}")
+            
+            # Fallback to legacy CDN uploader
+            try:
+                from cdn_uploader import CDNUploader
+                
+                cdn_type = os.getenv('CDN_TYPE', 'bunnycdn')
+                uploader = CDNUploader(cdn_type)
+                
+                # Upload backup to CDN using legacy method
+                result = uploader.upload_from_file(
+                    local_backup_path,
+                    manufacturer="backups",
+                    model_name=backup_name,
+                    image_type="backup"
+                )
+                
+                if result.get('success') and result.get('url'):
+                    cdn_url = result['url']
+                    print(f"✅ Backup uploaded via legacy CDN uploader: {cdn_url}")
+                else:
+                    print("❌ Legacy CDN uploader also failed")
+                    result = {'success': False}
+                    
+            except Exception as fallback_error:
+                print(f"❌ Both CDN methods failed: {fallback_error}")
+                result = {'success': False}
         
         if not result:
             return jsonify({'error': 'Failed to upload backup to CDN'}), 500
@@ -3484,8 +3530,51 @@ def backup_test_post():
 
 # Helper functions for CDN backup management
 
-def get_bunny_cdn_backups():
-    """Fetch backup files directly from Bunny CDN Storage API"""
+def get_cdn_backups():
+    """Get all CDN backups using the centralized CDN backup manager"""
+    try:
+        from cdn_backup_manager import CDNBackupManager
+        
+        # Initialize the CDN backup manager
+        cdn_manager = CDNBackupManager()
+        
+        # Get backups from all configured CDN providers
+        cdn_backups = cdn_manager.list_all_backups()
+        
+        # Convert BackupInfo objects to dictionaries for JSON serialization
+        backup_dicts = []
+        for backup in cdn_backups:
+            backup_dict = {
+                'id': backup.id,
+                'name': backup.name,
+                'backup_name': backup.name,  # Legacy compatibility
+                'filename': backup.filename,
+                'created_at': backup.created_at,
+                'file_size_mb': backup.file_size_mb,
+                'environment': backup.environment,
+                'backup_type': backup.backup_type,
+                'cdn_url': backup.cdn_url,
+                'cdn_type': backup.cdn_type,
+                'include_arrow_db': backup.include_arrow_db,
+                'include_user_db': backup.include_user_db,
+                'is_cdn_direct': backup.is_cdn_direct,
+                'source': backup.source,
+                'source_description': backup.source_description,
+                'file': backup.filename,  # Legacy compatibility
+                'is_remote': True
+            }
+            backup_dicts.append(backup_dict)
+        
+        print(f"✅ Retrieved {len(backup_dicts)} backups from CDN backup manager")
+        return backup_dicts
+        
+    except Exception as e:
+        print(f"❌ Failed to get CDN backups: {e}")
+        # Fallback to legacy method if CDN manager fails
+        return get_legacy_bunny_cdn_backups()
+
+def get_legacy_bunny_cdn_backups():
+    """Legacy Bunny CDN backup fetching (fallback)"""
     import requests
     
     # Get Bunny CDN configuration from environment
@@ -3523,55 +3612,52 @@ def get_bunny_cdn_backups():
     }
     
     try:
-        print(f"🌐 Fetching backups from Bunny CDN: {api_url}")
-        response = requests.get(api_url, headers=headers, timeout=10)
-        
-        print(f"📡 Bunny CDN response status: {response.status_code}")
+        print(f"🌐 Fetching backups from Legacy Bunny CDN: {api_url}")
+        response = requests.get(api_url, headers=headers, timeout=30)
         
         if response.status_code == 200:
             files = response.json()
             cdn_backups = []
             
             for file_info in files:
-                # Filter for backup files (.tar.gz and .gz)
                 filename = file_info.get('ObjectName', '')
                 if filename.endswith('.tar.gz') or filename.endswith('.gz'):
-                    # Convert Bunny CDN file info to our backup format
                     import hashlib
                     clean_name = filename.replace('.tar.gz', '').replace('.gz', '')
                     cdn_backup_id = hashlib.md5(filename.encode()).hexdigest()[:8]
                     
+                    # Get file size in MB
+                    file_size_bytes = file_info.get('Length', 0)
+                    file_size_mb = file_size_bytes / (1024 * 1024) if file_size_bytes else 0.0
+                    
                     backup_info = {
-                        'id': f"cdn_{cdn_backup_id}",  # Add consistent ID field
-                        'backup_name': clean_name,
+                        'id': f'legacy_cdn_{cdn_backup_id}',
                         'name': clean_name,
-                        'file_size_mb': file_info.get('Length', 0) / (1024 * 1024),
-                        'created_at': file_info.get('LastChanged', 'Unknown'),
+                        'backup_name': clean_name,
+                        'created_at': file_info.get('LastChanged', datetime.now().isoformat()),
+                        'file_size_mb': round(file_size_mb, 2),
                         'cdn_url': f"https://{os.getenv('BUNNY_HOSTNAME', f'{storage_zone}.b-cdn.net')}/arrows/backups/{filename}",
                         'cdn_type': 'bunnycdn',
-                        'include_arrow_db': True,  # Assume all backups include both
+                        'include_arrow_db': True,
                         'include_user_db': True,
                         'file': filename,
-                        'is_cdn_direct': True  # Flag to indicate this came directly from CDN API
+                        'is_cdn_direct': True,
+                        'source': 'cdn',
+                        'source_description': 'Legacy CDN (Bunny)',
+                        'environment': 'unknown',
+                        'backup_type': 'full',
+                        'is_remote': True
                     }
                     cdn_backups.append(backup_info)
             
-            print(f"✅ Found {len(cdn_backups)} backup files on Bunny CDN")
+            print(f"✅ Found {len(cdn_backups)} backup files on Legacy Bunny CDN")
             return cdn_backups
-            
-        elif response.status_code == 404:
-            print(f"⚠️  Bunny CDN backups directory not found: {api_url}")
-            print("ℹ️  This is normal if no backups have been uploaded yet")
-            return []
         else:
-            print(f"❌ Bunny CDN API error: {response.status_code} - {response.text}")
+            print(f"❌ Legacy Bunny CDN API error: {response.status_code}")
             return []
             
-    except requests.RequestException as e:
-        print(f"❌ Network error fetching from Bunny CDN: {e}")
-        return []
     except Exception as e:
-        print(f"❌ Unexpected error fetching from Bunny CDN: {e}")
+        print(f"❌ Legacy Bunny CDN request failed: {e}")
         return []
 
 def get_database_cdn_backups():
@@ -3634,16 +3720,20 @@ def list_backups(current_user):
         local_backups = backup_manager.list_backups()
         print(f"📁 Found {len(local_backups)} local backups")
         
-        # Get CDN backups directly from Bunny CDN Storage API
+        # Get CDN backups using centralized CDN backup manager (CDN-first approach)
         cdn_backups = []
         try:
-            cdn_backups = get_bunny_cdn_backups()
-            print(f"🌐 Retrieved {len(cdn_backups)} backups from Bunny CDN API")
+            cdn_backups = get_cdn_backups()
+            print(f"🌐 Retrieved {len(cdn_backups)} backups from CDN backup manager")
         except Exception as cdn_error:
             print(f"⚠️  Could not fetch CDN backups: {cdn_error}")
-            # Fallback to database metadata if CDN API fails
-            cdn_backups = get_database_cdn_backups()
-            print(f"📊 Using {len(cdn_backups)} backups from database metadata")
+            # Fallback to database metadata if CDN manager fails
+            try:
+                cdn_backups = get_database_cdn_backups()
+                print(f"📊 Using {len(cdn_backups)} backups from database metadata (fallback)")
+            except Exception as db_error:
+                print(f"❌ Database fallback also failed: {db_error}")
+                cdn_backups = []
         
         # No need to close connection here since it's handled in helper functions
         
