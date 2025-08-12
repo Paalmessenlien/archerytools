@@ -504,6 +504,56 @@ ensure_unified_databases() {
     else
         print_message "$YELLOW" "⚠️  User database will be created on first run"
     fi
+    
+    # Run spine data migration if needed
+    ensure_spine_data_migration
+}
+
+# Function to ensure spine calculation data migration
+ensure_spine_data_migration() {
+    print_message "$BLUE" "🧮 Checking spine calculation data migration..."
+    
+    # Check if spine calculation tables exist
+    if command -v sqlite3 &> /dev/null; then
+        cd arrow_scraper
+        
+        # Check if spine tables exist in the arrow database
+        SPINE_TABLES_COUNT=$(sqlite3 "../databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('calculation_parameters', 'arrow_material_properties', 'manufacturer_spine_charts');" 2>/dev/null || echo "0")
+        
+        if [[ "$SPINE_TABLES_COUNT" == "3" ]]; then
+            print_message "$GREEN" "✅ Spine calculation tables already exist"
+        else
+            print_message "$YELLOW" "⚠️  Spine calculation tables missing, running migration..."
+            
+            # Run spine data migration
+            if [[ -f "migrate_spine_calculation_data.py" ]]; then
+                # Set database path to unified location
+                export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+                
+                if python3 migrate_spine_calculation_data.py; then
+                    print_message "$GREEN" "✅ Spine calculation migration completed"
+                    
+                    # Import sample data if available
+                    if [[ -f "import_spine_calculator_data.py" ]]; then
+                        print_message "$BLUE" "📊 Importing spine calculation sample data..."
+                        if python3 import_spine_calculator_data.py; then
+                            print_message "$GREEN" "✅ Spine calculation data imported successfully"
+                        else
+                            print_message "$YELLOW" "⚠️  Warning: Spine data import failed, but migration completed"
+                        fi
+                    fi
+                else
+                    print_message "$YELLOW" "⚠️  Warning: Spine calculation migration failed, continuing anyway"
+                fi
+            else
+                print_message "$YELLOW" "⚠️  Warning: Spine migration script not found"
+            fi
+        fi
+        
+        cd "$SCRIPT_DIR"
+    else
+        print_message "$YELLOW" "⚠️  sqlite3 not available, skipping spine data check"
+    fi
 }
 
 # Function to start the services

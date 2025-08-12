@@ -75,6 +75,46 @@ check_port() {
     exit 1
 }
 
+# Function to ensure spine calculation data migration
+ensure_spine_data_migration() {
+    log "🧮 Checking spine calculation data migration..."
+    
+    # Check if spine calculation tables exist
+    if command -v sqlite3 &> /dev/null; then
+        # Check if spine tables exist in the arrow database
+        SPINE_TABLES_COUNT=$(sqlite3 "databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('calculation_parameters', 'arrow_material_properties', 'manufacturer_spine_charts');" 2>/dev/null || echo "0")
+        
+        if [[ "$SPINE_TABLES_COUNT" == "3" ]]; then
+            success "✅ Spine calculation tables already exist"
+        else
+            warning "⚠️  Spine calculation tables missing, running migration..."
+            
+            # Run spine data migration
+            if [[ -f "migrate_spine_calculation_data.py" ]]; then
+                if python migrate_spine_calculation_data.py; then
+                    success "✅ Spine calculation migration completed"
+                    
+                    # Import sample data if available
+                    if [[ -f "import_spine_calculator_data.py" ]]; then
+                        log "📊 Importing spine calculation sample data..."
+                        if python import_spine_calculator_data.py; then
+                            success "✅ Spine calculation data imported successfully"
+                        else
+                            warning "⚠️  Warning: Spine data import failed, but migration completed"
+                        fi
+                    fi
+                else
+                    warning "⚠️  Warning: Spine calculation migration failed, continuing anyway"
+                fi
+            else
+                warning "⚠️  Warning: Spine migration script not found"
+            fi
+        fi
+    else
+        warning "⚠️  sqlite3 not available, skipping spine data check"
+    fi
+}
+
 # Function to start API backend
 start_api() {
     log "Starting Flask API backend on port $API_PORT..."
@@ -99,6 +139,9 @@ start_api() {
     # NEW UNIFIED DATABASE ARCHITECTURE (August 2025)
     export ARROW_DATABASE_PATH="$(pwd)/databases/arrow_database.db"
     export USER_DATABASE_PATH="$(pwd)/databases/user_data.db"
+    
+    # Ensure spine calculation data migration
+    ensure_spine_data_migration
     
     # Start Flask API
     python api.py > ../logs/api.log 2>&1 &
