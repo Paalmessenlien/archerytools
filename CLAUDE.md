@@ -1418,6 +1418,22 @@ This section details recent fixes and improvements to common development and dep
 - **Files**: Database migration affects `arrow_scraper/databases/arrow_database.db`
 - **Status**: ✅ **RESOLVED** - Spine data API endpoints now have proper database tables and data
 
+**Automatic Spine Data Migration Integration (August 2025):**
+- **Feature**: Added automatic spine calculation data migration to all startup scripts
+- **Implementation**:
+  - `start-unified.sh` - Production startup now automatically checks and creates spine calculation tables
+  - `start-local-dev.sh` - Local development startup includes spine migration before API start
+  - Automatic detection using sqlite3 to check for required tables
+  - Only runs migration if tables are missing (calculation_parameters, arrow_material_properties, manufacturer_spine_charts)
+  - Automatically imports sample spine calculation data on first run
+- **Benefits**: 
+  - New deployments automatically get spine calculation functionality
+  - No manual migration steps required for production or development
+  - Graceful error handling if migration fails
+  - Works with both unified database architecture and local development
+- **Files**: `start-unified.sh`, `start-local-dev.sh`
+- **Status**: ✅ **IMPLEMENTED** - Spine data migration now runs automatically on server startup
+
 ### Legacy Fixes & Enhancements (July 2025)
 
 **GitHub Issue #16 - Bow Configuration Form Fixes:**
