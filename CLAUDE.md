@@ -1408,6 +1408,16 @@ This section details recent fixes and improvements to common development and dep
 - **Files**: `frontend/pages/admin.vue` → `frontend/pages/admin/index.vue`
 - **Status**: ✅ **RESOLVED** - Admin spine data navigation now works correctly with proper nested routing
 
+**Spine Data Database Path Mismatch Fix (August 2025):**
+- **Issue**: API returning 500 Internal Server Error with "Failed to get manufacturer spine charts" and "no such table" errors
+- **Root Cause**: Database path mismatch - spine calculation tables were created in `/databases/arrow_database.db` but API was looking in `/arrow_scraper/databases/arrow_database.db`
+- **Solution**: 
+  - Ran `migrate_spine_calculation_data.py` on correct database file used by API
+  - Imported spine calculator sample data into API's database with 23 records across 6 tables
+  - Created spine calculation tables: `calculation_parameters`, `arrow_material_properties`, `manufacturer_spine_charts`, etc.
+- **Files**: Database migration affects `arrow_scraper/databases/arrow_database.db`
+- **Status**: ✅ **RESOLVED** - Spine data API endpoints now have proper database tables and data
+
 ### Legacy Fixes & Enhancements (July 2025)
 
 **GitHub Issue #16 - Bow Configuration Form Fixes:**
