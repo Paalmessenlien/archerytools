@@ -410,6 +410,21 @@
       </div>
     </div>
 
+    <!-- Manufacturer Spine Chart Selector -->
+    <div class="mb-8">
+      <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+        <h3 class="text-lg font-semibold text-green-900 dark:text-green-200 mb-4">
+          <i class="fas fa-chart-line mr-2"></i>
+          Professional Spine Calculation
+        </h3>
+        
+        <ManufacturerSpineChartSelector
+          :bow-type="bowConfig.bow_type"
+          @selection-change="handleSpineChartSelection"
+        />
+      </div>
+    </div>
+
     <!-- Calculated Specifications -->
     <md-elevated-card class="mb-8 light-surface light-elevation">
       <div class="p-6">
@@ -447,6 +462,65 @@
             </p>
           </div>
         </div>
+
+        <!-- Enhanced Spine Calculation Results -->
+        <div v-if="enhancedSpineResult" class="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <h4 class="text-sm font-semibold text-green-900 dark:text-green-200 mb-3">
+            <i class="fas fa-chart-line mr-2"></i>
+            Enhanced Calculation Results
+          </h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Effective Bow Weight -->
+            <div>
+              <p class="text-xs text-green-700 dark:text-green-300 mb-1">Effective Bow Weight:</p>
+              <p class="font-medium text-green-900 dark:text-green-100">{{ enhancedSpineResult.effective_bow_weight }} lbs</p>
+              <div v-if="enhancedSpineResult.adjustments_applied && enhancedSpineResult.adjustments_applied.length > 0" class="text-xs text-green-600 dark:text-green-400 mt-1">
+                <div v-for="adjustment in enhancedSpineResult.adjustments_applied" :key="adjustment">
+                  • {{ adjustment }}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Calculation Source -->
+            <div>
+              <p class="text-xs text-green-700 dark:text-green-300 mb-1">Calculation Source:</p>
+              <div v-if="enhancedSpineResult.manufacturer_recommendation">
+                <p class="font-medium text-green-900 dark:text-green-100">
+                  {{ enhancedSpineResult.manufacturer_recommendation.manufacturer }} 
+                  {{ enhancedSpineResult.manufacturer_recommendation.model }}
+                </p>
+                <p class="text-xs text-green-600 dark:text-green-400 mt-1">
+                  Professional manufacturer spine chart
+                </p>
+              </div>
+              <div v-else>
+                <p class="font-medium text-green-900 dark:text-green-100">Generic Calculation</p>
+                <p class="text-xs text-green-600 dark:text-green-400 mt-1">
+                  Standard spine calculation method
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Calculation Notes -->
+          <div v-if="enhancedSpineResult.calculation_notes && enhancedSpineResult.calculation_notes.length > 0" class="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+            <p class="text-xs text-green-700 dark:text-green-300 mb-1">Notes:</p>
+            <div class="text-xs text-green-600 dark:text-green-400 space-y-1">
+              <div v-for="note in enhancedSpineResult.calculation_notes" :key="note">
+                • {{ note }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculation Loading State -->
+        <div v-else-if="isCalculatingEnhancedSpine" class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div class="flex items-center">
+            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent dark:border-blue-400"></div>
+            <span class="ml-2 text-sm text-blue-700 dark:text-blue-300">Calculating enhanced spine recommendation...</span>
+          </div>
+        </div>
         
         <!-- Material-specific calculation notes -->
         <div v-if="bowConfig.arrow_material && bowConfig.arrow_material === 'wood'" class="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
@@ -463,6 +537,11 @@
             <strong>All Materials:</strong> Shows recommendations for all arrow materials. 
             Spine calculations use standard carbon spine numbers based on your bow type.
           </p>
+        </div>
+
+        <!-- Spine Conversion Widget -->
+        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <SpineConversionWidget />
         </div>
       </div>
     </md-elevated-card>
@@ -482,6 +561,8 @@
 <script setup lang="ts">
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
+import ManufacturerSpineChartSelector from '~/components/ManufacturerSpineChartSelector.vue'
+import SpineConversionWidget from '~/components/SpineConversionWidget.vue'
 
 // API
 const api = useApi()
@@ -588,6 +669,68 @@ const handleArrowAddedToSetup = (arrowData) => {
   
   // Stay on calculator page - all data is preserved via Pinia store
   // User can continue browsing and adding more arrows
+}
+
+// Spine chart selection state
+const spineChartSelection = ref({
+  manufacturer: null,
+  chartId: null,
+  chart: null,
+  calculationMode: 'simple',
+  professionalSettings: {
+    bowSpeed: null,
+    releaseType: 'mechanical'
+  }
+})
+
+// Enhanced spine calculation state
+const enhancedSpineResult = ref(null)
+const isCalculatingEnhancedSpine = ref(false)
+
+// Handle spine chart selection change
+const handleSpineChartSelection = async (selection) => {
+  spineChartSelection.value = selection
+  
+  // Trigger enhanced spine calculation if manufacturer is selected
+  if (selection.manufacturer || selection.calculationMode === 'professional') {
+    await calculateEnhancedSpine()
+  } else {
+    enhancedSpineResult.value = null
+  }
+}
+
+// Calculate enhanced spine using manufacturer charts
+const calculateEnhancedSpine = async () => {
+  if (isCalculatingEnhancedSpine.value) return
+  
+  isCalculatingEnhancedSpine.value = true
+  
+  try {
+    const requestData = {
+      bow_config: {
+        ...bowConfig.value,
+        // Add professional settings if in professional mode
+        ...(spineChartSelection.value.calculationMode === 'professional' ? spineChartSelection.value.professionalSettings : {})
+      },
+      manufacturer_preference: spineChartSelection.value.manufacturer,
+      chart_id: spineChartSelection.value.chartId
+    }
+    
+    const response = await api.post('/calculator/spine-recommendation-enhanced', requestData)
+    enhancedSpineResult.value = response
+    
+    // Update the recommended spine display with enhanced calculation
+    if (response.recommended_spine) {
+      // Update the bow config store with the enhanced spine
+      bowConfigStore.setRecommendedSpine(response.recommended_spine)
+    }
+    
+  } catch (error) {
+    console.error('Error calculating enhanced spine:', error)
+    showNotification('Failed to calculate enhanced spine recommendation', 'error')
+  } finally {
+    isCalculatingEnhancedSpine.value = false
+  }
 }
 
 // Calculate vane weight based on type and length

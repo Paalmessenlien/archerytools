@@ -321,8 +321,8 @@ async function loadMaterials() {
   error.value = ''
   
   try {
-    // Try to load materials from admin API
-    const response = await api.get('/api/admin/spine-data/materials')
+    // Try to load materials from enhanced spine data API
+    const response = await api.get('/api/admin/spine-charts/materials')
     materials.value = response.data.materials
   } catch (err) {
     // Fallback to static data if API fails

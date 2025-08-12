@@ -5234,6 +5234,696 @@ def test_spine_calculation(current_user):
         print(f"Error testing spine calculation: {e}")
         return jsonify({'error': 'Failed to test spine calculation'}), 500
 
+# ==========================================
+# Enhanced Manufacturer Spine Chart API Endpoints
+# ==========================================
+
+@app.route('/api/calculator/manufacturers', methods=['GET'])
+def get_spine_chart_manufacturers():
+    """Get list of manufacturers with spine charts available"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get manufacturers from enhanced spine charts
+        cursor.execute("""
+            SELECT DISTINCT manufacturer, 
+                   COUNT(*) as chart_count,
+                   GROUP_CONCAT(DISTINCT bow_type) as bow_types
+            FROM manufacturer_spine_charts_enhanced 
+            WHERE is_active = 1 
+            GROUP BY manufacturer
+            ORDER BY manufacturer
+        """)
+        
+        manufacturers = []
+        for row in cursor.fetchall():
+            manufacturers.append({
+                'manufacturer': row[0],
+                'chart_count': row[1],
+                'bow_types': row[2].split(',') if row[2] else []
+            })
+        
+        conn.close()
+        return jsonify({'manufacturers': manufacturers})
+    except Exception as e:
+        print(f"Error getting spine chart manufacturers: {e}")
+        return jsonify({'error': 'Failed to get manufacturers'}), 500
+
+@app.route('/api/calculator/manufacturers/<manufacturer>/charts', methods=['GET'])
+def get_manufacturer_charts_for_calculator(manufacturer):
+    """Get spine charts for a specific manufacturer"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get charts for the manufacturer
+        cursor.execute("""
+            SELECT id, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                   provenance, spine_system, chart_notes, created_at
+            FROM manufacturer_spine_charts_enhanced 
+            WHERE manufacturer = ? AND is_active = 1 
+            ORDER BY bow_type, model
+        """, (manufacturer,))
+        
+        charts = []
+        for row in cursor.fetchall():
+            chart = {
+                'id': row[0],
+                'manufacturer': row[1],
+                'model': row[2],
+                'bow_type': row[3],
+                'grid_definition': json.loads(row[4]) if row[4] else {},
+                'spine_grid': json.loads(row[5]) if row[5] else [],
+                'provenance': row[6],
+                'spine_system': row[7],
+                'chart_notes': row[8],
+                'created_at': row[9]
+            }
+            charts.append(chart)
+        
+        conn.close()
+        return jsonify({
+            'manufacturer': manufacturer,
+            'charts': charts
+        })
+    except Exception as e:
+        print(f"Error getting charts for manufacturer {manufacturer}: {e}")
+        return jsonify({'error': f'Failed to get charts for {manufacturer}'}), 500
+
+@app.route('/api/calculator/spine-recommendation-enhanced', methods=['POST'])
+def calculate_enhanced_spine_recommendation():
+    """Enhanced spine calculation using manufacturer-specific charts"""
+    try:
+        data = request.get_json()
+        
+        # Extract bow configuration
+        bow_config = data.get('bow_config', {})
+        manufacturer_preference = data.get('manufacturer_preference')
+        chart_id = data.get('chart_id')  # Specific chart to use
+        
+        # Get basic spine calculation first
+        draw_weight = bow_config.get('draw_weight', 50)
+        draw_length = bow_config.get('draw_length', 29)
+        arrow_length = bow_config.get('arrow_length', 29)
+        bow_type = bow_config.get('bow_type', 'compound')
+        point_weight = bow_config.get('point_weight', 125)
+        arrow_material = bow_config.get('arrow_material', 'carbon')
+        
+        # Calculate adjustments using imported formulas
+        effective_bow_weight = calculate_effective_bow_weight(
+            draw_weight, arrow_length, point_weight, bow_config
+        )
+        
+        # Get manufacturer-specific recommendation if available
+        manufacturer_recommendation = None
+        if manufacturer_preference or chart_id:
+            manufacturer_recommendation = get_manufacturer_spine_recommendation(
+                manufacturer_preference, chart_id, bow_type, effective_bow_weight, arrow_length
+            )
+        
+        # Get generic recommendation as fallback
+        generic_recommendation = calculate_generic_spine(
+            effective_bow_weight, bow_type, arrow_material
+        )
+        
+        result = {
+            'effective_bow_weight': effective_bow_weight,
+            'adjustments_applied': get_applied_adjustments(bow_config),
+            'generic_recommendation': generic_recommendation,
+            'manufacturer_recommendation': manufacturer_recommendation,
+            'recommended_spine': manufacturer_recommendation['spine'] if manufacturer_recommendation else generic_recommendation['spine'],
+            'calculation_notes': get_calculation_notes(bow_config, manufacturer_recommendation)
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error calculating enhanced spine recommendation: {e}")
+        return jsonify({'error': 'Failed to calculate spine recommendation'}), 500
+
+@app.route('/api/calculator/convert-spine', methods=['POST'])
+def convert_spine_values():
+    """Convert spine values between different systems"""
+    try:
+        data = request.get_json()
+        
+        from_spine = data.get('from_spine')
+        from_system = data.get('from_system')  # carbon, aluminum, wood
+        to_system = data.get('to_system')
+        
+        if not all([from_spine, from_system, to_system]):
+            return jsonify({'error': 'Missing required parameters'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Look up conversion
+        conversion_type = f"{from_system}_to_{to_system}"
+        cursor.execute("""
+            SELECT to_spine, accuracy_note 
+            FROM spine_conversion_tables 
+            WHERE conversion_type = ? AND from_spine = ?
+        """, (conversion_type, str(from_spine)))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'from_spine': from_spine,
+                'from_system': from_system,
+                'to_spine': result[0],
+                'to_system': to_system,
+                'accuracy_note': result[1],
+                'conversion_available': True
+            })
+        else:
+            return jsonify({
+                'from_spine': from_spine,
+                'from_system': from_system,
+                'to_spine': None,
+                'to_system': to_system,
+                'accuracy_note': 'No direct conversion available',
+                'conversion_available': False
+            })
+    except Exception as e:
+        print(f"Error converting spine values: {e}")
+        return jsonify({'error': 'Failed to convert spine values'}), 500
+
+@app.route('/api/admin/spine-charts', methods=['GET'])
+@token_required
+@admin_required
+def get_all_spine_charts(current_user):
+    """Get all spine charts (manufacturer + custom) for admin"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        print(f"Database path being used: {getattr(db, 'db_path', 'Unknown')}")
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if tables exist
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%spine%'")
+        tables = cursor.fetchall()
+        print(f"Spine-related tables found: {[table[0] for table in tables]}")
+        
+        # Get manufacturer charts
+        cursor.execute("""
+            SELECT 'manufacturer' as chart_type, id, manufacturer, model, bow_type, 
+                   spine_system, chart_notes, provenance, is_active, created_at,
+                   grid_definition, spine_grid
+            FROM manufacturer_spine_charts_enhanced
+            ORDER BY manufacturer, model, bow_type
+        """)
+        
+        manufacturer_charts = []
+        for row in cursor.fetchall():
+            manufacturer_charts.append({
+                'chart_type': row[0],
+                'id': row[1],
+                'manufacturer': row[2],
+                'model': row[3],
+                'bow_type': row[4],
+                'spine_system': row[5],
+                'chart_notes': row[6],
+                'provenance': row[7],
+                'is_active': bool(row[8]),
+                'created_at': row[9],
+                'grid_definition': json.loads(row[10]) if row[10] else {},
+                'spine_grid': json.loads(row[11]) if row[11] else []
+            })
+        
+        # Get custom charts
+        cursor.execute("""
+            SELECT 'custom' as chart_type, id, manufacturer, model, bow_type, 
+                   spine_system, chart_notes, created_by, is_active, created_at,
+                   grid_definition, spine_grid
+            FROM custom_spine_charts
+            ORDER BY chart_name
+        """)
+        
+        custom_charts = []
+        for row in cursor.fetchall():
+            custom_charts.append({
+                'chart_type': row[0],
+                'id': row[1],
+                'manufacturer': row[2],
+                'model': row[3],
+                'bow_type': row[4],
+                'spine_system': row[5],
+                'chart_notes': row[6],
+                'created_by': row[7],
+                'is_active': bool(row[8]),
+                'created_at': row[9],
+                'grid_definition': json.loads(row[10]) if row[10] else {},
+                'spine_grid': json.loads(row[11]) if row[11] else []
+            })
+        
+        conn.close()
+        return jsonify({
+            'manufacturer_charts': manufacturer_charts,
+            'custom_charts': custom_charts,
+            'total_charts': len(manufacturer_charts) + len(custom_charts)
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error getting all spine charts: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Failed to get spine charts: {str(e)}'}), 500
+
+@app.route('/api/admin/spine-charts/custom', methods=['POST'])
+@token_required
+@admin_required
+def create_custom_spine_chart(current_user):
+    """Create a new custom spine chart"""
+    try:
+        data = request.get_json()
+        
+        required_fields = ['chart_name', 'bow_type', 'spine_grid']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO custom_spine_charts 
+            (chart_name, manufacturer, model, bow_type, grid_definition, 
+             spine_grid, spine_system, chart_notes, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data['chart_name'],
+            data.get('manufacturer', ''),
+            data.get('model', ''),
+            data['bow_type'],
+            json.dumps(data.get('grid_definition', {})),
+            json.dumps(data['spine_grid']),
+            data.get('spine_system', 'standard_deflection'),
+            data.get('chart_notes', ''),
+            current_user['email']
+        ))
+        
+        chart_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Custom spine chart created successfully',
+            'chart_id': chart_id
+        }), 201
+    except Exception as e:
+        print(f"Error creating custom spine chart: {e}")
+        return jsonify({'error': 'Failed to create custom spine chart'}), 500
+
+@app.route('/api/admin/spine-charts/custom/<int:chart_id>', methods=['PUT'])
+@token_required
+@admin_required
+def update_custom_spine_chart(current_user, chart_id):
+    """Update a custom spine chart"""
+    try:
+        data = request.get_json()
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if chart exists and is custom
+        cursor.execute("""
+            SELECT created_by FROM custom_spine_charts WHERE id = ?
+        """, (chart_id,))
+        chart = cursor.fetchone()
+        
+        if not chart:
+            return jsonify({'error': 'Custom chart not found'}), 404
+        
+        # Update the chart
+        cursor.execute("""
+            UPDATE custom_spine_charts 
+            SET manufacturer = ?, model = ?, bow_type = ?, spine_system = ?, 
+                chart_notes = ?, is_active = ?, spine_grid = ?, grid_definition = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            data.get('manufacturer', ''),
+            data.get('model', ''),
+            data.get('bow_type', 'compound'),
+            data.get('spine_system', 'standard_deflection'),
+            data.get('chart_notes', ''),
+            data.get('is_active', True),
+            json.dumps(data.get('spine_grid', [])),
+            json.dumps(data.get('grid_definition', {})),
+            chart_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Custom spine chart updated successfully'}), 200
+    except Exception as e:
+        print(f"Error updating custom spine chart: {e}")
+        return jsonify({'error': 'Failed to update custom spine chart'}), 500
+
+@app.route('/api/admin/spine-charts/custom/<int:chart_id>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_custom_spine_chart(current_user, chart_id):
+    """Delete a custom spine chart"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if chart exists and is custom
+        cursor.execute("""
+            SELECT created_by FROM custom_spine_charts WHERE id = ?
+        """, (chart_id,))
+        chart = cursor.fetchone()
+        
+        if not chart:
+            return jsonify({'error': 'Custom chart not found'}), 404
+        
+        # Delete the chart
+        cursor.execute("DELETE FROM custom_spine_charts WHERE id = ?", (chart_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Custom spine chart deleted successfully'}), 200
+    except Exception as e:
+        print(f"Error deleting custom spine chart: {e}")
+        return jsonify({'error': 'Failed to delete custom spine chart'}), 500
+
+@app.route('/api/admin/spine-charts/manufacturer/<int:chart_id>/override', methods=['POST'])
+@token_required
+@admin_required
+def create_manufacturer_override(current_user, chart_id):
+    """Create a custom chart based on manufacturer chart for editing"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get the original manufacturer chart
+        cursor.execute("""
+            SELECT manufacturer, model, bow_type, grid_definition, spine_grid, 
+                   spine_system, chart_notes, provenance
+            FROM manufacturer_spine_charts_enhanced 
+            WHERE id = ?
+        """, (chart_id,))
+        
+        original_chart = cursor.fetchone()
+        if not original_chart:
+            return jsonify({'error': 'Manufacturer chart not found'}), 404
+        
+        # Create custom chart based on manufacturer chart
+        cursor.execute("""
+            INSERT INTO custom_spine_charts 
+            (chart_name, manufacturer, model, bow_type, grid_definition, 
+             spine_grid, spine_system, chart_notes, created_by, overrides_manufacturer_chart)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            f"{original_chart[0]} {original_chart[1]} (Custom Override)",
+            original_chart[0],  # manufacturer
+            f"{original_chart[1]} (Custom)",  # model
+            original_chart[2],  # bow_type
+            original_chart[3],  # grid_definition
+            original_chart[4],  # spine_grid
+            original_chart[5],  # spine_system
+            f"Custom override of {original_chart[0]} {original_chart[1]}. Original notes: {original_chart[6] or 'None'}",
+            current_user['email'],
+            True  # overrides_manufacturer_chart
+        ))
+        
+        custom_chart_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Custom override chart created successfully',
+            'custom_chart_id': custom_chart_id
+        }), 201
+    except Exception as e:
+        print(f"Error creating manufacturer override: {e}")
+        return jsonify({'error': 'Failed to create manufacturer override'}), 500
+
+# Helper functions for enhanced spine calculations
+
+def calculate_effective_bow_weight(draw_weight, arrow_length, point_weight, bow_config):
+    """Calculate effective bow weight with adjustments"""
+    effective_weight = draw_weight
+    
+    # Arrow length adjustment (5 lbs per inch difference from 28")
+    length_adjustment = (arrow_length - 28) * 5
+    effective_weight += length_adjustment
+    
+    # Point weight adjustment (5 lbs per 25 grain difference from 125gr)
+    point_adjustment = ((point_weight - 125) / 25) * 5
+    effective_weight += point_adjustment
+    
+    # Bow speed adjustment (if available)
+    bow_speed = bow_config.get('bow_speed')
+    if bow_speed:
+        if bow_speed <= 275:
+            effective_weight -= 10
+        elif bow_speed <= 300:
+            effective_weight -= 5
+        elif bow_speed <= 320:
+            pass  # no adjustment
+        elif bow_speed <= 340:
+            effective_weight += 5
+        elif bow_speed <= 350:
+            effective_weight += 10
+        else:
+            effective_weight += 15
+    
+    # Release type adjustment
+    release_type = bow_config.get('release_type', 'mechanical')
+    if release_type == 'finger_release':
+        effective_weight += 5
+    
+    return round(effective_weight, 1)
+
+def get_manufacturer_spine_recommendation(manufacturer, chart_id, bow_type, effective_weight, arrow_length):
+    """Get spine recommendation from manufacturer chart"""
+    try:
+        db = get_database()
+        if not db:
+            return None
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        if chart_id:
+            # Use specific chart
+            cursor.execute("""
+                SELECT manufacturer, model, spine_grid, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE id = ? AND is_active = 1
+            """, (chart_id,))
+        else:
+            # Find best matching chart for manufacturer and bow type
+            cursor.execute("""
+                SELECT manufacturer, model, spine_grid, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE manufacturer = ? AND bow_type = ? AND is_active = 1
+                LIMIT 1
+            """, (manufacturer, bow_type))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
+            return None
+        
+        manufacturer_name, model, spine_grid_json, spine_system, notes = result
+        spine_grid = json.loads(spine_grid_json)
+        
+        # Find matching spine from grid
+        recommended_spine = find_spine_from_grid(spine_grid, effective_weight, arrow_length)
+        
+        if recommended_spine:
+            return {
+                'manufacturer': manufacturer_name,
+                'model': model,
+                'spine': recommended_spine,
+                'spine_system': spine_system,
+                'chart_notes': notes,
+                'source': 'manufacturer_chart'
+            }
+    except Exception as e:
+        print(f"Error getting manufacturer spine recommendation: {e}")
+    
+    return None
+
+def find_spine_from_grid(spine_grid, effective_weight, arrow_length):
+    """Find appropriate spine from manufacturer grid"""
+    try:
+        for entry in spine_grid:
+            weight_range = entry.get('draw_weight_range_lbs', '')
+            arrow_length_in_chart = entry.get('arrow_length_in', 28)
+            
+            # Parse weight range (e.g., "50-54")
+            if '-' in weight_range:
+                min_weight, max_weight = map(int, weight_range.split('-'))
+            else:
+                min_weight = max_weight = int(weight_range)
+            
+            # Check if effective weight falls in range
+            if min_weight <= effective_weight <= max_weight:
+                # Adjust for arrow length if needed (most charts are for 28")
+                if arrow_length_in_chart == arrow_length or abs(arrow_length_in_chart - arrow_length) <= 1:
+                    return entry.get('spine')
+        
+        # If no exact match, find closest
+        closest_entry = None
+        min_diff = float('inf')
+        
+        for entry in spine_grid:
+            weight_range = entry.get('draw_weight_range_lbs', '')
+            if '-' in weight_range:
+                min_weight, max_weight = map(int, weight_range.split('-'))
+                mid_weight = (min_weight + max_weight) / 2
+            else:
+                mid_weight = int(weight_range)
+            
+            diff = abs(mid_weight - effective_weight)
+            if diff < min_diff:
+                min_diff = diff
+                closest_entry = entry
+        
+        return closest_entry.get('spine') if closest_entry else None
+    except Exception as e:
+        print(f"Error finding spine from grid: {e}")
+        return None
+
+def calculate_generic_spine(effective_weight, bow_type, arrow_material):
+    """Calculate generic spine recommendation as fallback"""
+    # Basic spine calculation logic
+    if arrow_material == 'wood':
+        # Wood spine system (pounds)
+        if effective_weight <= 35:
+            spine = "55-60"
+        elif effective_weight <= 45:
+            spine = "45-50"
+        elif effective_weight <= 55:
+            spine = "35-40"
+        elif effective_weight <= 65:
+            spine = "26-30"
+        else:
+            spine = "20-25"
+    else:
+        # Carbon/aluminum spine system
+        if bow_type == 'compound':
+            if effective_weight <= 35:
+                spine = 600
+            elif effective_weight <= 45:
+                spine = 500
+            elif effective_weight <= 55:
+                spine = 400
+            elif effective_weight <= 65:
+                spine = 340
+            elif effective_weight <= 75:
+                spine = 300
+            else:
+                spine = 250
+        else:  # recurve/longbow
+            if effective_weight <= 35:
+                spine = 700
+            elif effective_weight <= 45:
+                spine = 600
+            elif effective_weight <= 55:
+                spine = 500
+            elif effective_weight <= 65:
+                spine = 400
+            else:
+                spine = 340
+    
+    return {
+        'spine': spine,
+        'source': 'generic_calculation',
+        'system': 'wood' if arrow_material == 'wood' else 'standard'
+    }
+
+def get_applied_adjustments(bow_config):
+    """Get list of adjustments applied to base weight"""
+    adjustments = []
+    
+    arrow_length = bow_config.get('arrow_length', 29)
+    if arrow_length != 28:
+        diff = arrow_length - 28
+        adjustments.append(f"Arrow length: {diff:+.1f}\" = {diff*5:+.0f} lbs")
+    
+    point_weight = bow_config.get('point_weight', 125)
+    if point_weight != 125:
+        diff = point_weight - 125
+        adj = (diff / 25) * 5
+        adjustments.append(f"Point weight: {diff:+.0f} gr = {adj:+.1f} lbs")
+    
+    bow_speed = bow_config.get('bow_speed')
+    if bow_speed:
+        if bow_speed <= 275:
+            adjustments.append(f"Bow speed: {bow_speed} fps = -10 lbs")
+        elif bow_speed <= 300:
+            adjustments.append(f"Bow speed: {bow_speed} fps = -5 lbs")
+        elif bow_speed <= 320:
+            adjustments.append(f"Bow speed: {bow_speed} fps = 0 lbs")
+        elif bow_speed <= 340:
+            adjustments.append(f"Bow speed: {bow_speed} fps = +5 lbs")
+        elif bow_speed <= 350:
+            adjustments.append(f"Bow speed: {bow_speed} fps = +10 lbs")
+        else:
+            adjustments.append(f"Bow speed: {bow_speed} fps = +15 lbs")
+    
+    release_type = bow_config.get('release_type', 'mechanical')
+    if release_type == 'finger_release':
+        adjustments.append("Finger release: +5 lbs")
+    
+    return adjustments
+
+def get_calculation_notes(bow_config, manufacturer_recommendation):
+    """Get calculation notes and explanations"""
+    notes = []
+    
+    if manufacturer_recommendation:
+        notes.append(f"Using {manufacturer_recommendation['manufacturer']} {manufacturer_recommendation['model']} spine chart")
+        if manufacturer_recommendation.get('chart_notes'):
+            notes.append(manufacturer_recommendation['chart_notes'])
+    else:
+        notes.append("Using generic spine calculation (no manufacturer chart selected)")
+    
+    arrow_material = bow_config.get('arrow_material', 'carbon')
+    if arrow_material == 'wood':
+        notes.append("Wood arrow spine measured in pounds (traditional system)")
+    
+    return notes
+
 # Run the app
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))
