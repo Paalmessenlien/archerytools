@@ -1,9 +1,14 @@
 # Production Debug Checklist
 
-## Current Issue Summary
-- **Problem**: No spine charts available in production
-- **Root Cause**: Production API container stopped 6 days ago (Exit code 137)
-- **Status**: Migrations completed but ran on wrong container (nginx instead of API)
+## Issue Resolution Summary (August 12, 2025)
+- **Problem**: ✅ RESOLVED - No spine charts available in production
+- **Root Cause**: Production API container stopped 6 days ago (Exit code 137 - out of memory)
+- **Solution Applied**: 
+  - ✅ Containers restarted and running healthy
+  - ✅ Spine data imported successfully (21 charts)
+  - ✅ Added 2GB swap file to prevent future OOM kills
+  - ✅ System fully operational
+- **Key Learning**: No swap space was the primary cause of container deaths
 
 ## Container Status Diagnosis
 
@@ -282,4 +287,24 @@ If production is completely broken and needs immediate recovery:
 
 ---
 
-*This checklist addresses the specific issue where production containers stopped running 6 days ago, preventing the spine chart migration system from working properly.*
+## RESOLUTION LOG (August 12, 2025)
+
+### What Actually Worked:
+1. **Containers were already restarted** - System was running but spine data wasn't imported
+2. **Manual spine data import**: `./docker-migration-runner.sh migrate` successfully imported 21 spine charts
+3. **Added swap space**: `sudo fallocate -l 2G /swapfile && sudo swapon /swapfile` prevented future OOM
+4. **Made swap permanent**: Added `/swapfile none swap sw 0 0` to `/etc/fstab`
+
+### Final Status:
+- ✅ All containers running healthy
+- ✅ 21 spine charts imported successfully  
+- ✅ API health check passing (`https://archerytool.online/api/health`)
+- ✅ Frontend accessible (`https://archerytool.online`)
+- ✅ 2GB swap active to prevent future memory issues
+
+### Key Insight:
+The spine chart endpoints are **admin-only** (`/api/admin/spine-charts`) - they require authentication and are not publicly accessible. The spine data is properly integrated and available through the admin interface.
+
+---
+
+*This checklist addressed the specific issue where production containers stopped running due to memory pressure, preventing the spine chart migration system from working properly. Issue resolved August 12, 2025.*
