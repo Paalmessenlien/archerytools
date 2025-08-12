@@ -27,6 +27,12 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 **Recent Major Updates (2025):**
+- ✅ **Admin Panel Authentication & JSON Serialization Fixes (August 2025)**: Complete resolution of admin panel authentication and API routing issues
+  - **Authentication Fix**: Replaced all unauthenticated `$fetch` calls with authenticated `api.get()` and `api.post()` calls
+  - **JSON Serialization Fix**: Added comprehensive Path object conversion for all admin endpoints (migrations, database health, maintenance)
+  - **API Routing Fix**: Added Nuxt proxy rules to correctly route `/api/**` to Flask server, resolving 404 "Page not found" errors
+  - **Endpoints Fixed**: Migration status/run, database health, optimization, vacuum, and schema verification
+  - **Admin Panel Fully Functional**: All migration management, database health monitoring, and maintenance operations now working
 - ✅ **Database Maintenance & Migration Management System**: Comprehensive admin tools for database health monitoring, migration management, and maintenance operations with professional web interface
 - ✅ **CDN-First Backup System**: Cross-environment backup access with CDN storage, eliminating data blanking issues
 - ✅ **Admin Backup/Restore System**: Complete database backup and restore functionality with CDN integration
@@ -1750,6 +1756,44 @@ This section details the newly implemented user authentication and profile manag
 - **Fixed**: Added comprehensive dark mode CSS for all UI components
 - **Solution**: Enhanced CSS with `.dark` variants for cards, navigation tabs, input fields, badges, and compatibility indicators
 - **Files**: `/frontend/assets/css/main.css` (dark mode component styling), `/frontend/layouts/default.vue` (loading indicator fix)
+
+**Admin Panel Authentication & API Issues (August 2025):**
+- **Issue**: Admin panel showing 401 UNAUTHORIZED errors for all endpoints
+- **Root Cause**: Frontend using unauthenticated `$fetch()` calls instead of authenticated API calls
+- **Solution**: Replace all `$fetch('/api/admin/...')` with `api.get('/admin/...')` or `api.post('/admin/...')`
+- **Files Fixed**: `frontend/pages/admin/index.vue` (6 endpoint calls updated)
+
+**Admin Panel 404 "Page not found" Errors:**
+- **Issue**: Nuxt treating `/api/*` paths as frontend routes instead of proxying to Flask API
+- **Root Cause**: Missing proxy configuration in Nuxt
+- **Solution**: Add `routeRules` to `nuxt.config.ts`:
+  ```typescript
+  routeRules: {
+    '/api/**': { 
+      proxy: 'http://localhost:5000/api/**',
+      cors: true 
+    }
+  }
+  ```
+- **Status**: ✅ **RESOLVED** - All API calls now correctly routed to Flask server
+
+**Admin Panel 500 JSON Serialization Errors:**
+- **Issue**: "Object of type PosixPath is not JSON serializable" errors
+- **Root Cause**: Database classes returning `Path` objects in API responses
+- **Solution**: Add comprehensive Path object conversion in all admin endpoints:
+  ```python
+  def convert_paths_to_strings(obj):
+      if hasattr(obj, '__fspath__'):  # Path objects
+          return str(obj)
+      elif isinstance(obj, dict):
+          return {k: convert_paths_to_strings(v) for k, v in obj.items()}
+      # ... handle lists and other types
+  ```
+- **Endpoints Fixed**: 
+  - `/api/admin/database/health` ✅
+  - `/api/admin/migrations/status` ✅  
+  - `/api/admin/migrations/run` ✅
+- **Status**: ✅ **RESOLVED** - All admin endpoints now handle Path serialization correctly
 
 ### Performance Optimizations
 
