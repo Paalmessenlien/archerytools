@@ -5,7 +5,7 @@
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
           <i class="fas fa-edit mr-2 text-blue-600"></i>
-          Edit Equipment: {{ equipment.manufacturer }} {{ equipment.model_name }}
+          Edit Equipment: {{ equipment.manufacturer_name || equipment.manufacturer }} {{ equipment.model_name }}
         </h3>
       </div>
 
@@ -25,7 +25,7 @@
             </div>
             <div>
               <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                {{ equipment.manufacturer }} {{ equipment.model_name }}
+                {{ equipment.manufacturer_name || equipment.manufacturer }} {{ equipment.model_name }}
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400">{{ equipment.category_name }}</p>
               <div v-if="equipment.weight_grams" class="text-sm text-gray-500 dark:text-gray-400 mt-1">

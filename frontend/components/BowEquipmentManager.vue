@@ -73,7 +73,7 @@
                   <!-- Equipment Details -->
                   <div class="flex-1 min-w-0">
                     <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {{ equipmentItem.manufacturer }} {{ equipmentItem.model_name }}
+                      {{ equipmentItem.manufacturer_name || equipmentItem.manufacturer }} {{ equipmentItem.model_name }}
                     </h4>
                     <p v-if="equipmentItem.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                       {{ equipmentItem.description }}
@@ -141,14 +141,32 @@
       </CustomButton>
     </div>
 
-    <!-- Equipment Selector Modal -->
-    <EquipmentSelectorModal
-      v-if="showEquipmentSelector"
-      :bow-setup="bowSetup"
-      :excluded-equipment="excludedEquipmentIds"
-      @select="handleEquipmentSelected"
-      @close="showEquipmentSelector = false"
-    />
+    <!-- Custom Equipment Form Modal -->
+    <div v-if="showEquipmentSelector" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <i class="fas fa-cogs mr-2 text-green-600"></i>
+              Add Equipment to {{ bowSetup.name }}
+            </h3>
+            <CustomButton @click="showEquipmentSelector = false" variant="text" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-times text-xl"></i>
+            </CustomButton>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+          <CustomEquipmentForm
+            :bow-setup="bowSetup"
+            @equipment-added="handleEquipmentAdded"
+            @cancel="showEquipmentSelector = false"
+          />
+        </div>
+      </div>
+    </div>
 
     <!-- Equipment Edit Modal -->
     <EquipmentEditModal
@@ -225,20 +243,15 @@ const openEquipmentSelector = () => {
   showEquipmentSelector.value = true
 }
 
-const handleEquipmentSelected = async (selectedEquipment) => {
+const handleEquipmentAdded = async (addedEquipment) => {
   try {
-    const response = await api.post(`/bow-setups/${props.bowSetup.id}/equipment`, {
-      equipment_id: selectedEquipment.id,
-      installation_notes: selectedEquipment.notes || ''
-    })
-    
     await loadEquipment()
-    emit('show-notification', `${selectedEquipment.manufacturer} ${selectedEquipment.model_name} added successfully`, 'success')
+    emit('show-notification', `${addedEquipment.manufacturer_name} ${addedEquipment.model_name} added successfully`, 'success')
     emit('equipment-updated')
     showEquipmentSelector.value = false
   } catch (error) {
-    console.error('Error adding equipment:', error)
-    emit('show-notification', 'Failed to add equipment', 'error')
+    console.error('Error handling equipment added:', error)
+    emit('show-notification', 'Failed to refresh equipment list', 'error')
   }
 }
 

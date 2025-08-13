@@ -3066,10 +3066,134 @@ def search_equipment():
         print(f"Error searching equipment: {e}")
         return jsonify({'error': 'Failed to search equipment'}), 500
 
+@app.route('/api/equipment/form-schema/<category>', methods=['GET'])
+def get_equipment_form_schema(category):
+    """Get form schema for a specific equipment category"""
+    try:
+        # Use get_database() to get the correct arrow database connection
+        db = get_database()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get field standards for the category
+        cursor.execute('''
+            SELECT field_name, field_type, label, unit, required,
+                   validation_rules, field_options, default_value, help_text, display_order
+            FROM equipment_field_standards 
+            WHERE category_name = ?
+            ORDER BY display_order, field_name
+        ''', (category,))
+        
+        fields = []
+        for row in cursor.fetchall():
+            field_data = {
+                'name': row[0],
+                'type': row[1],
+                'label': row[2],
+                'unit': row[3],
+                'required': bool(row[4]),
+                'order': row[9]
+            }
+            
+            # Parse JSON fields
+            if row[5]:  # validation_rules
+                try:
+                    field_data['validation'] = json.loads(row[5])
+                except json.JSONDecodeError:
+                    pass
+                    
+            if row[6]:  # field_options
+                try:
+                    field_data['options'] = json.loads(row[6])
+                except json.JSONDecodeError:
+                    field_data['options'] = []
+                    
+            if row[7]:  # default_value
+                field_data['default'] = row[7]
+                
+            if row[8]:  # help_text
+                field_data['help'] = row[8]
+                
+            fields.append(field_data)
+        
+        return jsonify({
+            'category': category,
+            'fields': fields
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting form schema for {category}: {e}")
+        return jsonify({'error': f'Failed to get form schema for {category}'}), 500
+
+@app.route('/api/equipment/manufacturers/suggest', methods=['GET'])
+def suggest_equipment_manufacturers():
+    """Get manufacturer suggestions for autocomplete"""
+    try:
+        query = request.args.get('q', '').lower()
+        category = request.args.get('category', '')
+        
+        # Map frontend category names to database category names
+        category_mapping = {
+            'String': 'strings',
+            'Sight': 'sights', 
+            'Stabilizer': 'stabilizers',
+            'Arrow Rest': 'arrow_rests',
+            'Weight': 'weights'
+        }
+        
+        # Convert category name to database format
+        if category in category_mapping:
+            category = category_mapping[category]
+        
+        # Use get_database() to get the correct arrow database connection
+        db = get_database()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get manufacturers from unified manufacturer system
+        sql = '''
+            SELECT DISTINCT m.name, m.website_url, m.country
+            FROM manufacturers m
+        '''
+        params = []
+        
+        # Filter by category if specified
+        if category:
+            sql += '''
+                JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
+                WHERE mec.category_name = ?
+            '''
+            params.append(category)
+            
+            if query:
+                sql += ' AND LOWER(m.name) LIKE ?'
+                params.append(f'%{query}%')
+        else:
+            if query:
+                sql += ' WHERE LOWER(m.name) LIKE ?'
+                params.append(f'%{query}%')
+        
+        sql += ' ORDER BY m.name LIMIT 20'
+        
+        cursor.execute(sql, params)
+        manufacturers = []
+        for row in cursor.fetchall():
+            manufacturers.append({
+                'name': row[0],
+                'website': row[1],
+                'country': row[2]
+            })
+        
+        return jsonify({'manufacturers': manufacturers}), 200
+        
+    except Exception as e:
+        print(f"Error getting manufacturer suggestions: {e}")
+        return jsonify({'error': 'Failed to get manufacturer suggestions'}), 500
+
 @app.route('/api/bow-setups/<int:setup_id>/equipment', methods=['GET'])
 @token_required
 def get_bow_equipment(current_user, setup_id):
-    """Get all equipment for a bow setup"""
+    """Get all equipment for a bow setup (supports both custom and pre-chosen equipment)"""
     try:
         from user_database import UserDatabase
         user_db = UserDatabase()
@@ -3083,54 +3207,86 @@ def get_bow_equipment(current_user, setup_id):
             conn.close()
             return jsonify({'error': 'Setup not found or access denied'}), 404
         
-        # Get equipment with details from both databases
-        # First get bow_equipment from user database
+        # Get all equipment for this bow setup
         cursor.execute('''
             SELECT * FROM bow_equipment 
             WHERE bow_setup_id = ? AND is_active = 1
+            ORDER BY category_name, manufacturer_name, model_name
         ''', (setup_id,))
         
         bow_equipment_rows = cursor.fetchall()
-        conn.close()
-        
-        # Now get equipment details from arrow database
-        arrow_db = get_database()
-        arrow_cursor = arrow_db.get_connection().cursor()
-        
         equipment = []
-        for be_row in bow_equipment_rows:
-            be_item = dict(be_row)
-            
-            # Get equipment details from arrow database
-            arrow_cursor.execute('''
-                SELECT e.*, ec.name as category_name, ec.icon as category_icon
-                FROM equipment e
-                JOIN equipment_categories ec ON e.category_id = ec.id
-                WHERE e.id = ?
-            ''', (be_item['equipment_id'],))
-            
-            equipment_row = arrow_cursor.fetchone()
-            if equipment_row:
-                equipment_item = dict(equipment_row)
-                # Merge bow_equipment data with equipment data
-                equipment_item.update({
-                    'bow_equipment_id': be_item['id'],
-                    'installation_date': be_item['installation_date'],
-                    'installation_notes': be_item['installation_notes'],
-                    'custom_specifications': be_item['custom_specifications'],
-                    'is_active': be_item['is_active']
-                })
-                
-                # Parse JSON fields
-                for field in ['specifications', 'custom_specifications']:
-                    if equipment_item.get(field):
-                        try:
-                            equipment_item[field] = json.loads(equipment_item[field])
-                        except json.JSONDecodeError:
-                            equipment_item[field] = {}
-                
-                equipment.append(equipment_item)
         
+        for be_row in bow_equipment_rows:
+            equipment_item = dict(be_row)
+            
+            # For custom equipment (is_custom = True), use the stored data directly
+            if equipment_item.get('is_custom'):
+                # Custom equipment - use stored data
+                equipment_item['manufacturer'] = equipment_item['manufacturer_name']
+                equipment_item['model_name'] = equipment_item['model_name']
+                equipment_item['category_name'] = equipment_item['category_name']
+                
+                # Add category icon
+                category_icons = {
+                    'String': 'fas fa-link',
+                    'Sight': 'fas fa-crosshairs', 
+                    'Stabilizer': 'fas fa-balance-scale',
+                    'Arrow Rest': 'fas fa-hand-paper',
+                    'Weight': 'fas fa-weight-hanging'
+                }
+                equipment_item['category_icon'] = category_icons.get(equipment_item['category_name'], 'fas fa-cog')
+                
+                # Parse specifications JSON
+                if equipment_item.get('custom_specifications'):
+                    try:
+                        equipment_item['specifications'] = json.loads(equipment_item['custom_specifications'])
+                    except json.JSONDecodeError:
+                        equipment_item['specifications'] = {}
+                else:
+                    equipment_item['specifications'] = {}
+                    
+            else:
+                # Legacy pre-chosen equipment - get details from arrow database
+                if equipment_item.get('equipment_id'):
+                    try:
+                        arrow_db = get_database()
+                        arrow_cursor = arrow_db.get_connection().cursor()
+                        
+                        arrow_cursor.execute('''
+                            SELECT e.*, ec.name as category_name, ec.icon as category_icon
+                            FROM equipment e
+                            JOIN equipment_categories ec ON e.category_id = ec.id
+                            WHERE e.id = ?
+                        ''', (equipment_item['equipment_id'],))
+                        
+                        equipment_row = arrow_cursor.fetchone()
+                        if equipment_row:
+                            equipment_data = dict(equipment_row)
+                            # Merge with bow_equipment data, prioritizing bow_equipment values
+                            for key, value in equipment_data.items():
+                                if key not in equipment_item or equipment_item[key] is None:
+                                    equipment_item[key] = value
+                            
+                            # Parse JSON fields
+                            for field in ['specifications', 'custom_specifications']:
+                                if equipment_item.get(field):
+                                    try:
+                                        equipment_item[field] = json.loads(equipment_item[field])
+                                    except json.JSONDecodeError:
+                                        equipment_item[field] = {}
+                        
+                        arrow_cursor.close()
+                    except Exception as e:
+                        print(f"Warning: Could not get legacy equipment details: {e}")
+            
+            # Clean up the response
+            equipment_item['id'] = equipment_item['id']  # bow_equipment ID
+            equipment_item['bow_equipment_id'] = equipment_item['id']
+            
+            equipment.append(equipment_item)
+        
+        conn.close()
         return jsonify({'equipment': equipment}), 200
         
     except Exception as e:
@@ -3140,11 +3296,17 @@ def get_bow_equipment(current_user, setup_id):
 @app.route('/api/bow-setups/<int:setup_id>/equipment', methods=['POST'])
 @token_required
 def add_bow_equipment(current_user, setup_id):
-    """Add equipment to a bow setup"""
+    """Add custom equipment to a bow setup"""
     try:
         data = request.get_json()
-        if not data or 'equipment_id' not in data:
-            return jsonify({'error': 'Equipment ID is required'}), 400
+        if not data:
+            return jsonify({'error': 'Equipment data is required'}), 400
+        
+        # Validate required fields for custom equipment
+        required_fields = ['manufacturer_name', 'model_name', 'category_name']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'{field} is required'}), 400
         
         from user_database import UserDatabase
         user_db = UserDatabase()
@@ -3158,70 +3320,89 @@ def add_bow_equipment(current_user, setup_id):
             conn.close()
             return jsonify({'error': 'Setup not found or access denied'}), 404
         
-        # Verify equipment exists
-        arrow_conn = sqlite3.connect(get_db_path())
-        arrow_cursor = arrow_conn.cursor()
-        arrow_cursor.execute('SELECT id FROM equipment WHERE id = ?', (data['equipment_id'],))
-        if not arrow_cursor.fetchone():
-            arrow_conn.close()
-            conn.close()
-            return jsonify({'error': 'Equipment not found'}), 404
-        arrow_conn.close()
-        
-        # Check if equipment is already added
+        # Check for duplicate equipment (same manufacturer, model, category)
         cursor.execute('''
             SELECT id FROM bow_equipment 
-            WHERE bow_setup_id = ? AND equipment_id = ? AND is_active = 1
-        ''', (setup_id, data['equipment_id']))
+            WHERE bow_setup_id = ? AND manufacturer_name = ? AND model_name = ? 
+            AND category_name = ? AND is_active = 1
+        ''', (setup_id, data['manufacturer_name'], data['model_name'], data['category_name']))
         if cursor.fetchone():
             conn.close()
-            return jsonify({'error': 'Equipment already added to this bow setup'}), 409
+            return jsonify({'error': 'This equipment is already added to the setup'}), 409
         
-        # Add equipment to bow setup
+        # Convert weight to grams if provided in ounces
+        weight_grams = data.get('weight_grams')
+        if not weight_grams and data.get('weight_ounces'):
+            weight_grams = float(data['weight_ounces']) * 28.3495  # Convert ounces to grams
+        
+        # Try to link to existing manufacturer from database
+        equipment_id = None
+        try:
+            arrow_db = ArrowDatabase()
+            arrow_conn = arrow_db.get_connection()
+            arrow_cursor = arrow_conn.cursor()
+            
+            # Look for matching manufacturer
+            arrow_cursor.execute('''
+                SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)
+            ''', (data['manufacturer_name'],))
+            manufacturer_row = arrow_cursor.fetchone()
+            manufacturer_id = manufacturer_row[0] if manufacturer_row else None
+            
+            arrow_conn.close()
+        except Exception as e:
+            print(f"Warning: Could not check manufacturer linking: {e}")
+            manufacturer_id = None
+        
+        # Add custom equipment to bow setup
         cursor.execute('''
-            INSERT INTO bow_equipment (bow_setup_id, equipment_id, installation_notes, custom_specifications)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO bow_equipment (
+                bow_setup_id, equipment_id, manufacturer_name, model_name, category_name,
+                weight_grams, description, image_url, installation_notes, 
+                custom_specifications, is_custom
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             setup_id,
-            data['equipment_id'],
+            equipment_id,  # Will be NULL for custom equipment (can link later)
+            data['manufacturer_name'],
+            data['model_name'],
+            data['category_name'],
+            weight_grams,
+            data.get('description', ''),
+            data.get('image_url', ''),
             data.get('installation_notes', ''),
-            json.dumps(data.get('custom_specifications', {}))
+            json.dumps(data.get('specifications', {})),
+            True  # is_custom = True
         ))
         
-        equipment_id = cursor.lastrowid
+        bow_equipment_id = cursor.lastrowid
         conn.commit()
         
-        # Return the added equipment with details
+        # Return the added equipment
         cursor.execute('''
-            SELECT be.*, e.manufacturer, e.model_name, e.specifications,
-                   e.weight_grams, e.image_url, e.description,
-                   ec.name as category_name, ec.icon as category_icon
-            FROM bow_equipment be
-            JOIN equipment e ON be.equipment_id = e.id
-            JOIN equipment_categories ec ON e.category_id = ec.id
-            WHERE be.id = ?
-        ''', (equipment_id,))
+            SELECT * FROM bow_equipment WHERE id = ?
+        ''', (bow_equipment_id,))
         
         result = dict(cursor.fetchone())
+        
         # Parse JSON fields
-        for field in ['specifications', 'custom_specifications']:
-            if result.get(field):
-                try:
-                    result[field] = json.loads(result[field])
-                except json.JSONDecodeError:
-                    result[field] = {}
+        if result.get('custom_specifications'):
+            try:
+                result['custom_specifications'] = json.loads(result['custom_specifications'])
+            except json.JSONDecodeError:
+                result['custom_specifications'] = {}
         
         conn.close()
         return jsonify(result), 201
         
     except Exception as e:
-        print(f"Error adding bow equipment: {e}")
+        print(f"Error adding custom bow equipment: {e}")
         return jsonify({'error': 'Failed to add equipment'}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['PUT'])
 @token_required
 def update_bow_equipment(current_user, setup_id, equipment_id):
-    """Update equipment configuration in a bow setup"""
+    """Update custom equipment configuration in a bow setup"""
     try:
         data = request.get_json()
         if not data:
@@ -3234,9 +3415,9 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
         
         # Verify the setup belongs to the current user and equipment exists
         cursor.execute('''
-            SELECT be.id FROM bow_equipment be
+            SELECT be.id, be.is_custom FROM bow_equipment be
             JOIN bow_setups bs ON be.bow_setup_id = bs.id
-            WHERE be.bow_setup_id = ? AND be.equipment_id = ? 
+            WHERE be.bow_setup_id = ? AND be.id = ? 
             AND bs.user_id = ? AND be.is_active = 1
         ''', (setup_id, equipment_id, current_user['id']))
         
@@ -3249,13 +3430,31 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
         updates = []
         params = []
         
-        if 'installation_notes' in data:
-            updates.append('installation_notes = ?')
-            params.append(data['installation_notes'])
-        
-        if 'custom_specifications' in data:
-            updates.append('custom_specifications = ?')
-            params.append(json.dumps(data['custom_specifications']))
+        # For custom equipment, allow updating all fields
+        if bow_equipment['is_custom']:
+            updatable_fields = [
+                'manufacturer_name', 'model_name', 'category_name', 'weight_grams',
+                'description', 'image_url', 'installation_notes'
+            ]
+            
+            for field in updatable_fields:
+                if field in data:
+                    updates.append(f'{field} = ?')
+                    params.append(data[field])
+            
+            # Handle specifications separately
+            if 'specifications' in data:
+                updates.append('custom_specifications = ?')
+                params.append(json.dumps(data['specifications']))
+        else:
+            # For legacy pre-chosen equipment, only allow certain updates
+            if 'installation_notes' in data:
+                updates.append('installation_notes = ?')
+                params.append(data['installation_notes'])
+            
+            if 'custom_specifications' in data:
+                updates.append('custom_specifications = ?')
+                params.append(json.dumps(data['custom_specifications']))
         
         if updates:
             params.append(bow_equipment['id'])
@@ -3267,23 +3466,39 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
         
         # Return updated equipment
         cursor.execute('''
-            SELECT be.*, e.manufacturer, e.model_name, e.specifications,
-                   e.weight_grams, e.image_url, e.description,
-                   ec.name as category_name, ec.icon as category_icon
-            FROM bow_equipment be
-            JOIN equipment e ON be.equipment_id = e.id
-            JOIN equipment_categories ec ON e.category_id = ec.id
-            WHERE be.id = ?
+            SELECT * FROM bow_equipment WHERE id = ?
         ''', (bow_equipment['id'],))
         
         result = dict(cursor.fetchone())
-        # Parse JSON fields
-        for field in ['specifications', 'custom_specifications']:
-            if result.get(field):
+        
+        # For custom equipment, format the response properly
+        if result.get('is_custom'):
+            result['manufacturer'] = result['manufacturer_name']
+            result['specifications'] = {}
+            
+            if result.get('custom_specifications'):
                 try:
-                    result[field] = json.loads(result[field])
+                    result['specifications'] = json.loads(result['custom_specifications'])
                 except json.JSONDecodeError:
-                    result[field] = {}
+                    result['specifications'] = {}
+            
+            # Add category icon
+            category_icons = {
+                'String': 'fas fa-link',
+                'Sight': 'fas fa-crosshairs', 
+                'Stabilizer': 'fas fa-balance-scale',
+                'Arrow Rest': 'fas fa-hand-paper',
+                'Weight': 'fas fa-weight-hanging'
+            }
+            result['category_icon'] = category_icons.get(result['category_name'], 'fas fa-cog')
+        else:
+            # Parse JSON fields for legacy equipment
+            for field in ['custom_specifications']:
+                if result.get(field):
+                    try:
+                        result[field] = json.loads(result[field])
+                    except json.JSONDecodeError:
+                        result[field] = {}
         
         conn.close()
         return jsonify(result), 200
