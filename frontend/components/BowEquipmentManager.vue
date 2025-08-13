@@ -176,6 +176,19 @@
       @save="handleEquipmentUpdated"
       @close="editingEquipment = null"
     />
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmDeleteModal
+      v-if="equipmentToDelete"
+      :title="`Remove Equipment`"
+      :message="`Are you sure you want to remove this equipment from your bow setup?`"
+      :item-name="`${equipmentToDelete.manufacturer_name || equipmentToDelete.manufacturer} ${equipmentToDelete.model_name}`"
+      :confirm-text="`Remove`"
+      :loading="deletingEquipment"
+      :error="deleteError"
+      @confirm="confirmRemoveEquipment"
+      @cancel="cancelRemoveEquipment"
+    />
   </div>
 </template>
 
@@ -201,6 +214,9 @@ const loading = ref(false)
 const showEquipmentSelector = ref(false)
 const editingEquipment = ref(null)
 const collapsedCategories = ref({})
+const equipmentToDelete = ref(null)
+const deletingEquipment = ref(false)
+const deleteError = ref('')
 
 // Computed
 const groupedEquipment = computed(() => {
@@ -277,20 +293,35 @@ const handleEquipmentUpdated = async (updatedEquipment) => {
   }
 }
 
-const removeEquipment = async (equipmentItem) => {
-  if (!confirm(`Remove ${equipmentItem.manufacturer} ${equipmentItem.model_name} from this setup?`)) {
-    return
-  }
+const removeEquipment = (equipmentItem) => {
+  equipmentToDelete.value = equipmentItem
+  deleteError.value = ''
+}
+
+const confirmRemoveEquipment = async () => {
+  if (!equipmentToDelete.value) return
   
   try {
-    await api.delete(`/bow-setups/${props.bowSetup.id}/equipment/${equipmentItem.id}`)
+    deletingEquipment.value = true
+    deleteError.value = ''
+    
+    await api.delete(`/bow-setups/${props.bowSetup.id}/equipment/${equipmentToDelete.value.id}`)
     await loadEquipment()
+    
     emit('show-notification', 'Equipment removed successfully', 'success')
     emit('equipment-updated')
+    equipmentToDelete.value = null
   } catch (error) {
     console.error('Error removing equipment:', error)
-    emit('show-notification', 'Failed to remove equipment', 'error')
+    deleteError.value = error.message || 'Failed to remove equipment'
+  } finally {
+    deletingEquipment.value = false
   }
+}
+
+const cancelRemoveEquipment = () => {
+  equipmentToDelete.value = null
+  deleteError.value = ''
 }
 
 const toggleCategory = (category) => {
