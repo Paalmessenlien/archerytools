@@ -4540,6 +4540,7 @@ def create_backup(current_user):
         
         # Upload to CDN using centralized CDN backup manager
         cdn_url = None
+        result = None
         try:
             from cdn_backup_manager import CDNBackupManager
             
@@ -4565,6 +4566,7 @@ def create_backup(current_user):
                 result = {
                     'success': True,
                     'url': cdn_url,
+                    'cdn_url': cdn_url,  # Add both keys for compatibility
                     'cdn_type': cdn_type,
                     'filename': structured_filename
                 }
@@ -4592,6 +4594,9 @@ def create_backup(current_user):
                 
                 if result.get('success') and result.get('url'):
                     cdn_url = result['url']
+                    # Ensure cdn_url key is present for consistency
+                    result['cdn_url'] = cdn_url
+                    result['cdn_type'] = os.getenv('CDN_TYPE', 'bunnycdn')
                     print(f"✅ Backup uploaded via legacy CDN uploader: {cdn_url}")
                 else:
                     print("❌ Legacy CDN uploader also failed")
@@ -4601,8 +4606,12 @@ def create_backup(current_user):
                 print(f"❌ Both CDN methods failed: {fallback_error}")
                 result = {'success': False}
         
-        if not result:
+        if not result or not result.get('success'):
             return jsonify({'error': 'Failed to upload backup to CDN'}), 500
+        
+        # Ensure result has required keys
+        if 'cdn_url' not in result:
+            return jsonify({'error': 'Backup creation failed: CDN URL not available'}), 500
         
         # Get backup file size
         backup_size = os.path.getsize(local_backup_path) / (1024 * 1024)  # MB
@@ -4619,7 +4628,7 @@ def create_backup(current_user):
              created_by, local_path)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            backup_name, result['cdn_url'], result['cdn_type'], backup_size,
+            backup_name, result['cdn_url'], result.get('cdn_type', 'unknown'), backup_size,
             include_arrow_db, include_user_db, current_user['id'], local_backup_path
         ))
         
