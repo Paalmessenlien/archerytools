@@ -23,12 +23,14 @@ show_help() {
     echo "  clean    - Stop and remove all containers, networks, and volumes"
     echo "  status   - Show service status"
     echo "  shell    - Open shell in API container"
+    echo "  debug    - Debug frontend container for native binding issues"
     echo "  help     - Show this help message"
     echo ""
     echo "Examples:"
     echo "  $0 start          # Start development environment"
     echo "  $0 logs           # Watch logs"
     echo "  $0 shell          # Debug API container"
+    echo "  $0 debug          # Debug frontend native binding issues"
 }
 
 # Function to check Docker and Docker Compose
@@ -162,6 +164,7 @@ show_logs() {
 # Function to build containers
 build_containers() {
     echo "🔨 Building containers..."
+    echo "ℹ️  Note: Frontend build may take several minutes due to native binding compilation"
     docker-compose -f "$COMPOSE_FILE" build --no-cache
     echo "✅ Containers built successfully"
 }
@@ -208,6 +211,29 @@ open_shell() {
     fi
 }
 
+# Function to debug frontend container
+debug_frontend() {
+    echo "🔍 Debugging frontend container for native binding issues..."
+    if docker-compose -f "$COMPOSE_FILE" ps | grep -q "arrowtuner-frontend-dev.*Up"; then
+        echo "Frontend container is running, opening shell..."
+        docker-compose -f "$COMPOSE_FILE" exec frontend /bin/bash
+    else
+        echo "Frontend container is not running. Checking build logs..."
+        echo ""
+        echo "💡 Common solutions for native binding issues:"
+        echo "1. Rebuild containers: $0 build"
+        echo "2. Clean environment: $0 clean && $0 start"
+        echo "3. Try manual fix inside container:"
+        echo "   docker-compose -f $COMPOSE_FILE run --rm frontend /bin/bash"
+        echo "   rm -rf node_modules package-lock.json"
+        echo "   npm install"
+        echo "   npm rebuild"
+        echo ""
+        echo "🏗️  Recent build logs:"
+        docker-compose -f "$COMPOSE_FILE" logs frontend | tail -20
+    fi
+}
+
 # Main command processing
 case "${1:-start}" in
     start)
@@ -236,6 +262,9 @@ case "${1:-start}" in
         ;;
     shell)
         open_shell
+        ;;
+    debug)
+        debug_frontend
         ;;
     help|--help|-h)
         show_help
