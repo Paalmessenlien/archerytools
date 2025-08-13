@@ -1863,6 +1863,22 @@ This section details the newly implemented user authentication and profile manag
   - `/api/admin/migrations/run` ✅
 - **Status**: ✅ **RESOLVED** - All admin endpoints now handle Path serialization correctly
 
+**Equipment Form Schema API 500 Errors (August 2025):**
+- **Issue**: All equipment categories (String, Sight, Scope, etc.) returning 500 errors with "Failed to get form schema" when adding equipment to bow setups
+- **Root Cause**: Column name mismatch in SQL query - API trying to select columns that don't exist in production database (`field_label` vs `label`, `field_unit` vs `unit`, `is_required` vs `required`, etc.)
+- **Solution**: Updated SQL query in `get_equipment_form_schema()` function to use correct column names:
+  ```python
+  # Fixed SQL query:
+  SELECT field_name, field_type, label, unit, required,
+         validation_rules, field_options, default_value, help_text, display_order
+  FROM equipment_field_standards 
+  WHERE category_name = ?
+  ORDER BY display_order, field_name
+  ```
+- **Files Modified**: `arrow_scraper/api.py` (lines 3082-3088, 3092-3098, 3108)
+- **Production Deployment**: Fixed via `docker cp` + `docker restart arrowtuner-api` for immediate hotfix
+- **Status**: ✅ **RESOLVED** - All 8 equipment categories now load form schemas successfully
+
 ### Performance Optimizations
 
 **Frontend Build:**
