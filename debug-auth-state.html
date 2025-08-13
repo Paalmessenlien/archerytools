@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Debug</title>
+</head>
+<body>
+    <h1>Authentication Debug</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        // Check localStorage token
+        const token = localStorage.getItem('token');
+        results.innerHTML += `<h3>🔍 Authentication State:</h3>`;
+        results.innerHTML += `<p><strong>Token exists:</strong> ${!!token}</p>`;
+        
+        if (token) {
+            results.innerHTML += `<p><strong>Token (first 50 chars):</strong> ${token.substring(0, 50)}...</p>`;
+            
+            // Test admin check with token
+            fetch('/api/admin/check', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                results.innerHTML += `<h3>🔐 Admin Check Result:</h3>`;
+                results.innerHTML += `<p><strong>Status:</strong> ${response.status}</p>`;
+                return response.json();
+            })
+            .then(data => {
+                results.innerHTML += `<p><strong>Response:</strong> ${JSON.stringify(data, null, 2)}</p>`;
+            })
+            .catch(error => {
+                results.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+            });
+            
+            // Test user endpoint
+            fetch('/api/user', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                results.innerHTML += `<h3>👤 User Check Result:</h3>`;
+                results.innerHTML += `<p><strong>Status:</strong> ${response.status}</p>`;
+                return response.json();
+            })
+            .then(data => {
+                results.innerHTML += `<p><strong>User Data:</strong> ${JSON.stringify(data, null, 2)}</p>`;
+            })
+            .catch(error => {
+                results.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+            });
+        } else {
+            results.innerHTML += `<p>❌ No authentication token found in localStorage</p>`;
+            results.innerHTML += `<p>💡 You need to log in with Google first</p>`;
+            results.innerHTML += `<p>🔗 Go to: <a href="/">http://localhost:3000</a> and click "Sign in with Google"</p>`;
+        }
+        
+        // Check current URL
+        results.innerHTML += `<h3>🌐 Current Context:</h3>`;
+        results.innerHTML += `<p><strong>URL:</strong> ${window.location.href}</p>`;
+        results.innerHTML += `<p><strong>Origin:</strong> ${window.location.origin}</p>`;
+    </script>
+</body>
+</html>

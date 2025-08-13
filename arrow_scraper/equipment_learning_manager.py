@@ -56,28 +56,68 @@ class EquipmentLearningManager:
             if not existing_manufacturer:
                 # Check if it's already in pending manufacturers
                 cursor.execute('''
-                    SELECT id, usage_count FROM pending_manufacturers 
-                    WHERE LOWER(name) = LOWER(?)
+                    SELECT id, usage_count, user_count, category_context FROM pending_manufacturers 
+                    WHERE LOWER(name) = LOWER(?) AND status = 'pending'
                 ''', (manufacturer_name,))
                 pending = cursor.fetchone()
                 
                 if pending:
-                    # Update usage count for existing pending manufacturer
+                    # Update usage stats for existing pending manufacturer
+                    existing_categories = json.loads(pending['category_context'] or '[]')
+                    if category_name not in existing_categories:
+                        existing_categories.append(category_name)
+                    
                     cursor.execute('''
                         UPDATE pending_manufacturers 
-                        SET usage_count = usage_count + 1, last_seen = CURRENT_TIMESTAMP
+                        SET usage_count = usage_count + 1, 
+                            last_seen = CURRENT_TIMESTAMP,
+                            updated_at = CURRENT_TIMESTAMP,
+                            category_context = ?
                         WHERE id = ?
-                    ''', (pending['id'],))
+                    ''', (json.dumps(existing_categories), pending['id']))
+                    
+                    # Update or insert user-manufacturer relationship
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO user_pending_manufacturers 
+                        (user_id, pending_manufacturer_id, last_used, usage_count, equipment_count)
+                        VALUES (?, ?, CURRENT_TIMESTAMP, 
+                                COALESCE((SELECT usage_count FROM user_pending_manufacturers 
+                                         WHERE user_id = ? AND pending_manufacturer_id = ?), 0) + 1,
+                                COALESCE((SELECT equipment_count FROM user_pending_manufacturers 
+                                         WHERE user_id = ? AND pending_manufacturer_id = ?), 0) + 1)
+                    ''', (user_id, pending['id'], user_id, pending['id'], user_id, pending['id']))
+                    
                     learning_info['manufacturer_status'] = 'pending_updated'
+                    print(f"📊 Updated pending manufacturer: {manufacturer_name} (usage: {pending['usage_count'] + 1})")
                 else:
                     # Add new pending manufacturer
+                    normalized_name = manufacturer_name.lower().strip()
                     cursor.execute('''
                         INSERT INTO pending_manufacturers 
-                        (name, category_context, usage_count, created_by_user_id)
-                        VALUES (?, ?, 1, ?)
-                    ''', (manufacturer_name, category_name, user_id))
+                        (name, normalized_name, category_context, usage_count, user_count, 
+                         created_by_user_id, status)
+                        VALUES (?, ?, ?, 1, 1, ?, 'pending')
+                    ''', (manufacturer_name, normalized_name, json.dumps([category_name]), user_id))
+                    
+                    pending_id = cursor.lastrowid
+                    
+                    # Add user-manufacturer relationship
+                    cursor.execute('''
+                        INSERT INTO user_pending_manufacturers 
+                        (user_id, pending_manufacturer_id, usage_count, equipment_count)
+                        VALUES (?, ?, 1, 1)
+                    ''', (user_id, pending_id))
+                    
                     learning_info['new_manufacturer'] = True
                     learning_info['manufacturer_status'] = 'pending_new'
+                    print(f"✨ New pending manufacturer added: {manufacturer_name} (awaiting approval)")
+                    
+                    # Log the creation action
+                    cursor.execute('''
+                        INSERT INTO manufacturer_approval_log 
+                        (pending_manufacturer_id, action, user_notes, old_status, new_status)
+                        VALUES (?, 'created', ?, NULL, 'pending')
+                    ''', (pending_id, f"Created by user for {category_name} equipment"))
             else:
                 learning_info['manufacturer_status'] = 'existing'
             

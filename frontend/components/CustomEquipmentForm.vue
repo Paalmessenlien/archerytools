@@ -60,16 +60,38 @@
               
               <!-- Manufacturer Suggestions Dropdown -->
               <div v-if="showManufacturerSuggestions && manufacturerSuggestions.length > 0" 
-                   class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
+                   class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                 <div
                   v-for="manufacturer in manufacturerSuggestions"
                   :key="manufacturer.name"
                   @click="selectManufacturer(manufacturer)"
-                  class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm"
+                  :class="[
+                    'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm border-l-4 transition-colors',
+                    manufacturer.isPending ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-transparent'
+                  ]"
                 >
-                  <div class="font-medium">{{ manufacturer.name }}</div>
-                  <div v-if="manufacturer.country" class="text-xs text-gray-500 dark:text-gray-400">
+                  <div class="flex items-center justify-between">
+                    <div class="font-medium flex items-center">
+                      {{ manufacturer.name }}
+                      <!-- Pending Status Badge -->
+                      <span v-if="manufacturer.isPending" 
+                            class="ml-2 px-2 py-1 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 rounded-full">
+                        <i class="fas fa-clock mr-1"></i>Pending Approval
+                      </span>
+                    </div>
+                    <!-- Usage Count for Pending Manufacturers -->
+                    <div v-if="manufacturer.isPending && manufacturer.usageCount" 
+                         class="text-xs text-orange-600 dark:text-orange-400">
+                      Used {{ manufacturer.usageCount }} times
+                    </div>
+                  </div>
+                  <div v-if="manufacturer.country" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {{ manufacturer.country }}
+                  </div>
+                  <!-- Categories for Pending Manufacturers -->
+                  <div v-if="manufacturer.isPending && manufacturer.categories?.length" 
+                       class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    Categories: {{ manufacturer.categories.join(', ') }}
                   </div>
                 </div>
               </div>
@@ -386,6 +408,11 @@ const submitForm = async () => {
   try {
     submitting.value = true
     
+    // Check if this is a new manufacturer that will become pending
+    const isNewManufacturer = !manufacturerSuggestions.value.some(m => 
+      m.name.toLowerCase() === formData.value.manufacturer_name.toLowerCase()
+    )
+    
     const equipmentData = {
       manufacturer_name: formData.value.manufacturer_name,
       model_name: formData.value.model_name,
@@ -398,6 +425,14 @@ const submitForm = async () => {
     const response = await api.post(`/bow-setups/${props.bowSetup.id}/equipment`, equipmentData)
     
     emit('equipment-added', response)
+    
+    // Show notification if new manufacturer was added as pending
+    if (isNewManufacturer) {
+      // Add a small delay to show success, then show manufacturer pending info
+      setTimeout(() => {
+        alert(`✨ Equipment added successfully!\n\n📝 "${formData.value.manufacturer_name}" is a new manufacturer and has been submitted for approval. You can continue using this manufacturer for future equipment until it's reviewed by an admin.`)
+      }, 500)
+    }
     
     // Reset form
     formData.value = {

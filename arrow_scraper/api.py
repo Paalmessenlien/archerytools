@@ -3136,6 +3136,17 @@ def suggest_equipment_manufacturers():
         category = request.args.get('category', '')
         limit = int(request.args.get('limit', 20))
         
+        # Check if user is authenticated for pending manufacturer access
+        current_user = None
+        try:
+            from auth import validate_jwt_token
+            token = request.headers.get('Authorization')
+            if token and token.startswith('Bearer '):
+                token = token[7:]  # Remove 'Bearer ' prefix
+                current_user = validate_jwt_token(token)
+        except:
+            pass  # Not authenticated, continue without pending manufacturers
+        
         # Use get_database() to get the correct arrow database connection
         db = get_database()
         conn = db.get_connection()
@@ -3154,23 +3165,76 @@ def suggest_equipment_manufacturers():
         
         conn.close()
         
+        # Add user's pending manufacturers if authenticated
+        pending_manufacturers = []
+        if current_user:
+            try:
+                from user_database import UserDatabase
+                user_db = UserDatabase()
+                user_conn = user_db.get_connection()
+                user_cursor = user_conn.cursor()
+                
+                # Get user's pending manufacturers (including those they didn't create)
+                user_cursor.execute('''
+                    SELECT DISTINCT pm.name, pm.category_context, pm.usage_count, pm.status
+                    FROM pending_manufacturers pm
+                    JOIN user_pending_manufacturers upm ON pm.id = upm.pending_manufacturer_id
+                    WHERE upm.user_id = ? AND pm.status = 'pending'
+                    ORDER BY upm.last_used DESC
+                ''', (current_user['id'],))
+                
+                for row in user_cursor.fetchall():
+                    pending_manufacturers.append({
+                        'name': row['name'],
+                        'website': None,
+                        'country': 'Unknown',
+                        'isPending': True,
+                        'usageCount': row['usage_count'],
+                        'categories': json.loads(row['category_context'] or '[]')
+                    })
+                
+                user_conn.close()
+                
+            except Exception as e:
+                print(f"Warning: Could not get pending manufacturers for user {current_user.get('id', 'unknown')}: {e}")
+        
         # Use smart manufacturer matching for suggestions
         from manufacturer_matcher import ManufacturerMatcher
         matcher = ManufacturerMatcher()
         
-        # Get intelligent suggestions
+        # Get intelligent suggestions from approved manufacturers
         suggestions = matcher.get_manufacturer_suggestions(
-            query, all_manufacturers, category, limit
+            query, all_manufacturers, category, limit // 2  # Leave room for pending manufacturers
         )
         
-        # Format response (remove internal id field for frontend)
+        # Format approved manufacturers
         manufacturers = []
         for manufacturer in suggestions:
             manufacturers.append({
                 'name': manufacturer['name'],
                 'website': manufacturer.get('website'),
-                'country': manufacturer.get('country', 'Unknown')
+                'country': manufacturer.get('country', 'Unknown'),
+                'isPending': False
             })
+        
+        # Add matching pending manufacturers for the user
+        if pending_manufacturers:
+            query_lower = query.lower()
+            matching_pending = []
+            
+            for pending in pending_manufacturers:
+                # Include if no query or if query matches name
+                if not query or query_lower in pending['name'].lower():
+                    # Filter by category if specified
+                    if not category or category in pending.get('categories', []):
+                        matching_pending.append(pending)
+            
+            # Sort pending by usage count (most used first)
+            matching_pending.sort(key=lambda x: x.get('usageCount', 0), reverse=True)
+            
+            # Add pending manufacturers to the beginning of results (prioritize for user)
+            manufacturers = matching_pending[:limit//3] + manufacturers
+            manufacturers = manufacturers[:limit]  # Respect total limit
         
         return jsonify({'manufacturers': manufacturers}), 200
         
@@ -3314,6 +3378,32 @@ def reject_manufacturer(current_user, pending_id):
     except Exception as e:
         print(f"Error rejecting manufacturer: {e}")
         return jsonify({'error': 'Failed to reject manufacturer'}), 500
+
+@app.route('/api/admin/manufacturers/pending', methods=['GET'])
+@token_required
+def get_pending_manufacturers(current_user):
+    """Get pending manufacturers for admin review"""
+    try:
+        # Check admin status
+        if not current_user.get('is_admin'):
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        status = request.args.get('status', 'pending')
+        limit = int(request.args.get('limit', 50))
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        pending_manufacturers = learning.get_pending_manufacturers(status, limit)
+        
+        return jsonify({
+            'pending_manufacturers': pending_manufacturers,
+            'total_count': len(pending_manufacturers)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting pending manufacturers: {e}")
+        return jsonify({'error': 'Failed to get pending manufacturers'}), 500
 
 @app.route('/api/equipment/usage-analytics', methods=['GET'])
 @token_required

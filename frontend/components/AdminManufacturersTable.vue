@@ -16,33 +16,68 @@
       </CustomButton>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ manufacturers.length }}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Total Manufacturers</div>
-      </div>
-      <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ totalArrows }}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Total Arrows</div>
-      </div>
-      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
-        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ totalEquipment }}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Total Equipment</div>
-      </div>
-      <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ averageArrowsPerManufacturer }}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Avg Arrows/Manufacturer</div>
-      </div>
+    <!-- Sub-navigation tabs -->
+    <div class="mb-6">
+      <nav class="flex space-x-8 border-b border-gray-200 dark:border-gray-700">
+        <button
+          @click="manufacturerTab = 'active'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+            manufacturerTab === 'active'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-check-circle mr-2"></i>
+          Active Manufacturers ({{ manufacturers.length }})
+        </button>
+        <button
+          @click="manufacturerTab = 'pending'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+            manufacturerTab === 'pending'
+              ? 'border-orange-500 text-orange-600 dark:text-orange-400 dark:border-orange-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-clock mr-2"></i>
+          Pending Approval 
+          <span v-if="pendingManufacturers.length > 0" class="ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 text-xs rounded-full">
+            {{ pendingManufacturers.length }}
+          </span>
+        </button>
+      </nav>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="text-center py-8">
-      <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
-      <p class="text-gray-600 dark:text-gray-400">Loading manufacturers...</p>
-    </div>
+    <!-- Active Manufacturers Tab -->
+    <div v-if="manufacturerTab === 'active'">
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ manufacturers.length }}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Manufacturers</div>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ totalArrows }}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Arrows</div>
+        </div>
+        <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ totalEquipment }}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Equipment</div>
+        </div>
+        <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ averageArrowsPerManufacturer }}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Avg Arrows/Manufacturer</div>
+        </div>
+      </div>
 
-    <!-- Manufacturers Table -->
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+        <p class="text-gray-600 dark:text-gray-400">Loading manufacturers...</p>
+      </div>
+
+      <!-- Manufacturers Table -->
     <div v-else-if="manufacturers.length > 0" class="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-900">
@@ -152,19 +187,156 @@
       </table>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <i class="fas fa-industry text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Manufacturers Found</h3>
-      <p class="text-gray-500 dark:text-gray-400 mb-4">Start by adding your first manufacturer.</p>
-      <CustomButton
-        @click="openCreateModal"
-        variant="filled"
-        class="bg-green-600 text-white hover:bg-green-700"
-      >
-        <i class="fas fa-plus mr-2"></i>
-        Add First Manufacturer
-      </CustomButton>
+      <!-- Empty State -->
+      <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <i class="fas fa-industry text-4xl text-gray-400 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Manufacturers Found</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-4">Start by adding your first manufacturer.</p>
+        <CustomButton
+          @click="openCreateModal"
+          variant="filled"
+          class="bg-green-600 text-white hover:bg-green-700"
+        >
+          <i class="fas fa-plus mr-2"></i>
+          Add First Manufacturer
+        </CustomButton>
+      </div>
+    </div>
+
+    <!-- Pending Manufacturers Tab -->
+    <div v-if="manufacturerTab === 'pending'">
+      <!-- Pending Statistics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ pendingManufacturers.length }}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Pending Approval</div>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {{ pendingManufacturers.reduce((sum, m) => sum + (m.usage_count || 0), 0) }}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Usage Count</div>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+            {{ pendingManufacturers.reduce((sum, m) => sum + (m.user_count || 0), 0) }}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Users Involved</div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loadingPending" class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-2xl text-orange-600 mb-2"></i>
+        <p class="text-gray-600 dark:text-gray-400">Loading pending manufacturers...</p>
+      </div>
+
+      <!-- Pending Manufacturers Table -->
+      <div v-else-if="pendingManufacturers.length > 0" class="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Manufacturer Name
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Usage Stats
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Categories
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Created By
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Date Submitted
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tr 
+              v-for="pending in pendingManufacturers" 
+              :key="pending.id"
+              class="hover:bg-orange-50 dark:hover:bg-orange-900/10 border-l-4 border-orange-400"
+            >
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <i class="fas fa-clock text-orange-400 mr-3"></i>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {{ pending.name }}
+                    </div>
+                    <div class="text-xs text-orange-600 dark:text-orange-400">
+                      Pending Approval
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="space-y-1">
+                  <div class="text-sm text-gray-900 dark:text-gray-100">
+                    Used {{ pending.usage_count || 0 }} times
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    by {{ pending.user_count || 0 }} users
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1">
+                  <span 
+                    v-for="category in JSON.parse(pending.category_context || '[]')" 
+                    :key="category"
+                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+                  >
+                    {{ category }}
+                  </span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-gray-100">
+                  {{ pending.created_by_name || 'Unknown User' }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-gray-100">
+                  {{ formatDate(pending.first_seen) }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                <CustomButton
+                  @click="approveManufacturer(pending)"
+                  variant="outlined"
+                  size="small"
+                  class="text-green-600 border-green-600 hover:bg-green-50 dark:text-green-400 dark:border-green-400"
+                >
+                  <i class="fas fa-check mr-1"></i>
+                  Approve
+                </CustomButton>
+                <CustomButton
+                  @click="rejectManufacturer(pending)"
+                  variant="outlined"
+                  size="small"
+                  class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400"
+                >
+                  <i class="fas fa-times mr-1"></i>
+                  Reject
+                </CustomButton>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty Pending State -->
+      <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <i class="fas fa-check-circle text-4xl text-green-400 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Pending Manufacturers</h3>
+        <p class="text-gray-500 dark:text-gray-400">All manufacturer submissions have been reviewed.</p>
+      </div>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -442,7 +614,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 // Props and emits
 const emit = defineEmits(['refresh-stats', 'show-notification'])
@@ -465,6 +637,11 @@ const selectedManufacturer = ref(null)
 const manufacturerToDelete = ref(null)
 const availableCategories = ref([])
 const categorySettings = ref({})
+
+// Pending manufacturers state
+const manufacturerTab = ref('active')
+const loadingPending = ref(false)
+const pendingManufacturers = ref([])
 
 // Form data
 const formData = ref({
@@ -759,6 +936,68 @@ const formatDate = (dateString) => {
     return 'Unknown'
   }
 }
+
+// Pending manufacturers functions
+const loadPendingManufacturers = async () => {
+  try {
+    loadingPending.value = true
+    const response = await api.get('/admin/manufacturers/pending')
+    pendingManufacturers.value = response.pending_manufacturers || []
+  } catch (error) {
+    console.error('Error loading pending manufacturers:', error)
+    emit('show-notification', 'Failed to load pending manufacturers', 'error')
+  } finally {
+    loadingPending.value = false
+  }
+}
+
+const approveManufacturer = async (pending) => {
+  try {
+    await api.put(`/admin/manufacturers/${pending.id}/approve`, {
+      admin_notes: 'Approved via admin panel'
+    })
+    
+    emit('show-notification', `${pending.name} has been approved successfully`, 'success')
+    
+    // Reload both active and pending manufacturers
+    await Promise.all([
+      loadManufacturers(),
+      loadPendingManufacturers()
+    ])
+    
+  } catch (error) {
+    console.error('Error approving manufacturer:', error)
+    emit('show-notification', error.message || 'Failed to approve manufacturer', 'error')
+  }
+}
+
+const rejectManufacturer = async (pending) => {
+  if (!confirm(`Are you sure you want to reject "${pending.name}"? This action cannot be undone.`)) {
+    return
+  }
+  
+  try {
+    await api.put(`/admin/manufacturers/${pending.id}/reject`, {
+      admin_notes: 'Rejected via admin panel'
+    })
+    
+    emit('show-notification', `${pending.name} has been rejected`, 'warning')
+    
+    // Reload pending manufacturers
+    await loadPendingManufacturers()
+    
+  } catch (error) {
+    console.error('Error rejecting manufacturer:', error)
+    emit('show-notification', error.message || 'Failed to reject manufacturer', 'error')
+  }
+}
+
+// Watch for tab changes to load appropriate data
+watch(manufacturerTab, async (newTab) => {
+  if (newTab === 'pending' && pendingManufacturers.value.length === 0) {
+    await loadPendingManufacturers()
+  }
+})
 
 // Expose loadManufacturers method for parent component
 defineExpose({

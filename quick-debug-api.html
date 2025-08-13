@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug</title>
+</head>
+<body>
+    <h1>Quick API Debug</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Test what the frontend is actually using
+        async function testAPI() {
+            const results = document.getElementById('results');
+            
+            results.innerHTML += '<h3>Testing API URLs:</h3>';
+            
+            // Test 1: Direct Flask API
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += '<p>✅ Direct Flask API (localhost:5000) works</p>';
+                } else {
+                    results.innerHTML += '<p>❌ Direct Flask API failed: ' + response.status + '</p>';
+                }
+            } catch (e) {
+                results.innerHTML += '<p>❌ Direct Flask API error: ' + e.message + '</p>';
+            }
+            
+            // Test 2: Via Nuxt
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += '<p>✅ Nuxt proxy (/api) works</p>';
+                } else {
+                    results.innerHTML += '<p>❌ Nuxt proxy failed: ' + response.status + '</p>';
+                }
+            } catch (e) {
+                results.innerHTML += '<p>❌ Nuxt proxy error: ' + e.message + '</p>';
+            }
+            
+            // Test 3: Check current URL
+            results.innerHTML += '<p><strong>Current URL:</strong> ' + window.location.href + '</p>';
+            results.innerHTML += '<p><strong>Origin:</strong> ' + window.location.origin + '</p>';
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>
