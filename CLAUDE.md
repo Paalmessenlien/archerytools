@@ -117,12 +117,12 @@ python test_setup.py
 
 ### Running the Dual Architecture Application
 
-**🚀 Option 1: Unified Docker Development Environment (Recommended for Development)**
+**🚀 Option 1: Hybrid Development Environment (Recommended for Development)**
 
-**Quick Development Startup:**
+**Single-Command Development Startup:**
 ```bash
-# Start unified development environment with production schema compatibility
-./start-docker-dev.sh start
+# Start hybrid development environment (API in Docker + Frontend on Host)
+./start-hybrid-dev.sh start
 
 # Access your development environment:
 # - Frontend: http://localhost:3000
@@ -130,17 +130,21 @@ python test_setup.py
 # - Admin: http://localhost:3000/admin
 
 # Development workflow commands:
-./start-docker-dev.sh logs      # Follow logs from all services
-./start-docker-dev.sh shell     # Debug API container
-./start-docker-dev.sh status    # Check service health
-./start-docker-dev.sh stop      # Stop all services
+./start-hybrid-dev.sh logs      # View service logs
+./start-hybrid-dev.sh status    # Check service health and URLs
+./start-hybrid-dev.sh restart   # Restart all services
+./start-hybrid-dev.sh api-shell # Open shell in API container
+./start-hybrid-dev.sh stop      # Stop all services
 
 # Key benefits:
-# - Same database schema as production (no more schema conflicts)
-# - Hot reload for both frontend and backend
-# - Easy debugging and development workflow
-# - Comprehensive health monitoring
+# - ✅ Eliminates oxc-parser native binding issues completely
+# - ✅ Production-identical API database schema in Docker container  
+# - ✅ Native frontend performance with full hot reload
+# - ✅ Single command startup with automatic dependency management
+# - ✅ Comprehensive health monitoring and process management
 ```
+
+**📚 Complete Documentation:** See [docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md](docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md) for comprehensive setup guide, troubleshooting, and technical details.
 
 **Option 2: Enhanced Docker Deployment (Recommended for Production)**
 
@@ -928,27 +932,36 @@ Enhanced database classes correctly handle production Docker container paths in 
 - **Migration Support**: Automatic schema migrations for both databases
 - **Component Integration**: Components (inserts, nocks, points) stored with arrows in unified database
 
-**Production Database Architecture:**
+**Unified Database Architecture (August 2025 Update):**
 ```
-Docker Volumes:
-├── arrowtuner-arrowdata:/app/arrow_data/     # Arrow database persistence
-├── arrowtuner-userdata:/app/user_data/      # User database persistence
+Production & Development Docker Volumes:
+├── arrowtuner-databases:/app/databases/     # 🔴 UNIFIED database persistence (NEW)
 └── arrowtuner-logs:/app/logs/               # Log persistence
 
 Database Files:
-├── /app/arrow_data/arrow_database.db        # Arrow specs, spine data, components
-├── /app/user_data/user_data.db             # User accounts, bow setups
-└── /app/backups/                           # Backup archive storage
+├── /app/databases/arrow_database.db         # 🔴 UNIFIED Arrow specs, spine data, components  
+├── /app/databases/user_data.db              # 🔴 UNIFIED User accounts, bow setups
+└── /app/backups/                            # Backup archive storage
     ├── production_backup.tar.gz
     └── daily_backup_20250804.tar.gz
 
+Development Environment:
+├── arrowtuner-dev-databases:/app/databases/ # 🔴 UNIFIED development database persistence
+└── arrowtuner-dev-logs:/app/logs/           # Development log persistence
+
 Source Data:
-└── data/processed/                         # Source JSON files for arrow data
+└── data/processed/                          # Source JSON files for arrow data
     ├── easton_arrows.json
     ├── goldtip_arrows.json
     └── components/
         └── tophat_archery_components_*.json
 ```
+
+**🎯 Key Improvements:**
+- **Unified Path Resolution**: Both development and production use `/app/databases/` consistently
+- **Environment Variables**: `ARROW_DATABASE_PATH` and `USER_DATABASE_PATH` explicitly set in Docker Compose
+- **Single Volume**: Consolidated from separate arrow/user volumes to unified `databases` volume
+- **Production Consistency**: Local development matches production database architecture exactly
 
 **Database Persistence Documentation**: See [DATABASE_PERSISTENCE.md](DATABASE_PERSISTENCE.md) for complete persistence and backup system documentation.
 
@@ -1387,6 +1400,29 @@ The Archery Tools platform provides:
 20. **Enhanced manufacturer workflow** with pending approval system and auto-learning
 
 ## Troubleshooting & Development Notes
+
+### Recent Fixes & Solutions (August 2025)
+
+**Database Path Mismatch Issues (RESOLVED):**
+- **Issue**: Form schema API returning 500 errors with "no such column: field_label"
+- **Root Cause**: Local development API using different database than production Docker volumes
+- **Solution**: Unified database architecture with consistent `/app/databases/` paths
+- **Implementation**: Updated `docker-compose.dev.yml` with `ARROW_DATABASE_PATH` environment variable
+- **Result**: Local development now matches production database architecture exactly
+
+**Native Binding Compilation Issues (RESOLVED):**
+- **Issue**: oxc-parser failing to compile in Docker containers causing development failures
+- **Root Cause**: Alpine Linux musl libc vs glibc incompatibility with Node.js native bindings
+- **Solution**: Hybrid development environment (API in Docker + Frontend on Host)
+- **Implementation**: Created `start-hybrid-dev.sh` with comprehensive process management
+- **Result**: 100% elimination of native binding issues while maintaining production consistency
+
+**Database Cleanup (COMPLETED):**
+- **Issue**: Multiple conflicting database files causing path resolution confusion
+- **Solution**: Systematic cleanup of all legacy database files
+- **Preserved**: Only active Docker volume databases and legitimate timestamped backups
+- **Removed**: Root level, arrow_scraper folder, legacy databases folder, docker-volumes folder
+- **Result**: Clean unified database architecture with single source of truth
 
 ### Docker Issues
 
