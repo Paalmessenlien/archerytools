@@ -3381,7 +3381,7 @@ def reject_manufacturer(current_user, pending_id):
 
 @app.route('/api/admin/manufacturers/pending', methods=['GET'])
 @token_required
-def get_pending_manufacturers(current_user):
+def get_pending_manufacturers_list(current_user):
     """Get pending manufacturers for admin review"""
     try:
         # Check admin status
