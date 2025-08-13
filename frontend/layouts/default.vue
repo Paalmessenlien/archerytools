@@ -243,6 +243,9 @@
     
     <!-- Mobile Bottom Navigation -->
     <MobileBottomNav @login="handleLogin" />
+    
+    <!-- Global Notifications -->
+    <NotificationContainer />
   </div>
 </template>
 

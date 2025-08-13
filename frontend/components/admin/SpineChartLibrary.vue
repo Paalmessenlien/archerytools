@@ -693,6 +693,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modals -->
+    <ConfirmDeleteModal
+      v-if="confirmAction.show"
+      :title="confirmAction.title"
+      :message="confirmAction.message"
+      :item-name="confirmAction.itemName"
+      :confirm-text="confirmAction.confirmText"
+      :loading="confirmAction.loading"
+      :error="confirmAction.error"
+      @confirm="executeConfirmedAction"
+      @cancel="cancelConfirmedAction"
+    />
   </div>
 </template>
 
@@ -724,6 +737,18 @@ const showGridEditor = ref(false)
 const savingChart = ref(false)
 const selectedChart = ref<SpineChart | null>(null)
 const editingChart = ref<SpineChart | null>(null)
+
+// Confirmation modal state
+const confirmAction = ref({
+  show: false,
+  title: '',
+  message: '',
+  itemName: '',
+  confirmText: 'Confirm',
+  loading: false,
+  error: '',
+  action: null as (() => void) | null
+})
 
 // Data
 const manufacturerCharts = ref<SpineChart[]>([])
@@ -860,8 +885,17 @@ const addSpineEntry = () => {
 const removeSpineEntry = (index: number) => {
   if (!editingChart.value || !editingChart.value.spine_grid) return
   
-  if (confirm('Are you sure you want to remove this spine grid entry?')) {
-    editingChart.value.spine_grid.splice(index, 1)
+  confirmAction.value = {
+    show: true,
+    title: 'Remove Spine Entry',
+    message: 'Are you sure you want to remove this spine grid entry?',
+    itemName: `Entry ${index + 1}`,
+    confirmText: 'Remove',
+    loading: false,
+    error: '',
+    action: () => {
+      editingChart.value!.spine_grid.splice(index, 1)
+    }
   }
 }
 
@@ -885,8 +919,17 @@ const sortSpineGrid = () => {
 const clearSpineGrid = () => {
   if (!editingChart.value) return
   
-  if (confirm('Are you sure you want to clear all spine grid entries? This cannot be undone.')) {
-    editingChart.value.spine_grid = []
+  confirmAction.value = {
+    show: true,
+    title: 'Clear All Spine Entries',
+    message: 'Are you sure you want to clear all spine grid entries? This cannot be undone.',
+    itemName: `${editingChart.value.spine_grid?.length || 0} entries`,
+    confirmText: 'Clear All',
+    loading: false,
+    error: '',
+    action: () => {
+      editingChart.value!.spine_grid = []
+    }
   }
 }
 
@@ -940,20 +983,45 @@ const saveChart = async () => {
   }
 }
 
-const deleteChart = async (chart: SpineChart) => {
-  if (!confirm(`Are you sure you want to delete the chart "${chart.manufacturer} ${chart.model}"?`)) {
-    return
-  }
-  
-  try {
-    if (chart.chart_type === 'custom') {
-      await api.delete(`/admin/spine-charts/custom/${chart.id}`)
-      await loadSpineCharts()
+const deleteChart = (chart: SpineChart) => {
+  confirmAction.value = {
+    show: true,
+    title: 'Delete Spine Chart',
+    message: 'Are you sure you want to delete this spine chart? This action cannot be undone.',
+    itemName: `${chart.manufacturer} ${chart.model}`,
+    confirmText: 'Delete',
+    loading: false,
+    error: '',
+    action: async () => {
+      try {
+        confirmAction.value.loading = true
+        confirmAction.value.error = ''
+        
+        if (chart.chart_type === 'custom') {
+          await api.delete(`/admin/spine-charts/custom/${chart.id}`)
+          await loadSpineCharts()
+          confirmAction.value.show = false
+        }
+      } catch (err) {
+        console.error('Error deleting chart:', err)
+        confirmAction.value.error = 'Failed to delete chart'
+      } finally {
+        confirmAction.value.loading = false
+      }
     }
-  } catch (err) {
-    console.error('Error deleting chart:', err)
-    error.value = 'Failed to delete chart'
   }
+}
+
+// Confirmation modal handlers
+const executeConfirmedAction = async () => {
+  if (confirmAction.value.action) {
+    await confirmAction.value.action()
+  }
+}
+
+const cancelConfirmedAction = () => {
+  confirmAction.value.show = false
+  confirmAction.value.error = ''
 }
 
 // Utility functions

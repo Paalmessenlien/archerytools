@@ -446,7 +446,7 @@ const handleUpdateArrow = async (updatedArrow) => {
   } catch (err) {
     console.error('Error updating arrow configuration:', err);
     console.error('Error details:', err.response?.data || err.message);
-    alert('Error updating arrow: ' + (err.response?.data?.error || err.message));
+    notifyError('Error updating arrow: ' + (err.response?.data?.error || err.message));
   }
 };
 
@@ -457,7 +457,7 @@ const duplicateArrow = async (arrowSetup) => {
   const token = process.client ? localStorage.getItem('token') : null;
   
   if (!token) {
-    alert('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
+    notifyError('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
     return;
   }
   
@@ -502,23 +502,19 @@ const duplicateArrow = async (arrowSetup) => {
     });
     
     // Show brief success notification to user
-    if (process.client && window.alert) {
-      setTimeout(() => {
-        alert(`✅ Arrow duplicated successfully!\n${arrowSetup.arrow?.manufacturer || 'Arrow'} ${arrowSetup.arrow?.model_name || ''} has been added to your bow setup.`);
-      }, 100);
-    }
+    notifySuccess(`Arrow duplicated successfully! ${arrowSetup.arrow?.manufacturer || 'Arrow'} ${arrowSetup.arrow?.model_name || ''} has been added to your bow setup.`);
   } catch (err) {
     console.error('❌ Error duplicating arrow:', err);
     
     // Check for authentication errors specifically
     if (err.message && (err.message.includes('401') || err.message.includes('Token is missing'))) {
-      alert('Please log in to duplicate arrows. The duplicate function requires authentication.');
+      notifyError('Please log in to duplicate arrows. The duplicate function requires authentication.');
     } else if (err.message && err.message.includes('403')) {
-      alert('You do not have permission to duplicate arrows in this bow setup.');  
+      notifyError('You do not have permission to duplicate arrows in this bow setup.');  
     } else if (err.message && err.message.includes('404')) {
-      alert('Bow setup or arrow not found. Please refresh the page and try again.');
+      notifyError('Bow setup or arrow not found. Please refresh the page and try again.');
     } else {
-      alert('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
+      notifyError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
     }
   }
 };
@@ -529,11 +525,24 @@ const handleEquipmentUpdated = () => {
   console.log('Equipment updated for bow setup');
 };
 
+// Use notification composable
+const { notifySuccess, notifyError, notifyInfo, notifyWarning } = useNotifications()
+
 const showNotification = (message, type = 'info') => {
-  // Simple notification system - could be enhanced with toast notifications
-  if (process.client) {
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    alert(`${icon} ${message}`);
+  // Updated to use custom notifications instead of alert()
+  switch (type) {
+    case 'success':
+      notifySuccess(message)
+      break
+    case 'error':
+      notifyError(message)
+      break
+    case 'warning':
+      notifyWarning(message)
+      break
+    default:
+      notifyInfo(message)
+      break
   }
 };
 
