@@ -48,7 +48,15 @@ Complete guide to the database migration system:
 - **User vs Arrow Database**: Target-specific migration patterns
 - **Production Deployment**: Safe migration procedures and rollback strategies
 - **Admin Integration**: Web-based migration management and monitoring
-- **Best Practices**: Schema changes, data migrations, and error handling
+
+#### [Custom Equipment Management System](CUSTOM_EQUIPMENT_SYSTEM.md)
+Comprehensive documentation for the custom equipment management system:
+- **Dynamic Form Generation**: Category-based form fields with validation and autocomplete
+- **Database Schema**: Equipment field standards and enhanced bow_equipment table
+- **API Endpoints**: Form schema generation and manufacturer suggestions
+- **Frontend Components**: CustomEquipmentForm.vue and equipment management integration
+- **Equipment Categories**: 5 equipment types with 30+ standardized fields
+- **Migration Support**: Database migrations 008 and 009 for custom equipment
 
 ---
 
