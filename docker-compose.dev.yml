@@ -48,7 +48,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev.debian
+      dockerfile: Dockerfile.dev.prebuilt
     container_name: arrowtuner-frontend-dev
     restart: unless-stopped
     ports:
@@ -61,8 +61,7 @@ services:
       - BUILD_VERIFICATION=enabled
       - NITRO_HOST=0.0.0.0  # Allow external connections
     volumes:
-      - ./frontend:/app:rw  # Mount source code for hot reload
-      - /app/node_modules   # Prevent overwriting node_modules
+      - ./frontend:/app:rw  # Mount source code for hot reload (includes pre-built node_modules)
     depends_on:
       - api
     networks:

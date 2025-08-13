@@ -16,6 +16,7 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  start    - Start all services in development mode"
+    echo "  fallback - Start with fallback configuration (if native binding issues persist)"
     echo "  stop     - Stop all services"
     echo "  restart  - Restart all services"
     echo "  logs     - Follow logs from all services"
@@ -31,6 +32,7 @@ show_help() {
     echo "  $0 logs           # Watch logs"
     echo "  $0 shell          # Debug API container"
     echo "  $0 debug          # Debug frontend native binding issues"
+    echo "  $0 fallback       # Use fallback config to avoid oxc-parser issues"
 }
 
 # Function to check Docker and Docker Compose
@@ -82,6 +84,16 @@ check_environment() {
 start_services() {
     echo "🚀 Starting development services..."
     echo "Using compose file: $COMPOSE_FILE"
+    
+    # Check if frontend dependencies are built locally
+    if [ ! -d "frontend/node_modules" ]; then
+        echo "📦 Frontend dependencies not found locally"
+        echo "🔧 Setting up local frontend dependencies to avoid native binding issues..."
+        ./setup-local-frontend.sh || {
+            echo "❌ Failed to setup local frontend dependencies"
+            echo "💡 Trying alternative Docker approach..."
+        }
+    fi
     
     # Stop any existing services first
     docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
@@ -234,12 +246,65 @@ debug_frontend() {
     fi
 }
 
+# Function to start services with fallback configuration
+start_fallback_services() {
+    echo "🔄 Starting development services with fallback configuration..."
+    echo "This uses legacy peer deps and simpler build process to avoid oxc-parser issues"
+    
+    local FALLBACK_COMPOSE_FILE="docker-compose.dev.fallback.yml"
+    
+    # Stop any existing services first
+    docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
+    docker-compose -f "$FALLBACK_COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
+    
+    # Build and start fallback services
+    docker-compose -f "$FALLBACK_COMPOSE_FILE" up --build -d
+    
+    # Wait a moment for services to start
+    echo "⏳ Waiting for fallback services to initialize..."
+    sleep 15
+    
+    # Check service status
+    echo "🔍 Checking fallback service health..."
+    
+    # Check API health
+    if docker-compose -f "$FALLBACK_COMPOSE_FILE" ps | grep -q "arrowtuner-api-dev-fallback.*Up"; then
+        echo "✅ Fallback API container is running"
+    else
+        echo "❌ Fallback API container failed to start"
+    fi
+    
+    # Check Frontend health  
+    if docker-compose -f "$FALLBACK_COMPOSE_FILE" ps | grep -q "arrowtuner-frontend-dev-fallback.*Up"; then
+        echo "✅ Fallback Frontend container is running"
+    else
+        echo "❌ Fallback Frontend container failed to start"
+        echo "📋 Recent frontend logs:"
+        docker-compose -f "$FALLBACK_COMPOSE_FILE" logs --tail=20 frontend
+    fi
+    
+    echo ""
+    echo "🎉 Fallback development environment started!"
+    echo ""
+    echo "📍 Access URLs:"
+    echo "   Frontend:  http://localhost:3000"
+    echo "   API:       http://localhost:5000/api/health"
+    echo "   Admin:     http://localhost:3000/admin"
+    echo ""
+    echo "💡 This configuration uses legacy peer deps to avoid native binding issues"
+}
+
 # Main command processing
 case "${1:-start}" in
     start)
         check_dependencies
         check_environment
         start_services
+        ;;
+    fallback)
+        check_dependencies
+        check_environment
+        start_fallback_services
         ;;
     stop)
         stop_services
