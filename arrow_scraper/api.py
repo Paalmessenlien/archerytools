@@ -3080,11 +3080,11 @@ def get_equipment_form_schema(category):
         
         # Get field standards for the category
         cursor.execute('''
-            SELECT field_name, field_type, label, unit, required,
-                   validation_rules, field_options, default_value, help_text, display_order
+            SELECT field_name, field_type, field_label, field_unit, is_required,
+                   validation_rules, dropdown_options, default_value, help_text, field_order
             FROM equipment_field_standards 
             WHERE category_name = ?
-            ORDER BY display_order, field_name
+            ORDER BY field_order, field_name
         ''', (category,))
         
         fields = []
@@ -3092,10 +3092,10 @@ def get_equipment_form_schema(category):
             field_data = {
                 'name': row[0],      # field_name
                 'type': row[1],      # field_type
-                'label': row[2],     # label
-                'unit': row[3],      # unit
-                'required': bool(row[4]),  # required
-                'order': row[9]      # display_order
+                'label': row[2],     # field_label
+                'unit': row[3],      # field_unit
+                'required': bool(row[4]),  # is_required
+                'order': row[9]      # field_order
             }
             
             # Parse JSON fields
@@ -3105,7 +3105,7 @@ def get_equipment_form_schema(category):
                 except json.JSONDecodeError:
                     pass
                     
-            if row[6]:  # field_options
+            if row[6]:  # dropdown_options
                 try:
                     field_data['options'] = json.loads(row[6])
                 except json.JSONDecodeError:
