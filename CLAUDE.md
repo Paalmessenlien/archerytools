@@ -117,7 +117,32 @@ python test_setup.py
 
 ### Running the Dual Architecture Application
 
-**Option 1: Enhanced Docker Deployment (Recommended)**
+**🚀 Option 1: Unified Docker Development Environment (Recommended for Development)**
+
+**Quick Development Startup:**
+```bash
+# Start unified development environment with production schema compatibility
+./start-docker-dev.sh start
+
+# Access your development environment:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:5000/api/health
+# - Admin: http://localhost:3000/admin
+
+# Development workflow commands:
+./start-docker-dev.sh logs      # Follow logs from all services
+./start-docker-dev.sh shell     # Debug API container
+./start-docker-dev.sh status    # Check service health
+./start-docker-dev.sh stop      # Stop all services
+
+# Key benefits:
+# - Same database schema as production (no more schema conflicts)
+# - Hot reload for both frontend and backend
+# - Easy debugging and development workflow
+# - Comprehensive health monitoring
+```
+
+**Option 2: Enhanced Docker Deployment (Recommended for Production)**
 
 **Enhanced Production Deployment (With Comprehensive Verification):**
 ```bash
@@ -147,7 +172,36 @@ python3 test-bow-saving.py
 ./docker-deploy.sh docker-compose.dev.yml
 ```
 
-**Manual Docker Commands:**
+**🐳 Unified Docker Development Environment (Recommended for Development):**
+```bash
+# Start unified development environment with production schema
+./start-docker-dev.sh start
+
+# Available commands:
+./start-docker-dev.sh start     # Start all services in development mode
+./start-docker-dev.sh stop      # Stop all services  
+./start-docker-dev.sh restart   # Restart all services
+./start-docker-dev.sh logs      # Follow logs from all services
+./start-docker-dev.sh shell     # Open shell in API container for debugging
+./start-docker-dev.sh status    # Show service status and health
+./start-docker-dev.sh build     # Rebuild all containers
+./start-docker-dev.sh clean     # Clean environment (removes containers, networks, volumes)
+
+# Access URLs for development:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:5000/api/health  
+# - Nginx: http://localhost:8080
+# - Admin: http://localhost:3000/admin
+
+# Key benefits:
+# - Uses same database schema as production (eliminates schema mismatches)
+# - Preserves development features (hot reload, debug mode, development tools)
+# - Consistent migration system with production
+# - Easy debugging with shell access
+# - Comprehensive health monitoring
+```
+
+**Manual Docker Commands (Legacy):**
 ```bash
 # Clean up orphan containers first (if needed)
 ./docker-cleanup.sh
@@ -155,7 +209,7 @@ python3 test-bow-saving.py
 # API-only testing
 docker-compose -f docker-compose.simple.yml up -d --build
 
-# Full development with hot reload (uses override file)
+# Legacy development with hot reload (may have schema issues)
 docker-compose up -d --build
 
 # Production testing without domain
@@ -1326,9 +1380,11 @@ The Archery Tools platform provides:
 13. **User authentication** with Google OAuth integration and profile management
 14. **Bow setup management** with persistent storage and configuration tracking
 15. **Complete equipment management** with add, configure, edit, and remove functionality for bow accessories
-16. **Professional equipment categorization** with 5 equipment types and JSON-based specifications
+16. **Professional equipment categorization** with 8 equipment types and JSON-based specifications
 17. **Equipment installation tracking** with custom specifications and installation notes
 18. **Cross-database equipment integration** between user setups and equipment database
+19. **Unified Docker development environment** with production schema compatibility
+20. **Enhanced manufacturer workflow** with pending approval system and auto-learning
 
 ## Troubleshooting & Development Notes
 
@@ -1396,6 +1452,24 @@ The Archery Tools platform provides:
 ### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Unified Docker Development Environment Implementation (August 2025):**
+- **Issue**: Schema inconsistencies between local development and production causing API errors
+- **Root Cause**: Local development using different database schemas than production, leading to column name mismatches in form schema API
+- **Solution**: Created comprehensive unified Docker development environment:
+  - **docker-compose.dev.yml**: Complete development environment using production database schema
+  - **start-docker-dev.sh**: Comprehensive development startup script with health checks and debugging
+  - **Dockerfile.dev**: Development-optimized Dockerfiles for API and frontend with hot reload capabilities
+  - **nginx.dev.conf**: Development proxy configuration with CORS support
+  - **revert-production-fix.sh**: Emergency production fix script for quick rollbacks
+- **Key Benefits**:
+  - Uses identical database schema as production (eliminates schema mismatches)
+  - Preserves all development features (hot reload, debug mode, development tools)
+  - Same migration system as production for consistency
+  - Comprehensive command interface for development workflow
+  - Easy debugging with shell access and health monitoring
+- **Files**: `docker-compose.dev.yml`, `start-docker-dev.sh`, `arrow_scraper/Dockerfile.dev`, `frontend/Dockerfile.dev`, `deploy/nginx/nginx.dev.conf`
+- **Status**: ✅ **PRODUCTION READY** - Comprehensive development environment that eliminates dev/prod schema inconsistencies
 
 **Admin Panel Display Race Condition Fix (August 2025):**
 - **Issue**: Admin panel showing both admin content and "Access Denied" message simultaneously despite admin functionality working correctly
