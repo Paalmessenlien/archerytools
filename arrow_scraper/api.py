@@ -83,42 +83,17 @@ def get_tuning_system():
     return tuning_system
 
 def get_database():
-    """Get database with fallback locations"""
+    """Get database with unified path resolution"""
     global database
     if database is None:
         try:
-            # Try multiple database locations
-            db_paths = [
-                '/app/arrow_database.db',          # Primary location
-                '/app/arrow_database_backup.db',   # Backup location
-                'arrow_database.db',               # Development location
-            ]
-            
-            database_path = None
-            for db_path in db_paths:
-                if os.path.exists(db_path):
-                    try:
-                        # Quick check if database has data
-                        import sqlite3
-                        conn = sqlite3.connect(db_path)
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT COUNT(*) FROM arrows")
-                        count = cursor.fetchone()[0]
-                        conn.close()
-                        
-                        if count > 0:
-                            database_path = db_path
-                            break
-                    except Exception as e:
-                        continue
-            
-            if not database_path:
-                return None
-            
-            database = ArrowDatabase(database_path)
+            # Use ArrowDatabase's built-in unified path resolution
+            database = ArrowDatabase()
             
         except Exception as e:
             import traceback
+            print(f"Error creating ArrowDatabase: {e}")
+            traceback.print_exc()
             database = None
     return database
 

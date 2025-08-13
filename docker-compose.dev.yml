@@ -23,11 +23,11 @@ services:
       - DATABASE_VERIFICATION=enabled
       - STARTUP_TIMEOUT=60
       - FORCE_DATABASE_IMPORT=true  # Enable database import in dev
+      - ARROW_DATABASE_PATH=/app/databases/arrow_database.db  # Use unified database path
+      - USER_DATABASE_PATH=/app/databases/user_data.db       # Use unified user database path
     volumes:
-      - ./.env:/app/.env:ro  # Mount root .env file as read-only
       - ./arrow_scraper:/app:rw  # Mount source code for hot reload
-      - arrowtuner-dev-userdata:/app/user_data  # Persist user database
-      - arrowtuner-dev-arrowdata:/app/arrow_data  # Persist arrow database
+      - arrowtuner-dev-databases:/app/databases  # Unified database persistence
       - arrowtuner-dev-logs:/app/logs  # Persist logs
     networks:
       - arrowtuner-dev-network
@@ -105,9 +105,7 @@ services:
           memory: 64M
 
 volumes:
-  arrowtuner-dev-userdata:
-    driver: local
-  arrowtuner-dev-arrowdata:
+  arrowtuner-dev-databases:
     driver: local
   arrowtuner-dev-logs:
     driver: local
