@@ -168,7 +168,7 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-lg">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {{ isEditing ? 'Edit Manufacturer' : 'Add New Manufacturer' }}
@@ -312,7 +312,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-lg">
         <div class="text-center">
           <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
@@ -365,7 +365,7 @@
     </div>
 
     <!-- Equipment Categories Modal -->
-    <div v-if="showCategoriesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div v-if="showCategoriesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           <i class="fas fa-cogs mr-2 text-purple-600"></i>
@@ -373,7 +373,7 @@
         </h3>
         
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          Configure which equipment categories this manufacturer supports. This will determine what equipment types can be assigned to this manufacturer.
+          Configure which categories this manufacturer supports. This includes equipment categories (arrows, strings, sights, etc.) and bow categories (compound bows, recurve components, traditional bows, etc.).
         </p>
         
         <div v-if="loadingCategories" class="text-center py-8">
@@ -388,13 +388,13 @@
             class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
           >
             <div class="flex items-center space-x-3">
-              <i :class="category.icon" class="text-lg text-gray-600 dark:text-gray-400"></i>
+              <i :class="category.icon || getCategoryIcon(category.name)" class="text-lg text-gray-600 dark:text-gray-400"></i>
               <div>
                 <div class="font-medium text-gray-900 dark:text-gray-100">
-                  {{ category.display_name }}
+                  {{ category.display_name || getCategoryDisplayName(category.name) }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ category.description }}
+                  {{ category.description || `${getCategoryDisplayName(category.name)} manufacturing and support` }}
                 </div>
               </div>
             </div>
@@ -595,13 +595,30 @@ const openCategoriesModal = async (manufacturer) => {
   loadingCategories.value = true
   
   try {
-    // Load available categories
-    const [categoriesResponse, manufacturerCategoriesResponse] = await Promise.all([
+    // Load available categories including bow and equipment categories
+    const [categoriesResponse, manufacturerCategoriesResponse, bowEquipmentResponse] = await Promise.all([
       api.get('/admin/equipment-categories'),
-      api.get(`/admin/manufacturers/${manufacturer.id}/equipment-categories`)
+      api.get(`/admin/manufacturers/${manufacturer.id}/equipment-categories`),
+      api.get('/bow-equipment/manufacturers')
     ])
     
-    availableCategories.value = categoriesResponse.categories || []
+    // Combine equipment categories with bow/equipment categories
+    const equipmentCategories = categoriesResponse.categories || []
+    const bowEquipmentCategories = [
+      { name: 'compound_bows', display_name: 'Compound Bows', description: 'Compound bow manufacturing', icon: 'fas fa-bow-arrow' },
+      { name: 'recurve_risers', display_name: 'Recurve Risers', description: 'Recurve bow riser manufacturing', icon: 'fas fa-mountain' },
+      { name: 'recurve_limbs', display_name: 'Recurve Limbs', description: 'Recurve bow limb manufacturing', icon: 'fas fa-bezier-curve' },
+      { name: 'traditional_risers', display_name: 'Traditional Risers', description: 'Traditional bow riser manufacturing', icon: 'fas fa-tree' },
+      { name: 'traditional_limbs', display_name: 'Traditional Limbs', description: 'Traditional bow limb manufacturing', icon: 'fas fa-leaf' },
+      { name: 'longbows', display_name: 'Longbows', description: 'Longbow manufacturing', icon: 'fas fa-archway' },
+      { name: 'strings', display_name: 'Strings', description: 'Bowstring manufacturing', icon: 'fas fa-grip-lines' },
+      { name: 'sights', display_name: 'Sights', description: 'Bow sight manufacturing', icon: 'fas fa-bullseye' },
+      { name: 'stabilizers', display_name: 'Stabilizers', description: 'Stabilizer manufacturing', icon: 'fas fa-balance-scale' },
+      { name: 'arrow_rests', display_name: 'Arrow Rests', description: 'Arrow rest manufacturing', icon: 'fas fa-hand-paper' },
+      { name: 'weights', display_name: 'Weights', description: 'Weight system manufacturing', icon: 'fas fa-weight-hanging' }
+    ]
+    
+    availableCategories.value = [...equipmentCategories, ...bowEquipmentCategories]
     
     // Set up category settings based on manufacturer's current settings
     categorySettings.value = {}
@@ -609,6 +626,14 @@ const openCategoriesModal = async (manufacturer) => {
     
     for (const category of manufacturerCategories) {
       categorySettings.value[category.category_name] = category.is_supported
+    }
+    
+    // Check if manufacturer is in bow equipment categories
+    const bowEquipmentData = bowEquipmentResponse.categories || {}
+    for (const [categoryName, manufacturers] of Object.entries(bowEquipmentData)) {
+      if (manufacturers.includes(manufacturer.name)) {
+        categorySettings.value[categoryName] = true
+      }
     }
     
     // Set defaults for any missing categories
@@ -679,7 +704,13 @@ const getCategoryDisplayName = (categoryName) => {
     'sights': 'Sights',
     'stabilizers': 'Stabilizers',
     'arrow_rests': 'Arrow Rests',
-    'weights': 'Weights'
+    'weights': 'Weights',
+    'compound_bows': 'Compound Bows',
+    'recurve_risers': 'Recurve Risers',
+    'recurve_limbs': 'Recurve Limbs',
+    'traditional_risers': 'Traditional Risers',
+    'traditional_limbs': 'Traditional Limbs',
+    'longbows': 'Longbows'
   }
   return displayNames[categoryName] || categoryName
 }
@@ -691,7 +722,13 @@ const getCategoryIcon = (categoryName) => {
     'sights': 'fas fa-bullseye',
     'stabilizers': 'fas fa-balance-scale',
     'arrow_rests': 'fas fa-hand-paper',
-    'weights': 'fas fa-weight-hanging'
+    'weights': 'fas fa-weight-hanging',
+    'compound_bows': 'fas fa-bow-arrow',
+    'recurve_risers': 'fas fa-mountain',
+    'recurve_limbs': 'fas fa-bezier-curve',
+    'traditional_risers': 'fas fa-tree',
+    'traditional_limbs': 'fas fa-leaf',
+    'longbows': 'fas fa-archway'
   }
   return icons[categoryName] || 'fas fa-cog'
 }
@@ -703,7 +740,13 @@ const getCategoryBadgeClass = (categoryName) => {
     'sights': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
     'stabilizers': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
     'arrow_rests': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-    'weights': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+    'weights': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    'compound_bows': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+    'recurve_risers': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+    'recurve_limbs': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+    'traditional_risers': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    'traditional_limbs': 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300',
+    'longbows': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
   }
   return classes[categoryName] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
 }
