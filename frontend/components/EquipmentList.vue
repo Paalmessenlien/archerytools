@@ -212,9 +212,12 @@ const getCategoryIcon = (categoryName) => {
   const iconMap = {
     'String': 'fas fa-link',
     'Sight': 'fas fa-crosshairs',
+    'Scope': 'fas fa-search',
     'Stabilizer': 'fas fa-balance-scale',
     'Arrow Rest': 'fas fa-hand-paper',
-    'Weight': 'fas fa-weight-hanging'
+    'Plunger': 'fas fa-bullseye',
+    'Weight': 'fas fa-weight-hanging',
+    'Other': 'fas fa-cog'
   }
   return iconMap[categoryName] || 'fas fa-cog'
 }

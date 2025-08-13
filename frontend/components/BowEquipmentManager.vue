@@ -301,9 +301,12 @@ const getCategoryIcon = (categoryName) => {
   const iconMap = {
     'String': 'fas fa-link',
     'Sight': 'fas fa-crosshairs',
+    'Scope': 'fas fa-search',
     'Stabilizer': 'fas fa-balance-scale',
     'Arrow Rest': 'fas fa-hand-paper',
-    'Weight': 'fas fa-weight-hanging'
+    'Plunger': 'fas fa-bullseye',
+    'Weight': 'fas fa-weight-hanging',
+    'Other': 'fas fa-cog'
   }
   return iconMap[categoryName] || 'fas fa-cog'
 }
@@ -312,9 +315,12 @@ const getCategoryDisplayName = (categoryName) => {
   const displayNames = {
     'String': 'Strings & Cables',
     'Sight': 'Sights',
+    'Scope': 'Scopes',
     'Stabilizer': 'Stabilizers',
     'Arrow Rest': 'Arrow Rests',
-    'Weight': 'Weights'
+    'Plunger': 'Plungers',
+    'Weight': 'Weights',
+    'Other': 'Other Equipment'
   }
   return displayNames[categoryName] || categoryName
 }
