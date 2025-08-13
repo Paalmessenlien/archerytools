@@ -51,7 +51,13 @@ Complete development workflow documentation:
 ### Development Commands
 ```bash
 # Start development environment
-./scripts/start-dual-architecture.sh start
+./start-local-dev.sh start
+
+# Stop development environment
+./start-local-dev.sh stop
+
+# Check service status
+./start-local-dev.sh status
 
 # Test backend
 cd arrow_scraper && python test_api.py
