@@ -3786,7 +3786,7 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         cursor.execute('''
             SELECT be.id FROM bow_equipment be
             JOIN bow_setups bs ON be.bow_setup_id = bs.id
-            WHERE be.bow_setup_id = ? AND be.equipment_id = ? 
+            WHERE be.bow_setup_id = ? AND be.id = ? 
             AND bs.user_id = ? AND be.is_active = 1
         ''', (setup_id, equipment_id, current_user['id']))
         
