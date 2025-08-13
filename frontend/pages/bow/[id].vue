@@ -211,6 +211,19 @@
       @save="handleUpdateArrow"
       @close="editingArrow = null"
     />
+
+    <!-- Arrow Deletion Confirmation Modal -->
+    <ConfirmDeleteModal
+      v-if="arrowToDelete"
+      :title="`Remove Arrow`"
+      :message="`Are you sure you want to remove this arrow from your bow setup?`"
+      :item-name="getArrowDisplayName(arrowToDelete)"
+      :confirm-text="`Remove`"
+      :loading="deletingArrow"
+      :error="deleteArrowError"
+      @confirm="confirmRemoveArrow"
+      @cancel="cancelRemoveArrow"
+    />
   </div>
 </template>
 
@@ -236,6 +249,11 @@ const editingSetup = ref(null);
 const isSavingSetup = ref(false);
 const editError = ref(null);
 const editingArrow = ref(null);
+
+// Arrow deletion state
+const arrowToDelete = ref(null);
+const deletingArrow = ref(false);
+const deleteArrowError = ref('');
 
 // Computed
 const hasComponentWeights = computed(() => {
@@ -392,14 +410,50 @@ const openArrowSearchModal = () => {
 };
 
 
-const removeArrowFromSetup = async (setupArrowId) => {
+const removeArrowFromSetup = (setupArrowId) => {
+  // Find the arrow setup to get details for the confirmation modal
+  const arrowSetup = bowSetup.value?.arrows?.find(arrow => arrow.id === setupArrowId);
+  if (arrowSetup) {
+    arrowToDelete.value = { setupArrowId, arrowSetup };
+    deleteArrowError.value = '';
+  }
+};
+
+const confirmRemoveArrow = async () => {
+  if (!arrowToDelete.value) return;
+  
   try {
+    deletingArrow.value = true;
+    deleteArrowError.value = '';
+    
     // Use the correct API endpoint for removing arrows from setup
-    await api.delete(`/setup-arrows/${setupArrowId}`);
+    await api.delete(`/setup-arrows/${arrowToDelete.value.setupArrowId}`);
     await fetchSetupArrows();
+    
+    notifySuccess('Arrow removed successfully from bow setup');
+    arrowToDelete.value = null;
   } catch (err) {
     console.error('Error removing arrow:', err);
+    deleteArrowError.value = err.message || 'Failed to remove arrow';
+  } finally {
+    deletingArrow.value = false;
   }
+};
+
+const cancelRemoveArrow = () => {
+  arrowToDelete.value = null;
+  deleteArrowError.value = '';
+};
+
+const getArrowDisplayName = (arrowDeleteInfo) => {
+  if (!arrowDeleteInfo?.arrowSetup) return 'Unknown Arrow';
+  
+  const arrow = arrowDeleteInfo.arrowSetup.arrow || arrowDeleteInfo.arrowSetup;
+  const manufacturer = arrow.manufacturer || arrow.manufacturer_name || 'Unknown';
+  const model = arrow.model_name || arrow.model || 'Unknown';
+  const spine = arrow.spine || arrowDeleteInfo.arrowSetup.calculated_spine || '';
+  
+  return `${manufacturer} ${model}${spine ? ` (${spine} spine)` : ''}`;
 };
 
 const viewArrowDetails = (arrowIdOrArrow) => {
