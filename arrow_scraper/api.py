@@ -3569,43 +3569,33 @@ def add_bow_equipment(current_user, setup_id):
         if not weight_grams and data.get('weight_ounces'):
             weight_grams = float(data['weight_ounces']) * 28.3495  # Convert ounces to grams
         
-        # Try to link to existing manufacturer using smart matching
+        # Check if manufacturer exists in database (for linking existing ones only)
         equipment_id = None
         manufacturer_id = None
-        linked_manufacturer_name = data['manufacturer_name']
+        linked_manufacturer_name = data['manufacturer_name']  # Always preserve user input
         
         try:
             arrow_db = ArrowDatabase()
             arrow_conn = arrow_db.get_connection()
             arrow_cursor = arrow_conn.cursor()
             
-            # Get all manufacturers from database
-            arrow_cursor.execute('SELECT id, name, country FROM manufacturers ORDER BY name')
-            manufacturers = [{'id': row[0], 'name': row[1], 'country': row[2] or 'Unknown'} 
-                           for row in arrow_cursor.fetchall()]
+            # Check for exact manufacturer match first
+            arrow_cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
+                               (data['manufacturer_name'],))
+            exact_match = arrow_cursor.fetchone()
             
-            # Use smart manufacturer matching
-            from manufacturer_matcher import ManufacturerMatcher
-            matcher = ManufacturerMatcher()
-            
-            # Attempt to link with high confidence
-            link_result = matcher.link_manufacturer(
-                data['manufacturer_name'], 
-                manufacturers, 
-                data.get('category_name')
-            )
-            
-            if link_result:
-                manufacturer_id = link_result['manufacturer_id']
-                linked_manufacturer_name = link_result['manufacturer_name']
-                print(f"🔗 Smart manufacturer linking: '{data['manufacturer_name']}' → '{linked_manufacturer_name}' "
-                      f"(confidence: {link_result['confidence']:.2f}, {link_result['match_type']})")
+            if exact_match:
+                # Exact match found - use existing manufacturer
+                manufacturer_id = exact_match['id']
+                print(f"✅ Exact manufacturer match found for: '{data['manufacturer_name']}'")
             else:
-                print(f"📝 No manufacturer match found for: '{data['manufacturer_name']}' - storing as custom manufacturer")
+                # No exact match - this will become a pending manufacturer
+                # Preserve the user's exact input without any smart matching alterations
+                print(f"📝 New manufacturer: '{data['manufacturer_name']}' - will be saved as pending")
             
             arrow_conn.close()
         except Exception as e:
-            print(f"Warning: Smart manufacturer linking failed: {e}")
+            print(f"Warning: Manufacturer lookup failed: {e}")
             manufacturer_id = None
         
         # Add custom equipment to bow setup
