@@ -1,0 +1,118 @@
+# Development Docker Compose using production schema but with development features
+# This eliminates schema inconsistencies by using the same database setup as production
+# Use with: docker-compose -f docker-compose.dev.yml up
+
+services:
+  # Flask API Backend - Development Mode with Production Schema
+  api:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: Dockerfile.dev
+    container_name: arrowtuner-api-dev
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development  # Development mode
+      - FLASK_DEBUG=1          # Enable debug mode
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-not-set}
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
+      - DATABASE_VERIFICATION=enabled
+      - STARTUP_TIMEOUT=60
+      - FORCE_DATABASE_IMPORT=true  # Enable database import in dev
+    volumes:
+      - ./.env:/app/.env:ro  # Mount root .env file as read-only
+      - ./arrow_scraper:/app:rw  # Mount source code for hot reload
+      - arrowtuner-dev-userdata:/app/user_data  # Persist user database
+      - arrowtuner-dev-arrowdata:/app/arrow_data  # Persist arrow database
+      - arrowtuner-dev-logs:/app/logs  # Persist logs
+    networks:
+      - arrowtuner-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/simple-health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  # Nuxt 3 Frontend - Development Mode
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: arrowtuner-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "24678:24678"  # Vite HMR port
+    environment:
+      - NODE_ENV=development
+      - NUXT_PUBLIC_API_BASE=http://localhost:5000/api  # Point to local API
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - BUILD_VERIFICATION=enabled
+      - NITRO_HOST=0.0.0.0  # Allow external connections
+    volumes:
+      - ./frontend:/app:rw  # Mount source code for hot reload
+      - /app/node_modules   # Prevent overwriting node_modules
+    depends_on:
+      - api
+    networks:
+      - arrowtuner-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Optional: Nginx for development (can be disabled)
+  nginx:
+    image: nginx:alpine
+    container_name: arrowtuner-nginx-dev
+    restart: unless-stopped
+    ports:
+      - "8080:80"  # Different port to avoid conflicts
+    volumes:
+      - ./deploy/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - arrowtuner-dev-logs:/var/log/nginx
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - arrowtuner-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+volumes:
+  arrowtuner-dev-userdata:
+    driver: local
+  arrowtuner-dev-arrowdata:
+    driver: local
+  arrowtuner-dev-logs:
+    driver: local
+
+networks:
+  arrowtuner-dev-network:
+    driver: bridge
