@@ -1,0 +1,79 @@
+# Fallback Development Docker Compose - Uses simple approach without native bindings
+# Use when the prebuilt approach fails due to oxc-parser issues
+
+services:
+  # Flask API Backend - Development Mode with Production Schema
+  api:
+    build: 
+      context: ./arrow_scraper
+      dockerfile: Dockerfile.dev
+    container_name: arrowtuner-api-dev-fallback
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-not-set}
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
+      - DATABASE_VERIFICATION=enabled
+      - STARTUP_TIMEOUT=60
+      - FORCE_DATABASE_IMPORT=true
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./arrow_scraper:/app:rw
+      - arrowtuner-dev-userdata-fallback:/app/user_data
+      - arrowtuner-dev-arrowdata-fallback:/app/arrow_data
+      - arrowtuner-dev-logs-fallback:/app/logs
+    networks:
+      - arrowtuner-dev-network-fallback
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/simple-health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nuxt 3 Frontend - Simple Development Mode (no oxc-parser issues)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev.simple
+    container_name: arrowtuner-frontend-dev-fallback
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "24678:24678"
+    environment:
+      - NODE_ENV=development
+      - NUXT_PUBLIC_API_BASE=http://localhost:5000/api
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${NUXT_PUBLIC_GOOGLE_CLIENT_ID:-not-set}
+      - NITRO_HOST=0.0.0.0
+    volumes:
+      - ./frontend:/app:rw
+      - /app/node_modules  # Exclude node_modules from mount
+    depends_on:
+      - api
+    networks:
+      - arrowtuner-dev-network-fallback
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # Longer start period for fallback
+
+volumes:
+  arrowtuner-dev-userdata-fallback:
+    driver: local
+  arrowtuner-dev-arrowdata-fallback:
+    driver: local
+  arrowtuner-dev-logs-fallback:
+    driver: local
+
+networks:
+  arrowtuner-dev-network-fallback:
+    driver: bridge
