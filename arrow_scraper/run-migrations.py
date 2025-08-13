@@ -172,6 +172,32 @@ class MigrationRunner:
                 self.errors.append((migration_name, str(e)))
         else:
             print(f"⏭️  Migration {migration_name} already applied")
+        
+        # Migration 3: Fix pending manufacturers schema
+        migration_name = "fix_pending_manufacturers_schema_2025"
+        if not self.has_migration_run(user_db_path, migration_name):
+            print(f"🔄 Running migration: {migration_name}")
+            try:
+                # Run Migration 012
+                import subprocess
+                migration_path = "migrations/012_fix_pending_manufacturers_schema.py"
+                if os.path.exists(migration_path):
+                    result = subprocess.run([sys.executable, migration_path], 
+                                          capture_output=True, text=True, cwd=".")
+                    if result.returncode == 0:
+                        print("  ✅ Pending manufacturers schema migration completed")
+                        self.record_migration(user_db_path, migration_name, True)
+                        self.migrations_run.append(migration_name)
+                    else:
+                        raise Exception(result.stderr or "Migration script failed")
+                else:
+                    print("  ⚠️  Migration 012 script not found, skipping")
+            except Exception as e:
+                print(f"  ❌ Migration failed: {e}")
+                self.record_migration(user_db_path, migration_name, False, str(e))
+                self.errors.append((migration_name, str(e)))
+        else:
+            print(f"⏭️  Migration {migration_name} already applied")
                 
     def run_arrow_db_migration(self, arrow_db_path):
         """Run migrations specific to arrow database"""

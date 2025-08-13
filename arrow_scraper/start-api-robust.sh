@@ -101,6 +101,7 @@ run_migrations() {
             "migrate_add_bow_info_fields.py" 
             "migrate_add_compound_model.py"
             "migrate_diameter_categories.py"
+            "migrations/012_fix_pending_manufacturers_schema.py"
         )
         
         for migration in "${migrations[@]}"; do
