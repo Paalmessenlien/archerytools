@@ -270,9 +270,12 @@ const showManufacturerSuggestions = ref(false)
 const categories = ref([
   { name: 'String', icon: 'fas fa-link' },
   { name: 'Sight', icon: 'fas fa-crosshairs' },
+  { name: 'Scope', icon: 'fas fa-search' },
   { name: 'Stabilizer', icon: 'fas fa-balance-scale' },
   { name: 'Arrow Rest', icon: 'fas fa-hand-paper' },
-  { name: 'Weight', icon: 'fas fa-weight-hanging' }
+  { name: 'Plunger', icon: 'fas fa-bullseye' },
+  { name: 'Weight', icon: 'fas fa-weight-hanging' },
+  { name: 'Other', icon: 'fas fa-cog' }
 ])
 
 // Form Data
