@@ -1,19 +1,17 @@
-# Development Frontend Dockerfile
-# Uses production build process but with development features
-FROM node:18-alpine
+# Development Frontend Dockerfile - Debian-based for better native binding compatibility
+FROM node:18-bullseye-slim
 
 # Set work directory
 WORKDIR /app
 
 # Install system dependencies including build tools for native bindings
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     curl \
     git \
     vim \
     python3 \
-    make \
-    g++ \
-    linux-headers
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -21,14 +19,15 @@ COPY package*.json ./
 # Clear npm cache and install dependencies (including dev dependencies)
 RUN npm cache clean --force && \
     rm -rf node_modules package-lock.json && \
-    npm install --verbose
+    npm install --verbose && \
+    npm rebuild --verbose
 
 # Copy application code (will be overridden by volume mount)
 COPY . .
 
 # Create non-root user
-RUN addgroup -g 1000 -S appgroup && \
-    adduser -u 1000 -S appuser -G appgroup
+RUN addgroup --gid 1000 appgroup && \
+    adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
 
 # Set ownership
 RUN chown -R appuser:appgroup /app
