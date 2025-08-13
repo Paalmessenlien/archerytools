@@ -83,6 +83,14 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - ✅ **Advanced Admin Data Tools**: Batch fill missing data functionality and URL-based scraping integration for comprehensive arrow data management
 - ✅ **Database Maintenance & Migration Management System**: Complete admin tools for database health monitoring, migration management, and maintenance operations with professional web interface (August 2025)
 - ✅ **Professional Spine Chart Management System**: Comprehensive manufacturer spine chart integration with editing capabilities, custom chart creation, and enhanced spine calculations using real manufacturer data (August 2025)
+- ✅ **Enhanced Equipment Management System with Auto-Learning (August 2025)**: Complete equipment management enhancement with 8 equipment categories and intelligent auto-learning capabilities
+  - **8 Equipment Categories**: Professional categorization system including String, Sight, Scope, Stabilizer, Arrow Rest, Plunger, Weight, and Other
+  - **Smart Manufacturer Detection**: Auto-learning system with fuzzy matching for manufacturer name standardization and linking
+  - **Dynamic Form Schemas**: Category-specific form fields with validation, dropdown options, and professional specifications
+  - **Database Integration**: Enhanced equipment_field_standards table with 46 field definitions across all categories
+  - **API Enhancements**: Updated equipment endpoints with form schema generation and manufacturer suggestion capabilities
+  - **Frontend Integration**: EquipmentSelector component updated with all 8 categories, proper icons, and seamless form generation
+  - **Comprehensive Testing**: Full test suite validating auto-learning, manufacturer suggestions, and end-to-end functionality
 
 ## Development Commands
 
@@ -161,13 +169,19 @@ sudo docker-compose -f docker-compose.ssl.yml up -d --build
 - **Production HTTPS**: https://yourdomain.com
 - **API**: /api/health endpoint for health checks
 
-**Option 2: Dual Architecture Startup**
+**Option 2: Local Development Startup**
 ```bash
-# Start both Nuxt 3 frontend and Flask API backend
-./scripts/start-dual-architecture.sh start
+# Start both Nuxt 3 frontend and Flask API backend for development
+./start-local-dev.sh start
 
-# Development mode
-NODE_ENV=development ./scripts/start-dual-architecture.sh start
+# Stop services
+./start-local-dev.sh stop
+
+# Check service status
+./start-local-dev.sh status
+
+# Restart services
+./start-local-dev.sh restart
 
 # Frontend: http://localhost:3000
 # API Backend: http://localhost:5000
@@ -491,12 +505,21 @@ python add-sample-equipment.py --target-db=/path/to/database.db
 # Test equipment management functionality
 python test-equipment-functionality.py
 
-# Equipment management features:
-# - 5 equipment categories: String, Sight, Stabilizer, Arrow Rest, Weight  
-# - Professional specifications with JSON-based configuration
+# Enhanced equipment management features (August 2025):
+# - 8 equipment categories: String, Sight, Scope, Stabilizer, Arrow Rest, Plunger, Weight, Other  
+# - Dynamic form schemas with 46 field definitions across all categories
+# - Smart manufacturer detection with fuzzy matching and auto-learning
+# - Professional specifications with category-specific validation
 # - Installation tracking with custom notes and specifications
-# - CRUD operations: Add, configure, edit, remove equipment
+# - CRUD operations: Add, configure, edit, remove equipment with enhanced forms
 # - Cross-database integration between user setups and equipment data
+# - Auto-learning system that improves manufacturer suggestions over time
+
+# Test enhanced equipment system with auto-learning
+python test_enhanced_equipment_system.py
+
+# Test smart manufacturer linking and fuzzy matching
+python test_smart_manufacturer_linking.py
 ```
 
 ### Multiple Concurrent Tuning Sessions
@@ -1853,8 +1876,8 @@ This section details the newly implemented user authentication and profile manag
 
 **Common Development Commands:**
 ```bash
-# Quick dual-architecture startup
-./scripts/start-dual-architecture.sh start
+# Quick local development startup
+./start-local-dev.sh start
 
 # Frontend development with hot reload
 cd frontend && npm run dev

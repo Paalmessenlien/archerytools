@@ -49,14 +49,33 @@ Complete guide to the database migration system:
 - **Production Deployment**: Safe migration procedures and rollback strategies
 - **Admin Integration**: Web-based migration management and monitoring
 
+#### [Enhanced Equipment Management System](ENHANCED_EQUIPMENT_MANAGEMENT.md) 
+**⚡ Latest Update (August 2025)** - Comprehensive equipment management with auto-learning:
+- **8 Equipment Categories**: Professional system including Scope, Plunger, and Other categories
+- **Smart Auto-Learning**: Intelligent manufacturer detection with fuzzy matching and confidence scoring
+- **Dynamic Form Schemas**: 46 field definitions with category-specific validation and help text
+- **API Enhancements**: Form schema generation, manufacturer suggestions, and learning endpoints
+- **Frontend Integration**: Updated EquipmentSelector with all 8 categories and professional icons
+- **Database Evolution**: Enhanced equipment_field_standards with manufacturer_equipment_categories table
+- **Comprehensive Testing**: Full test suite validating auto-learning and end-to-end functionality
+
 #### [Custom Equipment Management System](CUSTOM_EQUIPMENT_SYSTEM.md)
-Comprehensive documentation for the custom equipment management system:
+**📋 Legacy Documentation** - Original 5-category system documentation:
 - **Dynamic Form Generation**: Category-based form fields with validation and autocomplete
 - **Database Schema**: Equipment field standards and enhanced bow_equipment table
 - **API Endpoints**: Form schema generation and manufacturer suggestions
 - **Frontend Components**: CustomEquipmentForm.vue and equipment management integration
 - **Equipment Categories**: 5 equipment types with 30+ standardized fields
 - **Migration Support**: Database migrations 008 and 009 for custom equipment
+
+#### [Smart Manufacturer Matching System](SMART_MANUFACTURER_MATCHING.md)
+Intelligent manufacturer detection and linking system:
+- **Fuzzy String Matching**: Multiple algorithms with confidence scoring (0.0-1.0)
+- **Manufacturer Aliases**: Recognizes 100+ common name variations and abbreviations
+- **Category Specialization**: Prioritizes manufacturers known for specific equipment types
+- **Smart Linking**: Automatic high-confidence manufacturer linking (≥80% threshold)
+- **Enhanced Autocomplete**: Intelligent suggestions with category-aware ranking
+- **Quality Improvement**: Standardizes manufacturer names for data consistency
 
 ---
 
@@ -77,7 +96,13 @@ Comprehensive documentation for the custom equipment management system:
 ### Development Commands
 ```bash
 # Start development environment
-./scripts/start-dual-architecture.sh start
+./start-local-dev.sh start
+
+# Stop development environment
+./start-local-dev.sh stop
+
+# Check service status
+./start-local-dev.sh status
 
 # Test backend
 cd arrow_scraper && python test_api.py

@@ -3001,9 +3001,12 @@ def get_equipment_categories():
         return jsonify([
             {'name': 'String', 'icon': 'fas fa-link'},
             {'name': 'Sight', 'icon': 'fas fa-crosshairs'},
+            {'name': 'Scope', 'icon': 'fas fa-search'},
             {'name': 'Stabilizer', 'icon': 'fas fa-balance-scale'},
             {'name': 'Arrow Rest', 'icon': 'fas fa-hand-paper'},
-            {'name': 'Weight', 'icon': 'fas fa-weight-hanging'}
+            {'name': 'Plunger', 'icon': 'fas fa-bullseye'},
+            {'name': 'Weight', 'icon': 'fas fa-weight-hanging'},
+            {'name': 'Other', 'icon': 'fas fa-cog'}
         ]), 200
         
     except Exception as e:
@@ -3077,22 +3080,22 @@ def get_equipment_form_schema(category):
         
         # Get field standards for the category
         cursor.execute('''
-            SELECT field_name, field_type, label, unit, required,
-                   validation_rules, field_options, default_value, help_text, display_order
+            SELECT field_name, field_type, field_label, field_unit, is_required,
+                   validation_rules, dropdown_options, default_value, help_text, field_order
             FROM equipment_field_standards 
             WHERE category_name = ?
-            ORDER BY display_order, field_name
+            ORDER BY field_order, field_name
         ''', (category,))
         
         fields = []
         for row in cursor.fetchall():
             field_data = {
-                'name': row[0],
-                'type': row[1],
-                'label': row[2],
-                'unit': row[3],
-                'required': bool(row[4]),
-                'order': row[9]
+                'name': row[0],      # field_name
+                'type': row[1],      # field_type
+                'label': row[2],     # field_label
+                'unit': row[3],      # field_unit
+                'required': bool(row[4]),  # is_required
+                'order': row[9]      # field_order
             }
             
             # Parse JSON fields
@@ -3102,7 +3105,7 @@ def get_equipment_form_schema(category):
                 except json.JSONDecodeError:
                     pass
                     
-            if row[6]:  # field_options
+            if row[6]:  # dropdown_options
                 try:
                     field_data['options'] = json.loads(row[6])
                 except json.JSONDecodeError:
@@ -3127,68 +3130,209 @@ def get_equipment_form_schema(category):
 
 @app.route('/api/equipment/manufacturers/suggest', methods=['GET'])
 def suggest_equipment_manufacturers():
-    """Get manufacturer suggestions for autocomplete"""
+    """Get smart manufacturer suggestions for autocomplete with fuzzy matching"""
     try:
-        query = request.args.get('q', '').lower()
+        query = request.args.get('q', '')
         category = request.args.get('category', '')
-        
-        # Map frontend category names to database category names
-        category_mapping = {
-            'String': 'strings',
-            'Sight': 'sights', 
-            'Stabilizer': 'stabilizers',
-            'Arrow Rest': 'arrow_rests',
-            'Weight': 'weights'
-        }
-        
-        # Convert category name to database format
-        if category in category_mapping:
-            category = category_mapping[category]
+        limit = int(request.args.get('limit', 20))
         
         # Use get_database() to get the correct arrow database connection
         db = get_database()
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        # Get manufacturers from unified manufacturer system
-        sql = '''
-            SELECT DISTINCT m.name, m.website_url, m.country
-            FROM manufacturers m
-        '''
-        params = []
-        
-        # Filter by category if specified
-        if category:
-            sql += '''
-                JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
-                WHERE mec.category_name = ?
-            '''
-            params.append(category)
-            
-            if query:
-                sql += ' AND LOWER(m.name) LIKE ?'
-                params.append(f'%{query}%')
-        else:
-            if query:
-                sql += ' WHERE LOWER(m.name) LIKE ?'
-                params.append(f'%{query}%')
-        
-        sql += ' ORDER BY m.name LIMIT 20'
-        
-        cursor.execute(sql, params)
-        manufacturers = []
+        # Get all manufacturers from database
+        cursor.execute('SELECT id, name, website_url, country FROM manufacturers ORDER BY name')
+        all_manufacturers = []
         for row in cursor.fetchall():
+            all_manufacturers.append({
+                'id': row[0],
+                'name': row[1],
+                'website': row[2],
+                'country': row[3] or 'Unknown'
+            })
+        
+        conn.close()
+        
+        # Use smart manufacturer matching for suggestions
+        from manufacturer_matcher import ManufacturerMatcher
+        matcher = ManufacturerMatcher()
+        
+        # Get intelligent suggestions
+        suggestions = matcher.get_manufacturer_suggestions(
+            query, all_manufacturers, category, limit
+        )
+        
+        # Format response (remove internal id field for frontend)
+        manufacturers = []
+        for manufacturer in suggestions:
             manufacturers.append({
-                'name': row[0],
-                'website': row[1],
-                'country': row[2]
+                'name': manufacturer['name'],
+                'website': manufacturer.get('website'),
+                'country': manufacturer.get('country', 'Unknown')
             })
         
         return jsonify({'manufacturers': manufacturers}), 200
         
     except Exception as e:
-        print(f"Error getting manufacturer suggestions: {e}")
-        return jsonify({'error': 'Failed to get manufacturer suggestions'}), 500
+        print(f"Error getting smart manufacturer suggestions: {e}")
+        # Fallback to basic suggestions if smart matching fails
+        try:
+            db = get_database()
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Basic fallback query
+            if query:
+                cursor.execute('''
+                    SELECT DISTINCT name, website_url, country 
+                    FROM manufacturers 
+                    WHERE LOWER(name) LIKE ? 
+                    ORDER BY name LIMIT ?
+                ''', (f'%{query.lower()}%', limit))
+            else:
+                cursor.execute('SELECT DISTINCT name, website_url, country FROM manufacturers ORDER BY name LIMIT ?', (limit,))
+            
+            manufacturers = []
+            for row in cursor.fetchall():
+                manufacturers.append({
+                    'name': row[0],
+                    'website': row[1],
+                    'country': row[2] or 'Unknown'
+                })
+            
+            conn.close()
+            return jsonify({'manufacturers': manufacturers}), 200
+            
+        except Exception as fallback_error:
+            print(f"Fallback manufacturer suggestions also failed: {fallback_error}")
+            return jsonify({'error': 'Failed to get manufacturer suggestions'}), 500
+
+@app.route('/api/equipment/models/suggest', methods=['GET'])
+def suggest_equipment_models():
+    """Get smart model name suggestions based on manufacturer and category"""
+    try:
+        manufacturer = request.args.get('manufacturer', '')
+        category = request.args.get('category', '')
+        query = request.args.get('q', '')
+        limit = int(request.args.get('limit', 10))
+        
+        if not manufacturer or not category:
+            return jsonify({'error': 'manufacturer and category parameters are required'}), 400
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        # Get model suggestions
+        suggestions = learning.get_model_suggestions(manufacturer, category, query, limit)
+        
+        return jsonify({
+            'models': suggestions,
+            'manufacturer': manufacturer,
+            'category': category
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting model suggestions: {e}")
+        return jsonify({'error': 'Failed to get model suggestions'}), 500
+
+@app.route('/api/admin/pending-manufacturers', methods=['GET'])
+@token_required
+def get_pending_manufacturers(current_user):
+    """Get pending manufacturers for admin approval"""
+    try:
+        # Check admin status
+        if not current_user.get('is_admin'):
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        status = request.args.get('status', 'pending')
+        limit = int(request.args.get('limit', 50))
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        pending_manufacturers = learning.get_pending_manufacturers(status, limit)
+        
+        return jsonify({
+            'pending_manufacturers': pending_manufacturers,
+            'status': status,
+            'count': len(pending_manufacturers)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting pending manufacturers: {e}")
+        return jsonify({'error': 'Failed to get pending manufacturers'}), 500
+
+@app.route('/api/admin/manufacturers/<int:pending_id>/approve', methods=['PUT'])
+@token_required
+def approve_manufacturer(current_user, pending_id):
+    """Approve a pending manufacturer"""
+    try:
+        # Check admin status
+        if not current_user.get('is_admin'):
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        data = request.get_json() or {}
+        admin_notes = data.get('admin_notes', '')
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        success = learning.approve_manufacturer(pending_id, admin_notes)
+        
+        if success:
+            return jsonify({'message': 'Manufacturer approved successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to approve manufacturer'}), 400
+        
+    except Exception as e:
+        print(f"Error approving manufacturer: {e}")
+        return jsonify({'error': 'Failed to approve manufacturer'}), 500
+
+@app.route('/api/admin/manufacturers/<int:pending_id>/reject', methods=['PUT'])
+@token_required
+def reject_manufacturer(current_user, pending_id):
+    """Reject a pending manufacturer"""
+    try:
+        # Check admin status
+        if not current_user.get('is_admin'):
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        data = request.get_json() or {}
+        admin_notes = data.get('admin_notes', '')
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        success = learning.reject_manufacturer(pending_id, admin_notes)
+        
+        if success:
+            return jsonify({'message': 'Manufacturer rejected'}), 200
+        else:
+            return jsonify({'error': 'Failed to reject manufacturer'}), 400
+        
+    except Exception as e:
+        print(f"Error rejecting manufacturer: {e}")
+        return jsonify({'error': 'Failed to reject manufacturer'}), 500
+
+@app.route('/api/equipment/usage-analytics', methods=['GET'])
+@token_required
+def get_equipment_usage_analytics(current_user):
+    """Get equipment usage analytics"""
+    try:
+        category = request.args.get('category')
+        days = int(request.args.get('days', 30))
+        
+        from equipment_learning_manager import EquipmentLearningManager
+        learning = EquipmentLearningManager()
+        
+        analytics = learning.get_equipment_usage_analytics(category, days)
+        
+        return jsonify(analytics), 200
+        
+    except Exception as e:
+        print(f"Error getting usage analytics: {e}")
+        return jsonify({'error': 'Failed to get usage analytics'}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>/equipment', methods=['GET'])
 @token_required
@@ -3335,23 +3479,43 @@ def add_bow_equipment(current_user, setup_id):
         if not weight_grams and data.get('weight_ounces'):
             weight_grams = float(data['weight_ounces']) * 28.3495  # Convert ounces to grams
         
-        # Try to link to existing manufacturer from database
+        # Try to link to existing manufacturer using smart matching
         equipment_id = None
+        manufacturer_id = None
+        linked_manufacturer_name = data['manufacturer_name']
+        
         try:
             arrow_db = ArrowDatabase()
             arrow_conn = arrow_db.get_connection()
             arrow_cursor = arrow_conn.cursor()
             
-            # Look for matching manufacturer
-            arrow_cursor.execute('''
-                SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)
-            ''', (data['manufacturer_name'],))
-            manufacturer_row = arrow_cursor.fetchone()
-            manufacturer_id = manufacturer_row[0] if manufacturer_row else None
+            # Get all manufacturers from database
+            arrow_cursor.execute('SELECT id, name, country FROM manufacturers ORDER BY name')
+            manufacturers = [{'id': row[0], 'name': row[1], 'country': row[2] or 'Unknown'} 
+                           for row in arrow_cursor.fetchall()]
+            
+            # Use smart manufacturer matching
+            from manufacturer_matcher import ManufacturerMatcher
+            matcher = ManufacturerMatcher()
+            
+            # Attempt to link with high confidence
+            link_result = matcher.link_manufacturer(
+                data['manufacturer_name'], 
+                manufacturers, 
+                data.get('category_name')
+            )
+            
+            if link_result:
+                manufacturer_id = link_result['manufacturer_id']
+                linked_manufacturer_name = link_result['manufacturer_name']
+                print(f"🔗 Smart manufacturer linking: '{data['manufacturer_name']}' → '{linked_manufacturer_name}' "
+                      f"(confidence: {link_result['confidence']:.2f}, {link_result['match_type']})")
+            else:
+                print(f"📝 No manufacturer match found for: '{data['manufacturer_name']}' - storing as custom manufacturer")
             
             arrow_conn.close()
         except Exception as e:
-            print(f"Warning: Could not check manufacturer linking: {e}")
+            print(f"Warning: Smart manufacturer linking failed: {e}")
             manufacturer_id = None
         
         # Add custom equipment to bow setup
@@ -3364,7 +3528,7 @@ def add_bow_equipment(current_user, setup_id):
         ''', (
             setup_id,
             equipment_id,  # Will be NULL for custom equipment (can link later)
-            data['manufacturer_name'],
+            linked_manufacturer_name,  # Use smart-matched manufacturer name
             data['model_name'],
             data['category_name'],
             weight_grams,
@@ -3377,6 +3541,27 @@ def add_bow_equipment(current_user, setup_id):
         
         bow_equipment_id = cursor.lastrowid
         conn.commit()
+        
+        # Auto-learn from this equipment entry
+        try:
+            from equipment_learning_manager import EquipmentLearningManager
+            learning = EquipmentLearningManager()
+            learning_info = learning.learn_equipment_entry(
+                linked_manufacturer_name,
+                data['model_name'], 
+                data['category_name'],
+                current_user['id']
+            )
+            
+            if learning_info['new_manufacturer']:
+                print(f"📚 New manufacturer learned: '{linked_manufacturer_name}' (pending approval)")
+            if learning_info['new_model']:
+                print(f"📚 New model learned: '{data['model_name']}' for {linked_manufacturer_name}")
+            else:
+                print(f"📊 Model usage updated: '{data['model_name']}' used {learning_info['model_usage_count']} times")
+                
+        except Exception as e:
+            print(f"Warning: Auto-learning failed: {e}")
         
         # Return the added equipment
         cursor.execute('''

@@ -204,9 +204,12 @@ const loadUnifiedManufacturers = async (categoryName) => {
     const categoryMapping = {
       'String': 'strings',
       'Sight': 'sights',
+      'Scope': 'scopes',
       'Stabilizer': 'stabilizers', 
       'Arrow Rest': 'arrow_rests',
-      'Weight': 'weights'
+      'Plunger': 'plungers',
+      'Weight': 'weights',
+      'Other': 'other'
     }
     
     const apiCategory = categoryMapping[categoryName]
@@ -268,9 +271,12 @@ const getCategoryIcon = (categoryName) => {
   const iconMap = {
     'String': 'fas fa-link',
     'Sight': 'fas fa-crosshairs',
+    'Scope': 'fas fa-search',
     'Stabilizer': 'fas fa-balance-scale',
     'Arrow Rest': 'fas fa-hand-paper',
-    'Weight': 'fas fa-weight-hanging'
+    'Plunger': 'fas fa-bullseye',
+    'Weight': 'fas fa-weight-hanging',
+    'Other': 'fas fa-cog'
   }
   return iconMap[categoryName] || 'fas fa-cog'
 }
@@ -281,9 +287,12 @@ const getKeySpecs = (specs, category) => {
   const keySpecsMap = {
     'String': ['material', 'strand_count', 'bow_weight_range'],
     'Sight': ['sight_type', 'pin_count', 'adjustment_type'],
+    'Scope': ['magnification', 'objective_lens_size', 'reticle_type'],
     'Stabilizer': ['length_inches', 'weight_ounces', 'material'],
     'Arrow Rest': ['rest_type', 'activation_type', 'arrow_containment'],
-    'Weight': ['weight_ounces', 'mounting_location', 'weight_type']
+    'Plunger': ['plunger_type', 'tension_range', 'material'],
+    'Weight': ['weight_ounces', 'mounting_location', 'weight_type'],
+    'Other': ['equipment_type', 'primary_function', 'specifications']
   }
   
   const keySpecs = keySpecsMap[category] || Object.keys(specs).slice(0, 3)

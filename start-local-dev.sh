@@ -271,8 +271,8 @@ stop_services() {
     success "Services stopped."
 }
 
-# Handle script termination
-trap stop_services INT TERM EXIT
+# Handle script termination (removed EXIT to allow script to exit cleanly)
+trap stop_services INT TERM
 
 # Main execution
 case "${1:-start}" in
@@ -287,23 +287,9 @@ case "${1:-start}" in
         check_health
         show_status
         
-        # Keep script running
-        log "Press Ctrl+C to stop all services"
-        while true; do
-            sleep 5
-            # Check if processes are still running
-            if [ -f logs/api.pid ] && [ -f logs/frontend.pid ]; then
-                API_PID=$(cat logs/api.pid)
-                FRONTEND_PID=$(cat logs/frontend.pid)
-                if ! kill -0 $API_PID 2>/dev/null || ! kill -0 $FRONTEND_PID 2>/dev/null; then
-                    error "One or more services died, stopping..."
-                    break
-                fi
-            else
-                error "PID files missing, stopping..."
-                break
-            fi
-        done
+        log "Services started successfully in background"
+        log "Use './start-local-dev.sh stop' to stop services"
+        log "Use './start-local-dev.sh status' to check service status"
         ;;
     
     stop)
