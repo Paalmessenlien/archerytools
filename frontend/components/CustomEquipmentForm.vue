@@ -53,58 +53,15 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Manufacturer Name with Autocomplete -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Manufacturer *
-            </label>
-            <div class="relative">
-              <input
-                v-model="formData.manufacturer_name"
-                @input="searchManufacturers"
-                @focus="showManufacturerSuggestions = true"
-                type="text"
-                placeholder="Enter manufacturer name..."
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
-              
-              <!-- Manufacturer Suggestions Dropdown -->
-              <div v-if="showManufacturerSuggestions && manufacturerSuggestions.length > 0" 
-                   class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                <div
-                  v-for="manufacturer in manufacturerSuggestions"
-                  :key="manufacturer.name"
-                  @click="selectManufacturer(manufacturer)"
-                  :class="[
-                    'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm border-l-4 transition-colors',
-                    manufacturer.isPending ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-transparent'
-                  ]"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="font-medium flex items-center">
-                      {{ manufacturer.name }}
-                      <!-- Pending Status Badge -->
-                      <span v-if="manufacturer.isPending" 
-                            class="ml-2 px-2 py-1 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 rounded-full">
-                        <i class="fas fa-clock mr-1"></i>Pending Approval
-                      </span>
-                    </div>
-                    <!-- Usage Count for Pending Manufacturers -->
-                    <div v-if="manufacturer.isPending && manufacturer.usageCount" 
-                         class="text-xs text-orange-600 dark:text-orange-400">
-                      Used {{ manufacturer.usageCount }} times
-                    </div>
-                  </div>
-                  <div v-if="manufacturer.country" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {{ manufacturer.country }}
-                  </div>
-                  <!-- Categories for Pending Manufacturers -->
-                  <div v-if="manufacturer.isPending && manufacturer.categories?.length" 
-                       class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                    Categories: {{ manufacturer.categories.join(', ') }}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ManufacturerInput
+              v-model="formData.manufacturer_name"
+              :category="categoryMapping[selectedCategory]"
+              label="Manufacturer"
+              placeholder="Enter manufacturer name..."
+              :required="true"
+              @manufacturer-selected="handleManufacturerSelected"
+              @manufacturer-created="handleManufacturerCreated"
+            />
           </div>
 
           <!-- Model Name -->
@@ -295,8 +252,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useApi } from '~/composables/useApi'
+import ManufacturerInput from '~/components/ManufacturerInput.vue'
 
 const props = defineProps({
   bowSetup: {
@@ -323,8 +281,6 @@ const loading = ref(false)
 const submitting = ref(false)
 const selectedCategory = ref('String')
 const formSchema = ref(null)
-const manufacturerSuggestions = ref([])
-const showManufacturerSuggestions = ref(false)
 
 // Categories
 const categories = ref([
@@ -337,6 +293,18 @@ const categories = ref([
   { name: 'Weight', icon: 'fas fa-weight-hanging' },
   { name: 'Other', icon: 'fas fa-cog' }
 ])
+
+// Map UI categories to API categories for ManufacturerInput
+const categoryMapping = {
+  'String': 'strings',
+  'Sight': 'sights',
+  'Scope': 'scopes',
+  'Stabilizer': 'stabilizers',
+  'Arrow Rest': 'arrow_rests',
+  'Plunger': 'plungers',
+  'Weight': 'weights',
+  'Other': 'other'
+}
 
 // Form Data
 const formData = ref({
@@ -430,19 +398,14 @@ const loadFormSchema = async (category) => {
   }
 }
 
-const searchManufacturers = async () => {
-  if (formData.value.manufacturer_name.length < 2) {
-    manufacturerSuggestions.value = []
-    return
-  }
-  
-  try {
-    const response = await api.get(`/equipment/manufacturers/suggest?q=${encodeURIComponent(formData.value.manufacturer_name)}&category=${selectedCategory.value}`)
-    manufacturerSuggestions.value = response.manufacturers || []
-  } catch (error) {
-    console.error('Error searching manufacturers:', error)
-    manufacturerSuggestions.value = []
-  }
+// Handle manufacturer selection from ManufacturerInput
+const handleManufacturerSelected = (event) => {
+  console.log('Manufacturer selected:', event)
+}
+
+// Handle new manufacturer creation
+const handleManufacturerCreated = (event) => {
+  console.log('New manufacturer will be created:', event)
 }
 
 const getCategoryIcon = (categoryName) => {
@@ -459,11 +422,6 @@ const getCategoryIcon = (categoryName) => {
   return iconMap[categoryName] || 'fas fa-cog'
 }
 
-const selectManufacturer = (manufacturer) => {
-  formData.value.manufacturer_name = manufacturer.name
-  showManufacturerSuggestions.value = false
-  manufacturerSuggestions.value = []
-}
 
 const getFieldPlaceholder = (field) => {
   if (field.default) {
@@ -506,21 +464,8 @@ const submitForm = async () => {
       emit('equipment-updated', response)
     } else {
       // Handle equipment addition
-      // Check if this is a new manufacturer that will become pending
-      const isNewManufacturer = !manufacturerSuggestions.value.some(m => 
-        m.name.toLowerCase() === formData.value.manufacturer_name.toLowerCase()
-      )
-      
       const response = await api.post(`/bow-setups/${props.bowSetup.id}/equipment`, equipmentData)
       emit('equipment-added', response)
-      
-      // Show notification if new manufacturer was added as pending
-      if (isNewManufacturer) {
-        // Add a small delay to show success, then show manufacturer pending info
-        setTimeout(() => {
-          alert(`✨ Equipment added successfully!\n\n📝 "${formData.value.manufacturer_name}" is a new manufacturer and has been submitted for approval. You can continue using this manufacturer for future equipment until it's reviewed by an admin.`)
-        }, 500)
-      }
       
       // Reset form for adding mode only
       formData.value = {
@@ -557,12 +502,6 @@ watch(selectedCategory, (newCategory) => {
   loadFormSchema(newCategory)
 })
 
-// Click outside to close manufacturer suggestions
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.relative')) {
-    showManufacturerSuggestions.value = false
-  }
-}
 
 // Initialize form for editing mode
 const initializeForEditing = () => {
@@ -691,11 +630,6 @@ onMounted(async () => {
     initializeForEditing()
   }
   await loadFormSchema(selectedCategory.value)
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 

@@ -30,6 +30,22 @@ The system supports migrations for two separate databases:
    - Bow setups and configurations
    - Equipment assignments and tuning sessions
 
+### Database Paths in Different Environments
+
+**Hybrid Development (Docker)**:
+- Arrow Database: `/app/databases/arrow_database.db`
+- User Database: `/app/databases/user_data.db`
+- Volume: `arrowtuner-dev-databases`
+
+**Local Development**:
+- Arrow Database: `arrow_scraper/databases/arrow_database.db`
+- User Database: `arrow_scraper/databases/user_data.db`
+
+**Production**:
+- Arrow Database: `/app/databases/arrow_database.db`
+- User Database: `/app/databases/user_data.db`
+- Volume: `arrowtuner-databases`
+
 ## Migration File Structure
 
 ### Directory Layout
@@ -244,7 +260,33 @@ if migration_008:
 
 ## Running Migrations
 
-### Command Line Interface
+### Hybrid Development Environment (Recommended)
+
+When using the hybrid development environment with `./start-hybrid-dev.sh`, migrations are handled within the Docker container:
+
+```bash
+# Check migration status in Docker container
+docker exec arrowtuner-api-dev python run_migrations.py --status
+
+# Apply all pending migrations
+docker exec arrowtuner-api-dev python run_migrations.py
+
+# Apply migrations for specific environment
+docker exec arrowtuner-api-dev python run_migrations.py --environment development
+
+# Dry run (test without applying)
+docker exec arrowtuner-api-dev python run_migrations.py --dry-run
+
+# Apply specific migration
+docker exec arrowtuner-api-dev python run_migrations.py --version 008
+
+# Show detailed migration information
+docker exec arrowtuner-api-dev python -c "from database_migration_manager import DatabaseMigrationManager; mgr = DatabaseMigrationManager('/app/databases/arrow_database.db'); print(mgr.get_migration_status())"
+```
+
+### Local Development
+
+For local development without Docker:
 
 ```bash
 cd arrow_scraper
@@ -254,7 +296,7 @@ source venv/bin/activate
 python run_migrations.py
 
 # Apply migrations for specific environment
-python run_migrations.py --environment production
+python run_migrations.py --environment development
 
 # Dry run (test without applying)
 python run_migrations.py --dry-run
