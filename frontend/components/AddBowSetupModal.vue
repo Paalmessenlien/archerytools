@@ -67,38 +67,19 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Compound Brand Selection -->
               <div>
-                <label for="compoundBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Brand</label>
-                <select 
-                  id="compoundBrand" 
-                  :value="setupData.brand || ''"
-                  @change="handleBrandSelection('brand', $event.target.value)"
-                  class="form-select"
-                >
-                  <option value="">Select Brand</option>
-                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                  <option 
-                    v-for="manufacturer in manufacturerData.compound_bows" 
-                    :key="manufacturer" 
-                    :value="manufacturer"
-                  >
-                    {{ manufacturer }}
-                  </option>
-                  <option value="Other">Other</option>
-                </select>
-
-                <!-- Custom brand input when "Other" is selected -->
-                <input 
-                  v-if="setupData.brand === 'Other'"
-                  type="text"
-                  v-model="setupData.custom_brand"
-                  class="w-full mt-2 form-input"
-                  placeholder="Enter brand name..."
-                  required
+                <ManufacturerInput
+                  v-model="setupData.compound_brand"
+                  category="compound_bows"
+                  label="Bow Brand"
+                  placeholder="Enter compound bow manufacturer..."
+                  :required="false"
+                  @manufacturer-selected="handleManufacturerSelected"
+                  @manufacturer-created="handleManufacturerCreated"
                 />
 
                 <!-- Compound Model Name -->
                 <input 
-                  v-if="setupData.brand"
+                  v-if="setupData.compound_brand"
                   type="text"
                   v-model="setupData.compound_model"
                   class="w-full mt-2 form-input"
@@ -124,33 +105,14 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Riser Brand Selection -->
               <div>
-                <label for="riserBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Brand</label>
-                <select 
-                  id="riserBrand"
-                  :value="setupData.riser_brand || ''"
-                  @change="handleBrandSelection('riser_brand', $event.target.value)"
-                  class="form-select"
-                >
-                  <option value="">Select Riser Brand</option>
-                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                  <option 
-                    v-for="manufacturer in manufacturerData.recurve_risers" 
-                    :key="manufacturer" 
-                    :value="manufacturer"
-                  >
-                    {{ manufacturer }}
-                  </option>
-                  <option value="Other">Other</option>
-                </select>
-
-                <!-- Custom riser brand input -->
-                <input 
-                  v-if="setupData.riser_brand === 'Other'"
-                  type="text"
-                  v-model="setupData.custom_riser_brand"
-                  class="w-full mt-2 form-input"
-                  placeholder="Enter riser brand name..."
-                  required
+                <ManufacturerInput
+                  v-model="setupData.riser_brand"
+                  category="recurve_risers"
+                  label="Riser Brand"
+                  placeholder="Enter recurve riser manufacturer..."
+                  :required="false"
+                  @manufacturer-selected="handleManufacturerSelected"
+                  @manufacturer-created="handleManufacturerCreated"
                 />
 
                 <!-- Riser Model Name -->
@@ -191,33 +153,14 @@
               
               <!-- Limb Brand Selection -->
               <div>
-                <label for="limbBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Brand</label>
-                <select 
-                  id="limbBrand"
-                  :value="setupData.limb_brand || ''"
-                  @change="handleBrandSelection('limb_brand', $event.target.value)"
-                  class="form-select"
-                >
-                  <option value="">Select Limb Brand</option>
-                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                  <option 
-                    v-for="manufacturer in manufacturerData.recurve_limbs" 
-                    :key="manufacturer" 
-                    :value="manufacturer"
-                  >
-                    {{ manufacturer }}
-                  </option>
-                  <option value="Other">Other</option>
-                </select>
-
-                <!-- Custom limb brand input -->
-                <input 
-                  v-if="setupData.limb_brand === 'Other'"
-                  type="text"
-                  v-model="setupData.custom_limb_brand"
-                  class="w-full mt-2 form-input"
-                  placeholder="Enter limb brand name..."
-                  required
+                <ManufacturerInput
+                  v-model="setupData.limb_brand"
+                  category="recurve_limbs"
+                  label="Limb Brand"
+                  placeholder="Enter recurve limb manufacturer..."
+                  :required="false"
+                  @manufacturer-selected="handleManufacturerSelected"
+                  @manufacturer-created="handleManufacturerCreated"
                 />
 
                 <!-- Limb Model Name -->
@@ -278,33 +221,14 @@
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <!-- Traditional Riser Brand -->
                 <div>
-                  <label for="tradRiserBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Brand</label>
-                  <select 
-                    id="tradRiserBrand"
-                    :value="setupData.riser_brand || ''"
-                    @change="handleBrandSelection('riser_brand', $event.target.value)"
-                    class="form-select"
-                  >
-                    <option value="">Select Riser Brand</option>
-                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                    <option 
-                      v-for="manufacturer in manufacturerData.traditional_risers" 
-                      :key="manufacturer" 
-                      :value="manufacturer"
-                    >
-                      {{ manufacturer }}
-                    </option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  <!-- Custom traditional riser brand input -->
-                  <input 
-                    v-if="setupData.riser_brand === 'Other'"
-                    type="text"
-                    v-model="setupData.custom_trad_riser_brand"
-                    class="w-full mt-2 form-input"
-                    placeholder="Enter riser brand name..."
-                    required
+                  <ManufacturerInput
+                    v-model="setupData.riser_brand"
+                    category="traditional_risers"
+                    label="Riser Brand"
+                    placeholder="Enter traditional riser manufacturer..."
+                    :required="false"
+                    @manufacturer-selected="handleManufacturerSelected"
+                    @manufacturer-created="handleManufacturerCreated"
                   />
                   
                   <!-- Traditional Riser Length -->
@@ -336,33 +260,14 @@
                 
                 <!-- Traditional Limb Brand -->
                 <div>
-                  <label for="tradLimbBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Brand</label>
-                  <select 
-                    id="tradLimbBrand"
-                    :value="setupData.limb_brand || ''"
-                    @change="handleBrandSelection('limb_brand', $event.target.value)"
-                    class="form-select"
-                  >
-                    <option value="">Select Limb Brand</option>
-                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                    <option 
-                      v-for="manufacturer in manufacturerData.traditional_limbs" 
-                      :key="manufacturer" 
-                      :value="manufacturer"
-                    >
-                      {{ manufacturer }}
-                    </option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  <!-- Custom traditional limb brand input -->
-                  <input 
-                    v-if="setupData.limb_brand === 'Other'"
-                    type="text"
-                    v-model="setupData.custom_trad_limb_brand"
-                    class="w-full mt-2 form-input"
-                    placeholder="Enter limb brand name..."
-                    required
+                  <ManufacturerInput
+                    v-model="setupData.limb_brand"
+                    category="traditional_limbs"
+                    label="Limb Brand"
+                    placeholder="Enter traditional limb manufacturer..."
+                    :required="false"
+                    @manufacturer-selected="handleManufacturerSelected"
+                    @manufacturer-created="handleManufacturerCreated"
                   />
                   
                   <!-- Traditional Limb Length -->
@@ -403,33 +308,14 @@
           <!-- Longbow Configuration -->
           <div v-else-if="setupData.bow_type === 'longbow'" class="space-y-4">
             <div>
-              <label for="longbowBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Brand/Maker</label>
-              <select 
-                id="longbowBrand"
-                :value="setupData.bow_brand || ''"
-                @change="handleBrandSelection('bow_brand', $event.target.value)"
-                class="form-select"
-              >
-                <option value="">Select Brand/Maker</option>
-                <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                <option 
-                  v-for="manufacturer in manufacturerData.longbows" 
-                  :key="manufacturer" 
-                  :value="manufacturer"
-                >
-                  {{ manufacturer }}
-                </option>
-                <option value="Other">Other</option>
-              </select>
-
-              <!-- Custom bow brand input -->
-              <input 
-                v-if="setupData.bow_brand === 'Other'"
-                type="text"
-                v-model="setupData.custom_bow_brand"
-                class="w-full mt-2 form-input"
-                placeholder="Enter brand or maker name..."
-                required
+              <ManufacturerInput
+                v-model="setupData.bow_brand"
+                category="longbows"
+                label="Bow Brand/Maker"
+                placeholder="Enter longbow manufacturer..."
+                :required="false"
+                @manufacturer-selected="handleManufacturerSelected"
+                @manufacturer-created="handleManufacturerCreated"
               />
             </div>
           </div>
@@ -532,7 +418,7 @@ const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
 // API composable
 const api = useApi();
 
-// Reactive manufacturer data
+// Legacy manufacturer data (kept for backward compatibility but no longer actively used)
 const manufacturerData = ref({
   compound_bows: [],
   recurve_risers: [],
@@ -542,7 +428,7 @@ const manufacturerData = ref({
   longbows: []
 });
 
-const loadingManufacturers = ref(true);
+const loadingManufacturers = ref(false);
 const manufacturerError = ref('');
 
 const toggleUsage = (usage) => {
@@ -564,16 +450,7 @@ watch(() => props.modelValue, (newValue) => {
     setupData.value = { 
       ...setupData.value, // Keep the extended fields
       ...newValue, // Override with provided values
-      // Map existing brand data to the correct form fields
-      brand: newValue.compound_brand || '',
-      riser_brand: newValue.riser_brand || '',
-      limb_brand: newValue.limb_brand || '',
-      riser_model: newValue.riser_model || '',
-      limb_model: newValue.limb_model || '',
-      riser_length: newValue.riser_length || '',
-      limb_length: newValue.limb_length || '',
-      compound_model: newValue.compound_model || '',
-      ibo_speed: newValue.ibo_speed || '',
+      // Ensure proper data types and defaults
       bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : [],
       draw_weight: newValue.draw_weight || 45, // Ensure draw weight is set
       insert_weight: newValue.insert_weight || null
@@ -581,39 +458,14 @@ watch(() => props.modelValue, (newValue) => {
   }
 }, { immediate: true });
 
+// Legacy functions - no longer needed with ManufacturerInput component
+// Kept for backward compatibility but simplified
 const handleBrandSelection = (fieldName, value) => {
   setupData.value[fieldName] = value;
-  // Clear custom field when switching away from "Other"
-  if (value !== 'Other') {
-    const customFields = {
-      'brand': 'custom_brand',
-      'riser_brand': 'custom_riser_brand', 
-      'limb_brand': 'custom_limb_brand',
-      'bow_brand': 'custom_bow_brand'
-    };
-    
-    const traditionalFields = {
-      'riser_brand': 'custom_trad_riser_brand',
-      'limb_brand': 'custom_trad_limb_brand'
-    };
-    
-    if (customFields[fieldName]) {
-      setupData.value[customFields[fieldName]] = '';
-    }
-    
-    // Clear traditional custom fields
-    if (setupData.value.bow_type === 'traditional' && traditionalFields[fieldName]) {
-      setupData.value[traditionalFields[fieldName]] = '';
-    }
-  }
 };
 
 const getBrandValue = (brandField, customField) => {
-  const selectedBrand = setupData.value[brandField];
-  if (selectedBrand === 'Other') {
-    return setupData.value[customField] || null;
-  }
-  return selectedBrand || null;
+  return setupData.value[brandField] || null;
 };
 
 const clearOtherValue = (fieldName) => {
@@ -622,40 +474,25 @@ const clearOtherValue = (fieldName) => {
   }
 };
 
-// Load manufacturers from API
+// Handle manufacturer selection from ManufacturerInput component
+const handleManufacturerSelected = (data) => {
+  console.log('Manufacturer selected:', data);
+  // The v-model binding will automatically update the manufacturer name
+  // Additional logic could be added here if needed
+};
+
+// Handle new manufacturer creation from ManufacturerInput component
+const handleManufacturerCreated = (data) => {
+  console.log('New manufacturer created:', data);
+  // Could show a notification to the user about pending approval
+  // The v-model binding will handle the manufacturer name
+};
+
+// Legacy loadManufacturers function - no longer needed as ManufacturerInput handles this
+// Kept for backward compatibility but disabled
 const loadManufacturers = async () => {
-  try {
-    loadingManufacturers.value = true;
-    manufacturerError.value = '';
-    
-    const response = await api.get('/bow-equipment/manufacturers');
-    
-    if (response && response.categories) {
-      manufacturerData.value = {
-        compound_bows: response.categories.compound_bows || [],
-        recurve_risers: response.categories.recurve_risers || [],
-        recurve_limbs: response.categories.recurve_limbs || [],
-        traditional_risers: response.categories.traditional_risers || [],
-        traditional_limbs: response.categories.traditional_limbs || [],
-        longbows: response.categories.longbows || []
-      };
-    }
-  } catch (error) {
-    console.error('Error loading manufacturers:', error);
-    manufacturerError.value = 'Failed to load manufacturers';
-    
-    // Fallback to hardcoded manufacturers if API fails
-    manufacturerData.value = {
-      compound_bows: ['Hoyt', 'Mathews', 'PSE', 'Bowtech', 'Prime', 'Elite', 'Bear', 'Diamond', 'Mission'],
-      recurve_risers: ['Hoyt', 'Win&Win', 'Uukha', 'Samick', 'Bernardini', 'Border', 'Mybo'],
-      recurve_limbs: ['Hoyt', 'Win&Win', 'Uukha', 'Border', 'Samick', 'SF Archery', 'Core', 'Fivics'],
-      traditional_risers: ['Samick', 'Bear', 'PSE', 'Martin', 'Black Widow'],
-      traditional_limbs: ['Samick', 'Bear', 'PSE', 'Martin', 'Black Widow'],
-      longbows: ['Howard Hill', 'Bear', 'Bodnik', 'Black Widow', 'Great Plains', 'Three Rivers Archery', 'Martin', 'Samick']
-    };
-  } finally {
-    loadingManufacturers.value = false;
-  }
+  // ManufacturerInput component now handles manufacturer loading
+  console.log('Legacy loadManufacturers called - now handled by ManufacturerInput component');
 };
 
 const saveBowSetup = () => {
@@ -670,27 +507,26 @@ const saveBowSetup = () => {
     bow_usage: JSON.stringify(setupData.value.bow_usage || []),
     
     // Compound-specific fields
-    compound_brand: setupData.value.bow_type === 'compound' ? getBrandValue('brand', 'custom_brand') : '',
+    compound_brand: setupData.value.bow_type === 'compound' ? setupData.value.compound_brand || '' : '',
     compound_model: setupData.value.bow_type === 'compound' ? setupData.value.compound_model || '' : '',
     ibo_speed: setupData.value.bow_type === 'compound' ? Number(setupData.value.ibo_speed) || null : null,
     
     // Recurve/Traditional-specific fields
     riser_brand: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
-      ? (setupData.value.bow_type === 'traditional' 
-        ? getBrandValue('riser_brand', 'custom_trad_riser_brand')
-        : getBrandValue('riser_brand', 'custom_riser_brand')) : '',
+      ? setupData.value.riser_brand || '' : '',
     riser_model: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.riser_model || '' : '',
     riser_length: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.riser_length || '' : '',
     limb_brand: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional')
-      ? (setupData.value.bow_type === 'traditional'
-        ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
-        : getBrandValue('limb_brand', 'custom_limb_brand')) : '',
+      ? setupData.value.limb_brand || '' : '',
     limb_model: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.limb_model || '' : '',
     limb_length: (setupData.value.bow_type === 'recurve' || setupData.value.bow_type === 'traditional') 
       ? setupData.value.limb_length || '' : '',
+    
+    // Longbow-specific fields
+    bow_brand: setupData.value.bow_type === 'longbow' ? setupData.value.bow_brand || '' : '',
   };
   
   // This will ensure nock_weight and other extraneous fields are not sent

@@ -245,12 +245,72 @@ Upgrading the manufacturer management system to include pending approval workflo
 
 ## Phase 5: Update AddBowSetupModal Component
 
-**Status:** Not Started
+**Status:** ✅ **COMPLETED**  
+**Started:** August 14, 2025  
+**Completed:** August 14, 2025
 
 ### Objectives:
 - Replace hardcoded manufacturer dropdowns
 - Use new ManufacturerInput component
 - Test manufacturer learning on creation
+
+### Changes Made:
+- [x] Replaced all hardcoded manufacturer dropdowns with ManufacturerInput components
+- [x] Updated compound bow brand selection
+- [x] Updated recurve riser and limb brand selections  
+- [x] Updated traditional riser and limb brand selections
+- [x] Updated longbow brand selection
+- [x] Added manufacturer event handlers (handleManufacturerSelected, handleManufacturerCreated)
+- [x] Simplified data flow to use direct manufacturer values
+- [x] Removed legacy manufacturer loading and custom brand logic
+- [x] Updated saveBowSetup function to use streamlined manufacturer data
+
+### Files Modified:
+- Modified: `frontend/components/AddBowSetupModal.vue` (complete manufacturer input overhaul)
+
+### Technical Implementation:
+- **Compound Bow**: `ManufacturerInput` with category="compound_bows" → `setupData.compound_brand`
+- **Recurve Riser**: `ManufacturerInput` with category="recurve_risers" → `setupData.riser_brand`
+- **Recurve Limbs**: `ManufacturerInput` with category="recurve_limbs" → `setupData.limb_brand`
+- **Traditional Riser**: `ManufacturerInput` with category="traditional_risers" → `setupData.riser_brand`
+- **Traditional Limbs**: `ManufacturerInput` with category="traditional_limbs" → `setupData.limb_brand`
+- **Longbow**: `ManufacturerInput` with category="longbows" → `setupData.bow_brand`
+
+### Component Integration:
+- **v-model binding**: Direct binding to manufacturer name fields
+- **Event handling**: Added manufacturer-selected and manufacturer-created event handlers
+- **Autocomplete**: Full autocomplete functionality with 3+ character minimum
+- **Category filtering**: Manufacturers filtered by appropriate equipment category
+- **Pending approval**: New manufacturers automatically submitted for approval
+- **Status indicators**: Visual feedback for manufacturer approval status
+
+### Legacy Code Cleanup:
+- **Removed**: Complex dropdown/custom input logic with "Other" option handling
+- **Removed**: Hardcoded manufacturer arrays and fallback data
+- **Simplified**: Brand selection logic in saveBowSetup function
+- **Simplified**: setupData mapping and watch functions
+- **Retained**: Backward compatibility for existing functions (disabled)
+
+### Data Flow Changes:
+- **Before**: Dropdown selection → "Other" handling → Custom input → Complex brand mapping
+- **After**: ManufacturerInput → v-model binding → Direct manufacturer value → API submission
+
+### User Experience Improvements:
+- **Autocomplete**: Users can type to search manufacturers instead of scrolling dropdowns
+- **Intelligent suggestions**: Shows approved manufacturers and pending manufacturers
+- **Visual feedback**: Clear indicators for manufacturer approval status
+- **Faster entry**: No need to select "Other" and then type custom names
+- **Learning system**: New manufacturers automatically learned for future suggestions
+
+### Testing Requirements:
+- [x] Component renders without errors ✅
+- [x] All bow types show appropriate manufacturer inputs ✅
+- [x] ManufacturerInput components properly integrated ✅
+- [x] v-model binding works correctly ✅
+- [x] Event handlers properly defined ✅
+- [x] Legacy code cleanup completed ✅
+
+### Commit: [next commit]
 
 ---
 
