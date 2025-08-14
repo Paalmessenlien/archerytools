@@ -253,28 +253,10 @@
                 </div>
               </div>
             </div>
-            
-            <div>
-              <label for="limbFitting" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Fitting</label>
-              <select id="limbFitting" v-model="formData.limb_fitting" class="form-select">
-                <option value="ILF">ILF (International Limb Fitting)</option>
-                <option value="Formula">Formula (WA Standard)</option>
-              </select>
-            </div>
           </div>
 
           <!-- Traditional Bow Configuration -->
           <div v-else-if="formData.bow_type === 'traditional'" class="space-y-4">
-            <div>
-              <label for="construction" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Construction Type</label>
-              <select id="construction" v-model="formData.construction" class="form-select">
-                <option value="one_piece">One Piece</option>
-                <option value="two_piece">Two Piece (Takedown)</option>
-              </select>
-            </div>
-
-            <!-- Two-piece specific fields -->
-            <div v-if="formData.construction === 'two_piece'" class="space-y-4">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <!-- Traditional Riser Brand -->
                 <div>
@@ -389,50 +371,9 @@
                   </div>
                 </div>
               </div>
-              
-              <div>
-                <label for="tradLimbFitting" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Fitting</label>
-                <select id="tradLimbFitting" v-model="formData.limb_fitting" class="form-select">
-                  <option value="ILF">ILF (International Limb Fitting)</option>
-                  <option value="Bolt_Down">Bolt Down</option>
-                </select>
-              </div>
             </div>
           </div>
 
-          <!-- Longbow Configuration -->
-          <div v-else-if="formData.bow_type === 'longbow'" class="space-y-4">
-            <div>
-              <label for="longbowBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Brand/Maker</label>
-              <select 
-                id="longbowBrand"
-                :value="formData.bow_brand || ''"
-                @change="handleBrandSelection('bow_brand', $event.target.value)"
-                class="form-select"
-              >
-                <option value="">Select Brand/Maker</option>
-                <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                <option 
-                  v-for="manufacturer in manufacturerData.longbows" 
-                  :key="manufacturer" 
-                  :value="manufacturer"
-                >
-                  {{ manufacturer }}
-                </option>
-                <option value="Other">Other</option>
-              </select>
-
-              <!-- Custom bow brand input -->
-              <input 
-                v-if="formData.bow_brand === 'Other'"
-                type="text"
-                v-model="formData.custom_bow_brand"
-                class="w-full mt-2 form-input"
-                placeholder="Enter brand or maker name..."
-                required
-              />
-            </div>
-          </div>
         </div>
         
         <!-- Bow Usage -->
@@ -692,9 +633,6 @@ const initializeForm = () => {
     limb_brand: props.setup.limb_brand || '',
     limb_model: props.setup.limb_model || '',
     limb_length: props.setup.limb_length || '',
-    limb_fitting: props.setup.limb_fitting || 'ILF',
-    construction: props.setup.construction || 'one_piece',
-    bow_brand: props.setup.bow_brand || '', // for longbows
     description: props.setup.description || '',
     change_reason: '',
     
@@ -703,7 +641,6 @@ const initializeForm = () => {
     custom_brand: '',
     custom_riser_brand: '',
     custom_limb_brand: '',
-    custom_bow_brand: '',
     custom_trad_riser_brand: '',
     custom_trad_limb_brand: ''
   }
@@ -740,7 +677,6 @@ const handleBrandSelection = (fieldName, value) => {
       'brand': 'custom_brand',
       'riser_brand': 'custom_riser_brand', 
       'limb_brand': 'custom_limb_brand',
-      'bow_brand': 'custom_bow_brand'
     }
     
     const traditionalFields = {
@@ -813,7 +749,7 @@ const handleSave = async () => {
     
     // Prepare data similar to AddBowSetupModal's saveBowSetup method
     const { change_reason, brand, custom_brand, custom_riser_brand, custom_limb_brand, 
-            custom_bow_brand, custom_trad_riser_brand, custom_trad_limb_brand, ...baseData } = formData.value
+            custom_trad_riser_brand, custom_trad_limb_brand, ...baseData } = formData.value
     
     const payload = {
       ...baseData,
@@ -831,9 +767,6 @@ const handleSave = async () => {
         ? (formData.value.bow_type === 'traditional'
           ? getBrandValue('limb_brand', 'custom_trad_limb_brand')
           : getBrandValue('limb_brand', 'custom_limb_brand')) : '',
-      
-      // Longbow-specific fields  
-      bow_brand: formData.value.bow_type === 'longbow' ? getBrandValue('bow_brand', 'custom_bow_brand') : '',
       
       user_note: change_reason || 'Setup configuration updated'
     }

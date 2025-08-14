@@ -50,16 +50,6 @@
           <p class="text-gray-600 dark:text-gray-400">{{ setup.bow_type }} Setup</p>
         </div>
         
-        <div class="flex items-center space-x-3">
-          <CustomButton
-            @click="showEditModal = true"
-            variant="outlined"
-            class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-900/20"
-          >
-            <i class="fas fa-edit mr-2"></i>
-            Edit Setup
-          </CustomButton>
-        </div>
       </div>
 
       <!-- Tab Navigation -->
@@ -251,8 +241,8 @@ const tabs = computed(() => [
   },
   {
     id: 'settings',
-    name: 'Settings',
-    icon: 'fas fa-cog',
+    name: 'Edit Setup',
+    icon: 'fas fa-edit',
     badge: null
   }
 ])
