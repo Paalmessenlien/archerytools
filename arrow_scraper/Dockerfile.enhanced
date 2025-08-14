@@ -36,7 +36,9 @@ RUN chmod +x /app/api.py \
     /app/build-database.py \
     /app/start-api.sh \
     /app/start-api-robust.sh \
-    /app/verify-databases.py
+    /app/verify-databases.py \
+    /app/comprehensive-migration-runner.sh \
+    /app/run_migrations.py
 
 # Create non-root user with specific UID/GID
 RUN addgroup --gid 1000 appgroup && \

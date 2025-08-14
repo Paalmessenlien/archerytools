@@ -88,20 +88,28 @@ print('✅ User database initialized successfully')
 run_migrations() {
     echo "📦 Running comprehensive database migrations..."
     
-    # Set environment variables for migration system
-    export ARROW_DATABASE_PATH="/app/databases/arrow_database.db"
-    export USER_DATABASE_PATH="/app/databases/user_data.db"
+    # Set environment variables for migration system (use computed paths)
+    export ARROW_DATABASE_PATH="${ARROW_DB}"
+    export USER_DATABASE_PATH="${USER_DB}"
     
     # First try the comprehensive migration runner (preferred)
     if [ -f "/app/comprehensive-migration-runner.sh" ]; then
         echo "🎯 Using comprehensive migration runner..."
         chmod +x /app/comprehensive-migration-runner.sh
+        
+        # Ensure environment variables are properly set for migration
+        export ARROW_DATABASE_PATH="${ARROW_DB}"
+        export USER_DATABASE_PATH="${USER_DB}"
+        
+        # Run comprehensive migrations from /app directory (where migrations/ exists)
         if /app/comprehensive-migration-runner.sh docker; then
             echo "✅ Comprehensive migrations completed successfully"
             return 0
         else
             echo "⚠️  Comprehensive migrations failed, trying fallback..."
         fi
+    else
+        echo "⚠️  Comprehensive migration runner not found at /app/comprehensive-migration-runner.sh"
     fi
     
     # Fallback: Check for standard migration runner

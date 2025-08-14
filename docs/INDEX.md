@@ -49,6 +49,22 @@ Complete guide to the database migration system:
 - **Production Deployment**: Safe migration procedures and rollback strategies
 - **Admin Integration**: Web-based migration management and monitoring
 
+#### [Migration Reference Guide](MIGRATION_REFERENCE.md) ⭐
+**NEW:** Comprehensive reference for all 16 existing migrations:
+- **Complete Migration Catalog**: Detailed documentation of migrations 001-016
+- **Migration Dependencies**: Understanding the dependency chain and relationships
+- **What Each Migration Does**: Tables created, fields added, data transformations
+- **Why Each Migration Exists**: Business logic and technical reasoning
+- **Creating New Migrations**: Templates, patterns, and best practices
+
+#### [Migration Quick Reference](MIGRATION_CHEATSHEET.md) ⭐
+**NEW:** Quick reference for daily migration tasks:
+- **Common Commands**: Status checking, running migrations, troubleshooting
+- **Migration Summary Table**: All migrations with purpose and database targets
+- **Code Patterns**: Common migration templates and SQL patterns
+- **Admin Panel Usage**: Web-based migration management
+- **Production Checklist**: Pre-deployment verification steps
+
 #### [Enhanced Equipment Management System](ENHANCED_EQUIPMENT_MANAGEMENT.md) 
 **⚡ Latest Update (August 2025)** - Comprehensive equipment management with auto-learning:
 - **8 Equipment Categories**: Professional system including Scope, Plunger, and Other categories
