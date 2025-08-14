@@ -504,7 +504,17 @@ const duplicateArrow = async (arrowSetup) => {
     emit('arrow-updated') // Notify parent
   } catch (error) {
     console.error('Error duplicating arrow:', error)
-    // Fallback to parent handling
+    
+    // Handle specific error cases
+    if (error.message && error.message.includes('409')) {
+      // Arrow already exists - this is not actually an error, just inform the user
+      console.log('Arrow configuration already exists, showing info to user')
+      // You could show a toast notification here if available
+      // For now, just don't treat this as a failure
+      return
+    }
+    
+    // For other errors, fall back to parent handling
     emit('duplicate-arrow', arrowSetup)
   }
 }
