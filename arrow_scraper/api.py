@@ -7447,8 +7447,9 @@ def get_migration_status(current_user):
         else:
             db_path = 'arrow_database.db'
         
-        # Initialize migration manager
-        manager = DatabaseMigrationManager(db_path)
+        # Initialize migration manager with correct migrations directory
+        migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+        manager = DatabaseMigrationManager(db_path, migrations_dir)
         status = manager.get_migration_status()
         
         # Ensure all paths are strings for JSON serialization
@@ -7498,8 +7499,9 @@ def run_migrations(current_user):
         else:
             db_path = 'arrow_database.db'
         
-        # Initialize migration manager
-        manager = DatabaseMigrationManager(db_path)
+        # Initialize migration manager with correct migrations directory
+        migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+        manager = DatabaseMigrationManager(db_path, migrations_dir)
         
         # Get pending migrations first
         pending = manager.get_pending_migrations()
@@ -7628,8 +7630,9 @@ def get_migration_details(current_user, version):
         
         db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
         
-        # Initialize migration manager
-        manager = DatabaseMigrationManager(db_path)
+        # Initialize migration manager with correct migrations directory
+        migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+        manager = DatabaseMigrationManager(db_path, migrations_dir)
         details = manager.get_migration_details(version)
         
         if details:
@@ -7655,8 +7658,9 @@ def validate_migrations(current_user):
         
         db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
         
-        # Initialize migration manager
-        manager = DatabaseMigrationManager(db_path)
+        # Initialize migration manager with correct migrations directory
+        migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+        manager = DatabaseMigrationManager(db_path, migrations_dir)
         validation_results = manager.validate_migration_sequence()
         
         return jsonify(validation_results), 200
