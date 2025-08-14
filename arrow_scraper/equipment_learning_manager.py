@@ -46,12 +46,27 @@ class EquipmentLearningManager:
             arrow_db = ArrowDatabase()
             arrow_conn = arrow_db.get_connection()
             arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.row_factory = sqlite3.Row
             
-            # Check if manufacturer exists in main database
-            arrow_cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
-                               (manufacturer_name,))
-            existing_manufacturer = arrow_cursor.fetchone()
-            arrow_conn.close()
+            # Verify manufacturers table exists
+            arrow_cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='manufacturers'
+            """)
+            manufacturers_table = arrow_cursor.fetchone()
+            
+            if not manufacturers_table:
+                print(f"⚠️ manufacturers table not found in arrow database: {arrow_db.db_path}")
+                arrow_conn.close()
+                learning_info['manufacturer_status'] = 'pending_new'  # Default to new
+                existing_manufacturer = None
+            else:
+                # Check if manufacturer exists in main database
+                arrow_cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
+                                   (manufacturer_name,))
+                existing_manufacturer = arrow_cursor.fetchone()
+                arrow_conn.close()
+                print(f"✅ Checked manufacturers table in: {arrow_db.db_path}")
             
             if not existing_manufacturer:
                 # Check if it's already in pending manufacturers
@@ -256,13 +271,27 @@ class EquipmentLearningManager:
             arrow_db = ArrowDatabase()
             arrow_conn = arrow_db.get_connection()
             arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.row_factory = sqlite3.Row
             
             try:
+                # Verify manufacturers table exists before inserting
+                arrow_cursor.execute("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name='manufacturers'
+                """)
+                manufacturers_table = arrow_cursor.fetchone()
+                
+                if not manufacturers_table:
+                    print(f"⚠️ manufacturers table not found in arrow database: {arrow_db.db_path}")
+                    arrow_conn.close()
+                    return False
+                
                 arrow_cursor.execute('''
                     INSERT OR IGNORE INTO manufacturers (name, is_active, created_at)
                     VALUES (?, TRUE, CURRENT_TIMESTAMP)
                 ''', (pending['name'],))
                 arrow_conn.commit()
+                print(f"✅ Added manufacturer '{pending['name']}' to main database")
                 
                 # Update pending status
                 cursor.execute('''
