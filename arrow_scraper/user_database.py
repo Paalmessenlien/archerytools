@@ -757,7 +757,11 @@ class UserDatabase:
             
             # Return the updated setup
             cursor.execute("SELECT * FROM bow_setups WHERE id = ?", (setup_id,))
-            return dict(cursor.fetchone())
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            else:
+                return None
             
         except sqlite3.Error as e:
             print(f"Error updating bow setup: {e}")

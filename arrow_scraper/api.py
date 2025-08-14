@@ -8,6 +8,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
+import sqlite3
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -1393,10 +1394,18 @@ def add_arrow_to_setup(current_user, setup_id):
         
         return jsonify(response_data)
         
+    except sqlite3.IntegrityError as e:
+        if conn:
+            conn.close()
+        if 'UNIQUE constraint failed' in str(e):
+            return jsonify({'error': 'This arrow configuration already exists in your setup'}), 409
+        else:
+            return jsonify({'error': f'Database constraint error: {str(e)}'}), 400
     except Exception as e:
         if conn:
             conn.close()
-        return jsonify({'error': str(e)}), 500
+        print(f"Error adding arrow to setup: {e}")
+        return jsonify({'error': 'Failed to add arrow to setup'}), 500
 
 
 @app.route('/api/bow-setups/<int:setup_id>/arrows', methods=['GET'])
@@ -3947,10 +3956,22 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
             AND bs.user_id = ? AND be.is_active = 1
         ''', (setup_id, equipment_id, current_user['id']))
         
-        equipment = cursor.fetchone()
-        if not equipment:
+        equipment_row = cursor.fetchone()
+        if not equipment_row:
             conn.close()
             return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Convert row to dict for easier access
+        equipment = dict(equipment_row) if hasattr(equipment_row, 'keys') else {
+            'id': equipment_row[0] if len(equipment_row) > 0 else None,
+            'manufacturer_name': equipment_row[1] if len(equipment_row) > 1 else None,
+            'model_name': equipment_row[2] if len(equipment_row) > 2 else None,
+            'category_name': equipment_row[3] if len(equipment_row) > 3 else None,
+        }
+        
+        if not equipment.get('id'):
+            conn.close()
+            return jsonify({'error': 'Invalid equipment data'}), 400
         
         # Enhanced soft delete with tracking
         cursor.execute('''
