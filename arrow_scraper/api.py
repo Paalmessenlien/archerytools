@@ -3938,6 +3938,7 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
 @token_required
 def remove_bow_equipment(current_user, setup_id, equipment_id):
     """Soft delete equipment from a bow setup with enhanced tracking"""
+    conn = None
     try:
         from user_database import UserDatabase
         from change_log_service import ChangeLogService
@@ -3945,6 +3946,10 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         user_db = UserDatabase()
         change_service = ChangeLogService()
         conn = user_db.get_connection()
+        
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+            
         cursor = conn.cursor()
         
         # Get equipment details for logging before deletion
@@ -3962,12 +3967,21 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
             return jsonify({'error': 'Equipment not found or access denied'}), 404
         
         # Convert row to dict for easier access
-        equipment = dict(equipment_row) if hasattr(equipment_row, 'keys') else {
-            'id': equipment_row[0] if len(equipment_row) > 0 else None,
-            'manufacturer_name': equipment_row[1] if len(equipment_row) > 1 else None,
-            'model_name': equipment_row[2] if len(equipment_row) > 2 else None,
-            'category_name': equipment_row[3] if len(equipment_row) > 3 else None,
-        }
+        try:
+            if hasattr(equipment_row, 'keys'):
+                equipment = dict(equipment_row)
+            else:
+                # Fallback manual conversion
+                equipment = {
+                    'id': equipment_row[0] if len(equipment_row) > 0 else None,
+                    'manufacturer_name': equipment_row[1] if len(equipment_row) > 1 else None,
+                    'model_name': equipment_row[2] if len(equipment_row) > 2 else None,
+                    'category_name': equipment_row[3] if len(equipment_row) > 3 else None,
+                }
+        except Exception as conv_error:
+            print(f"Error converting equipment row to dict: {conv_error}")
+            conn.close()
+            return jsonify({'error': 'Failed to process equipment data'}), 500
         
         if not equipment.get('id'):
             conn.close()
@@ -3983,20 +3997,25 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         ''', (current_user['id'], equipment['id']))
         
         # Log the equipment removal
-        equipment_name = f"{equipment['manufacturer_name'] or 'Unknown'} {equipment['model_name'] or 'Equipment'}"
-        category = equipment['category_name'] or 'Equipment'
+        equipment_name = f"{equipment.get('manufacturer_name') or 'Unknown'} {equipment.get('model_name') or 'Equipment'}"
+        category = equipment.get('category_name') or 'Equipment'
         
-        change_service.log_equipment_change(
-            bow_setup_id=setup_id,
-            equipment_id=equipment['id'],
-            user_id=current_user['id'],
-            change_type='remove',
-            field_name=None,
-            old_value=None,
-            new_value=None,
-            change_description=f"Removed {category}: {equipment_name}",
-            change_reason=f"Equipment marked as deleted (can be restored)"
-        )
+        # Try to log the change, but don't fail the removal if logging fails
+        try:
+            change_service.log_equipment_change(
+                bow_setup_id=setup_id,
+                equipment_id=equipment['id'],
+                user_id=current_user['id'],
+                change_type='remove',
+                field_name=None,
+                old_value=None,
+                new_value=None,
+                change_description=f"Removed {category}: {equipment_name}",
+                change_reason=f"Equipment marked as deleted (can be restored)"
+            )
+        except Exception as log_error:
+            print(f"Warning: Failed to log equipment removal: {log_error}")
+            # Continue with removal even if logging fails
         
         conn.commit()
         conn.close()
@@ -4010,6 +4029,16 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         
     except Exception as e:
         print(f"Error removing bow equipment: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Ensure connection is closed on error
+        if conn:
+            try:
+                conn.close()
+            except:
+                pass
+                
         return jsonify({'error': 'Failed to remove equipment'}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>/restore', methods=['POST'])
