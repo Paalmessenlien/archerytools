@@ -170,7 +170,9 @@ class DatabaseMigrationManager:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 
-                # Find migration class
+                migration_found = False
+                
+                # Method 1: Look for BaseMigration subclass (class-based migrations 001-011)
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if (isinstance(attr, type) and 
@@ -180,12 +182,165 @@ class DatabaseMigrationManager:
                         migration = attr()
                         if migration.version:
                             migrations[migration.version] = migration
+                            migration_found = True
                             break
+                
+                # Method 2: Look for plain Migration class (standalone migrations 012+)
+                if not migration_found and hasattr(module, 'Migration'):
+                    migration_class = getattr(module, 'Migration')
+                    if isinstance(migration_class, type):
+                        migration_instance = migration_class()
+                        if hasattr(migration_instance, 'version') and migration_instance.version:
+                            # Create wrapper to make it compatible with BaseMigration interface
+                            wrapper = self._create_migration_wrapper(migration_instance, module, migration_file)
+                            migrations[str(migration_instance.version).zfill(3)] = wrapper
+                            migration_found = True
+                
+                # Method 3: Look for standalone up/down functions (function-based migrations)
+                if not migration_found and hasattr(module, 'up') and hasattr(module, 'down'):
+                    # Extract version from filename (e.g., "013_equipment_change_logging.py" -> "013")
+                    version_match = migration_file.stem.split('_')[0]
+                    if version_match.isdigit():
+                        # Create wrapper to make it compatible with BaseMigration interface
+                        wrapper = self._create_function_wrapper(module, migration_file, version_match)
+                        migrations[version_match] = wrapper
+                        migration_found = True
+                
+                # Method 4: Look for run_migration function (legacy function-based migrations)
+                if not migration_found and hasattr(module, 'run_migration'):
+                    # Extract version from filename (e.g., "013_equipment_change_logging.py" -> "013")
+                    version_match = migration_file.stem.split('_')[0]
+                    if version_match.isdigit():
+                        # Create wrapper to make it compatible with BaseMigration interface
+                        wrapper = self._create_run_migration_wrapper(module, migration_file, version_match)
+                        migrations[version_match] = wrapper
+                        migration_found = True
+                
+                if not migration_found:
+                    self.logger.warning(f"⚠️  No migration class or functions found in {migration_file}")
                             
             except Exception as e:
                 self.logger.error(f"❌ Failed to load migration {migration_file}: {e}")
         
         return migrations
+    
+    def _create_migration_wrapper(self, migration_instance, module, migration_file):
+        """Create a BaseMigration wrapper for plain Migration class instances"""
+        class MigrationWrapper(BaseMigration):
+            def __init__(self, wrapped_migration):
+                super().__init__()
+                self.wrapped = wrapped_migration
+                self.version = str(wrapped_migration.version).zfill(3)
+                self.description = getattr(wrapped_migration, 'description', f'Migration {self.version}')
+                self.dependencies = getattr(wrapped_migration, 'dependencies', [])
+                self.environments = getattr(wrapped_migration, 'environments', ['all'])
+            
+            def up(self, db_path: str, environment: str = None) -> bool:
+                if hasattr(self.wrapped, 'up'):
+                    try:
+                        result = self.wrapped.up(db_path)
+                        return result if result is not None else True
+                    except Exception as e:
+                        self.logger.error(f"Migration {self.version} up() failed: {e}")
+                        return False
+                return True
+            
+            def down(self, db_path: str, environment: str = None) -> bool:
+                if hasattr(self.wrapped, 'down'):
+                    try:
+                        result = self.wrapped.down(db_path)
+                        return result if result is not None else True
+                    except Exception as e:
+                        self.logger.error(f"Migration {self.version} down() failed: {e}")
+                        return False
+                return True
+        
+        return MigrationWrapper(migration_instance)
+    
+    def _create_function_wrapper(self, module, migration_file, version):
+        """Create a BaseMigration wrapper for function-based migrations"""
+        class FunctionWrapper(BaseMigration):
+            def __init__(self, module, version, file_path):
+                super().__init__()
+                self.module = module
+                self.version = str(version).zfill(3)
+                self.description = getattr(module, '__doc__', f'Migration {self.version}').strip() if hasattr(module, '__doc__') and module.__doc__ else f'Migration {self.version}'
+                # Extract description from docstring if available
+                if hasattr(module, '__doc__') and module.__doc__:
+                    lines = [line.strip() for line in module.__doc__.strip().split('\n') if line.strip()]
+                    if len(lines) > 1:
+                        self.description = lines[1]  # Second line usually contains the description
+                    elif len(lines) == 1:
+                        self.description = lines[0]
+                self.dependencies = []
+                self.environments = ['all']
+                self.file_path = file_path
+            
+            def up(self, db_path: str, environment: str = None) -> bool:
+                if hasattr(self.module, 'up'):
+                    try:
+                        result = self.module.up(db_path)
+                        return result if result is not None else True
+                    except Exception as e:
+                        self.logger.error(f"Migration {self.version} up() failed: {e}")
+                        return False
+                return True
+            
+            def down(self, db_path: str, environment: str = None) -> bool:
+                if hasattr(self.module, 'down'):
+                    try:
+                        result = self.module.down(db_path)
+                        return result if result is not None else True
+                    except Exception as e:
+                        self.logger.error(f"Migration {self.version} down() failed: {e}")
+                        return False
+                return True
+        
+        return FunctionWrapper(module, version, migration_file)
+    
+    def _create_run_migration_wrapper(self, module, migration_file, version):
+        """Create a BaseMigration wrapper for run_migration() function-based migrations"""
+        class RunMigrationWrapper(BaseMigration):
+            def __init__(self, module, version, file_path):
+                super().__init__()
+                self.module = module
+                self.version = str(version).zfill(3)
+                self.description = getattr(module, '__doc__', f'Migration {self.version}').strip() if hasattr(module, '__doc__') and module.__doc__ else f'Migration {self.version}'
+                # Extract description from docstring if available
+                if hasattr(module, '__doc__') and module.__doc__:
+                    lines = [line.strip() for line in module.__doc__.strip().split('\n') if line.strip()]
+                    # Look for the description line (usually starts with "Migration XXX:")
+                    for line in lines:
+                        if line.startswith(f'Migration {version}:'):
+                            self.description = line.split(':', 1)[1].strip() if ':' in line else line
+                            break
+                    else:
+                        # Fallback to second line
+                        if len(lines) > 1:
+                            self.description = lines[1]
+                        elif len(lines) == 1:
+                            self.description = lines[0]
+                self.dependencies = []
+                self.environments = ['all']
+                self.file_path = file_path
+            
+            def up(self, db_path: str, environment: str = None) -> bool:
+                if hasattr(self.module, 'run_migration'):
+                    try:
+                        # run_migration() functions typically don't return a value
+                        self.module.run_migration()
+                        return True
+                    except Exception as e:
+                        self.logger.error(f"Migration {self.version} run_migration() failed: {e}")
+                        return False
+                return True
+            
+            def down(self, db_path: str, environment: str = None) -> bool:
+                # run_migration() style migrations typically don't support rollback
+                self.logger.warning(f"Migration {self.version} does not support rollback (run_migration style)")
+                return True
+        
+        return RunMigrationWrapper(module, version, migration_file)
     
     def get_applied_migrations(self) -> List[str]:
         """Get list of already applied migration versions"""
