@@ -3953,6 +3953,8 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         cursor = conn.cursor()
         
         # Get equipment details for logging before deletion
+        print(f"DEBUG: Looking for equipment_id={equipment_id} in setup_id={setup_id} for user_id={current_user['id']}")
+        
         cursor.execute('''
             SELECT be.*, bs.user_id 
             FROM bow_equipment be
@@ -3962,7 +3964,25 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
         ''', (setup_id, equipment_id, current_user['id']))
         
         equipment_row = cursor.fetchone()
+        print(f"DEBUG: Equipment query result: {equipment_row}")
+        
         if not equipment_row:
+            print(f"DEBUG: Equipment not found - checking alternatives...")
+            
+            # Check if equipment exists but belongs to different user
+            cursor.execute('''
+                SELECT be.*, bs.user_id 
+                FROM bow_equipment be
+                JOIN bow_setups bs ON be.bow_setup_id = bs.id
+                WHERE be.bow_setup_id = ? AND be.id = ?
+            ''', (setup_id, equipment_id))
+            
+            alt_row = cursor.fetchone()
+            if alt_row:
+                print(f"DEBUG: Equipment exists but user_id mismatch or inactive. Actual user_id: {alt_row[-1]}")
+            else:
+                print(f"DEBUG: Equipment {equipment_id} does not exist at all")
+            
             conn.close()
             return jsonify({'error': 'Equipment not found or access denied'}), 404
         
