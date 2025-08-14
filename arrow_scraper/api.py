@@ -503,6 +503,222 @@ def get_bow_equipment_manufacturers():
         print(f"Error getting bow equipment manufacturers: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Manufacturer Autocomplete and Status API
+@app.route('/api/manufacturers/suggestions', methods=['GET'])
+def get_manufacturer_suggestions():
+    """Get manufacturer suggestions for autocomplete with learning integration"""
+    try:
+        query = request.args.get('query', '').strip()
+        category = request.args.get('category', '')
+        limit = int(request.args.get('limit', 8))
+        
+        if len(query) < 2:
+            return jsonify({'suggestions': []})
+        
+        suggestions = []
+        
+        # Search in approved manufacturers first
+        db = get_database()
+        if db:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Search manufacturers with category support
+            cursor.execute('''
+                SELECT DISTINCT m.name, mec.category_name
+                FROM manufacturers m
+                LEFT JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
+                WHERE m.is_active = 1 
+                AND LOWER(m.name) LIKE LOWER(?)
+                AND (mec.category_name = ? OR mec.category_name IS NULL)
+                ORDER BY 
+                    CASE WHEN LOWER(m.name) = LOWER(?) THEN 0 ELSE 1 END,
+                    LENGTH(m.name),
+                    m.name
+                LIMIT ?
+            ''', (f'%{query}%', category, query, limit))
+            
+            # Group results by manufacturer name
+            manufacturer_data = {}
+            for row in cursor.fetchall():
+                name = row['name']
+                cat = row['category_name']
+                
+                if name not in manufacturer_data:
+                    manufacturer_data[name] = {
+                        'name': name,
+                        'status': 'approved',
+                        'categories': [],
+                        'usage_count': 0
+                    }
+                
+                if cat and cat not in manufacturer_data[name]['categories']:
+                    manufacturer_data[name]['categories'].append(cat)
+            
+            # Convert to list and add to suggestions
+            for manufacturer in manufacturer_data.values():
+                suggestions.append(manufacturer)
+            
+            conn.close()
+        
+        # Search in pending manufacturers and equipment models (user learning data)
+        try:
+            from user_database import UserDatabase
+            user_db = UserDatabase()
+            user_conn = user_db.get_connection()
+            user_cursor = user_conn.cursor()
+            
+            # Add pending manufacturers
+            user_cursor.execute('''
+                SELECT name, usage_count, category_context
+                FROM pending_manufacturers
+                WHERE status = 'pending'
+                AND LOWER(name) LIKE LOWER(?)
+                ORDER BY usage_count DESC
+                LIMIT ?
+            ''', (f'%{query}%', limit))
+            
+            for row in user_cursor.fetchall():
+                categories = json.loads(row['category_context'] or '[]')
+                if not category or category in categories:
+                    suggestions.append({
+                        'name': row['name'],
+                        'status': 'pending',
+                        'categories': categories,
+                        'usage_count': row['usage_count']
+                    })
+            
+            # Add learned models for usage statistics
+            user_cursor.execute('''
+                SELECT manufacturer_name, SUM(usage_count) as total_usage
+                FROM equipment_models
+                WHERE LOWER(manufacturer_name) LIKE LOWER(?)
+                AND (category_name = ? OR ? = '')
+                GROUP BY manufacturer_name
+                ORDER BY total_usage DESC
+                LIMIT ?
+            ''', (f'%{query}%', category, category, limit))
+            
+            # Update usage counts for existing suggestions
+            for row in user_cursor.fetchall():
+                for suggestion in suggestions:
+                    if suggestion['name'].lower() == row['manufacturer_name'].lower():
+                        suggestion['usage_count'] += row['total_usage']
+                        break
+            
+            user_conn.close()
+            
+        except Exception as e:
+            print(f"Warning: Could not access user learning data: {e}")
+        
+        # Remove duplicates and sort by relevance
+        unique_suggestions = {}
+        for suggestion in suggestions:
+            name_lower = suggestion['name'].lower()
+            if name_lower not in unique_suggestions:
+                unique_suggestions[name_lower] = suggestion
+            else:
+                # Merge data if duplicate
+                existing = unique_suggestions[name_lower]
+                existing['usage_count'] += suggestion['usage_count']
+                if suggestion['status'] == 'approved' and existing['status'] == 'pending':
+                    existing['status'] = 'approved'
+                for cat in suggestion['categories']:
+                    if cat not in existing['categories']:
+                        existing['categories'].append(cat)
+        
+        # Sort suggestions by relevance
+        final_suggestions = list(unique_suggestions.values())
+        final_suggestions.sort(key=lambda x: (
+            0 if x['name'].lower() == query.lower() else 1,  # Exact matches first
+            -x['usage_count'],  # Higher usage count
+            len(x['name']),  # Shorter names
+            x['name'].lower()  # Alphabetical
+        ))
+        
+        return jsonify({
+            'suggestions': final_suggestions[:limit],
+            'query': query,
+            'category': category
+        })
+        
+    except Exception as e:
+        print(f"Error getting manufacturer suggestions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/manufacturers/status', methods=['GET'])
+def get_manufacturer_status():
+    """Get manufacturer approval status"""
+    try:
+        name = request.args.get('name', '').strip()
+        category = request.args.get('category', '')
+        
+        if not name:
+            return jsonify({'status': None})
+        
+        # Check in approved manufacturers first
+        db = get_database()
+        if db:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT m.id, m.name, mec.category_name
+                FROM manufacturers m
+                LEFT JOIN manufacturer_equipment_categories mec ON m.id = mec.manufacturer_id
+                WHERE m.is_active = 1 
+                AND LOWER(m.name) = LOWER(?)
+                AND (mec.category_name = ? OR ? = '' OR mec.category_name IS NULL)
+            ''', (name, category, category))
+            
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                return jsonify({
+                    'status': 'approved',
+                    'manufacturer_id': result['id'],
+                    'category_supported': bool(result['category_name'])
+                })
+        
+        # Check in pending manufacturers
+        try:
+            from user_database import UserDatabase
+            user_db = UserDatabase()
+            user_conn = user_db.get_connection()
+            user_cursor = user_conn.cursor()
+            
+            user_cursor.execute('''
+                SELECT id, status, category_context, usage_count
+                FROM pending_manufacturers
+                WHERE LOWER(name) = LOWER(?)
+                ORDER BY created_at DESC
+                LIMIT 1
+            ''', (name,))
+            
+            pending = user_cursor.fetchone()
+            user_conn.close()
+            
+            if pending:
+                categories = json.loads(pending['category_context'] or '[]')
+                return jsonify({
+                    'status': pending['status'],
+                    'pending_id': pending['id'],
+                    'categories': categories,
+                    'usage_count': pending['usage_count'],
+                    'category_supported': category in categories if category else True
+                })
+            
+        except Exception as e:
+            print(f"Warning: Could not check pending manufacturers: {e}")
+        
+        # Not found - will be new
+        return jsonify({'status': 'new'})
+        
+    except Exception as e:
+        print(f"Error checking manufacturer status: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/materials', methods=['GET'])
 def get_materials():
     """Get list of all materials with arrow counts"""
