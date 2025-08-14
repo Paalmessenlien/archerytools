@@ -15,24 +15,52 @@ class Migration:
         
     def get_user_db_path(self):
         """Get the user database path with proper fallback logic"""
-        # Try production path first
+        # Check environment variable first (Docker production)
+        env_path = os.environ.get('USER_DATABASE_PATH')
+        if env_path:
+            print(f"   Using USER_DATABASE_PATH: {env_path}")
+            return env_path
+        
+        # Try production path
         production_path = Path("/app/user_data/user_data.db")
-        if production_path.parent.exists():
+        if production_path.parent.exists() or os.path.exists("/app"):
+            print(f"   Using production path: {production_path}")
             return str(production_path)
         
         # Try container path
         container_path = Path("/app/databases/user_data.db") 
-        if container_path.parent.exists():
+        if container_path.parent.exists() or os.path.exists("/app"):
+            print(f"   Using container path: {container_path}")
             return str(container_path)
             
         # Fallback to local development
         local_path = Path(__file__).parent.parent / "databases" / "user_data.db"
+        print(f"   Using local development path: {local_path}")
         return str(local_path)
     
     def up(self):
         """Apply the migration - add missing columns to pending_manufacturers table"""
         user_db_path = self.get_user_db_path()
         print(f"🔧 Applying Migration 012 to user database: {user_db_path}")
+        
+        # Ensure the database directory exists
+        db_dir = Path(user_db_path).parent
+        db_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure the user database is initialized
+        if not Path(user_db_path).exists():
+            print(f"   User database not found, initializing: {user_db_path}")
+            # Try to initialize using UserDatabase class
+            try:
+                import sys
+                import os
+                sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+                from user_database import UserDatabase
+                user_db = UserDatabase()
+                print(f"   ✅ User database initialized at: {user_db.db_path}")
+            except Exception as e:
+                print(f"   ⚠️  Could not initialize UserDatabase: {e}")
+                print(f"   Creating database file manually...")
         
         try:
             conn = sqlite3.connect(user_db_path)
