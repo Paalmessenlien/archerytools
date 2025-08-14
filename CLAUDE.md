@@ -28,6 +28,16 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 **Recent Major Updates (2025):**
+- ✅ **Equipment Addition Database Schema Fix (August 2025)**: Complete resolution of 500 Internal Server Error preventing custom equipment addition
+  - **Database Schema Fix**: Made equipment_id nullable in bow_equipment table to support custom equipment entries
+  - **Migration 018**: Automatic database migration handling unified_change_history view dependency and data preservation
+  - **Custom Equipment Support**: Users can now add custom equipment without database constraint violations
+  - **Smart Manufacturer Linking**: System preserves ability to link equipment to existing manufacturer database when matches found
+  - **API Enhancement**: add_bow_equipment endpoint now correctly handles NULL equipment_id for custom equipment entries
+- ✅ **Vue Template Syntax Resolution (August 2025)**: Fixed template compilation errors in bow setup configuration interface
+  - **Component Fix**: BowSetupSettings.vue template syntax errors resolved with proper HTML element indentation
+  - **Traditional Bow Configuration**: Fixed nested element structure in traditional bow setup forms
+  - **Frontend Stability**: Eliminated Vue parser errors for improved development experience and hot reload functionality
 - ✅ **Arrow Duplication Fix (August 2025)**: Complete resolution of 409 CONFLICT error preventing arrow duplication functionality
   - **Database Schema Update**: Removed restrictive unique constraint on setup_arrows table that prevented duplicate arrows
   - **Migration 017**: Automatic database migration to remove UNIQUE(setup_id, arrow_id, arrow_length, point_weight) constraint
@@ -1530,6 +1540,30 @@ The Archery Tools platform provides:
 ### Recent Fixes & Enhancements (August 2025)
 
 This section details recent fixes and improvements to common development and deployment issues.
+
+**Equipment Addition 500 Internal Server Error Fix (August 2025):**
+- **Issue**: `NOT NULL constraint failed: bow_equipment.equipment_id` when adding custom equipment
+- **Root Cause**: Database schema incorrectly required equipment_id for custom equipment entries that don't exist in arrow database
+- **Solution**: Created Migration 018 to make equipment_id nullable
+- **Implementation**: 
+  - Fixed `bow_equipment` table schema: `equipment_id INTEGER NOT NULL` → `equipment_id INTEGER`
+  - Handled `unified_change_history` view dependency by dropping and recreating
+  - Preserved all existing equipment data during schema change
+  - Added proper rollback functionality with safety checks
+- **Files**: `arrow_scraper/migrations/018_make_equipment_id_nullable.py`
+- **Status**: ✅ **RESOLVED** - Custom equipment addition now works without database constraint violations
+
+**Vue Template Syntax Error Fix (August 2025):**
+- **Issue**: `Element is missing end tag` error in BowSetupSettings.vue preventing template compilation
+- **Root Cause**: Improper HTML element indentation in traditional bow configuration section
+- **Solution**: Fixed indentation for all nested form elements and option tags
+- **Implementation**:
+  - Corrected option element indentation in riser/limb length selects
+  - Fixed custom input field container structure
+  - Removed duplicate closing div tags
+  - Ensured proper parent-child element nesting
+- **Files**: `frontend/components/BowSetupSettings.vue`
+- **Status**: ✅ **RESOLVED** - Vue template now compiles without syntax errors
 
 **Unified Docker Development Environment Implementation (August 2025):**
 - **Issue**: Schema inconsistencies between local development and production causing API errors
