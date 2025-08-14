@@ -65,6 +65,14 @@ Complete guide to the database migration system:
 - **Admin Panel Usage**: Web-based migration management
 - **Production Checklist**: Pre-deployment verification steps
 
+#### [Migration System Fixes Documentation](MIGRATION_SYSTEM_FIXES.md) 🔧
+**August 2025:** Complete resolution of production migration discovery issues:
+- **Problem Analysis**: Why only 11 of 16 migrations were discovered in production
+- **Technical Solution**: Enhanced migration manager supporting 4 different migration patterns
+- **Docker Integration**: Fixes for containerized deployment migration execution
+- **Test Results**: Validation of complete 16-migration discovery system
+- **Future Guidelines**: Best practices for consistent migration development
+
 #### [Enhanced Equipment Management System](ENHANCED_EQUIPMENT_MANAGEMENT.md) 
 **⚡ Latest Update (August 2025)** - Comprehensive equipment management with auto-learning:
 - **8 Equipment Categories**: Professional system including Scope, Plunger, and Other categories
