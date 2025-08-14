@@ -329,6 +329,14 @@ class UserDatabase:
                 print("✅ Users already have custom draw_length values, skipping migration")
                 return
             
+            # Check if draw_length column still exists in bow_setups table
+            cursor.execute("PRAGMA table_info(bow_setups)")
+            columns = {col[1] for col in cursor.fetchall()}
+            
+            if 'draw_length' not in columns:
+                print("✅ draw_length column already removed from bow_setups, skipping migration")
+                return
+            
             print("🔄 Migrating draw_length from bow_setups to users...")
             
             # Get all users and their bow setups

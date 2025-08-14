@@ -142,7 +142,16 @@ python test_setup.py
 # - ✅ Native frontend performance with full hot reload
 # - ✅ Single command startup with automatic dependency management
 # - ✅ Comprehensive health monitoring and process management
+# - ✅ Automatic database initialization with proper permissions (August 2025)
+# - ✅ Fixed migration system compatibility with draw_length schema changes
 ```
+
+**Enhanced Database Management (August 2025):**
+The hybrid development environment now includes automatic database initialization that:
+- Copies existing databases from `arrow_scraper/databases/` to Docker volume
+- Sets proper file permissions for container user (`devuser`)
+- Ensures production-identical database schema and data
+- Resolves all database permission and migration issues
 
 **📚 Complete Documentation:** See [docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md](docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md) for comprehensive setup guide, troubleshooting, and technical details.
 
@@ -1402,6 +1411,19 @@ The Archery Tools platform provides:
 ## Troubleshooting & Development Notes
 
 ### Recent Fixes & Solutions (August 2025)
+
+**Hybrid Development Environment Database Issues (RESOLVED - August 2025):**
+- **Issue**: `./start-hybrid-dev.sh start` failing with "unable to open database file" and "no such column: bs.draw_length"
+- **Root Cause**: Three critical issues:
+  1. Container user permissions - `devuser` couldn't write to Docker volume owned by `root`
+  2. Missing database initialization - local databases not copied to Docker volume
+  3. Migration logic bug - `migrate_draw_length_to_users()` querying non-existent `draw_length` column
+- **Solution**: Comprehensive fix across multiple files:
+  - **Dockerfile.dev**: Added `/app/databases` directory with proper `devuser:devgroup` ownership
+  - **start-hybrid-dev.sh**: Added `initialize_databases()` function with automatic database copying
+  - **user_database.py**: Added column existence check before migration attempts
+- **Files Fixed**: `arrow_scraper/Dockerfile.dev`, `start-hybrid-dev.sh`, `arrow_scraper/user_database.py`, `docker-compose.dev.yml`
+- **Result**: Hybrid development environment now starts successfully with production-identical database schema
 
 **Database Path Mismatch Issues (RESOLVED):**
 - **Issue**: Form schema API returning 500 errors with "no such column: field_label"

@@ -117,6 +117,39 @@ setup_frontend() {
     cd ..
 }
 
+# Function to initialize databases for development
+initialize_databases() {
+    echo "🗄️ Initializing development databases..."
+    
+    # Check if databases exist locally
+    if [ -f "arrow_scraper/databases/arrow_database.db" ]; then
+        echo "✅ Local databases found"
+        
+        # Copy databases using the API container itself to ensure proper permissions
+        echo "📋 Copying databases to volume using API container..."
+        docker-compose -f "$API_COMPOSE_FILE" run --rm --no-deps api /bin/bash -c "
+            echo '📂 Checking source databases...'
+            ls -la /app/databases_source/ || echo 'Source directory not found'
+            
+            echo '📋 Copying databases with proper permissions...'
+            cp /app/databases_source/arrow_database.db /app/databases/arrow_database.db 2>/dev/null && echo '✅ arrow_database.db copied' || echo '⚠️ Failed to copy arrow_database.db'
+            cp /app/databases_source/user_data.db /app/databases/user_data.db 2>/dev/null && echo '✅ user_data.db copied' || echo '⚠️ Failed to copy user_data.db'
+            
+            echo '🔧 Setting permissions...'
+            chmod 644 /app/databases/*.db 2>/dev/null || true
+            
+            echo '📋 Final database listing:'
+            ls -la /app/databases/
+        "
+        
+        echo "✅ Database initialization completed"
+        
+    else
+        echo "⚠️ No local databases found at arrow_scraper/databases/"
+        echo "📝 The API will create empty databases on startup"
+    fi
+}
+
 # Function to start services
 start_services() {
     echo "🚀 Starting hybrid development services..."
@@ -128,6 +161,9 @@ start_services() {
     
     # Stop any existing Docker containers
     docker-compose -f "$API_COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
+    
+    # Initialize databases before starting API
+    initialize_databases
     
     # Start API container
     echo "🐳 Starting API container..."

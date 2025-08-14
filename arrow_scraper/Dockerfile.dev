@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /app/data/processed /app/data/raw /app/logs /app/user_data /app/arrow_data /app/backups
+RUN mkdir -p /app/data/processed /app/data/raw /app/logs /app/user_data /app/arrow_data /app/backups /app/databases
 
 # Make scripts executable
 RUN chmod +x /app/api.py \
@@ -47,7 +47,7 @@ RUN addgroup --gid 1000 devgroup && \
 
 # Set up directory permissions for development
 RUN chown -R devuser:devgroup /app && \
-    chmod -R 755 /app/logs /app/user_data /app/data /app/arrow_data /app/backups
+    chmod -R 755 /app/logs /app/user_data /app/data /app/arrow_data /app/backups /app/databases
 
 # Switch to non-root user
 USER devuser

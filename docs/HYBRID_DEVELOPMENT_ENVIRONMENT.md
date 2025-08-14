@@ -48,6 +48,8 @@ The hybrid development environment combines the best of both worlds:
 ### ✅ Solves Critical Issues
 - **No oxc-parser Problems**: Frontend runs natively avoiding native binding compilation
 - **Schema Consistency**: API uses identical production database structure
+- **Database Permissions**: Automatic database initialization with proper container user permissions (August 2025)
+- **Migration Compatibility**: Fixed migration system to handle schema changes gracefully (August 2025)
 - **Development Features**: Hot reload, debugging, live development preserved
 - **Easy Setup**: Single command startup with automatic dependency management
 
@@ -160,6 +162,28 @@ The startup script automatically handles:
 1. Check Docker status: `docker ps`
 2. View API logs: `docker-compose -f docker-compose.dev.yml logs api`
 3. Restart container: `./start-hybrid-dev.sh restart`
+
+#### Database Permission Issues (Fixed August 2025)
+**Symptoms**: "unable to open database file" errors
+**Root Cause**: Container user permissions on Docker volume
+**Solution**: 
+- **Automatically resolved** in current version through:
+  - Enhanced Dockerfile.dev with proper user permissions
+  - Automatic database initialization in start-hybrid-dev.sh
+  - Docker volume setup with correct ownership
+- **Manual fix if needed**: Rebuild container with `docker-compose -f docker-compose.dev.yml build api`
+
+#### Migration System Errors (Fixed August 2025)  
+**Symptoms**: "no such column: bs.draw_length" migration errors
+**Root Cause**: Migration attempting to query dropped columns
+**Solution**:
+- **Automatically resolved** through enhanced migration logic
+- Migration now checks column existence before queries
+- **Manual verification**: Run migration test in container:
+  ```bash
+  ./start-hybrid-dev.sh api-shell
+  python3 -c "from user_database import UserDatabase; UserDatabase().migrate_draw_length_to_users()"
+  ```
 
 #### Port Conflicts
 **Symptoms**: Services fail to bind to ports

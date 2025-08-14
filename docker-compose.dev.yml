@@ -27,6 +27,7 @@ services:
       - USER_DATABASE_PATH=/app/databases/user_data.db       # Use unified user database path
     volumes:
       - ./arrow_scraper:/app:rw  # Mount source code for hot reload
+      - ./arrow_scraper/databases:/app/databases_source:ro  # Source databases for initialization
       - arrowtuner-dev-databases:/app/databases  # Unified database persistence
       - arrowtuner-dev-logs:/app/logs  # Persist logs
     networks:
