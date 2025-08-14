@@ -238,7 +238,15 @@ class DatabaseMigrationManager:
             def up(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.wrapped, 'up'):
                     try:
-                        result = self.wrapped.up(db_path)
+                        # Try to call with db_path parameter first
+                        import inspect
+                        up_signature = inspect.signature(self.wrapped.up)
+                        if len(up_signature.parameters) > 0:
+                            # Method accepts parameters, pass db_path
+                            result = self.wrapped.up(db_path)
+                        else:
+                            # Method takes no parameters, call without arguments
+                            result = self.wrapped.up()
                         return result if result is not None else True
                     except Exception as e:
                         self.logger.error(f"Migration {self.version} up() failed: {e}")
@@ -248,7 +256,15 @@ class DatabaseMigrationManager:
             def down(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.wrapped, 'down'):
                     try:
-                        result = self.wrapped.down(db_path)
+                        # Try to call with db_path parameter first
+                        import inspect
+                        down_signature = inspect.signature(self.wrapped.down)
+                        if len(down_signature.parameters) > 0:
+                            # Method accepts parameters, pass db_path
+                            result = self.wrapped.down(db_path)
+                        else:
+                            # Method takes no parameters, call without arguments
+                            result = self.wrapped.down()
                         return result if result is not None else True
                     except Exception as e:
                         self.logger.error(f"Migration {self.version} down() failed: {e}")
