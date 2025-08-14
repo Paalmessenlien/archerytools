@@ -225,11 +225,12 @@ const fetchSuggestions = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await api.get('/manufacturers/suggestions', {
+    const params = new URLSearchParams({
       query: inputValue.value,
       category: props.category,
-      limit: props.maxSuggestions
+      limit: props.maxSuggestions.toString()
     })
+    const response = await api.get(`/manufacturers/suggestions?${params.toString()}`)
 
     if (response && response.suggestions) {
       suggestions.value = response.suggestions.map(suggestion => ({
@@ -266,10 +267,11 @@ const checkManufacturerStatus = async () => {
   }
 
   try {
-    const response = await api.get('/manufacturers/status', {
+    const params = new URLSearchParams({
       name: inputValue.value,
       category: props.category
     })
+    const response = await api.get(`/manufacturers/status?${params.toString()}`)
 
     if (response && response.status) {
       manufacturerStatus.value = response.status
