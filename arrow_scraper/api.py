@@ -1134,9 +1134,6 @@ def update_bow_setup(current_user, setup_id):
             'limb_brand': 'Limb brand',
             'limb_model': 'Limb model', 
             'limb_length': 'Limb length',
-            'limb_fitting': 'Limb fitting',
-            'construction': 'Construction',
-            'bow_brand': 'Bow brand',
             'description': 'Description'
         }
         
