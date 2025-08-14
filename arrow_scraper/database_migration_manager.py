@@ -226,6 +226,8 @@ class DatabaseMigrationManager:
     
     def _create_migration_wrapper(self, migration_instance, module, migration_file):
         """Create a BaseMigration wrapper for plain Migration class instances"""
+        manager_logger = self.logger  # Capture the manager's logger
+        
         class MigrationWrapper(BaseMigration):
             def __init__(self, wrapped_migration):
                 super().__init__()
@@ -234,18 +236,24 @@ class DatabaseMigrationManager:
                 self.description = getattr(wrapped_migration, 'description', f'Migration {self.version}')
                 self.dependencies = getattr(wrapped_migration, 'dependencies', [])
                 self.environments = getattr(wrapped_migration, 'environments', ['all'])
+                self.logger = manager_logger  # Use the manager's logger
             
             def up(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.wrapped, 'up'):
                     try:
-                        # Try to call with db_path parameter first
+                        # Try to call with proper parameters
                         import inspect
                         up_signature = inspect.signature(self.wrapped.up)
-                        if len(up_signature.parameters) > 0:
-                            # Method accepts parameters, pass db_path
+                        param_count = len(up_signature.parameters)
+                        
+                        if param_count >= 2:
+                            # Method expects db_path and environment
+                            result = self.wrapped.up(db_path, environment or 'development')
+                        elif param_count == 1:
+                            # Method expects only db_path
                             result = self.wrapped.up(db_path)
                         else:
-                            # Method takes no parameters, call without arguments
+                            # Method takes no parameters
                             result = self.wrapped.up()
                         return result if result is not None else True
                     except Exception as e:
@@ -256,14 +264,19 @@ class DatabaseMigrationManager:
             def down(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.wrapped, 'down'):
                     try:
-                        # Try to call with db_path parameter first
+                        # Try to call with proper parameters
                         import inspect
                         down_signature = inspect.signature(self.wrapped.down)
-                        if len(down_signature.parameters) > 0:
-                            # Method accepts parameters, pass db_path
+                        param_count = len(down_signature.parameters)
+                        
+                        if param_count >= 2:
+                            # Method expects db_path and environment
+                            result = self.wrapped.down(db_path, environment or 'development')
+                        elif param_count == 1:
+                            # Method expects only db_path
                             result = self.wrapped.down(db_path)
                         else:
-                            # Method takes no parameters, call without arguments
+                            # Method takes no parameters
                             result = self.wrapped.down()
                         return result if result is not None else True
                     except Exception as e:
@@ -275,6 +288,8 @@ class DatabaseMigrationManager:
     
     def _create_function_wrapper(self, module, migration_file, version):
         """Create a BaseMigration wrapper for function-based migrations"""
+        manager_logger = self.logger  # Capture the manager's logger
+        
         class FunctionWrapper(BaseMigration):
             def __init__(self, module, version, file_path):
                 super().__init__()
@@ -291,6 +306,7 @@ class DatabaseMigrationManager:
                 self.dependencies = []
                 self.environments = ['all']
                 self.file_path = file_path
+                self.logger = manager_logger  # Use the manager's logger
             
             def up(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.module, 'up'):
@@ -316,6 +332,8 @@ class DatabaseMigrationManager:
     
     def _create_run_migration_wrapper(self, module, migration_file, version):
         """Create a BaseMigration wrapper for run_migration() function-based migrations"""
+        manager_logger = self.logger  # Capture the manager's logger
+        
         class RunMigrationWrapper(BaseMigration):
             def __init__(self, module, version, file_path):
                 super().__init__()
@@ -339,6 +357,7 @@ class DatabaseMigrationManager:
                 self.dependencies = []
                 self.environments = ['all']
                 self.file_path = file_path
+                self.logger = manager_logger  # Use the manager's logger
             
             def up(self, db_path: str, environment: str = None) -> bool:
                 if hasattr(self.module, 'run_migration'):
