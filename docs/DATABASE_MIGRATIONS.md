@@ -761,6 +761,210 @@ if migration_008:
     print(f"Result: {success}")
 ```
 
+## Recent Improvements (August 2025)
+
+### Migration System Enhancements
+
+**Logger Integration Fix:**
+- **Issue**: Migration wrappers (`MigrationWrapper`, `FunctionWrapper`, `RunMigrationWrapper`) were missing logger access, causing `'MigrationWrapper' object has no attribute 'logger'` errors
+- **Solution**: Added logger initialization to all wrapper classes by capturing and assigning the parent manager's logger
+- **Implementation**: 
+  ```python
+  def _create_migration_wrapper(self, migration_instance, module, migration_file):
+      manager_logger = self.logger  # Capture the manager's logger
+      
+      class MigrationWrapper(BaseMigration):
+          def __init__(self, wrapped_migration):
+              super().__init__()
+              # ... other initialization ...
+              self.logger = manager_logger  # Use the manager's logger
+  ```
+
+**Parameter Handling Enhancement:**
+- **Issue**: Migration methods with different parameter signatures were not being called correctly, causing `up() missing 1 required positional argument: 'environment'` errors
+- **Solution**: Enhanced parameter detection using `inspect.signature()` to support various migration method signatures
+- **Supported Signatures**:
+  - `up()` - Legacy migrations with no parameters
+  - `up(db_path)` - Basic migrations with database path only  
+  - `up(db_path, environment)` - Modern migrations with both database path and environment
+- **Implementation**:
+  ```python
+  import inspect
+  up_signature = inspect.signature(self.wrapped.up)
+  param_count = len(up_signature.parameters)
+  
+  if param_count >= 2:
+      result = self.wrapped.up(db_path, environment or 'development')
+  elif param_count == 1:
+      result = self.wrapped.up(db_path)
+  else:
+      result = self.wrapped.up()
+  ```
+
+**Admin Interface Reliability:**
+- **Issue**: Admin frontend migration runner returning 500 Internal Server Error
+- **Solution**: Fixed underlying logger and parameter issues, ensuring admin interface works correctly
+- **Result**: Migration management through web interface now fully functional
+
+**Migration State Management:**
+- **Enhancement**: Improved handling of manually applied migrations through proper state recording
+- **Feature**: Migrations can now be marked as applied programmatically after manual execution
+- **Usage**:
+  ```python
+  manager._record_migration(migration_instance, success=True)
+  ```
+
+### Migration Wrapper Architecture
+
+The migration system now uses a sophisticated wrapper architecture that handles different migration styles:
+
+**1. Class-Based Migrations (Recommended)**
+```python
+class Migration017(BaseMigration):
+    def up(self, db_path: str, environment: str) -> bool:
+        # Modern migration with full parameter support
+        pass
+```
+
+**2. Function-Based Migrations**
+```python
+def up(db_path):
+    # Simple function-based migration
+    pass
+```
+
+**3. Legacy Migrations**
+```python
+def run_migration():
+    # Legacy migration with no parameters
+    pass
+```
+
+### Troubleshooting New Issues
+
+**Logger-Related Errors:**
+```python
+# Verify logger is properly initialized
+from database_migration_manager import DatabaseMigrationManager
+manager = DatabaseMigrationManager()
+migrations = manager.get_pending_migrations()
+for migration in migrations:
+    print(f"Migration {migration.version} has logger: {hasattr(migration, 'logger')}")
+```
+
+**Parameter Mismatch Errors:**
+```python
+# Debug parameter detection
+import inspect
+for migration in migrations:
+    if hasattr(migration, 'wrapped'):
+        sig = inspect.signature(migration.wrapped.up)
+        print(f"Migration {migration.version} up() params: {len(sig.parameters)}")
+```
+
+**Manual Migration Recording:**
+```python
+# Record a manually applied migration
+from database_migration_manager import DatabaseMigrationManager
+manager = DatabaseMigrationManager()
+pending = manager.get_pending_migrations()
+migration_to_record = next((m for m in pending if m.version == "017"), None)
+if migration_to_record:
+    manager._record_migration(migration_to_record, success=True)
+```
+
+### Case Study: Migration 017 - Arrow Duplication Fix
+
+**Background**: Users were encountering 409 CONFLICT errors when trying to duplicate arrows due to a restrictive unique constraint on the `setup_arrows` table.
+
+**Challenge**: Remove the unique constraint while preserving all existing data and maintaining data integrity.
+
+**Implementation**:
+```python
+class Migration:
+    def up(self, db_path: str, environment: str) -> bool:
+        """Remove unique constraint from setup_arrows to allow arrow duplication"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # 1. Check if constraint exists (idempotent check)
+            cursor.execute("PRAGMA index_list(setup_arrows)")
+            indexes = cursor.fetchall()
+            
+            has_unique_constraint = False
+            for index in indexes:
+                if index[2] == 1:  # Check unique flag
+                    # Verify it's the constraint we want to remove
+                    cursor.execute(f"PRAGMA index_info({index[1]})")
+                    index_columns = [col[2] for col in cursor.fetchall()]
+                    if set(index_columns) == {'setup_id', 'arrow_id', 'arrow_length', 'point_weight'}:
+                        has_unique_constraint = True
+                        break
+            
+            if not has_unique_constraint:
+                print("✅ No unique constraint found, migration not needed")
+                return True
+            
+            # 2. Preserve existing data
+            cursor.execute("SELECT * FROM setup_arrows")
+            existing_data = cursor.fetchall()
+            
+            # 3. Recreate table without constraint
+            cursor.execute('''
+                CREATE TABLE setup_arrows_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    setup_id INTEGER NOT NULL,
+                    arrow_id INTEGER NOT NULL,
+                    arrow_length REAL NOT NULL,
+                    point_weight REAL NOT NULL,
+                    -- ... other columns ...
+                    FOREIGN KEY (setup_id) REFERENCES bow_setups (id) ON DELETE CASCADE
+                    -- Note: Removed UNIQUE constraint
+                )
+            ''')
+            
+            # 4. Copy all data
+            if existing_data:
+                cursor.executemany('''
+                    INSERT INTO setup_arrows_new 
+                    (id, setup_id, arrow_id, arrow_length, point_weight, ...)
+                    VALUES (?, ?, ?, ?, ?, ...)
+                ''', existing_data)
+            
+            # 5. Replace table atomically
+            cursor.execute("DROP TABLE setup_arrows")
+            cursor.execute("ALTER TABLE setup_arrows_new RENAME TO setup_arrows")
+            
+            conn.commit()
+            print("✅ Successfully removed unique constraint")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Migration failed: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return False
+```
+
+**Key Learnings**:
+1. **Idempotent Design**: Always check current state before applying changes
+2. **Data Preservation**: Never assume data can be recreated - always preserve existing records
+3. **Atomic Operations**: Use transactions to ensure consistency
+4. **Error Handling**: Rollback on failures and provide clear error messages
+5. **Constraint Management**: SQLite requires table recreation to remove constraints
+
+### Best Practices for New Migrations
+
+1. **Use Modern Signature**: Always implement `up(self, db_path: str, environment: str) -> bool`
+2. **Include Logger Access**: Logger is automatically available as `self.logger` in wrapper classes
+3. **Make Idempotent**: Check current state before applying changes (like Migration 017)
+4. **Handle Errors Gracefully**: Use try/catch and return `False` on failures
+5. **Test All Environments**: Verify migration works in development, staging, and production
+6. **Preserve Data**: Always backup and preserve existing data during schema changes
+7. **Use Transactions**: Wrap related operations in database transactions
+8. **Provide Clear Output**: Include progress messages and success/failure indicators
+
 ## Future Enhancements
 
 ### Planned Features
