@@ -567,6 +567,9 @@ const duplicateArrow = async (arrowSetup) => {
       notifyError('You do not have permission to duplicate arrows in this bow setup.');  
     } else if (err.message && err.message.includes('404')) {
       notifyError('Bow setup or arrow not found. Please refresh the page and try again.');
+    } else if (err.message && err.message.includes('409')) {
+      // Arrow already exists - show info message instead of error
+      notifySuccess('This arrow configuration already exists in your bow setup.');
     } else {
       notifyError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
     }
