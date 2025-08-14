@@ -170,61 +170,45 @@
           
           <!-- Bow Brand and Model Information -->
           <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
-            <label class="block mb-1">Riser Brand</label>
-            <select v-model="form.riser_brand" class="w-full p-2 border rounded">
-              <option value="">Select Riser Brand</option>
-              <option value="Hoyt">Hoyt</option>
-              <option value="Win&Win">Win&Win</option>
-              <option value="Sebastian Flute">Sebastian Flute</option>
-              <option value="Gillo">Gillo</option>
-              <option value="Samick">Samick</option>
-              <option value="KTA">KTA</option>
-              <option value="Border">Border</option>
-              <option value="Dryad">Dryad</option>
-              <option value="Bear">Bear</option>
-              <option value="Martin">Martin</option>
-              <option value="Other">Other</option>
-            </select>
+            <ManufacturerInput
+              v-model="form.riser_brand"
+              :category="form.bow_type === 'recurve' ? 'recurve_risers' : 'traditional_risers'"
+              label="Riser Brand"
+              :placeholder="form.bow_type === 'recurve' ? 'Enter recurve riser manufacturer...' : 'Enter traditional riser manufacturer...'" 
+              :required="false"
+              @manufacturer-selected="handleManufacturerSelected"
+              @manufacturer-created="handleManufacturerCreated"
+            />
           </div>
           <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
             <label class="block mb-1">Riser Model</label>
             <input v-model="form.riser_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., Satori, Formula Xi, etc.">
           </div>
           <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
-            <label class="block mb-1">Limb Brand</label>
-            <select v-model="form.limb_brand" class="w-full p-2 border rounded">
-              <option value="">Select Limb Brand</option>
-              <option value="Uukha">Uukha</option>
-              <option value="Win&Win">Win&Win</option>
-              <option value="Hoyt">Hoyt</option>
-              <option value="KTA">KTA</option>
-              <option value="SF Archery">SF Archery</option>
-              <option value="Border">Border</option>
-              <option value="Samick">Samick</option>
-              <option value="Bear">Bear</option>
-              <option value="Martin">Martin</option>
-              <option value="Other">Other</option>
-            </select>
+            <ManufacturerInput
+              v-model="form.limb_brand"
+              :category="form.bow_type === 'recurve' ? 'recurve_limbs' : 'traditional_limbs'"
+              label="Limb Brand"
+              :placeholder="form.bow_type === 'recurve' ? 'Enter recurve limb manufacturer...' : 'Enter traditional limb manufacturer...'"
+              :required="false"
+              @manufacturer-selected="handleManufacturerSelected"
+              @manufacturer-created="handleManufacturerCreated"
+            />
           </div>
           <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
             <label class="block mb-1">Limb Model</label>
             <input v-model="form.limb_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., VX1000, Storm, etc.">
           </div>
           <div class="mb-4" v-if="form.bow_type === 'compound'">
-            <label class="block mb-1">Compound Bow Brand</label>
-            <select v-model="form.compound_brand" class="w-full p-2 border rounded">
-              <option value="">Select Compound Brand</option>
-              <option value="Mathews">Mathews</option>
-              <option value="Hoyt">Hoyt</option>
-              <option value="PSE">PSE</option>
-              <option value="Bowtech">Bowtech</option>
-              <option value="Bear">Bear</option>
-              <option value="Prime">Prime</option>
-              <option value="Elite">Elite</option>
-              <option value="Mission">Mission</option>
-              <option value="Diamond">Diamond</option>
-              <option value="Other">Other</option>
-            </select>
+            <ManufacturerInput
+              v-model="form.compound_brand"
+              category="compound_bows"
+              label="Compound Bow Brand"
+              placeholder="Enter compound bow manufacturer..."
+              :required="false"
+              @manufacturer-selected="handleManufacturerSelected"
+              @manufacturer-created="handleManufacturerCreated"
+            />
           </div>
           <div class="mb-4" v-if="form.bow_type === 'compound'">
             <label class="block mb-1">Compound Bow Model</label>
@@ -278,6 +262,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import ManufacturerInput from '~/components/ManufacturerInput.vue';
 
 const { token } = useAuth();
 const setups = ref([]);
@@ -485,6 +470,20 @@ const getBowUsageArray = (usageString) => {
   } catch {
     return [];
   }
+};
+
+// Handle manufacturer selection from ManufacturerInput component
+const handleManufacturerSelected = (data) => {
+  console.log('Manufacturer selected:', data);
+  // The v-model binding will automatically update the manufacturer name
+  // Additional logic could be added here if needed
+};
+
+// Handle new manufacturer creation from ManufacturerInput component
+const handleManufacturerCreated = (data) => {
+  console.log('New manufacturer created:', data);
+  // Could show a notification to the user about pending approval
+  // The v-model binding will handle the manufacturer name
 };
 
 const cancelForm = () => {
