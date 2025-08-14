@@ -1280,7 +1280,7 @@ def get_bow_setup(current_user, setup_id):
 @app.route('/api/bow-setups', methods=['POST'])
 @token_required
 def create_bow_setup(current_user):
-    """Create a new bow setup"""
+    """Create a new bow setup with manufacturer learning"""
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -1294,7 +1294,72 @@ def create_bow_setup(current_user):
         if not new_setup:
             return jsonify({'error': 'Failed to create bow setup'}), 500
         
-        return jsonify(new_setup), 201
+        # Learn from manufacturer entries in the bow setup
+        learning_results = []
+        try:
+            from equipment_learning_manager import EquipmentLearningManager
+            learning = EquipmentLearningManager()
+            
+            # Learn from compound bow manufacturer
+            if data.get('compound_brand') and data.get('bow_type') == 'compound':
+                result = learning.learn_equipment_entry(
+                    data['compound_brand'],
+                    data.get('compound_model', 'Unknown Model'),
+                    'compound_bows',
+                    current_user['id']
+                )
+                learning_results.append({
+                    'manufacturer': data['compound_brand'],
+                    'category': 'compound_bows',
+                    'result': result
+                })
+                
+            # Learn from riser manufacturer
+            if data.get('riser_brand') and data.get('bow_type') in ['recurve', 'traditional']:
+                category = 'recurve_risers' if data['bow_type'] == 'recurve' else 'traditional_risers'
+                result = learning.learn_equipment_entry(
+                    data['riser_brand'],
+                    data.get('riser_model', 'Unknown Model'),
+                    category,
+                    current_user['id']
+                )
+                learning_results.append({
+                    'manufacturer': data['riser_brand'],
+                    'category': category,
+                    'result': result
+                })
+                
+            # Learn from limb manufacturer
+            if data.get('limb_brand') and data.get('bow_type') in ['recurve', 'traditional']:
+                category = 'recurve_limbs' if data['bow_type'] == 'recurve' else 'traditional_limbs'
+                result = learning.learn_equipment_entry(
+                    data['limb_brand'],
+                    data.get('limb_model', 'Unknown Model'),
+                    category,
+                    current_user['id']
+                )
+                learning_results.append({
+                    'manufacturer': data['limb_brand'],
+                    'category': category,
+                    'result': result
+                })
+            
+            # Log learning results
+            for lr in learning_results:
+                if lr['result']['new_manufacturer']:
+                    print(f"📚 New manufacturer learned: '{lr['manufacturer']}' in {lr['category']} (pending approval)")
+                if lr['result']['new_model']:
+                    print(f"📚 New model learned: '{lr['manufacturer']}' model for {lr['category']}")
+                    
+        except Exception as e:
+            print(f"Warning: Manufacturer learning failed during bow setup creation: {e}")
+        
+        # Add learning results to response for debugging
+        response_data = dict(new_setup)
+        if learning_results:
+            response_data['manufacturer_learning'] = learning_results
+        
+        return jsonify(response_data), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1384,8 +1449,72 @@ def update_bow_setup(current_user, setup_id):
                 change_description=overall_description
             )
         
+        # Learn from manufacturer changes in the bow setup
+        learning_results = []
+        try:
+            from equipment_learning_manager import EquipmentLearningManager
+            learning = EquipmentLearningManager()
+            
+            # Check if manufacturers were changed and learn from new ones
+            manufacturer_fields = [
+                ('compound_brand', 'compound_model', 'compound_bows'),
+                ('riser_brand', 'riser_model', 'recurve_risers'),  # Will be adjusted based on bow_type
+                ('limb_brand', 'limb_model', 'recurve_limbs')     # Will be adjusted based on bow_type
+            ]
+            
+            bow_type = data.get('bow_type', current_setup['bow_type'])
+            
+            for brand_field, model_field, default_category in manufacturer_fields:
+                if brand_field in data and data[brand_field]:
+                    # Only learn if the manufacturer actually changed
+                    old_brand = current_setup[brand_field] or ''
+                    new_brand = data[brand_field] or ''
+                    
+                    if old_brand != new_brand and new_brand:
+                        # Determine correct category based on bow type
+                        if brand_field == 'compound_brand' and bow_type == 'compound':
+                            category = 'compound_bows'
+                        elif brand_field == 'riser_brand' and bow_type in ['recurve', 'traditional']:
+                            category = 'recurve_risers' if bow_type == 'recurve' else 'traditional_risers'
+                        elif brand_field == 'limb_brand' and bow_type in ['recurve', 'traditional']:
+                            category = 'recurve_limbs' if bow_type == 'recurve' else 'traditional_limbs'
+                        else:
+                            continue  # Skip if bow type doesn't match manufacturer type
+                        
+                        model_name = data.get(model_field, current_setup.get(model_field, 'Unknown Model'))
+                        
+                        result = learning.learn_equipment_entry(
+                            new_brand,
+                            model_name,
+                            category,
+                            current_user['id']
+                        )
+                        
+                        learning_results.append({
+                            'manufacturer': new_brand,
+                            'category': category,
+                            'field': brand_field,
+                            'result': result
+                        })
+            
+            # Log learning results
+            for lr in learning_results:
+                if lr['result']['new_manufacturer']:
+                    print(f"📚 New manufacturer learned from setup update: '{lr['manufacturer']}' in {lr['category']} (pending approval)")
+                if lr['result']['new_model']:
+                    print(f"📚 New model learned from setup update: '{lr['manufacturer']}' model for {lr['category']}")
+                    
+        except Exception as e:
+            print(f"Warning: Manufacturer learning failed during bow setup update: {e}")
+        
         conn.close()
-        return jsonify(updated_setup)
+        
+        # Add learning results to response for debugging
+        response_data = dict(updated_setup)
+        if learning_results:
+            response_data['manufacturer_learning'] = learning_results
+        
+        return jsonify(response_data)
         
     except Exception as e:
         print(f"Error updating bow setup: {e}")
