@@ -257,118 +257,117 @@
 
           <!-- Traditional Bow Configuration -->
           <div v-else-if="formData.bow_type === 'traditional'" class="space-y-4">
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <!-- Traditional Riser Brand -->
-                <div>
-                  <label for="tradRiserBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Brand</label>
-                  <select 
-                    id="tradRiserBrand"
-                    :value="formData.riser_brand || ''"
-                    @change="handleBrandSelection('riser_brand', $event.target.value)"
-                    class="form-select"
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <!-- Traditional Riser Brand -->
+              <div>
+                <label for="tradRiserBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Brand</label>
+                <select 
+                  id="tradRiserBrand"
+                  :value="formData.riser_brand || ''"
+                  @change="handleBrandSelection('riser_brand', $event.target.value)"
+                  class="form-select"
+                >
+                  <option value="">Select Riser Brand</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option 
+                    v-for="manufacturer in manufacturerData.traditional_risers" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
                   >
-                    <option value="">Select Riser Brand</option>
-                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                    <option 
-                      v-for="manufacturer in manufacturerData.traditional_risers" 
-                      :key="manufacturer" 
-                      :value="manufacturer"
-                    >
-                      {{ manufacturer }}
-                    </option>
-                    <option value="Other">Other</option>
-                  </select>
+                    {{ manufacturer }}
+                  </option>
+                  <option value="Other">Other</option>
+                </select>
 
-                  <!-- Custom traditional riser brand input -->
-                  <input 
-                    v-if="formData.riser_brand === 'Other'"
-                    type="text"
-                    v-model="formData.custom_trad_riser_brand"
-                    class="w-full mt-2 form-input"
-                    placeholder="Enter riser brand name..."
-                    required
-                  />
-                  
-                  <!-- Traditional Riser Length -->
-                  <div v-if="formData.riser_brand" class="mt-2">
-                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
-                    <select v-model="formData.riser_length" class="w-full form-select">
-                      <option value="">Select Riser Length</option>
-                      <option value="17">17"</option>
-                      <option value="19">19"</option>
-                      <option value="21">21"</option>
-                      <option value="23">23"</option>
-                      <option value="25">25"</option>
-                      <option value="27">27"</option>
-                      <option value="Other">Other (custom length)</option>
-                    </select>
-                    
-                    <!-- Custom traditional riser length input -->
-                    <input 
-                      v-if="formData.riser_length === 'Other'"
-                      type="text"
-                      v-model="formData.riser_length"
-                      @focus="clearOtherValue('riser_length')"
-                      class="w-full mt-2 form-input"
-                      placeholder="Enter custom riser length (e.g., 20 inches)"
-                      required
-                    />
-                  </div>
-                </div>
+                <!-- Custom traditional riser brand input -->
+                <input 
+                  v-if="formData.riser_brand === 'Other'"
+                  type="text"
+                  v-model="formData.custom_trad_riser_brand"
+                  class="w-full mt-2 form-input"
+                  placeholder="Enter riser brand name..."
+                  required
+                />
                 
-                <!-- Traditional Limb Brand -->
-                <div>
-                  <label for="tradLimbBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Brand</label>
-                  <select 
-                    id="tradLimbBrand"
-                    :value="formData.limb_brand || ''"
-                    @change="handleBrandSelection('limb_brand', $event.target.value)"
-                    class="form-select"
-                  >
-                    <option value="">Select Limb Brand</option>
-                    <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
-                    <option 
-                      v-for="manufacturer in manufacturerData.traditional_limbs" 
-                      :key="manufacturer" 
-                      :value="manufacturer"
-                    >
-                      {{ manufacturer }}
-                    </option>
-                    <option value="Other">Other</option>
+                <!-- Traditional Riser Length -->
+                <div v-if="formData.riser_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
+                  <select v-model="formData.riser_length" class="w-full form-select">
+                    <option value="">Select Riser Length</option>
+                    <option value="17">17"</option>
+                    <option value="19">19"</option>
+                    <option value="21">21"</option>
+                    <option value="23">23"</option>
+                    <option value="25">25"</option>
+                    <option value="27">27"</option>
+                    <option value="Other">Other (custom length)</option>
                   </select>
-
-                  <!-- Custom traditional limb brand input -->
+                  
+                  <!-- Custom traditional riser length input -->
                   <input 
-                    v-if="formData.limb_brand === 'Other'"
+                    v-if="formData.riser_length === 'Other'"
                     type="text"
-                    v-model="formData.custom_trad_limb_brand"
+                    v-model="formData.riser_length"
+                    @focus="clearOtherValue('riser_length')"
                     class="w-full mt-2 form-input"
-                    placeholder="Enter limb brand name..."
+                    placeholder="Enter custom riser length (e.g., 20 inches)"
                     required
                   />
+                </div>
+              </div>
+              
+              <!-- Traditional Limb Brand -->
+              <div>
+                <label for="tradLimbBrand" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Brand</label>
+                <select 
+                  id="tradLimbBrand"
+                  :value="formData.limb_brand || ''"
+                  @change="handleBrandSelection('limb_brand', $event.target.value)"
+                  class="form-select"
+                >
+                  <option value="">Select Limb Brand</option>
+                  <option v-if="loadingManufacturers" disabled>Loading manufacturers...</option>
+                  <option 
+                    v-for="manufacturer in manufacturerData.traditional_limbs" 
+                    :key="manufacturer" 
+                    :value="manufacturer"
+                  >
+                    {{ manufacturer }}
+                  </option>
+                  <option value="Other">Other</option>
+                </select>
+
+                <!-- Custom traditional limb brand input -->
+                <input 
+                  v-if="formData.limb_brand === 'Other'"
+                  type="text"
+                  v-model="formData.custom_trad_limb_brand"
+                  class="w-full mt-2 form-input"
+                  placeholder="Enter limb brand name..."
+                  required
+                />
+                
+                <!-- Traditional Limb Length -->
+                <div v-if="formData.limb_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
+                  <select v-model="formData.limb_length" class="w-full form-select">
+                    <option value="">Select Limb Length</option>
+                    <option value="Short">Short</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Long">Long</option>
+                    <option value="Other">Other (custom length)</option>
+                  </select>
                   
-                  <!-- Traditional Limb Length -->
-                  <div v-if="formData.limb_brand" class="mt-2">
-                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
-                    <select v-model="formData.limb_length" class="w-full form-select">
-                      <option value="">Select Limb Length</option>
-                      <option value="Short">Short</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Long">Long</option>
-                      <option value="Other">Other (custom length)</option>
-                    </select>
-                    
-                    <!-- Custom traditional limb length input -->
-                    <input 
-                      v-if="formData.limb_length === 'Other'"
-                      type="text"
-                      v-model="formData.limb_length"
-                      @focus="clearOtherValue('limb_length')"
-                      class="w-full mt-2 form-input"
-                      placeholder="Enter custom limb length (e.g., Extra Short)"
-                      required
-                    />
-                  </div>
+                  <!-- Custom traditional limb length input -->
+                  <input 
+                    v-if="formData.limb_length === 'Other'"
+                    type="text"
+                    v-model="formData.limb_length"
+                    @focus="clearOtherValue('limb_length')"
+                    class="w-full mt-2 form-input"
+                    placeholder="Enter custom limb length (e.g., Extra Short)"
+                    required
+                  />
                 </div>
               </div>
             </div>
