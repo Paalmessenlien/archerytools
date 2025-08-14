@@ -62,6 +62,16 @@
         </NuxtLink>
         
         <NuxtLink 
+          to="/change-history" 
+          @click="closeMenu"
+          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+          :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/change-history' }"
+        >
+          <i class="fas fa-history w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+          Change History
+        </NuxtLink>
+        
+        <NuxtLink 
           to="/calculator" 
           @click="closeMenu"
           class="flex items-center px-4 py-3 text-base font-medium text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"

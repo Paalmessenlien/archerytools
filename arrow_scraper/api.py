@@ -1084,22 +1084,97 @@ def create_bow_setup(current_user):
 @app.route('/api/bow-setups/<int:setup_id>', methods=['PUT'])
 @token_required
 def update_bow_setup(current_user, setup_id):
-    """Update a bow setup"""
+    """Update a bow setup with change logging"""
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
     try:
-        # Use the user database method for updating
         from user_database import UserDatabase
+        from change_log_service import ChangeLogService
+        
         user_db = UserDatabase()
+        change_service = ChangeLogService()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get current setup data for change tracking
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        current_setup = cursor.fetchone()
+        
+        if not current_setup:
+            conn.close()
+            return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
+        
+        # Extract user_note from data for change logging
+        user_note = data.pop('user_note', None)
+        
+        # Update the setup using the existing method
         updated_setup = user_db.update_bow_setup(current_user['id'], setup_id, data)
         
         if not updated_setup:
-            return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
+            conn.close()
+            return jsonify({'error': 'Failed to update setup'}), 500
         
+        # Log the setup changes
+        changes_logged = []
+        trackable_fields = {
+            'name': 'Setup name',
+            'bow_type': 'Bow type', 
+            'draw_weight': 'Draw weight',
+            'bow_usage': 'Bow usage',
+            'ibo_speed': 'IBO speed',
+            'insert_weight': 'Insert weight',
+            'compound_brand': 'Compound brand',
+            'compound_model': 'Compound model',
+            'riser_brand': 'Riser brand',
+            'riser_model': 'Riser model',
+            'riser_length': 'Riser length',
+            'limb_brand': 'Limb brand',
+            'limb_model': 'Limb model', 
+            'limb_length': 'Limb length',
+            'limb_fitting': 'Limb fitting',
+            'construction': 'Construction',
+            'bow_brand': 'Bow brand',
+            'description': 'Description'
+        }
+        
+        # Track individual field changes
+        for field_key, field_name in trackable_fields.items():
+            if field_key in data:
+                old_value = str(current_setup[field_key] or '') if current_setup[field_key] is not None else ''
+                new_value = str(data[field_key] or '') if data[field_key] is not None else ''
+                
+                if old_value != new_value:
+                    change_service.log_setup_change(
+                        bow_setup_id=setup_id,
+                        user_id=current_user['id'],
+                        change_type='setup_modified',
+                        field_name=field_key,
+                        old_value=old_value,
+                        new_value=new_value,
+                        change_description=f"{field_name} changed from '{old_value}' to '{new_value}'"
+                    )
+                    changes_logged.append(field_name)
+        
+        # Log overall setup update with user note
+        if user_note or changes_logged:
+            overall_description = user_note or f"Setup configuration updated ({', '.join(changes_logged)})"
+            change_service.log_setup_change(
+                bow_setup_id=setup_id,
+                user_id=current_user['id'],
+                change_type='setup_modified',
+                field_name=None,
+                old_value=None,
+                new_value=None,
+                change_description=overall_description
+            )
+        
+        conn.close()
         return jsonify(updated_setup)
+        
     except Exception as e:
+        print(f"Error updating bow setup: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>', methods=['DELETE'])
@@ -1183,15 +1258,19 @@ def add_arrow_to_setup(current_user, setup_id):
         
         # The setup_arrows table is now created in user_database.py initialization
         
-        # Check if this exact combination already exists
-        cursor.execute('''
-            SELECT id FROM setup_arrows 
-            WHERE setup_id = ? AND arrow_id = ? AND arrow_length = ? AND point_weight = ?
-        ''', (setup_id, data['arrow_id'], data['arrow_length'], data['point_weight']))
+        # Check if this exact combination already exists (but skip check if this is a duplicate operation)
+        allow_duplicate = data.get('allow_duplicate', False)
+        existing_record = None
         
-        existing_record = cursor.fetchone()
+        if not allow_duplicate:
+            cursor.execute('''
+                SELECT id FROM setup_arrows 
+                WHERE setup_id = ? AND arrow_id = ? AND arrow_length = ? AND point_weight = ?
+            ''', (setup_id, data['arrow_id'], data['arrow_length'], data['point_weight']))
+            
+            existing_record = cursor.fetchone()
         
-        if existing_record:
+        if existing_record and not allow_duplicate:
             # Update existing record with component weights
             cursor.execute('''
                 UPDATE setup_arrows 
@@ -1231,6 +1310,27 @@ def add_arrow_to_setup(current_user, setup_id):
         
         conn.commit()
         print(f"🔍 [add_arrow_to_setup] Created arrow association with ID={arrow_association_id} for setup_id={setup_id}")
+        
+        # Log the arrow addition
+        try:
+            from change_log_service import ChangeLogService
+            change_service = ChangeLogService()
+            
+            # Create change description with arrow details
+            arrow_details = f"Length: {data['arrow_length']}\", Point: {data['point_weight']}gr"
+            change_description = f"Arrow added to setup ({arrow_details})"
+            user_note = data.get('user_note', data.get('notes', 'Arrow added to setup'))
+            
+            change_service.log_arrow_change(
+                bow_setup_id=setup_id,
+                arrow_id=data['arrow_id'],
+                user_id=current_user['id'],
+                change_type='arrow_added',
+                change_description=change_description,
+                user_note=user_note
+            )
+        except Exception as e:
+            print(f"Warning: Failed to log arrow addition: {e}")
         
         # Get arrow details from arrow database
         arrow_conn = get_arrow_db()
@@ -1471,6 +1571,26 @@ def remove_arrow_from_setup(current_user, arrow_setup_id):
         if arrow_setup['user_id'] != current_user['id']:
             return jsonify({'error': 'Access denied'}), 403
         
+        # Log the arrow removal before deletion
+        try:
+            from change_log_service import ChangeLogService
+            change_service = ChangeLogService()
+            
+            # Create change description with arrow details
+            arrow_details = f"Length: {arrow_setup['arrow_length']}\", Point: {arrow_setup['point_weight']}gr"
+            change_description = f"Arrow removed from setup ({arrow_details})"
+            
+            change_service.log_arrow_change(
+                bow_setup_id=arrow_setup['setup_id'],
+                arrow_id=arrow_setup['arrow_id'],
+                user_id=current_user['id'],
+                change_type='arrow_removed',
+                change_description=change_description,
+                user_note='Arrow removed from setup'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to log arrow removal: {e}")
+        
         # Delete the arrow setup
         cursor.execute('DELETE FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
         conn.commit()
@@ -1521,12 +1641,17 @@ def update_bow_setup_arrow(current_user, setup_id, arrow_id):
             conn.close()
         return jsonify({'error': str(e)}), 500
 
-def update_arrow_in_setup_internal(arrow_setup_id, data, conn):
+def update_arrow_in_setup_internal(arrow_setup_id, data, conn, user_id=None):
     """Internal function to update arrow setup - shared by different endpoints"""
     cursor = conn.cursor()
     
-    # Get the current arrow setup
-    cursor.execute('SELECT * FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
+    # Get the current arrow setup and bow setup info
+    cursor.execute('''
+        SELECT sa.*, bs.id as bow_setup_id
+        FROM setup_arrows sa
+        JOIN bow_setups bs ON sa.setup_id = bs.id
+        WHERE sa.id = ?
+    ''', (arrow_setup_id,))
     arrow_setup = cursor.fetchone()
     
     if not arrow_setup:
@@ -1534,27 +1659,61 @@ def update_arrow_in_setup_internal(arrow_setup_id, data, conn):
     
     # Convert sqlite3.Row to dict for easier access
     arrow_setup_dict = dict(arrow_setup) if hasattr(arrow_setup, 'keys') else arrow_setup
+    old_data = dict(arrow_setup_dict)
+    
+    # Create new data dict with updates
+    new_data = {
+        'arrow_length': data.get('arrow_length', arrow_setup_dict['arrow_length']),
+        'point_weight': data.get('point_weight', arrow_setup_dict['point_weight']),
+        'calculated_spine': data.get('calculated_spine', arrow_setup_dict['calculated_spine']),
+        'notes': data.get('notes', arrow_setup_dict['notes']),
+        'nock_weight': data.get('nock_weight', arrow_setup_dict.get('nock_weight', 10)),
+        'insert_weight': data.get('insert_weight', arrow_setup_dict.get('insert_weight', 0)),
+        'bushing_weight': data.get('bushing_weight', arrow_setup_dict.get('bushing_weight', 0)),
+        'compatibility_score': data.get('compatibility_score', arrow_setup_dict.get('compatibility_score'))
+    }
     
     # Update the arrow setup with component weights
-    # Allow spine updates when user selects different spine from same arrow's options
     cursor.execute('''
         UPDATE setup_arrows 
         SET arrow_length = ?, point_weight = ?, calculated_spine = ?, notes = ?,
             nock_weight = ?, insert_weight = ?, bushing_weight = ?, compatibility_score = ?
         WHERE id = ?
     ''', (
-        data.get('arrow_length', arrow_setup_dict['arrow_length']),
-        data.get('point_weight', arrow_setup_dict['point_weight']),
-        data.get('calculated_spine', arrow_setup_dict['calculated_spine']),
-        data.get('notes', arrow_setup_dict['notes']),
-        data.get('nock_weight', arrow_setup_dict.get('nock_weight', 10)),
-        data.get('insert_weight', arrow_setup_dict.get('insert_weight', 0)),
-        data.get('bushing_weight', arrow_setup_dict.get('bushing_weight', 0)),
-        data.get('compatibility_score', arrow_setup_dict.get('compatibility_score')),
+        new_data['arrow_length'],
+        new_data['point_weight'],
+        new_data['calculated_spine'],
+        new_data['notes'],
+        new_data['nock_weight'],
+        new_data['insert_weight'],
+        new_data['bushing_weight'],
+        new_data['compatibility_score'],
         arrow_setup_id
     ))
     
     conn.commit()
+    
+    # Log the arrow changes if user_id is provided
+    if user_id:
+        try:
+            from change_log_service import ChangeLogService
+            change_service = ChangeLogService()
+            
+            user_note = data.get('user_note', 'Arrow settings updated')
+            change_log_ids = change_service.log_arrow_field_changes(
+                bow_setup_id=arrow_setup_dict['bow_setup_id'],
+                arrow_id=arrow_setup_dict['arrow_id'],
+                user_id=user_id,
+                old_data=old_data,
+                new_data=new_data,
+                user_note=user_note
+            )
+            
+            if change_log_ids:
+                print(f"📝 Logged {len(change_log_ids)} arrow field changes")
+                
+        except Exception as e:
+            print(f"Warning: Failed to log arrow changes: {e}")
     
     # Get the updated record
     cursor.execute('SELECT * FROM setup_arrows WHERE id = ?', (arrow_setup_id,))
@@ -1612,7 +1771,7 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
             return jsonify({'error': 'Access denied'}), 403
         
         # Use the internal update function
-        result = update_arrow_in_setup_internal(arrow_setup_id, data, conn)
+        result = update_arrow_in_setup_internal(arrow_setup_id, data, conn, user_id=current_user['id'])
         conn.close()
         return result
         
@@ -3642,20 +3801,23 @@ def add_bow_equipment(current_user, setup_id):
 @app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['PUT'])
 @token_required
 def update_bow_equipment(current_user, setup_id, equipment_id):
-    """Update custom equipment configuration in a bow setup"""
+    """Update custom equipment configuration in a bow setup with change logging"""
     try:
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
         from user_database import UserDatabase
+        from change_log_service import ChangeLogService
+        
         user_db = UserDatabase()
+        change_service = ChangeLogService()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
-        # Verify the setup belongs to the current user and equipment exists
+        # Get current equipment data for change logging
         cursor.execute('''
-            SELECT be.id, be.is_custom FROM bow_equipment be
+            SELECT be.* FROM bow_equipment be
             JOIN bow_setups bs ON be.bow_setup_id = bs.id
             WHERE be.bow_setup_id = ? AND be.id = ? 
             AND bs.user_id = ? AND be.is_active = 1
@@ -3665,6 +3827,9 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
         if not bow_equipment:
             conn.close()
             return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Store old data for change logging
+        old_data = dict(bow_equipment)
         
         # Update equipment configuration
         updates = []
@@ -3703,6 +3868,19 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
                 WHERE id = ?
             ''', params)
             conn.commit()
+            
+            # Get updated data and log changes
+            cursor.execute('SELECT * FROM bow_equipment WHERE id = ?', (equipment_id,))
+            new_data = dict(cursor.fetchone())
+            
+            # Log the changes with reason if provided
+            change_reason = data.get('change_reason', 'Equipment settings updated')
+            change_log_ids = change_service.log_equipment_field_changes(
+                setup_id, equipment_id, current_user['id'],
+                old_data, new_data, change_reason
+            )
+            
+            print(f"📝 Logged {len(change_log_ids)} equipment changes for equipment {equipment_id}")
         
         # Return updated equipment
         cursor.execute('''
@@ -3750,39 +3928,292 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
 @app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['DELETE'])
 @token_required
 def remove_bow_equipment(current_user, setup_id, equipment_id):
-    """Remove equipment from a bow setup"""
+    """Soft delete equipment from a bow setup with enhanced tracking"""
     try:
         from user_database import UserDatabase
+        from change_log_service import ChangeLogService
+        
         user_db = UserDatabase()
+        change_service = ChangeLogService()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
-        # Verify the setup belongs to the current user and equipment exists
+        # Get equipment details for logging before deletion
         cursor.execute('''
-            SELECT be.id FROM bow_equipment be
+            SELECT be.*, bs.user_id 
+            FROM bow_equipment be
             JOIN bow_setups bs ON be.bow_setup_id = bs.id
             WHERE be.bow_setup_id = ? AND be.id = ? 
             AND bs.user_id = ? AND be.is_active = 1
         ''', (setup_id, equipment_id, current_user['id']))
         
-        bow_equipment = cursor.fetchone()
-        if not bow_equipment:
+        equipment = cursor.fetchone()
+        if not equipment:
             conn.close()
             return jsonify({'error': 'Equipment not found or access denied'}), 404
         
-        # Mark equipment as inactive (soft delete)
+        # Enhanced soft delete with tracking
         cursor.execute('''
-            UPDATE bow_equipment SET is_active = 0
+            UPDATE bow_equipment 
+            SET is_active = 0, 
+                deleted_at = CURRENT_TIMESTAMP,
+                deleted_by = ?
             WHERE id = ?
-        ''', (bow_equipment['id'],))
+        ''', (current_user['id'], equipment['id']))
+        
+        # Log the equipment removal
+        equipment_name = f"{equipment['manufacturer_name'] or 'Unknown'} {equipment['model_name'] or 'Equipment'}"
+        category = equipment['category_name'] or 'Equipment'
+        
+        change_service.log_equipment_change(
+            bow_setup_id=setup_id,
+            equipment_id=equipment['id'],
+            user_id=current_user['id'],
+            change_type='remove',
+            field_name=None,
+            old_value=None,
+            new_value=None,
+            change_description=f"Removed {category}: {equipment_name}",
+            change_reason=f"Equipment marked as deleted (can be restored)"
+        )
         
         conn.commit()
         conn.close()
-        return jsonify({'message': 'Equipment removed successfully'}), 200
+        
+        return jsonify({
+            'message': 'Equipment removed successfully',
+            'equipment_name': equipment_name,
+            'can_restore': True,
+            'deleted_at': 'now'
+        }), 200
         
     except Exception as e:
         print(f"Error removing bow equipment: {e}")
         return jsonify({'error': 'Failed to remove equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>/restore', methods=['POST'])
+@token_required
+def restore_bow_equipment(current_user, setup_id, equipment_id):
+    """Restore previously deleted equipment to a bow setup"""
+    try:
+        from user_database import UserDatabase
+        from change_log_service import ChangeLogService
+        
+        user_db = UserDatabase()
+        change_service = ChangeLogService()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get deleted equipment details
+        cursor.execute('''
+            SELECT be.*, bs.user_id 
+            FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.bow_setup_id = ? AND be.id = ? 
+            AND bs.user_id = ? AND be.is_active = 0
+        ''', (setup_id, equipment_id, current_user['id']))
+        
+        equipment = cursor.fetchone()
+        if not equipment:
+            conn.close()
+            return jsonify({'error': 'Deleted equipment not found or access denied'}), 404
+        
+        # Restore equipment (soft undelete)
+        cursor.execute('''
+            UPDATE bow_equipment 
+            SET is_active = 1, 
+                deleted_at = NULL,
+                deleted_by = NULL
+            WHERE id = ?
+        ''', (equipment['id'],))
+        
+        # Log the equipment restoration
+        equipment_name = f"{equipment['manufacturer_name'] or 'Unknown'} {equipment['model_name'] or 'Equipment'}"
+        category = equipment['category_name'] or 'Equipment'
+        
+        change_service.log_equipment_change(
+            bow_setup_id=setup_id,
+            equipment_id=equipment['id'],
+            user_id=current_user['id'],
+            change_type='add',  # Restoration counts as re-adding
+            field_name=None,
+            old_value=None,
+            new_value=None,
+            change_description=f"Restored {category}: {equipment_name}",
+            change_reason=f"Equipment restored from deleted state"
+        )
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Equipment restored successfully',
+            'equipment_name': equipment_name,
+            'restored_at': 'now'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error restoring bow equipment: {e}")
+        return jsonify({'error': 'Failed to restore equipment'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment/deleted', methods=['GET'])
+@token_required
+def get_deleted_equipment(current_user, setup_id):
+    """Get list of deleted equipment for a bow setup that can be restored"""
+    try:
+        from user_database import UserDatabase
+        
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify setup belongs to user
+        cursor.execute("SELECT id FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+        
+        # Get deleted equipment
+        cursor.execute('''
+            SELECT be.*, u.email as deleted_by_email
+            FROM bow_equipment be
+            LEFT JOIN users u ON be.deleted_by = u.id
+            WHERE be.bow_setup_id = ? AND be.is_active = 0
+            ORDER BY be.deleted_at DESC
+        ''', (setup_id,))
+        
+        deleted_equipment = []
+        for row in cursor.fetchall():
+            equipment = dict(row)
+            # Format timestamps
+            if equipment['deleted_at']:
+                from datetime import datetime
+                try:
+                    equipment['deleted_at'] = datetime.fromisoformat(equipment['deleted_at']).isoformat()
+                except:
+                    pass
+            deleted_equipment.append(equipment)
+        
+        conn.close()
+        
+        return jsonify({
+            'deleted_equipment': deleted_equipment,
+            'count': len(deleted_equipment)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting deleted equipment: {e}")
+        return jsonify({'error': 'Failed to get deleted equipment'}), 500
+
+# ===== CHANGE LOG API ENDPOINTS =====
+
+@app.route('/api/bow-setups/<int:setup_id>/change-log', methods=['GET'])
+@token_required
+def get_setup_change_log(current_user, setup_id):
+    """Get change history for a bow setup"""
+    try:
+        from change_log_service import ChangeLogService
+        
+        # Get query parameters
+        limit = request.args.get('limit', 50, type=int)
+        days_back = request.args.get('days_back', type=int)
+        
+        change_service = ChangeLogService()
+        changes = change_service.get_setup_change_history(
+            setup_id, current_user['id'], limit, days_back
+        )
+        
+        # Format timestamps for JSON serialization (ensure UTC timezone)
+        from datetime import timezone
+        for change in changes:
+            # SQLite CURRENT_TIMESTAMP is UTC but creates naive datetime objects
+            # Mark as UTC before serialization to ensure proper timezone handling
+            if change['created_at'].tzinfo is None:
+                change['created_at'] = change['created_at'].replace(tzinfo=timezone.utc)
+            change['created_at'] = change['created_at'].isoformat()
+        
+        return jsonify({'changes': changes}), 200
+        
+    except Exception as e:
+        print(f"Error getting setup change log: {e}")
+        return jsonify({'error': 'Failed to get change log'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>/change-log', methods=['GET'])
+@token_required  
+def get_equipment_change_log(current_user, setup_id, equipment_id):
+    """Get change history for specific equipment"""
+    try:
+        from change_log_service import ChangeLogService
+        
+        limit = request.args.get('limit', 20, type=int)
+        
+        change_service = ChangeLogService()
+        changes = change_service.get_equipment_change_history(
+            equipment_id, current_user['id'], limit
+        )
+        
+        # Format timestamps for JSON serialization (ensure UTC timezone)
+        from datetime import timezone
+        for change in changes:
+            # SQLite CURRENT_TIMESTAMP is UTC but creates naive datetime objects
+            # Mark as UTC before serialization to ensure proper timezone handling
+            if change['created_at'].tzinfo is None:
+                change['created_at'] = change['created_at'].replace(tzinfo=timezone.utc)
+            change['created_at'] = change['created_at'].isoformat()
+        
+        return jsonify({'changes': changes}), 200
+        
+    except Exception as e:
+        print(f"Error getting equipment change log: {e}")
+        return jsonify({'error': 'Failed to get equipment change log'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/change-log/stats', methods=['GET'])
+@token_required
+def get_setup_change_stats(current_user, setup_id):
+    """Get change statistics for a bow setup"""
+    try:
+        from change_log_service import ChangeLogService
+        
+        change_service = ChangeLogService()
+        stats = change_service.get_change_statistics(setup_id, current_user['id'])
+        
+        return jsonify(stats), 200
+        
+    except Exception as e:
+        print(f"Error getting change statistics: {e}")
+        return jsonify({'error': 'Failed to get change statistics'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/change-log/add-note', methods=['POST'])
+@token_required
+def add_manual_change_note(current_user, setup_id):
+    """Add a manual change note for a bow setup"""
+    try:
+        data = request.get_json()
+        if not data or not data.get('description'):
+            return jsonify({'error': 'Change description is required'}), 400
+        
+        from change_log_service import ChangeLogService
+        
+        change_service = ChangeLogService()
+        
+        # If equipment_id is provided, log as equipment change, otherwise as setup change
+        if data.get('equipment_id'):
+            change_log_id = change_service.log_equipment_change(
+                setup_id, data['equipment_id'], current_user['id'],
+                'modify', None, None, None,
+                data['description'], data.get('reason', 'Manual note')
+            )
+        else:
+            change_log_id = change_service.log_setup_change(
+                setup_id, current_user['id'], 'setup_modified',
+                None, None, None, data['description']
+            )
+        
+        return jsonify({'id': change_log_id, 'message': 'Change note added successfully'}), 201
+        
+    except Exception as e:
+        print(f"Error adding manual change note: {e}")
+        return jsonify({'error': 'Failed to add change note'}), 500
 
 # ===== GUIDE WALKTHROUGH API ENDPOINTS =====
 
@@ -7587,6 +8018,65 @@ def get_calculation_notes(bow_config, manufacturer_recommendation):
         notes.append("Wood arrow spine measured in pounds (traditional system)")
     
     return notes
+
+@app.route('/api/bow-setups/<int:setup_id>/change-log', methods=['GET'])
+@token_required
+def get_bow_setup_change_history(current_user, setup_id):
+    """Get unified change history for a bow setup (arrows + equipment + setup)"""
+    try:
+        from change_log_service import ChangeLogService
+        change_service = ChangeLogService()
+        
+        # Get query parameters
+        limit = request.args.get('limit', 50, type=int)
+        days_back = request.args.get('days_back', type=int)
+        
+        # Get unified change history
+        changes = change_service.get_unified_change_history(
+            bow_setup_id=setup_id,
+            user_id=current_user['id'],
+            limit=limit,
+            days_back=days_back
+        )
+        
+        # Format timestamps for JSON response (ensure UTC timezone)
+        from datetime import timezone
+        for change in changes:
+            if hasattr(change['created_at'], 'isoformat'):
+                # SQLite CURRENT_TIMESTAMP is UTC but creates naive datetime objects
+                # Mark as UTC before serialization to ensure proper timezone handling
+                if change['created_at'].tzinfo is None:
+                    change['created_at'] = change['created_at'].replace(tzinfo=timezone.utc)
+                change['created_at'] = change['created_at'].isoformat()
+        
+        return jsonify({
+            'changes': changes,
+            'total_count': len(changes)
+        })
+        
+    except Exception as e:
+        print(f"Error getting change history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/change-log/statistics', methods=['GET'])
+@token_required
+def get_bow_setup_change_statistics(current_user, setup_id):
+    """Get change statistics for a bow setup"""
+    try:
+        from change_log_service import ChangeLogService
+        change_service = ChangeLogService()
+        
+        # Get change statistics
+        stats = change_service.get_change_statistics(
+            bow_setup_id=setup_id,
+            user_id=current_user['id']
+        )
+        
+        return jsonify(stats)
+        
+    except Exception as e:
+        print(f"Error getting change statistics: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # Run the app
 if __name__ == '__main__':

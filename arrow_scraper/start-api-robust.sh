@@ -86,22 +86,42 @@ print('✅ User database initialized successfully')
 
 # Function to run database migrations
 run_migrations() {
-    echo "📦 Running database migrations..."
+    echo "📦 Running comprehensive database migrations..."
     
-    # Check for migration runner
+    # Set environment variables for migration system
+    export ARROW_DATABASE_PATH="/app/databases/arrow_database.db"
+    export USER_DATABASE_PATH="/app/databases/user_data.db"
+    
+    # First try the comprehensive migration runner (preferred)
+    if [ -f "/app/comprehensive-migration-runner.sh" ]; then
+        echo "🎯 Using comprehensive migration runner..."
+        chmod +x /app/comprehensive-migration-runner.sh
+        if /app/comprehensive-migration-runner.sh docker; then
+            echo "✅ Comprehensive migrations completed successfully"
+            return 0
+        else
+            echo "⚠️  Comprehensive migrations failed, trying fallback..."
+        fi
+    fi
+    
+    # Fallback: Check for standard migration runner
     if [ -f "/app/run_migrations.py" ]; then
-        echo "🔄 Running comprehensive migration script..."
+        echo "🔄 Using standard migration script..."
         python3 /app/run_migrations.py
     else
-        echo "⚠️  Migration runner not found, running individual migrations..."
+        echo "⚠️  Standard migration runner not found, running legacy migrations..."
         
-        # Run individual migrations
+        # Legacy fallback: Run individual migrations
         local migrations=(
             "migrate_remove_arrow_fields.py"
             "migrate_add_bow_info_fields.py" 
             "migrate_add_compound_model.py"
             "migrate_diameter_categories.py"
             "migrations/012_fix_pending_manufacturers_schema.py"
+            "migrations/013_equipment_change_logging.py"
+            "migrations/014_arrow_change_logging.py"
+            "migrations/015_remove_setup_arrows_unique_constraint.py"
+            "migrations/016_equipment_soft_delete_enhancement.py"
         )
         
         for migration in "${migrations[@]}"; do

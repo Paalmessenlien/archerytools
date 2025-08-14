@@ -31,9 +31,9 @@ npm cache clean --force
 echo "📦 Installing dependencies with legacy peer deps..."
 npm install --legacy-peer-deps
 
-# Test that it works
-echo "🧪 Testing Nuxt prepare..."
-if npm run prepare; then
+# Test that it works (postinstall already ran nuxt prepare)
+echo "🧪 Checking if Nuxt preparation was successful..."
+if [ -d ".nuxt" ] && [ -f ".nuxt/nuxt.d.ts" ]; then
     echo "✅ Local frontend setup completed successfully!"
     echo ""
     echo "📋 Next steps:"
@@ -42,11 +42,13 @@ if npm run prepare; then
     echo ""
     echo "💡 This approach uses host-built node_modules to avoid container native binding issues"
 else
-    echo "❌ Nuxt prepare failed even on host system"
+    echo "❌ Nuxt preparation failed on host system"
+    echo "Missing .nuxt directory or TypeScript definitions"
     echo ""
     echo "🔧 Troubleshooting options:"
     echo "1. Try different Node.js version (nvm use 16 or nvm use 20)"
     echo "2. Check for global package conflicts"
     echo "3. Try: npm install --force"
+    echo "4. Manual fix: npm run postinstall"
     exit 1
 fi
