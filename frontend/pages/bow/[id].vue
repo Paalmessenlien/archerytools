@@ -529,7 +529,8 @@ const duplicateArrow = async (arrowSetup) => {
       nock_weight: arrowSetup.nock_weight || 10,
       insert_weight: arrowSetup.insert_weight || 0,
       bushing_weight: arrowSetup.bushing_weight || 0,
-      notes: `Duplicate of ${arrowSetup.arrow?.manufacturer || 'Unknown'} ${arrowSetup.arrow?.model_name || 'Arrow'}`
+      notes: `Duplicate of ${arrowSetup.arrow?.manufacturer || 'Unknown'} ${arrowSetup.arrow?.model_name || 'Arrow'}`,
+      allow_duplicate: true  // Allow creating duplicate even with same specs
     };
     
     console.log('🚀 Making API call to duplicate arrow:', arrowSetup.arrow?.manufacturer, arrowSetup.arrow?.model_name);
@@ -560,26 +561,13 @@ const duplicateArrow = async (arrowSetup) => {
   } catch (err) {
     console.error('❌ Error duplicating arrow:', err);
     
-    // Handle specific error cases - check multiple ways to detect different errors
-    const is401Error = err.message && (err.message.includes('401') || err.message.includes('Token is missing'))
-    const is403Error = err.message && err.message.includes('403')
-    const is404Error = err.message && err.message.includes('404')
-    const is409Error = (
-      (err.message && err.message.includes('409')) ||
-      (err.response && err.response.status === 409) ||
-      (err.status === 409) ||
-      (err.message && err.message.includes('already exists'))
-    )
-    
-    if (is401Error) {
+    // Handle specific error cases
+    if (err.message && (err.message.includes('401') || err.message.includes('Token is missing'))) {
       notifyError('Please log in to duplicate arrows. The duplicate function requires authentication.');
-    } else if (is403Error) {
+    } else if (err.message && err.message.includes('403')) {
       notifyError('You do not have permission to duplicate arrows in this bow setup.');  
-    } else if (is404Error) {
+    } else if (err.message && err.message.includes('404')) {
       notifyError('Bow setup or arrow not found. Please refresh the page and try again.');
-    } else if (is409Error) {
-      // Arrow already exists - show success message instead of error
-      notifySuccess('This arrow configuration already exists in your bow setup.');
     } else {
       notifyError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
     }

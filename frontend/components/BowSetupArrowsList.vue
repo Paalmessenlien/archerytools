@@ -293,6 +293,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { useRouter } from 'vue-router'
 
+// Composables
+const { notifySuccess, notifyError } = useNotifications()
+
 // Props
 const props = defineProps({
   arrows: {
@@ -495,6 +498,7 @@ const duplicateArrow = async (arrowSetup) => {
       insert_weight: arrowSetup.insert_weight || 0,
       bushing_weight: arrowSetup.bushing_weight || 0,
       fletching_weight: arrowSetup.fletching_weight || 15,
+      compatibility_score: arrowSetup.compatibility_score,
       user_note: 'Arrow duplicated',
       allow_duplicate: true  // Allow creating duplicate even with same specs
     }
@@ -505,31 +509,7 @@ const duplicateArrow = async (arrowSetup) => {
   } catch (error) {
     console.error('Error duplicating arrow:', error)
     
-    // Handle specific error cases - check multiple ways to detect 409 errors
-    const is409Error = (
-      (error.message && error.message.includes('409')) ||
-      (error.response && error.response.status === 409) ||
-      (error.status === 409) ||
-      (error.message && error.message.includes('already exists'))
-    )
-    
-    if (is409Error) {
-      // Arrow already exists - this is not actually an error, just inform the user
-      console.log('✅ Arrow configuration already exists, showing success message to user')
-      
-      // Try to show a success notification if the notification composable is available
-      try {
-        const { notifySuccess } = useNotifications()
-        notifySuccess('This arrow configuration already exists in your bow setup.')
-      } catch (notifyError) {
-        // If notifications aren't available, just log
-        console.log('✅ Arrow already exists - notifications not available')
-      }
-      
-      return // Don't emit to parent, we handled this successfully
-    }
-    
-    // For other errors, fall back to parent handling
+    // For errors, fall back to parent handling
     emit('duplicate-arrow', arrowSetup)
   }
 }
