@@ -6,16 +6,31 @@
         <i class="fas fa-bullseye mr-2 text-blue-600"></i>
         Saved Arrows ({{ arrows.length }})
       </h4>
-      <CustomButton
-        v-if="arrows.length > 0"
-        @click="toggleExpanded"
-        variant="text"
-        size="small"
-        class="text-gray-600 dark:text-gray-400"
-      >
-        <i class="fas transition-transform" :class="isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        {{ isExpanded ? 'Collapse' : 'Expand' }}
-      </CustomButton>
+      
+      <div class="flex items-center space-x-2">
+        <!-- Add Arrow Button -->
+        <CustomButton
+          @click="navigateToCalculator"
+          variant="filled"
+          size="small"
+          class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+        >
+          <i class="fas fa-plus mr-1"></i>
+          <span class="hidden sm:inline">Add Arrow</span>
+        </CustomButton>
+        
+        <!-- Expand/Collapse Button -->
+        <CustomButton
+          v-if="arrows.length > 0"
+          @click="toggleExpanded"
+          variant="text"
+          size="small"
+          class="text-gray-600 dark:text-gray-400"
+        >
+          <i class="fas transition-transform" :class="isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          {{ isExpanded ? 'Collapse' : 'Expand' }}
+        </CustomButton>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -32,9 +47,22 @@
     </div>
 
     <!-- No Arrows State -->
-    <div v-else-if="arrows.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-3 text-center">
-      <i class="fas fa-search-minus text-lg mb-2 block"></i>
-      No arrows added to this bow setup yet.
+    <div v-else-if="arrows.length === 0" class="text-center py-8">
+      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-bullseye text-2xl text-gray-400"></i>
+      </div>
+      <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Arrows Added Yet</h4>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">
+        Get started by adding arrows to your bow setup using the arrow calculator.
+      </p>
+      <CustomButton
+        @click="navigateToCalculator"
+        variant="filled"
+        class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+      >
+        <i class="fas fa-plus mr-2"></i>
+        Add Your First Arrow
+      </CustomButton>
     </div>
 
     <!-- Arrows List -->
@@ -48,12 +76,19 @@
           <div class="flex-1 min-w-0">
             <!-- Arrow Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-3">
-              <h5 class="font-medium text-gray-900 dark:text-gray-100">
-                {{ arrowSetup.arrow?.manufacturer || 'Unknown Manufacturer' }}
-              </h5>
+              <div class="flex items-center space-x-2">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100">
+                  {{ arrowSetup.arrow?.manufacturer || 'Unknown Manufacturer' }}
+                </h5>
+                <!-- Orphaned Arrow Warning -->
+                <span v-if="!arrowSetup.arrow" class="px-2 py-1 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 rounded-full">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  Orphaned
+                </span>
+              </div>
               <span class="hidden sm:inline text-gray-400">•</span>
               <span class="text-sm text-gray-700 dark:text-gray-300">
-                {{ arrowSetup.arrow?.model_name || 'Unknown Model' }}
+                {{ arrowSetup.arrow?.model_name || `Arrow ID: ${arrowSetup.arrow_id}` }}
               </span>
             </div>
             
@@ -78,7 +113,18 @@
                 
                 <div class="flex items-center space-x-2 col-span-2 sm:col-span-1">
                   <i class="fas fa-layer-group text-amber-600 dark:text-amber-400"></i>
-                  <span class="text-gray-700 dark:text-gray-300">Material: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow?.material || 'N/A' }}</span></span>
+                  <span class="text-gray-700 dark:text-gray-300">Material: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow?.material || 'Unknown Material' }}</span></span>
+                </div>
+                
+                <!-- Orphaned Arrow Warning -->
+                <div v-if="!arrowSetup.arrow" class="col-span-full mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded text-sm">
+                  <div class="flex items-start space-x-2">
+                    <i class="fas fa-info-circle text-orange-600 dark:text-orange-400 mt-0.5"></i>
+                    <div class="text-orange-800 dark:text-orange-200">
+                      <strong>Orphaned Arrow:</strong> This arrow configuration references Arrow ID {{ arrowSetup.arrow_id }} which no longer exists in the database. 
+                      This can happen when arrow data is updated or removed. You can safely delete this configuration.
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -134,42 +180,61 @@
               
               <!-- Actions -->
               <div class="flex space-x-1 sm:space-x-2 overflow-x-auto">
-                <CustomButton
-                  @click="editArrow(arrowSetup)"
-                  variant="outlined"
-                  size="small"
-                  class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400 whitespace-nowrap"
-                >
-                  <i class="fas fa-edit mr-1"></i>
-                  <span class="hidden sm:inline">Edit</span>
-                </CustomButton>
-                <CustomButton
-                  @click="duplicateArrow(arrowSetup)"
-                  variant="outlined"
-                  size="small"
-                  class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 whitespace-nowrap"
-                >
-                  <i class="fas fa-copy mr-1"></i>
-                  <span class="hidden sm:inline">Duplicate</span>
-                </CustomButton>
-                <CustomButton
-                  @click="viewArrowDetails(arrowSetup.arrow_id)"
-                  variant="outlined"
-                  size="small"
-                  class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 whitespace-nowrap"
-                >
-                  <i class="fas fa-info-circle mr-1"></i>
-                  <span class="hidden sm:inline">Details</span>
-                </CustomButton>
-                <CustomButton
-                  @click="removeArrow(arrowSetup.id)"
-                  variant="outlined"
-                  size="small"
-                  class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 whitespace-nowrap"
-                >
-                  <i class="fas fa-trash mr-1"></i>
-                  <span class="hidden sm:inline">Remove</span>
-                </CustomButton>
+                <!-- For orphaned arrows, emphasize the delete button and disable others -->
+                <template v-if="!arrowSetup.arrow">
+                  <CustomButton
+                    @click="removeArrow(arrowSetup.id)"
+                    variant="filled"
+                    size="small"
+                    class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 whitespace-nowrap"
+                  >
+                    <i class="fas fa-trash mr-1"></i>
+                    <span class="hidden sm:inline">Delete Orphaned</span>
+                  </CustomButton>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 self-center px-2">
+                    Other actions disabled for orphaned arrows
+                  </span>
+                </template>
+                
+                <!-- For normal arrows, show all actions -->
+                <template v-else>
+                  <CustomButton
+                    @click="editArrow(arrowSetup)"
+                    variant="outlined"
+                    size="small"
+                    class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400 whitespace-nowrap"
+                  >
+                    <i class="fas fa-edit mr-1"></i>
+                    <span class="hidden sm:inline">Edit</span>
+                  </CustomButton>
+                  <CustomButton
+                    @click="duplicateArrow(arrowSetup)"
+                    variant="outlined"
+                    size="small"
+                    class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 whitespace-nowrap"
+                  >
+                    <i class="fas fa-copy mr-1"></i>
+                    <span class="hidden sm:inline">Duplicate</span>
+                  </CustomButton>
+                  <CustomButton
+                    @click="viewArrowDetails(arrowSetup.arrow_id)"
+                    variant="outlined"
+                    size="small"
+                    class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 whitespace-nowrap"
+                  >
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <span class="hidden sm:inline">Details</span>
+                  </CustomButton>
+                  <CustomButton
+                    @click="removeArrow(arrowSetup.id)"
+                    variant="outlined"
+                    size="small"
+                    class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 whitespace-nowrap"
+                  >
+                    <i class="fas fa-trash mr-1"></i>
+                    <span class="hidden sm:inline">Remove</span>
+                  </CustomButton>
+                </template>
               </div>
             </div>
             
@@ -224,13 +289,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useApi } from '~/composables/useApi'
+import { useRouter } from 'vue-router'
 
 // Props
 const props = defineProps({
   arrows: {
     type: Array,
     default: () => []
+  },
+  bowSetup: {
+    type: Object,
+    default: null
+  },
+  expanded: {
+    type: Boolean,
+    default: false
   },
   loading: {
     type: Boolean,
@@ -239,19 +314,61 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow', 'duplicate-arrow'])
+const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow', 'duplicate-arrow', 'arrow-updated'])
+
+// Composables
+const api = useApi()
+const router = useRouter()
 
 // State
-const isExpanded = ref(false)
+const isExpanded = ref(props.expanded)
+const internalArrows = ref([])
+const internalLoading = ref(false)
 
 // Computed
 const displayedArrows = computed(() => {
-  return props.arrows
+  // Use arrows prop if provided, otherwise use internally loaded arrows
+  return props.arrows.length > 0 ? props.arrows : internalArrows.value
 })
 
+const arrows = computed(() => displayedArrows.value)
+
+const loading = computed(() => props.loading || internalLoading.value)
+
 // Methods
+const loadArrows = async () => {
+  if (!props.bowSetup?.id) return
+  
+  try {
+    internalLoading.value = true
+    const response = await api.get(`/bow-setups/${props.bowSetup.id}/arrows`)
+    internalArrows.value = response.arrows || []
+  } catch (error) {
+    console.error('Error loading arrows:', error)
+    internalArrows.value = []
+  } finally {
+    internalLoading.value = false
+  }
+}
+
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value
+}
+
+const navigateToCalculator = () => {
+  // Navigate to calculator with setup context for easier arrow addition
+  if (props.bowSetup?.id) {
+    router.push({
+      path: '/calculator',
+      query: {
+        setupId: props.bowSetup.id,
+        returnUrl: `/setups/${props.bowSetup.id}?tab=arrows`
+      }
+    })
+  } else {
+    // Fallback to basic calculator
+    router.push('/calculator')
+  }
 }
 
 const getCompatibilityClass = (score: number) => {
@@ -338,19 +455,58 @@ const viewArrowDetails = (arrowId: number) => {
   emit('view-details', arrowId)
 }
 
-const removeArrow = (arrowSetupId: number) => {
-  emit('remove-arrow', arrowSetupId)
+const removeArrow = async (arrowSetupId: number) => {
+  if (!props.bowSetup?.id) {
+    emit('remove-arrow', arrowSetupId)
+    return
+  }
+  
+  try {
+    await api.delete(`/setup-arrows/${arrowSetupId}`)
+    await loadArrows() // Reload arrows after removal
+    emit('arrow-updated') // Notify parent
+  } catch (error) {
+    console.error('Error removing arrow:', error)
+    // Could emit an error event here
+  }
 }
 
-const editArrow = (arrowSetup) => {
-  console.log('Edit arrow clicked:', arrowSetup)
+const editArrow = async (arrowSetup) => {
+  // For now, emit to parent component to handle editing modal
+  // In the future, this could be handled inline or with a modal
   emit('edit-arrow', arrowSetup)
 }
 
-const duplicateArrow = (arrowSetup) => {
-  console.log('🖱️ Duplicate button clicked in BowSetupArrowsList:', arrowSetup)
-  console.log('🚀 Emitting duplicate-arrow event to parent component')
-  emit('duplicate-arrow', arrowSetup)
+const duplicateArrow = async (arrowSetup) => {
+  if (!props.bowSetup?.id || !arrowSetup.arrow_id) {
+    emit('duplicate-arrow', arrowSetup)
+    return
+  }
+  
+  try {
+    // Create a copy of the arrow setup with the same configuration
+    const duplicateData = {
+      arrow_id: arrowSetup.arrow_id,
+      arrow_length: arrowSetup.arrow_length || 32,
+      point_weight: arrowSetup.point_weight || 100,
+      calculated_spine: arrowSetup.calculated_spine,
+      notes: getSmartCopyNote(arrowSetup.notes),
+      nock_weight: arrowSetup.nock_weight || 10,
+      insert_weight: arrowSetup.insert_weight || 0,
+      bushing_weight: arrowSetup.bushing_weight || 0,
+      fletching_weight: arrowSetup.fletching_weight || 15,
+      user_note: 'Arrow duplicated',
+      allow_duplicate: true  // Allow creating duplicate even with same specs
+    }
+    
+    await api.post(`/bow-setups/${props.bowSetup.id}/arrows`, duplicateData)
+    await loadArrows() // Reload arrows after duplication
+    emit('arrow-updated') // Notify parent
+  } catch (error) {
+    console.error('Error duplicating arrow:', error)
+    // Fallback to parent handling
+    emit('duplicate-arrow', arrowSetup)
+  }
 }
 
 // Get display spine value - try calculated_spine first, then fall back to arrow specifications
@@ -368,6 +524,43 @@ const getDisplaySpine = (arrowSetup: any) => {
   
   return 'N/A'
 }
+
+// Smart copy note generation - avoid nested "Copy of:" prefixes
+const getSmartCopyNote = (originalNote: string) => {
+  if (!originalNote) {
+    return 'Duplicated arrow'
+  }
+  
+  // If it already starts with "Copy of:", just increment or make it "Another copy of:"
+  if (originalNote.startsWith('Copy of:')) {
+    // Remove the "Copy of: " prefix to get the base note
+    const baseNote = originalNote.substring(9).trim()
+    return `Another copy of: ${baseNote}`
+  }
+  
+  // For new copies, add the "Copy of:" prefix
+  return `Copy of: ${originalNote}`
+}
+
+// Lifecycle
+onMounted(() => {
+  if (props.bowSetup?.id) {
+    loadArrows()
+  }
+})
+
+// Watch for bowSetup changes
+watch(() => props.bowSetup?.id, (newId) => {
+  if (newId) {
+    loadArrows()
+  }
+})
+
+// Expose methods to parent component
+defineExpose({
+  loadArrows,
+  refresh: loadArrows
+})
 </script>
 
 <style scoped>

@@ -109,6 +109,24 @@
               </span>
             </label>
           </div>
+
+          <!-- Change Reason -->
+          <div>
+            <label for="changeReason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Reason for Change
+              <span class="text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              id="changeReason"
+              v-model="formData.change_reason"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+              placeholder="e.g., Improved accuracy, Changed shooting style, Equipment upgrade..."
+            />
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              This will be logged in your change history to help track modifications.
+            </p>
+          </div>
         </form>
       </div>
 
@@ -159,7 +177,8 @@ const emit = defineEmits(['save', 'close'])
 const saving = ref(false)
 const formData = ref({
   installation_notes: '',
-  is_active: true
+  is_active: true,
+  change_reason: ''
 })
 const customSpecs = ref([])
 
@@ -228,7 +247,8 @@ const handleSave = async () => {
       id: props.equipment.id,
       installation_notes: formData.value.installation_notes,
       custom_specifications: customSpecsObject,
-      is_active: formData.value.is_active
+      is_active: formData.value.is_active,
+      change_reason: formData.value.change_reason
     }
 
     emit('save', updatedEquipment)

@@ -3,12 +3,12 @@
     <!-- Equipment Category Selection -->
     <div class="mb-6">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        <i class="fas fa-plus-circle mr-2 text-green-600 dark:text-green-400"></i>
-        Add Equipment
+        <i :class="isEditing ? 'fas fa-edit mr-2 text-blue-600 dark:text-blue-400' : 'fas fa-plus-circle mr-2 text-green-600 dark:text-green-400'"></i>
+        {{ isEditing ? 'Edit Equipment' : 'Add Equipment' }}
       </h3>
       
       <!-- Category Tabs -->
-      <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+      <div v-if="!isEditing" class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
           v-for="category in categories"
           :key="category.name"
@@ -23,6 +23,15 @@
           <i :class="category.icon" class="mr-2"></i>
           {{ category.name }}
         </button>
+      </div>
+      
+      <!-- Category Display for Editing Mode -->
+      <div v-else class="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center">
+          <i :class="getCategoryIcon(selectedCategory)" class="mr-2 text-lg text-blue-600 dark:text-blue-400"></i>
+          <span class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ selectedCategory }}</span>
+          <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">(Category)</span>
+        </div>
       </div>
     </div>
 
@@ -239,6 +248,25 @@
         </div>
       </div>
 
+      <!-- Change Notes (for editing mode) -->
+      <div v-if="isEditing" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+        <label for="changeNotes" class="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+          <i class="fas fa-sticky-note mr-2"></i>
+          Change Description
+          <span class="text-blue-600 dark:text-blue-400 font-normal">(optional)</span>
+        </label>
+        <textarea
+          id="changeNotes"
+          v-model="formData.change_notes"
+          rows="3"
+          class="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-100"
+          placeholder="Describe what you changed and why (e.g., 'Updated sight pins for better accuracy at 30 yards')"
+        ></textarea>
+        <p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+          This note will be logged in your equipment change history to help track modifications.
+        </p>
+      </div>
+
       <!-- Form Actions -->
       <div class="flex justify-end space-x-3 pt-4">
         <CustomButton @click="$emit('cancel')" variant="outlined">
@@ -248,15 +276,17 @@
           type="submit" 
           variant="filled"
           :disabled="!isFormValid || submitting"
-          class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+          :class="isEditing 
+            ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700'
+            : 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700'"
         >
           <span v-if="submitting">
             <i class="fas fa-spinner fa-spin mr-2"></i>
-            Adding...
+            {{ isEditing ? 'Updating...' : 'Adding...' }}
           </span>
           <span v-else>
-            <i class="fas fa-plus mr-2"></i>
-            Add Equipment
+            <i :class="isEditing ? 'fas fa-save mr-2' : 'fas fa-plus mr-2'"></i>
+            {{ isEditing ? 'Save Changes' : 'Add Equipment' }}
           </span>
         </CustomButton>
       </div>
@@ -272,10 +302,18 @@ const props = defineProps({
   bowSetup: {
     type: Object,
     required: true
+  },
+  initialEquipment: {
+    type: Object,
+    default: null
+  },
+  isEditing: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['equipment-added', 'cancel'])
+const emit = defineEmits(['equipment-added', 'equipment-updated', 'cancel'])
 
 // Composables
 const api = useApi()
@@ -307,6 +345,7 @@ const formData = ref({
   category_name: 'String',
   description: '',
   installation_notes: '',
+  change_notes: '',
   specifications: {}
 })
 
@@ -341,21 +380,49 @@ const isFormValid = computed(() => {
 const loadFormSchema = async (category) => {
   try {
     loading.value = true
+    
     const response = await api.get(`/equipment/form-schema/${category}`)
     formSchema.value = response
     
-    // Reset specifications when category changes
-    formData.value.specifications = {}
+    
+    // Only reset specifications when not in editing mode or when category actually changes
+    const isInitialLoad = !formData.value.category_name
+    const categoryChanged = formData.value.category_name && formData.value.category_name !== category
+    
+    if (!props.isEditing || categoryChanged) {
+      // Reset specifications when category changes (but not during initial editing setup)
+      formData.value.specifications = {}
+    }
+    // In editing mode, preserve existing specifications that were set in initializeForEditing
+    
     formData.value.category_name = category
     
-    // Initialize multi-select fields as arrays
+    // Initialize multi-select fields as arrays if they don't exist
     if (response.fields) {
       response.fields.forEach(field => {
         if (field.type === 'multi-select') {
-          formData.value.specifications[field.name] = []
+          if (!formData.value.specifications[field.name]) {
+            formData.value.specifications[field.name] = []
+          } else {
+            // Ensure existing multi-select values are arrays
+            let existingValue = formData.value.specifications[field.name]
+            if (!Array.isArray(existingValue)) {
+              if (typeof existingValue === 'string' && existingValue.length > 0) {
+                formData.value.specifications[field.name] = existingValue.split(',').map(v => v.trim()).filter(v => v)
+              } else {
+                formData.value.specifications[field.name] = existingValue ? [existingValue] : []
+              }
+            }
+          }
         }
       })
     }
+    
+    // Re-initialize editing data after schema is loaded (for proper field initialization)
+    if (props.isEditing && props.initialEquipment && isInitialLoad) {
+      await initializeEditingSpecifications()
+    }
+    
   } catch (error) {
     console.error('Error loading form schema:', error)
   } finally {
@@ -376,6 +443,20 @@ const searchManufacturers = async () => {
     console.error('Error searching manufacturers:', error)
     manufacturerSuggestions.value = []
   }
+}
+
+const getCategoryIcon = (categoryName) => {
+  const iconMap = {
+    'String': 'fas fa-link',
+    'Sight': 'fas fa-crosshairs',
+    'Scope': 'fas fa-search',
+    'Stabilizer': 'fas fa-balance-scale',
+    'Arrow Rest': 'fas fa-hand-paper',
+    'Plunger': 'fas fa-bullseye',
+    'Weight': 'fas fa-weight-hanging',
+    'Other': 'fas fa-cog'
+  }
+  return iconMap[categoryName] || 'fas fa-cog'
 }
 
 const selectManufacturer = (manufacturer) => {
@@ -408,11 +489,6 @@ const submitForm = async () => {
   try {
     submitting.value = true
     
-    // Check if this is a new manufacturer that will become pending
-    const isNewManufacturer = !manufacturerSuggestions.value.some(m => 
-      m.name.toLowerCase() === formData.value.manufacturer_name.toLowerCase()
-    )
-    
     const equipmentData = {
       manufacturer_name: formData.value.manufacturer_name,
       model_name: formData.value.model_name,
@@ -422,40 +498,55 @@ const submitForm = async () => {
       specifications: formData.value.specifications
     }
     
-    const response = await api.post(`/bow-setups/${props.bowSetup.id}/equipment`, equipmentData)
-    
-    emit('equipment-added', response)
-    
-    // Show notification if new manufacturer was added as pending
-    if (isNewManufacturer) {
-      // Add a small delay to show success, then show manufacturer pending info
-      setTimeout(() => {
-        alert(`✨ Equipment added successfully!\n\n📝 "${formData.value.manufacturer_name}" is a new manufacturer and has been submitted for approval. You can continue using this manufacturer for future equipment until it's reviewed by an admin.`)
-      }, 500)
-    }
-    
-    // Reset form
-    formData.value = {
-      manufacturer_name: '',
-      model_name: '',
-      category_name: selectedCategory.value,
-      description: '',
-      installation_notes: '',
-      specifications: {}
-    }
-    
-    // Reinitialize multi-select fields
-    if (formSchema.value?.fields) {
-      formSchema.value.fields.forEach(field => {
-        if (field.type === 'multi-select') {
-          formData.value.specifications[field.name] = []
-        }
-      })
+    if (props.isEditing) {
+      // Handle equipment update
+      equipmentData.change_reason = formData.value.change_notes || 'Equipment updated'
+      
+      const response = await api.put(`/bow-setups/${props.bowSetup.id}/equipment/${props.initialEquipment.id}`, equipmentData)
+      emit('equipment-updated', response)
+    } else {
+      // Handle equipment addition
+      // Check if this is a new manufacturer that will become pending
+      const isNewManufacturer = !manufacturerSuggestions.value.some(m => 
+        m.name.toLowerCase() === formData.value.manufacturer_name.toLowerCase()
+      )
+      
+      const response = await api.post(`/bow-setups/${props.bowSetup.id}/equipment`, equipmentData)
+      emit('equipment-added', response)
+      
+      // Show notification if new manufacturer was added as pending
+      if (isNewManufacturer) {
+        // Add a small delay to show success, then show manufacturer pending info
+        setTimeout(() => {
+          alert(`✨ Equipment added successfully!\n\n📝 "${formData.value.manufacturer_name}" is a new manufacturer and has been submitted for approval. You can continue using this manufacturer for future equipment until it's reviewed by an admin.`)
+        }, 500)
+      }
+      
+      // Reset form for adding mode only
+      formData.value = {
+        manufacturer_name: '',
+        model_name: '',
+        category_name: selectedCategory.value,
+        description: '',
+        installation_notes: '',
+        change_notes: '',
+        specifications: {}
+      }
+      
+      // Reinitialize multi-select fields
+      if (formSchema.value?.fields) {
+        formSchema.value.fields.forEach(field => {
+          if (field.type === 'multi-select') {
+            formData.value.specifications[field.name] = []
+          }
+        })
+      }
     }
     
   } catch (error) {
-    console.error('Error adding equipment:', error)
+    console.error(`Error ${props.isEditing ? 'updating' : 'adding'} equipment:`, error)
     // Could show error notification here
+    alert(`Error ${props.isEditing ? 'updating' : 'adding'} equipment: ${error.message || 'Please try again.'}`)
   } finally {
     submitting.value = false
   }
@@ -473,8 +564,132 @@ const handleClickOutside = (event) => {
   }
 }
 
+// Initialize form for editing mode
+const initializeForEditing = () => {
+  if (props.isEditing && props.initialEquipment) {
+    const equipment = props.initialEquipment
+    
+    
+    // Set basic form data
+    formData.value.manufacturer_name = equipment.manufacturer_name || equipment.manufacturer || ''
+    formData.value.model_name = equipment.model_name || ''
+    formData.value.category_name = equipment.category_name || 'String'
+    formData.value.description = equipment.description || ''
+    formData.value.installation_notes = equipment.installation_notes || ''
+    formData.value.change_notes = ''
+    
+    // Set category
+    selectedCategory.value = equipment.category_name || 'String'
+    
+    // IMMEDIATELY set specifications if available (don't wait for schema loading)
+    if (equipment.specifications && typeof equipment.specifications === 'object') {
+      formData.value.specifications = { ...equipment.specifications }
+    } else if (equipment.custom_specifications) {
+      try {
+        const parsedSpecs = typeof equipment.custom_specifications === 'string' 
+          ? JSON.parse(equipment.custom_specifications)
+          : equipment.custom_specifications
+        formData.value.specifications = { ...parsedSpecs }
+      } catch (error) {
+        console.error('Error parsing custom_specifications in initializeForEditing:', error)
+      }
+    }
+    
+  } else {
+    // Not in editing mode or no equipment provided
+  }
+}
+
+// Initialize specifications after schema is loaded (for editing mode)
+const initializeEditingSpecifications = async () => {
+  if (props.isEditing && props.initialEquipment) {
+    const equipment = props.initialEquipment
+    
+    console.log('🔧 DROPDOWN DEBUG: initializeEditingSpecifications called')
+    console.log('🔧 Initial equipment object:', JSON.stringify(equipment, null, 2))
+    console.log('🔧 Equipment specifications field:', equipment.specifications)
+    console.log('🔧 Equipment custom_specifications field:', equipment.custom_specifications)
+    
+    // Check multiple possible field names for specifications
+    let specsSource = null
+    let specs = {}
+    
+    if (equipment.specifications) {
+      specsSource = 'specifications'
+      specs = equipment.specifications
+    } else if (equipment.custom_specifications) {
+      specsSource = 'custom_specifications'  
+      specs = equipment.custom_specifications
+    }
+    
+    console.log('🔧 Using specifications from field:', specsSource)
+    console.log('🔧 Raw specs value:', specs)
+    
+    if (specs) {
+      try {
+        const parsedSpecs = typeof specs === 'string' 
+          ? JSON.parse(specs)
+          : specs
+        
+        console.log('🔧 Parsed specifications:', JSON.stringify(parsedSpecs, null, 2))
+        console.log('🔧 Form schema available:', !!formSchema.value)
+        console.log('🔧 Form schema fields:', formSchema.value?.fields?.length || 0)
+        
+        // Preserve existing specifications and merge with parsed ones
+        const oldSpecs = { ...formData.value.specifications }
+        formData.value.specifications = { 
+          ...formData.value.specifications,
+          ...parsedSpecs 
+        }
+        
+        console.log('🔧 Old form specifications:', JSON.stringify(oldSpecs, null, 2))
+        console.log('🔧 New form specifications:', JSON.stringify(formData.value.specifications, null, 2))
+        
+        // Ensure multi-select fields are arrays
+        if (formSchema.value?.fields) {
+          formSchema.value.fields.forEach(field => {
+            console.log(`🔧 Processing field: ${field.name} (${field.type})`)
+            
+            if (field.type === 'multi-select' && parsedSpecs[field.name]) {
+              // Convert single values or strings to arrays
+              let value = parsedSpecs[field.name]
+              console.log(`🔧 Multi-select field ${field.name} original value:`, value)
+              
+              if (typeof value === 'string') {
+                // Handle comma-separated strings
+                value = value.split(',').map(v => v.trim()).filter(v => v)
+              } else if (!Array.isArray(value)) {
+                value = [value]
+              }
+              
+              formData.value.specifications[field.name] = value
+              console.log(`🔧 Multi-select field ${field.name} converted to:`, value)
+            } else if (field.type === 'dropdown' && parsedSpecs[field.name]) {
+              console.log(`🔧 Dropdown field ${field.name} value:`, parsedSpecs[field.name])
+              console.log(`🔧 Dropdown field ${field.name} options:`, field.options)
+            }
+          })
+        }
+        
+        console.log('🔧 Final form specifications after processing:', JSON.stringify(formData.value.specifications, null, 2))
+        
+      } catch (error) {
+        console.error('🔧 Error parsing equipment specifications:', error)
+      }
+    } else {
+      console.log('🔧 No specifications found in equipment object')
+    }
+  } else {
+    console.log('🔧 initializeEditingSpecifications skipped - not editing or no equipment')
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
+  // Initialize for editing first, then load schema
+  if (props.isEditing) {
+    initializeForEditing()
+  }
   await loadFormSchema(selectedCategory.value)
   document.addEventListener('click', handleClickOutside)
 })

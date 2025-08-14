@@ -239,10 +239,20 @@
                   <!-- Quick Actions -->
                   <div class="flex flex-col space-y-2 ml-4" @click.stop>
                     <CustomButton
+                      @click="navigateToBowDetail(setup.id)"
+                      variant="text"
+                      size="small"
+                      class="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </CustomButton>
+                    <CustomButton
                       @click="openEditBowSetupModal(setup)"
                       variant="text"
                       size="small"
                       class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900"
+                      title="Edit Setup"
                     >
                       <i class="fas fa-edit"></i>
                     </CustomButton>
@@ -251,6 +261,7 @@
                       variant="text"
                       size="small"
                       class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
+                      title="Delete Setup"
                     >
                       <i class="fas fa-trash"></i>
                     </CustomButton>
@@ -881,7 +892,7 @@ onMounted(async () => {
 
 // Navigation methods
 const navigateToBowDetail = (setupId) => {
-  navigateTo(`/bow/${setupId}`);
+  navigateTo(`/setups/${setupId}`);
 };
 
 

@@ -14,15 +14,11 @@ RUN apt-get update && apt-get install -y \
 # Copy application code (including pre-built node_modules if available)
 COPY . .
 
-# Create non-root user
-RUN addgroup --gid 1000 appgroup && \
-    adduser --disabled-password --gecos '' --uid 1000 --gid 1000 appuser
+# Set ownership for node user (UID 1000)
+RUN chown -R node:node /app
 
-# Set ownership
-RUN chown -R appuser:appgroup /app
-
-# Switch to non-root user
-USER appuser
+# Use existing node user (UID 1000 already exists in node image)
+USER node
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

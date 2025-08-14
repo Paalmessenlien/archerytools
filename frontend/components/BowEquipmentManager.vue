@@ -141,17 +141,22 @@
       </CustomButton>
     </div>
 
-    <!-- Custom Equipment Form Modal -->
-    <div v-if="showEquipmentSelector" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+
+    <!-- Equipment Form Modal (Add/Edit) -->
+    <div v-if="showEquipmentSelector || editingEquipment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              <i class="fas fa-cogs mr-2 text-green-600"></i>
-              Add Equipment to {{ bowSetup.name }}
+              <i :class="editingEquipment ? 'fas fa-edit text-blue-600' : 'fas fa-cogs text-green-600'" class="mr-2"></i>
+              {{ editingEquipment ? 'Edit Equipment' : 'Add Equipment to' }} 
+              {{ editingEquipment ? '' : bowSetup.name }}
+              <span v-if="editingEquipment" class="text-base font-normal text-gray-600 dark:text-gray-400">
+                - {{ editingEquipment.manufacturer_name || editingEquipment.manufacturer }} {{ editingEquipment.model_name }}
+              </span>
             </h3>
-            <CustomButton @click="showEquipmentSelector = false" variant="text" class="text-gray-500 hover:text-gray-700">
+            <CustomButton @click="closeEquipmentModal" variant="text" class="text-gray-500 hover:text-gray-700">
               <i class="fas fa-times text-xl"></i>
             </CustomButton>
           </div>
@@ -161,21 +166,15 @@
         <div class="p-6">
           <CustomEquipmentForm
             :bow-setup="bowSetup"
+            :initial-equipment="editingEquipment"
+            :is-editing="!!editingEquipment"
             @equipment-added="handleEquipmentAdded"
-            @cancel="showEquipmentSelector = false"
+            @equipment-updated="handleEquipmentUpdated"
+            @cancel="closeEquipmentModal"
           />
         </div>
       </div>
     </div>
-
-    <!-- Equipment Edit Modal -->
-    <EquipmentEditModal
-      v-if="editingEquipment"
-      :equipment="editingEquipment"
-      :bow-setup="bowSetup"
-      @save="handleEquipmentUpdated"
-      @close="editingEquipment = null"
-    />
 
     <!-- Delete Confirmation Modal -->
     <ConfirmDeleteModal
@@ -259,12 +258,17 @@ const openEquipmentSelector = () => {
   showEquipmentSelector.value = true
 }
 
+const closeEquipmentModal = () => {
+  showEquipmentSelector.value = false
+  editingEquipment.value = null
+}
+
 const handleEquipmentAdded = async (addedEquipment) => {
   try {
     await loadEquipment()
     emit('show-notification', `${addedEquipment.manufacturer_name} ${addedEquipment.model_name} added successfully`, 'success')
     emit('equipment-updated')
-    showEquipmentSelector.value = false
+    closeEquipmentModal()
   } catch (error) {
     console.error('Error handling equipment added:', error)
     emit('show-notification', 'Failed to refresh equipment list', 'error')
@@ -277,19 +281,14 @@ const editEquipment = (equipmentItem) => {
 
 const handleEquipmentUpdated = async (updatedEquipment) => {
   try {
-    await api.put(`/bow-setups/${props.bowSetup.id}/equipment/${updatedEquipment.id}`, {
-      installation_notes: updatedEquipment.installation_notes,
-      custom_specifications: updatedEquipment.custom_specifications,
-      is_active: updatedEquipment.is_active
-    })
-    
+    // The CustomEquipmentForm handles the API call, so we just need to refresh and close
     await loadEquipment()
-    emit('show-notification', 'Equipment updated successfully', 'success')
+    emit('show-notification', `${updatedEquipment.manufacturer_name} ${updatedEquipment.model_name} updated successfully`, 'success')
     emit('equipment-updated')
-    editingEquipment.value = null
+    closeEquipmentModal()
   } catch (error) {
-    console.error('Error updating equipment:', error)
-    emit('show-notification', 'Failed to update equipment', 'error')
+    console.error('Error handling equipment update:', error)
+    emit('show-notification', 'Failed to refresh equipment list', 'error')
   }
 }
 

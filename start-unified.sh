@@ -511,27 +511,49 @@ ensure_unified_databases() {
 
 # Function to run database migrations
 run_database_migrations() {
-    print_message "$BLUE" "🔄 Running database migrations..."
+    print_message "$BLUE" "🔄 Running comprehensive database migrations..."
     
-    # Check if we're running with Docker containers
+    # Use the comprehensive migration runner
+    if [[ -f "$SCRIPT_DIR/comprehensive-migration-runner.sh" ]]; then
+        print_message "$BLUE" "🎯 Using comprehensive migration runner..."
+        
+        # Set environment variables for migration
+        export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+        export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        
+        # Determine environment for migration
+        local migration_environment="development"
+        if [[ "$DEPLOYMENT_MODE" == "production" ]] || [[ "$DEPLOYMENT_MODE" == "ssl" ]]; then
+            migration_environment="production"
+        fi
+        
+        # Run comprehensive migration system
+        if "$SCRIPT_DIR/comprehensive-migration-runner.sh" "$migration_environment"; then
+            print_message "$GREEN" "✅ Comprehensive database migrations completed successfully"
+            return 0
+        else
+            print_message "$YELLOW" "⚠️  Comprehensive migrations had issues, trying fallback..."
+        fi
+    fi
+    
+    # Fallback 1: Check for Docker migration runner
     if command -v docker &> /dev/null && docker ps &> /dev/null; then
-        print_message "$BLUE" "🐳 Detected Docker environment, using Docker migration runner..."
+        print_message "$BLUE" "🐳 Trying Docker migration runner as fallback..."
         
         # Give containers a moment to start if they're just starting up
         sleep 3
         
-        # Use Docker migration runner if available
         if [[ -f "docker-migration-runner.sh" ]]; then
             if ./docker-migration-runner.sh migrate; then
                 print_message "$GREEN" "✅ Database migrations completed successfully in Docker"
                 return 0
             else
-                print_message "$YELLOW" "⚠️  Docker migrations had issues, trying fallback..."
+                print_message "$YELLOW" "⚠️  Docker migrations had issues, trying next fallback..."
             fi
         fi
     fi
     
-    # Fallback: Check if migration runner exists for host execution
+    # Fallback 2: Direct migration runner execution
     if [[ -f "arrow_scraper/run_migrations.py" ]]; then
         cd arrow_scraper
         
@@ -541,28 +563,30 @@ run_database_migrations() {
         
         # Try to run migrations with Python
         if command -v python3 &> /dev/null; then
-            print_message "$BLUE" "🔧 Running migrations with Python 3 on host..."
+            print_message "$BLUE" "🔧 Running direct migrations with Python 3..."
             
             if python3 run_migrations.py --status-only; then
                 # Show migration status and run if needed
                 if python3 run_migrations.py; then
                     print_message "$GREEN" "✅ Database migrations completed successfully"
+                    cd "$SCRIPT_DIR"
+                    return 0
                 else
-                    print_message "$YELLOW" "⚠️  Some migrations failed, but continuing startup"
+                    print_message "$YELLOW" "⚠️  Some migrations failed, trying legacy migration..."
                 fi
             else
-                print_message "$YELLOW" "⚠️  Could not check migration status, but continuing startup"
+                print_message "$YELLOW" "⚠️  Could not check migration status, trying legacy migration..."
             fi
         else
-            print_message "$YELLOW" "⚠️  Python 3 not available, skipping migrations"
+            print_message "$YELLOW" "⚠️  Python 3 not available, trying legacy migration..."
         fi
         
         cd "$SCRIPT_DIR"
-    else
-        print_message "$YELLOW" "⚠️  Migration runner not found, falling back to legacy migration"
-        # Fall back to legacy spine data migration
-        ensure_spine_data_migration
     fi
+    
+    # Fallback 3: Legacy spine data migration
+    print_message "$YELLOW" "⚠️  Using legacy migration system as final fallback..."
+    ensure_spine_data_migration
 }
 
 # Function to ensure spine calculation data migration
