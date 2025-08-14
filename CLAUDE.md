@@ -28,6 +28,13 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 **Recent Major Updates (2025):**
+- ✅ **Arrow Duplication Fix (August 2025)**: Complete resolution of 409 CONFLICT error preventing arrow duplication functionality
+  - **Database Schema Update**: Removed restrictive unique constraint on setup_arrows table that prevented duplicate arrows
+  - **Migration 017**: Automatic database migration to remove UNIQUE(setup_id, arrow_id, arrow_length, point_weight) constraint
+  - **User Experience Enhancement**: Users can now duplicate existing arrows and make modifications without constraint violations
+  - **Data Preservation**: Migration preserves all existing arrow setup data while enabling duplication functionality
+  - **Frontend Integration**: BowSetupArrowsList.vue duplicate button now works correctly with allow_duplicate parameter
+  - **API Enhancement**: add_arrow_to_setup endpoint properly handles duplicate arrow specifications with allow_duplicate=true
 - ✅ **Custom Equipment Management System (August 2025)**: Complete transformation from pre-chosen to custom form-based equipment entry
   - **Dynamic Form Generation**: Category-specific forms with 30+ standardized fields across 5 equipment types
   - **Equipment Categories**: String, Sight, Stabilizer, Arrow Rest, Weight with professional field validation
@@ -1411,6 +1418,19 @@ The Archery Tools platform provides:
 ## Troubleshooting & Development Notes
 
 ### Recent Fixes & Solutions (August 2025)
+
+**Arrow Duplication 409 CONFLICT Error (RESOLVED - August 2025):**
+- **Issue**: Users getting "409 CONFLICT" error when trying to duplicate existing arrows with identical specifications
+- **Root Cause**: Unique constraint `UNIQUE(setup_id, arrow_id, arrow_length, point_weight)` on `setup_arrows` table preventing duplicates
+- **User Impact**: Users couldn't duplicate arrows for modifications despite `allow_duplicate: true` parameter
+- **Solution**: Database Migration 017 removes restrictive unique constraint
+  - **Migration Script**: `migrations/017_remove_setup_arrows_duplicate_constraint.py`
+  - **Database Change**: Recreates `setup_arrows` table without unique constraint while preserving all existing data
+  - **API Enhancement**: `add_arrow_to_setup()` endpoint now properly handles `allow_duplicate` parameter
+  - **Frontend Integration**: BowSetupArrowsList.vue duplicate button works correctly
+- **Files Modified**: `arrow_scraper/migrations/017_remove_setup_arrows_duplicate_constraint.py`, database schema
+- **Result**: Users can now duplicate existing arrows and make modifications as intended
+- **Migration Status**: Automatically applied in hybrid development environment, requires manual application in production
 
 **Hybrid Development Environment Database Issues (RESOLVED - August 2025):**
 - **Issue**: `./start-hybrid-dev.sh start` failing with "unable to open database file" and "no such column: bs.draw_length"
