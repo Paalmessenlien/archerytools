@@ -560,15 +560,25 @@ const duplicateArrow = async (arrowSetup) => {
   } catch (err) {
     console.error('❌ Error duplicating arrow:', err);
     
-    // Check for authentication errors specifically
-    if (err.message && (err.message.includes('401') || err.message.includes('Token is missing'))) {
+    // Handle specific error cases - check multiple ways to detect different errors
+    const is401Error = err.message && (err.message.includes('401') || err.message.includes('Token is missing'))
+    const is403Error = err.message && err.message.includes('403')
+    const is404Error = err.message && err.message.includes('404')
+    const is409Error = (
+      (err.message && err.message.includes('409')) ||
+      (err.response && err.response.status === 409) ||
+      (err.status === 409) ||
+      (err.message && err.message.includes('already exists'))
+    )
+    
+    if (is401Error) {
       notifyError('Please log in to duplicate arrows. The duplicate function requires authentication.');
-    } else if (err.message && err.message.includes('403')) {
+    } else if (is403Error) {
       notifyError('You do not have permission to duplicate arrows in this bow setup.');  
-    } else if (err.message && err.message.includes('404')) {
+    } else if (is404Error) {
       notifyError('Bow setup or arrow not found. Please refresh the page and try again.');
-    } else if (err.message && err.message.includes('409')) {
-      // Arrow already exists - show info message instead of error
+    } else if (is409Error) {
+      // Arrow already exists - show success message instead of error
       notifySuccess('This arrow configuration already exists in your bow setup.');
     } else {
       notifyError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));

@@ -505,13 +505,28 @@ const duplicateArrow = async (arrowSetup) => {
   } catch (error) {
     console.error('Error duplicating arrow:', error)
     
-    // Handle specific error cases
-    if (error.message && error.message.includes('409')) {
+    // Handle specific error cases - check multiple ways to detect 409 errors
+    const is409Error = (
+      (error.message && error.message.includes('409')) ||
+      (error.response && error.response.status === 409) ||
+      (error.status === 409) ||
+      (error.message && error.message.includes('already exists'))
+    )
+    
+    if (is409Error) {
       // Arrow already exists - this is not actually an error, just inform the user
-      console.log('Arrow configuration already exists, showing info to user')
-      // You could show a toast notification here if available
-      // For now, just don't treat this as a failure
-      return
+      console.log('✅ Arrow configuration already exists, showing success message to user')
+      
+      // Try to show a success notification if the notification composable is available
+      try {
+        const { notifySuccess } = useNotifications()
+        notifySuccess('This arrow configuration already exists in your bow setup.')
+      } catch (notifyError) {
+        // If notifications aren't available, just log
+        console.log('✅ Arrow already exists - notifications not available')
+      }
+      
+      return // Don't emit to parent, we handled this successfully
     }
     
     // For other errors, fall back to parent handling
