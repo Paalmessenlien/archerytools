@@ -467,15 +467,18 @@ class DatabaseHealthChecker:
             'recommendations': []
         }
         
-        # Expected schema definition
+        # Expected schema definition - Updated August 2025 to match current production schema
         expected_schema = {
             'arrows': [
                 'id', 'manufacturer', 'model_name', 'material', 'carbon_content',
-                'arrow_type', 'recommended_use', 'price_range', 'created_at'
+                'arrow_type', 'description', 'image_url', 'source_url', 'scraped_at', 
+                'created_at', 'retailer_data', 'manufacturer_id'
             ],
             'spine_specifications': [
-                'id', 'arrow_id', 'spine', 'outer_diameter', 'gpi_weight',
-                'length_options', 'wall_thickness', 'insert_weight_range', 'nock_size'
+                'id', 'arrow_id', 'spine', 'outer_diameter', 'gpi_weight', 
+                'inner_diameter', 'diameter_category', 'length_options', 
+                'wall_thickness', 'insert_weight_range', 'nock_size', 'notes',
+                'straightness_tolerance', 'weight_tolerance', 'created_at'
             ]
         }
         
