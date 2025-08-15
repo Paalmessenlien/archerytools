@@ -10,10 +10,40 @@
         <p class="text-gray-600 dark:text-gray-400">
           Track all modifications to your bow setups, arrows, and equipment over time.
         </p>
+        
+        <!-- View Toggle -->
+        <div class="mt-4 flex items-center space-x-4">
+          <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button
+              @click="viewMode = 'setup-specific'"
+              :class="[
+                'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                viewMode === 'setup-specific'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              ]"
+            >
+              <i class="fas fa-crosshairs mr-2"></i>
+              By Setup
+            </button>
+            <button
+              @click="viewMode = 'global'"
+              :class="[
+                'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                viewMode === 'global'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              ]"
+            >
+              <i class="fas fa-globe mr-2"></i>
+              All Activities
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Bow Setup Selector -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+      <div v-if="viewMode === 'setup-specific'" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
         <div class="p-6">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             <i class="fas fa-crosshairs mr-2 text-green-600 dark:text-green-400"></i>
@@ -70,8 +100,76 @@
         </div>
       </div>
 
+      <!-- Global Activity View -->
+      <div v-if="viewMode === 'global'" class="space-y-6">
+        <!-- Global Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activities</p>
+                <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ globalStatistics.total_activities || 0 }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-crosshairs text-green-600 dark:text-green-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Bow Setups</p>
+                <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ globalStatistics.setup_count || 0 }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Last 30 Days</p>
+                <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ globalStatistics.recent_activities || 0 }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-cogs text-orange-600 dark:text-orange-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Setups</p>
+                <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ globalStatistics.active_setups || 0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Activity Timeline -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <i class="fas fa-timeline mr-2 text-purple-600 dark:text-purple-400"></i>
+              All User Activities
+            </h2>
+            <GlobalChangeLogViewer
+              @statistics-updated="handleGlobalStatisticsUpdate"
+              @error="handleError"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- Change History Content -->
-      <div v-if="selectedSetup" class="space-y-6">
+      <div v-if="viewMode === 'setup-specific' && selectedSetup" class="space-y-6">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -137,7 +235,7 @@
       </div>
 
       <!-- Welcome Message -->
-      <div v-else-if="bowSetups.length > 0" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+      <div v-else-if="viewMode === 'setup-specific' && bowSetups.length > 0" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
         <i class="fas fa-arrow-up text-4xl text-blue-600 dark:text-blue-400 mb-4"></i>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Select a Bow Setup</h3>
         <p class="text-gray-600 dark:text-gray-400">
@@ -163,9 +261,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useApi } from '@/composables/useApi'
 import EnhancedChangeLogViewer from '@/components/EnhancedChangeLogViewer.vue'
+import GlobalChangeLogViewer from '@/components/GlobalChangeLogViewer.vue'
 
 // Meta information
 definePageMeta({
@@ -180,7 +279,9 @@ const bowSetups = ref([])
 const selectedSetup = ref(null)
 const loadingSetups = ref(true)
 const statistics = ref({})
+const globalStatistics = ref({})
 const error = ref('')
+const viewMode = ref('setup-specific')
 
 // Methods
 const loadBowSetups = async () => {
@@ -213,8 +314,22 @@ const loadStatistics = async () => {
   }
 }
 
+const loadGlobalStatistics = async () => {
+  try {
+    const response = await api.get('/change-log/global-statistics')
+    globalStatistics.value = response
+  } catch (err) {
+    console.error('Error loading global statistics:', err)
+    error.value = 'Failed to load global statistics'
+  }
+}
+
 const handleStatisticsUpdate = (newStats) => {
   statistics.value = { ...statistics.value, ...newStats }
+}
+
+const handleGlobalStatisticsUpdate = (newStats) => {
+  globalStatistics.value = { ...globalStatistics.value, ...newStats }
 }
 
 const handleError = (message) => {
@@ -231,9 +346,20 @@ const getEquipmentChangesCount = () => {
   return Object.values(equipmentChanges).reduce((sum, count) => sum + count, 0)
 }
 
+// Watch for view mode changes
+watch(viewMode, (newMode) => {
+  if (newMode === 'global') {
+    loadGlobalStatistics()
+  }
+})
+
 // Lifecycle
 onMounted(() => {
   loadBowSetups()
+  // Load global statistics if starting in global mode
+  if (viewMode.value === 'global') {
+    loadGlobalStatistics()
+  }
 })
 </script>
 

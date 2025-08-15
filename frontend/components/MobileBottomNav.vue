@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white dark:bg-gray-900 md:hidden shadow-lg">
+  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white dark:bg-gray-900 md:hidden shadow-lg border-t border-gray-200 dark:border-gray-700" style="z-index: 1000; padding-bottom: env(safe-area-inset-bottom);">
     <div class="flex h-20 items-center justify-around px-4">
       <!-- Home/Menu -->
       <button
@@ -81,15 +81,6 @@
           Spine Calculator
         </NuxtLink>
         
-        <NuxtLink 
-          to="/guides" 
-          @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 transition-colors rounded-lg hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/guides' }"
-        >
-          <i class="fas fa-book-open w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-          Tuning Guides
-        </NuxtLink>
         
         <NuxtLink 
           to="/tuning" 

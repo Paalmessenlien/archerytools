@@ -8494,6 +8494,175 @@ def get_bow_setup_change_statistics(current_user, setup_id):
         print(f"Error getting change statistics: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ===== GLOBAL CHANGE LOG API ENDPOINTS =====
+
+@app.route('/api/change-log/global', methods=['GET'])
+@token_required
+def get_global_change_log(current_user):
+    """Get global change history across all user's bow setups"""
+    try:
+        from change_log_service import ChangeLogService
+        change_service = ChangeLogService()
+        
+        # Get query parameters
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        change_source = request.args.get('change_source', '')  # setup, equipment, arrow
+        days_back = request.args.get('days_back')
+        
+        # Get all user's bow setups
+        user_db = get_user_database()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id, name FROM bow_setups WHERE user_id = ?', (current_user['id'],))
+        bow_setups = {row['id']: row['name'] for row in cursor.fetchall()}
+        conn.close()
+        
+        if not bow_setups:
+            return jsonify({'changes': [], 'statistics': {
+                'total_activities': 0,
+                'setup_count': 0,
+                'recent_activities': 0,
+                'active_setups': 0
+            }})
+        
+        # Get unified changes across all setups
+        all_changes = []
+        setup_ids = list(bow_setups.keys())
+        
+        for setup_id in setup_ids:
+            changes = change_service.get_unified_change_history(
+                bow_setup_id=setup_id,
+                user_id=current_user['id'],
+                limit=1000,  # Get all changes, we'll paginate manually
+                days_back=int(days_back) if days_back else None
+            )
+            
+            # Add setup name to each change
+            for change in changes:
+                change['bow_setup_name'] = bow_setups[setup_id]
+                change['bow_setup_id'] = setup_id
+            
+            all_changes.extend(changes)
+        
+        # Filter by change source if specified
+        if change_source:
+            all_changes = [c for c in all_changes if c.get('change_source') == change_source]
+        
+        # Sort by timestamp (most recent first)
+        all_changes.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        # Manual pagination
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_changes = all_changes[start_idx:end_idx]
+        
+        # Calculate statistics
+        from datetime import datetime, timedelta
+        recent_cutoff = datetime.now() - timedelta(days=30)
+        recent_changes = [c for c in all_changes if isinstance(c['created_at'], datetime) and c['created_at'] >= recent_cutoff]
+        
+        statistics = {
+            'total_activities': len(all_changes),
+            'setup_count': len(bow_setups),
+            'recent_activities': len(recent_changes),
+            'active_setups': len([s for s in setup_ids if any(c['bow_setup_id'] == s for c in recent_changes)])
+        }
+        
+        return jsonify({
+            'changes': paginated_changes,
+            'statistics': statistics,
+            'pagination': {
+                'page': page,
+                'limit': limit,
+                'total': len(all_changes),
+                'has_more': end_idx < len(all_changes)
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error getting global change log: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/change-log/global-statistics', methods=['GET'])
+@token_required
+def get_global_statistics(current_user):
+    """Get global statistics across all user activities"""
+    try:
+        from change_log_service import ChangeLogService
+        change_service = ChangeLogService()
+        
+        # Get all user's bow setups
+        user_db = get_user_database()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM bow_setups WHERE user_id = ?', (current_user['id'],))
+        setup_ids = [row['id'] for row in cursor.fetchall()]
+        conn.close()
+        
+        if not setup_ids:
+            return jsonify({
+                'total_activities': 0,
+                'setup_count': 0,
+                'recent_activities': 0,
+                'active_setups': 0,
+                'activity_breakdown': {
+                    'setup_changes': 0,
+                    'equipment_changes': 0,
+                    'arrow_changes': 0
+                }
+            })
+        
+        # Aggregate statistics across all setups
+        total_stats = {
+            'total_activities': 0,
+            'recent_activities': 0,
+            'equipment_changes': 0,
+            'arrow_changes': 0,
+            'setup_changes': 0
+        }
+        
+        active_setups = set()
+        
+        for setup_id in setup_ids:
+            stats = change_service.get_change_statistics(setup_id, current_user['id'])
+            
+            total_stats['total_activities'] += stats.get('total_changes', 0)
+            total_stats['recent_activities'] += stats.get('changes_last_30_days', 0)
+            
+            # Count changes by type
+            equipment_changes = stats.get('equipment_changes_by_type', {})
+            arrow_changes = stats.get('arrow_changes_by_type', {})
+            
+            total_stats['equipment_changes'] += sum(equipment_changes.values())
+            total_stats['arrow_changes'] += sum(arrow_changes.values())
+            
+            # Setup changes (total - equipment - arrow)
+            setup_change_count = stats.get('total_changes', 0) - sum(equipment_changes.values()) - sum(arrow_changes.values())
+            total_stats['setup_changes'] += setup_change_count
+            
+            # Check if setup had recent activity
+            if stats.get('changes_last_30_days', 0) > 0:
+                active_setups.add(setup_id)
+        
+        return jsonify({
+            'total_activities': total_stats['total_activities'],
+            'setup_count': len(setup_ids),
+            'recent_activities': total_stats['recent_activities'],
+            'active_setups': len(active_setups),
+            'activity_breakdown': {
+                'setup_changes': total_stats['setup_changes'],
+                'equipment_changes': total_stats['equipment_changes'],
+                'arrow_changes': total_stats['arrow_changes']
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error getting global statistics: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # Run the app
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))

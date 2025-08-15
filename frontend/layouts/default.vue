@@ -108,18 +108,6 @@
                           <div class="space-y-3">
                             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Tuning Tools</h3>
                             
-                            <NuxtLink
-                              to="/guides"
-                              @click="closeDesktopMenu"
-                              class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/guides' }"
-                            >
-                              <i class="fas fa-book-open text-amber-600 dark:text-amber-400 w-5"></i>
-                              <div>
-                                <div class="font-medium text-gray-900 dark:text-gray-100">Tuning Guides</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Step-by-step tutorials</div>
-                              </div>
-                            </NuxtLink>
                             
                             <NuxtLink
                               to="/tuning"
@@ -242,7 +230,7 @@
     <GlobalBowPicker />
 
     <!-- Main Content -->
-    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-20 md:pb-6">
+    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
       <slot />
     </main>
 
@@ -321,6 +309,17 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+})
+
+// Set mobile-friendly meta tags
+useHead({
+  meta: [
+    { name: 'viewport', content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' },
+    { name: 'format-detection', content: 'telephone=no' },
+    { name: 'mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
+  ]
 })
 </script>
 
