@@ -1,5 +1,5 @@
 <template>
-  <div class="trajectory-chart-container bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+  <div class="trajectory-chart-container bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
     <!-- Compact Show Trajectory Button (when chart is not displayed) -->
     <div v-if="!showChart" class="p-4 text-center">
       <button 
@@ -15,50 +15,65 @@
 
     <!-- Chart Display (when chart is shown) -->
     <div v-else class="p-4">
-      <div class="flex justify-between items-center mb-3">
-        <h4 class="text-base font-medium text-gray-900 dark:text-white flex items-center">
-          <span class="mr-1 text-sm">🎯</span>
-          Flight Trajectory
-        </h4>
-        <div class="flex items-center space-x-1">
-          <!-- Units Toggle -->
-          <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md text-xs">
-            <button 
-              @click="setUnits('imperial')"
-              :class="[
-                'px-2 py-1 rounded-l-md transition-colors',
-                units === 'imperial' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              ]"
-            >
-              Yards
-            </button>
-            <button 
-              @click="setUnits('metric')"
-              :class="[
-                'px-2 py-1 rounded-r-md transition-colors',
-                units === 'metric' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              ]"
-            >
-              Meters
-            </button>
+      <!-- Header - Mobile Responsive -->
+      <div class="mb-4">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h4 class="text-base font-medium text-gray-900 dark:text-white flex items-center">
+            <span class="mr-2 text-sm">🎯</span>
+            Flight Trajectory
+          </h4>
+          
+          <!-- Controls - Responsive Layout -->
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-1">
+            <!-- Units Toggle -->
+            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md text-xs w-full sm:w-auto">
+              <button 
+                @click="setUnits('imperial')"
+                :class="[
+                  'flex-1 sm:flex-none px-3 py-2 rounded-l-md transition-colors',
+                  units === 'imperial' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+              >
+                Yards
+              </button>
+              <button 
+                @click="setUnits('metric')"
+                :class="[
+                  'flex-1 sm:flex-none px-3 py-2 rounded-r-md transition-colors',
+                  units === 'metric' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+              >
+                Meters
+              </button>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+              <button 
+                @click="toggleEnvironmentalControls"
+                class="flex-1 sm:flex-none px-3 py-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              >
+                <i class="fas fa-cog mr-1"></i>
+                <span class="hidden sm:inline">{{ showEnvironmentalControls ? 'Hide' : 'Settings' }}</span>
+                <span class="sm:hidden">{{ showEnvironmentalControls ? 'Hide' : 'Settings' }}</span>
+              </button>
+              <button 
+                @click="hideChart"
+                class="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="Close trajectory chart"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
-          <button 
-            @click="toggleEnvironmentalControls"
-            class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-          >
-            <i class="fas fa-cog mr-1"></i>
-            {{ showEnvironmentalControls ? 'Hide' : 'Settings' }}
-          </button>
-          <button 
-            @click="hideChart"
-            class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            <i class="fas fa-times"></i>
-          </button>
+        </div>
+        
+        <!-- Tooltip moved to separate line on mobile -->
+        <div class="mt-2 sm:mt-0 flex justify-center sm:justify-end">
           <PerformanceTooltip 
             :title="'Trajectory Analysis'"
             :content="'Visual representation of arrow flight path showing drop, range, and environmental effects. Toggle between yards/meters and adjust environmental settings.'"
@@ -113,23 +128,23 @@
     </div>
 
     <!-- Chart Container -->
-    <div class="chart-wrapper" style="position: relative; height: 280px;">
-      <canvas ref="chartCanvas"></canvas>
+    <div class="chart-wrapper overflow-x-auto" style="position: relative; height: 280px; min-height: 240px;">
+      <canvas ref="chartCanvas" class="max-w-full"></canvas>
     </div>
 
     <!-- Trajectory Summary -->
-    <div v-if="trajectorySummary" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-      <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
+    <div v-if="trajectorySummary" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+      <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center sm:text-left">
         <div class="text-blue-600 dark:text-blue-400 font-medium">Max Range</div>
-        <div class="text-gray-900 dark:text-white font-semibold">{{ trajectorySummary.maxRange }} yards</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.maxRange }} yards</div>
       </div>
-      <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg">
+      <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg text-center sm:text-left">
         <div class="text-green-600 dark:text-green-400 font-medium">Peak Height</div>
-        <div class="text-gray-900 dark:text-white font-semibold">{{ trajectorySummary.peakHeight }}"</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.peakHeight }}"</div>
       </div>
-      <div class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-lg">
+      <div class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-lg text-center sm:text-left">
         <div class="text-orange-600 dark:text-orange-400 font-medium">Drop at 40yd</div>
-        <div class="text-gray-900 dark:text-white font-semibold">{{ trajectorySummary.dropAt40yd }}"</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.dropAt40yd }}"</div>
       </div>
     </div>
 

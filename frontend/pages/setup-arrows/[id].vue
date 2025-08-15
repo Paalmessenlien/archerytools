@@ -52,7 +52,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="setupArrowData" class="container mx-auto px-4 py-8">
+    <div v-else-if="setupArrowData" class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
       <!-- Breadcrumb Navigation -->
       <SetupContextBreadcrumb
         :bow-setup="setupArrowData.bow_setup"
@@ -93,18 +93,18 @@
           </div>
         </div>
         
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Actions - Mobile Responsive -->
+        <div class="flex flex-col sm:flex-row gap-3 w-full">
           <button
             @click="editMode = !editMode"
-            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             <i :class="editMode ? 'fas fa-eye' : 'fas fa-edit'" class="mr-2"></i>
             {{ editMode ? 'View Mode' : 'Edit Setup' }}
           </button>
           <button
             @click="duplicateArrow"
-            class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            class="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors w-full sm:w-auto"
           >
             <i class="fas fa-copy mr-2"></i>
             Duplicate
@@ -113,11 +113,11 @@
       </div>
 
       <!-- Main Content Grid -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         <!-- Left Column: Arrow Configuration -->
-        <div class="xl:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
           <!-- Arrow Setup Configuration -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 <i class="fas fa-cog mr-3 text-blue-600"></i>
@@ -162,9 +162,9 @@
         </div>
 
         <!-- Right Column: Arrow Information -->
-        <div class="space-y-6">
+        <div class="space-y-4 sm:space-y-6">
           <!-- Arrow Database Information -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               <i class="fas fa-database mr-2 text-green-600"></i>
               Arrow Information
