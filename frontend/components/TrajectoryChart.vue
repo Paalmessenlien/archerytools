@@ -148,31 +148,44 @@
 import { ref, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 import { useApi } from '~/composables/useApi'
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  LineController,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
+// Dynamic import for Chart.js to avoid SSR issues
+let Chart = null
+let chartComponents = null
 
-// Register Chart.js components
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  LineController,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+const initializeChart = async () => {
+  if (typeof window === 'undefined') return null
+  
+  if (!Chart) {
+    const chartModule = await import('chart.js')
+    Chart = chartModule.Chart
+    chartComponents = {
+      CategoryScale: chartModule.CategoryScale,
+      LinearScale: chartModule.LinearScale,
+      PointElement: chartModule.PointElement,
+      LineElement: chartModule.LineElement,
+      LineController: chartModule.LineController,
+      Title: chartModule.Title,
+      Tooltip: chartModule.Tooltip,
+      Legend: chartModule.Legend,
+      Filler: chartModule.Filler
+    }
+    
+    // Register Chart.js components
+    Chart.register(
+      chartComponents.CategoryScale,
+      chartComponents.LinearScale,
+      chartComponents.PointElement,
+      chartComponents.LineElement,
+      chartComponents.LineController,
+      chartComponents.Title,
+      chartComponents.Tooltip,
+      chartComponents.Legend,
+      chartComponents.Filler
+    )
+  }
+  
+  return Chart
+}
 
 const props = defineProps({
   arrowData: {
@@ -235,7 +248,7 @@ const generateTrajectoryChart = async () => {
     showChart.value = true
     await nextTick() // Wait for DOM to update
     
-    await initializeChart()
+    await initializeChartComponent()
     await updateTrajectory()
   } catch (error) {
     console.error('Error generating trajectory chart:', error)
@@ -306,16 +319,23 @@ const updateChartUnits = () => {
   chartInstance.value.update()
 }
 
-const initializeChart = async () => {
+const initializeChartComponent = async () => {
   if (!chartCanvas.value) {
     console.warn('Chart canvas not available for trajectory chart')
     return
   }
 
   try {
+    // Initialize Chart.js dynamically
+    const ChartClass = await initializeChart()
+    if (!ChartClass) {
+      console.warn('Chart.js not available')
+      return
+    }
+    
     const ctx = chartCanvas.value.getContext('2d')
     
-    chartInstance.value = markRaw(new Chart(ctx, {
+    chartInstance.value = markRaw(new ChartClass(ctx, {
       type: 'line',
       data: {
         labels: [],
