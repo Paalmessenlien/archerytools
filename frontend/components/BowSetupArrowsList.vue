@@ -169,9 +169,15 @@
                   </h5>
                   <div class="flex items-center space-x-2">
                     <!-- Overall Score -->
-                    <span v-if="arrowSetup.performance?.performance_summary" :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xl font-bold">
-                      {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
-                    </span>
+                    <div v-if="arrowSetup.performance?.performance_summary" class="flex items-center space-x-1">
+                      <span :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xl font-bold">
+                        {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
+                      </span>
+                      <PerformanceTooltip 
+                        :title="'Overall Performance Score'"
+                        :content="'Composite score based on speed, kinetic energy, FOC, and arrow efficiency. Higher scores (80+) indicate excellent performance for hunting and target shooting.'"
+                      />
+                    </div>
                     <!-- Calculate Performance Button -->
                     <CustomButton
                       v-if="!arrowSetup.performance?.performance_summary && canCalculatePerformance(arrowSetup)"
@@ -204,35 +210,59 @@
                 <!-- Performance Metrics Display -->
                 <div v-if="arrowSetup.performance?.performance_summary" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <!-- Speed -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
                     <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {{ formatSpeedValue(arrowSetup.performance.performance_summary.estimated_speed_fps) }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Speed</div>
+                    <div class="flex items-center justify-center space-x-1">
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Speed</span>
+                      <PerformanceTooltip 
+                        :title="'Arrow Speed'"
+                        :content="'Estimated arrow velocity in feet per second. Faster arrows have flatter trajectory and less wind drift. Typical hunting speeds: 250-350 fps.'"
+                      />
+                    </div>
                   </div>
                   
                   <!-- Kinetic Energy -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
                     <div class="text-lg font-bold text-green-600 dark:text-green-400">
                       {{ formatKineticEnergy(arrowSetup.performance.performance_summary.kinetic_energy_40yd) }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">KE @40yd</div>
+                    <div class="flex items-center justify-center space-x-1">
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">KE @40yd</span>
+                      <PerformanceTooltip 
+                        :title="'Kinetic Energy at 40 Yards'"
+                        :content="'Energy remaining after 40 yards of flight. Determines penetration power. Standards: 25+ ft·lbs (small game), 40+ ft·lbs (deer), 65+ ft·lbs (elk).'"
+                      />
+                    </div>
                   </div>
                   
                   <!-- FOC -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
                     <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
                       {{ formatFocPercentage(arrowSetup.performance.performance_summary.foc_percentage) }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">FOC</div>
+                    <div class="flex items-center justify-center space-x-1">
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">FOC</span>
+                      <PerformanceTooltip 
+                        :title="'Front of Center (FOC)'"
+                        :content="'How much weight is forward of the arrow center. Higher FOC improves stability and penetration. Recommended: 10-15% (target), 15-20% (hunting).'"
+                      />
+                    </div>
                   </div>
                   
                   <!-- Penetration -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
                     <div :class="getPenetrationClass(arrowSetup.performance.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
                       {{ arrowSetup.performance.performance_summary.penetration_category }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Penetration</div>
+                    <div class="flex items-center justify-center space-x-1">
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Penetration</span>
+                      <PerformanceTooltip 
+                        :title="'Penetration Rating'"
+                        :content="'Overall penetration capability based on kinetic energy and arrow design. Categories: poor, fair, good, excellent. Higher ratings indicate better ability to penetrate through bone and tissue.'"
+                      />
+                    </div>
                   </div>
                 </div>
                 
@@ -386,6 +416,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { useRouter } from 'vue-router'
+import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 
 // Composables
 const { notifySuccess, notifyError } = useNotifications()
