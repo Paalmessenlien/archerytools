@@ -242,17 +242,6 @@
                     <i class="fas fa-info-circle mr-1"></i>
                     Calculate performance metrics to see detailed ballistics analysis
                   </p>
-                  <!-- Debug Info -->
-                  <div class="text-xs text-gray-500 mt-2">
-                    <p>Debug: Can calculate = {{ canCalculatePerformance(arrowSetup) }}</p>
-                    <p>Has arrow: {{ !!arrowSetup.arrow }}</p>
-                    <p>Arrow length: {{ arrowSetup.arrow_length }}</p>
-                    <p>Point weight: {{ arrowSetup.point_weight }}</p>
-                    <p>Bow draw weight: {{ props.bowSetup?.draw_weight }}</p>
-                    <p>Performance data: {{ arrowSetup.performance ? 'YES' : 'NO' }}</p>
-                    <p>Performance summary: {{ arrowSetup.performance?.performance_summary ? 'YES' : 'NO' }}</p>
-                    <p>Full arrowSetup.performance: {{ JSON.stringify(arrowSetup.performance) }}</p>
-                  </div>
                 </div>
                 
                 <!-- Cannot Calculate Message -->

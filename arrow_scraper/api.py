@@ -2071,11 +2071,9 @@ def get_setup_arrows(current_user, setup_id):
                 # Load performance data from dedicated performance_data column
                 # Handle SQLite3 Row objects (use bracket notation instead of .get())
                 performance_data_raw = row['performance_data'] if 'performance_data' in row and row['performance_data'] else None
-                print(f"🔍 [get_setup_arrows] Arrow {row['id']} performance_data_raw: {performance_data_raw}")
                 if performance_data_raw:
                     import json
                     performance_data = json.loads(performance_data_raw)
-                    print(f"🔍 [get_setup_arrows] Arrow {row['id']} parsed performance_data: {performance_data}")
                     
                     # Check if we have the correct performance_summary structure
                     if 'performance_summary' in performance_data:
