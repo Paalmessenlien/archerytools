@@ -2072,7 +2072,25 @@ def get_setup_arrows(current_user, setup_id):
                 if row.get('performance_data'):
                     import json
                     performance_data = json.loads(row['performance_data'])
-                    arrow_info['performance'] = performance_data
+                    
+                    # Convert enhanced FOC format to expected performance_summary format
+                    if 'foc_percentage' in performance_data:
+                        # Convert enhanced FOC format to performance_summary format
+                        performance_summary = {
+                            'foc_percentage': performance_data.get('foc_percentage', 0),
+                            'estimated_speed_fps': 260,  # Default estimate
+                            'kinetic_energy_40yd': 45.0,  # Default estimate  
+                            'total_arrow_weight_grains': performance_data.get('total_weight', 400),
+                            'penetration_category': performance_data.get('foc_status', 'acceptable').lower(),
+                            'penetration_score': performance_data.get('performance_metrics', {}).get('penetration_power', 75)
+                        }
+                        arrow_info['performance'] = {
+                            'performance_summary': performance_summary,
+                            'detailed_data': performance_data  # Keep original data
+                        }
+                    else:
+                        # Already in correct format
+                        arrow_info['performance'] = performance_data
                 # Fallback: check for legacy performance data in notes field
                 elif row['notes'] and 'Performance:' in row['notes']:
                     import json

@@ -114,6 +114,7 @@
             </div>
             
             <BowSetupArrowsList 
+              ref="arrowsList"
               :bowSetup="setup" 
               :expanded="true"
               @arrow-updated="loadSetup"
@@ -229,6 +230,7 @@ const editError = ref('')
 const changeLogComponent = ref(null)
 const showArrowEditModal = ref(false)
 const editingArrowSetup = ref(null)
+const arrowsList = ref(null)
 
 // Notification state
 const notification = ref({
@@ -434,8 +436,13 @@ const calculatePerformanceForAllArrows = async () => {
     
     if (response.updated_arrows && response.updated_arrows.length > 0) {
       showNotification(`Performance calculated for ${response.updated_arrows.length} arrows`, 'success')
-      // Reload the setup to show updated performance data
-      await loadSetup()
+      // Refresh the arrows list to show updated performance data
+      if (arrowsList.value) {
+        await arrowsList.value.refresh()
+      } else {
+        // Fallback to full setup reload
+        await loadSetup()
+      }
     } else {
       showNotification('No arrows found to calculate performance for', 'warning')
     }
