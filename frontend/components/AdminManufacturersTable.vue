@@ -779,23 +779,58 @@ const openCategoriesModal = async (manufacturer) => {
       api.get('/bow-equipment/manufacturers')
     ])
     
-    // Combine equipment categories with bow/equipment categories
+    // Get equipment categories from API
     const equipmentCategories = categoriesResponse.categories || []
-    const bowEquipmentCategories = [
-      { name: 'compound_bows', display_name: 'Compound Bows', description: 'Compound bow manufacturing', icon: 'fas fa-bow-arrow' },
-      { name: 'recurve_risers', display_name: 'Recurve Risers', description: 'Recurve bow riser manufacturing', icon: 'fas fa-mountain' },
-      { name: 'recurve_limbs', display_name: 'Recurve Limbs', description: 'Recurve bow limb manufacturing', icon: 'fas fa-bezier-curve' },
-      { name: 'traditional_risers', display_name: 'Traditional Risers', description: 'Traditional bow riser manufacturing', icon: 'fas fa-tree' },
-      { name: 'traditional_limbs', display_name: 'Traditional Limbs', description: 'Traditional bow limb manufacturing', icon: 'fas fa-leaf' },
-      { name: 'longbows', display_name: 'Longbows', description: 'Longbow manufacturing', icon: 'fas fa-archway' },
-      { name: 'strings', display_name: 'Strings', description: 'Bowstring manufacturing', icon: 'fas fa-grip-lines' },
-      { name: 'sights', display_name: 'Sights', description: 'Bow sight manufacturing', icon: 'fas fa-bullseye' },
-      { name: 'stabilizers', display_name: 'Stabilizers', description: 'Stabilizer manufacturing', icon: 'fas fa-balance-scale' },
-      { name: 'arrow_rests', display_name: 'Arrow Rests', description: 'Arrow rest manufacturing', icon: 'fas fa-hand-paper' },
-      { name: 'weights', display_name: 'Weights', description: 'Weight system manufacturing', icon: 'fas fa-weight-hanging' }
-    ]
     
-    availableCategories.value = [...equipmentCategories, ...bowEquipmentCategories]
+    // Define all possible categories with their metadata
+    const allCategoryMetadata = {
+      'compound_bows': { display_name: 'Compound Bows', description: 'Compound bow manufacturing', icon: 'fas fa-bow-arrow' },
+      'recurve_risers': { display_name: 'Recurve Risers', description: 'Recurve bow riser manufacturing', icon: 'fas fa-mountain' },
+      'recurve_limbs': { display_name: 'Recurve Limbs', description: 'Recurve bow limb manufacturing', icon: 'fas fa-bezier-curve' },
+      'traditional_risers': { display_name: 'Traditional Risers', description: 'Traditional bow riser manufacturing', icon: 'fas fa-tree' },
+      'traditional_limbs': { display_name: 'Traditional Limbs', description: 'Traditional bow limb manufacturing', icon: 'fas fa-leaf' },
+      'longbows': { display_name: 'Longbows', description: 'Longbow manufacturing', icon: 'fas fa-archway' },
+      'strings': { display_name: 'Strings', description: 'Bowstring manufacturing', icon: 'fas fa-grip-lines' },
+      'sights': { display_name: 'Sights', description: 'Bow sight manufacturing', icon: 'fas fa-bullseye' },
+      'stabilizers': { display_name: 'Stabilizers', description: 'Stabilizer manufacturing', icon: 'fas fa-balance-scale' },
+      'arrow_rests': { display_name: 'Arrow Rests', description: 'Arrow rest manufacturing', icon: 'fas fa-hand-paper' },
+      'weights': { display_name: 'Weights', description: 'Weight system manufacturing', icon: 'fas fa-weight-hanging' },
+      'arrows': { display_name: 'Arrows', description: 'Arrow manufacturing', icon: 'fas fa-crosshairs' },
+      'scopes': { display_name: 'Scopes', description: 'Scope manufacturing', icon: 'fas fa-search' },
+      'plungers': { display_name: 'Plungers', description: 'Plunger manufacturing', icon: 'fas fa-bullseye' },
+      'other': { display_name: 'Other', description: 'Other equipment manufacturing', icon: 'fas fa-cog' }
+    }
+    
+    // Create a map to track unique categories
+    const categoryMap = new Map()
+    
+    // Add equipment categories from API
+    equipmentCategories.forEach(cat => {
+      const name = cat.name || cat.category_name
+      if (!categoryMap.has(name)) {
+        categoryMap.set(name, {
+          name: name,
+          display_name: cat.display_name || allCategoryMetadata[name]?.display_name || name,
+          description: cat.description || allCategoryMetadata[name]?.description || `${name} manufacturing`,
+          icon: cat.icon || allCategoryMetadata[name]?.icon || 'fas fa-cog'
+        })
+      }
+    })
+    
+    // Add any missing categories from metadata
+    Object.entries(allCategoryMetadata).forEach(([name, metadata]) => {
+      if (!categoryMap.has(name)) {
+        categoryMap.set(name, {
+          name: name,
+          ...metadata
+        })
+      }
+    })
+    
+    // Convert map to array and sort by display name
+    availableCategories.value = Array.from(categoryMap.values()).sort((a, b) => 
+      a.display_name.localeCompare(b.display_name)
+    )
     
     // Set up category settings based on manufacturer's current settings
     categorySettings.value = {}
@@ -879,9 +914,12 @@ const getCategoryDisplayName = (categoryName) => {
     'arrows': 'Arrows',
     'strings': 'Strings',
     'sights': 'Sights',
+    'scopes': 'Scopes',
     'stabilizers': 'Stabilizers',
     'arrow_rests': 'Arrow Rests',
+    'plungers': 'Plungers',
     'weights': 'Weights',
+    'other': 'Other',
     'compound_bows': 'Compound Bows',
     'recurve_risers': 'Recurve Risers',
     'recurve_limbs': 'Recurve Limbs',
@@ -897,9 +935,12 @@ const getCategoryIcon = (categoryName) => {
     'arrows': 'fas fa-crosshairs',
     'strings': 'fas fa-grip-lines',
     'sights': 'fas fa-bullseye',
+    'scopes': 'fas fa-search',
     'stabilizers': 'fas fa-balance-scale',
     'arrow_rests': 'fas fa-hand-paper',
+    'plungers': 'fas fa-bullseye',
     'weights': 'fas fa-weight-hanging',
+    'other': 'fas fa-cog',
     'compound_bows': 'fas fa-bow-arrow',
     'recurve_risers': 'fas fa-mountain',
     'recurve_limbs': 'fas fa-bezier-curve',
@@ -915,9 +956,12 @@ const getCategoryBadgeClass = (categoryName) => {
     'arrows': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
     'strings': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
     'sights': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    'scopes': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
     'stabilizers': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
     'arrow_rests': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    'plungers': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
     'weights': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    'other': 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300',
     'compound_bows': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
     'recurve_risers': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
     'recurve_limbs': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
