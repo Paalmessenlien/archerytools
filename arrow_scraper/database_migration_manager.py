@@ -185,6 +185,13 @@ class DatabaseMigrationManager:
                             migration_found = True
                             break
                 
+                # Method 1b: Look for migration instance (instantiated migrations like 018-022)
+                if not migration_found and hasattr(module, 'migration'):
+                    migration_instance = getattr(module, 'migration')
+                    if isinstance(migration_instance, BaseMigration) and migration_instance.version:
+                        migrations[migration_instance.version] = migration_instance
+                        migration_found = True
+                
                 # Method 2: Look for plain Migration class (standalone migrations 012+)
                 if not migration_found and hasattr(module, 'Migration'):
                     migration_class = getattr(module, 'Migration')
