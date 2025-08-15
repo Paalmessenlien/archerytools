@@ -814,6 +814,401 @@ class SpineCalculator:
             "front_weight": round(front_weight, 1),
             "back_weight": round(back_weight, 1)
         }
+    
+    def calculate_enhanced_foc(self, arrow_length: float, point_weight: float,
+                              shaft_weight: float, nock_weight: float = 10.0,
+                              fletching_weight: float = 15.0, insert_weight: float = 15.0,
+                              intended_use: str = "hunting") -> Dict[str, Any]:
+        """
+        Enhanced FOC calculation with optimization recommendations and performance analysis
+        
+        Args:
+            arrow_length: Total arrow length in inches
+            point_weight: Point weight in grains
+            shaft_weight: Shaft weight in grains  
+            nock_weight: Nock weight in grains
+            fletching_weight: Fletching weight in grains
+            insert_weight: Insert weight in grains
+            intended_use: Intended use case ("hunting", "target", "3d")
+            
+        Returns:
+            Dict with enhanced FOC analysis and optimization recommendations
+        """
+        
+        # Calculate base FOC
+        base_foc = self.calculate_foc(arrow_length, point_weight, shaft_weight, 
+                                    nock_weight, fletching_weight, insert_weight)
+        
+        # Define optimal FOC ranges by use case
+        optimal_ranges = {
+            "hunting": {"min": 10.0, "max": 16.0, "optimal": 13.0},
+            "target": {"min": 7.0, "max": 10.0, "optimal": 8.5},
+            "3d": {"min": 8.0, "max": 12.0, "optimal": 10.0}
+        }
+        
+        target_range = optimal_ranges.get(intended_use, optimal_ranges["hunting"])
+        current_foc = base_foc["foc_percentage"]
+        
+        # FOC performance analysis
+        foc_analysis = self._analyze_foc_performance(current_foc, intended_use)
+        
+        # Calculate optimization recommendations
+        optimization = self._calculate_foc_optimization(
+            arrow_length, point_weight, shaft_weight, nock_weight, 
+            fletching_weight, insert_weight, target_range["optimal"]
+        )
+        
+        # Enhanced performance metrics
+        performance_metrics = self._calculate_foc_performance_metrics(
+            current_foc, base_foc["total_weight"], intended_use
+        )
+        
+        return {
+            **base_foc,
+            "intended_use": intended_use,
+            "optimal_range": target_range,
+            "foc_status": self._get_foc_status(current_foc, target_range),
+            "foc_analysis": foc_analysis,
+            "optimization": optimization,
+            "performance_metrics": performance_metrics,
+            "recommendations": self._get_foc_recommendations(current_foc, target_range, intended_use)
+        }
+    
+    def _analyze_foc_performance(self, foc_percentage: float, intended_use: str) -> Dict[str, Any]:
+        """Analyze FOC impact on arrow performance characteristics"""
+        
+        analysis = {
+            "stability": 0,
+            "accuracy": 0,
+            "penetration": 0,
+            "wind_resistance": 0,
+            "forgiveness": 0
+        }
+        
+        # FOC impact on performance characteristics
+        if foc_percentage < 5:
+            # Very low FOC - unstable
+            analysis.update({
+                "stability": 3,
+                "accuracy": 4,
+                "penetration": 3,
+                "wind_resistance": 2,
+                "forgiveness": 2
+            })
+        elif foc_percentage < 8:
+            # Low FOC - good for target
+            analysis.update({
+                "stability": 6,
+                "accuracy": 8,
+                "penetration": 5,
+                "wind_resistance": 4,
+                "forgiveness": 5
+            })
+        elif foc_percentage < 12:
+            # Moderate FOC - balanced
+            analysis.update({
+                "stability": 8,
+                "accuracy": 7,
+                "penetration": 7,
+                "wind_resistance": 6,
+                "forgiveness": 7
+            })
+        elif foc_percentage < 16:
+            # High FOC - good for hunting
+            analysis.update({
+                "stability": 9,
+                "accuracy": 6,
+                "penetration": 9,
+                "wind_resistance": 8,
+                "forgiveness": 8
+            })
+        else:
+            # Very high FOC - may be overstabilized
+            analysis.update({
+                "stability": 7,
+                "accuracy": 5,
+                "penetration": 9,
+                "wind_resistance": 9,
+                "forgiveness": 6
+            })
+        
+        # Calculate overall performance score
+        if intended_use == "hunting":
+            weights = {"stability": 0.25, "accuracy": 0.15, "penetration": 0.35, "wind_resistance": 0.15, "forgiveness": 0.10}
+        elif intended_use == "target":
+            weights = {"stability": 0.15, "accuracy": 0.45, "penetration": 0.05, "wind_resistance": 0.10, "forgiveness": 0.25}
+        else:  # 3D
+            weights = {"stability": 0.20, "accuracy": 0.35, "penetration": 0.10, "wind_resistance": 0.15, "forgiveness": 0.20}
+        
+        overall_score = sum(analysis[key] * weights[key] for key in weights) * 10
+        
+        return {
+            **analysis,
+            "overall_score": round(overall_score, 1),
+            "performance_notes": self._get_foc_performance_notes(foc_percentage, intended_use)
+        }
+    
+    def _calculate_foc_optimization(self, arrow_length: float, point_weight: float,
+                                  shaft_weight: float, nock_weight: float,
+                                  fletching_weight: float, insert_weight: float,
+                                  target_foc: float) -> Dict[str, Any]:
+        """Calculate optimal point weight to achieve target FOC"""
+        
+        # Calculate what point weight would achieve target FOC
+        total_weight_without_point = shaft_weight + nock_weight + fletching_weight + insert_weight
+        
+        # FOC formula: (balance_point - physical_center) / arrow_length * 100
+        # Solve for optimal point weight
+        physical_center = arrow_length / 2.0
+        target_foc_decimal = target_foc / 100.0
+        
+        # Simplified calculation for optimal point weight
+        # This is an approximation that works well for most arrows
+        optimal_point_weight = point_weight
+        
+        # Iterative approach to find optimal point weight
+        for test_weight in range(50, 400, 5):
+            test_foc = self.calculate_foc(arrow_length, test_weight, shaft_weight,
+                                        nock_weight, fletching_weight, insert_weight)
+            if abs(test_foc["foc_percentage"] - target_foc) < 0.1:
+                optimal_point_weight = test_weight
+                break
+        
+        point_weight_change = optimal_point_weight - point_weight
+        
+        # Calculate alternative adjustments
+        alternatives = []
+        
+        # Insert weight adjustment
+        if abs(point_weight_change) > 25:
+            # Try adjusting insert weight instead
+            for insert_adjust in [-10, -5, 5, 10, 15, 20]:
+                new_insert = max(0, insert_weight + insert_adjust)
+                test_foc = self.calculate_foc(arrow_length, point_weight, shaft_weight,
+                                            nock_weight, fletching_weight, new_insert)
+                if abs(test_foc["foc_percentage"] - target_foc) < 1.0:
+                    alternatives.append({
+                        "type": "insert_weight",
+                        "description": f"Adjust insert weight to {new_insert}gr ({insert_adjust:+}gr)",
+                        "resulting_foc": test_foc["foc_percentage"]
+                    })
+        
+        # Fletching weight adjustment
+        for fletch_adjust in [-5, -3, 3, 5, 8]:
+            new_fletching = max(5, fletching_weight + fletch_adjust)
+            test_foc = self.calculate_foc(arrow_length, point_weight, shaft_weight,
+                                        nock_weight, new_fletching, insert_weight)
+            if abs(test_foc["foc_percentage"] - target_foc) < 1.0:
+                alternatives.append({
+                    "type": "fletching_weight",
+                    "description": f"Adjust fletching weight to {new_fletching}gr ({fletch_adjust:+}gr)",
+                    "resulting_foc": test_foc["foc_percentage"]
+                })
+        
+        return {
+            "current_point_weight": point_weight,
+            "optimal_point_weight": optimal_point_weight,
+            "point_weight_change": point_weight_change,
+            "target_foc": target_foc,
+            "alternatives": alternatives[:3],  # Top 3 alternatives
+            "feasible": abs(point_weight_change) <= 100,  # Practical weight change limit
+            "notes": self._get_optimization_notes(point_weight_change)
+        }
+    
+    def _calculate_foc_performance_metrics(self, foc_percentage: float, 
+                                         total_weight: float, intended_use: str) -> Dict[str, Any]:
+        """Calculate performance metrics based on FOC and arrow characteristics"""
+        
+        # FOC impact on flight characteristics
+        stability_factor = min(1.2, max(0.6, 0.7 + (foc_percentage / 50)))
+        penetration_factor = min(1.3, max(0.7, 0.8 + (foc_percentage / 40)))
+        accuracy_factor = min(1.1, max(0.8, 1.1 - abs(foc_percentage - 9) / 20))
+        
+        # Base performance metrics (normalized to 100)
+        base_metrics = {
+            "hunting": {"accuracy": 75, "penetration": 85, "wind_resistance": 70},
+            "target": {"accuracy": 90, "penetration": 60, "wind_resistance": 65},
+            "3d": {"accuracy": 85, "penetration": 70, "wind_resistance": 75}
+        }
+        
+        base = base_metrics.get(intended_use, base_metrics["hunting"])
+        
+        # Apply FOC factors
+        performance = {
+            "flight_stability": round(stability_factor * 80, 1),
+            "accuracy_potential": round(accuracy_factor * base["accuracy"], 1),
+            "penetration_power": round(penetration_factor * base["penetration"], 1),
+            "wind_resistance": round(stability_factor * base["wind_resistance"], 1),
+            "forgiveness": round((stability_factor + accuracy_factor) / 2 * 75, 1)
+        }
+        
+        # Overall performance score
+        if intended_use == "hunting":
+            weights = {"flight_stability": 0.2, "accuracy_potential": 0.2, "penetration_power": 0.3, 
+                      "wind_resistance": 0.2, "forgiveness": 0.1}
+        elif intended_use == "target":
+            weights = {"flight_stability": 0.15, "accuracy_potential": 0.4, "penetration_power": 0.05,
+                      "wind_resistance": 0.15, "forgiveness": 0.25}
+        else:  # 3D
+            weights = {"flight_stability": 0.2, "accuracy_potential": 0.3, "penetration_power": 0.1,
+                      "wind_resistance": 0.2, "forgiveness": 0.2}
+        
+        overall_score = sum(performance[key] * weights[key] for key in weights)
+        
+        return {
+            **performance,
+            "overall_performance": round(overall_score, 1),
+            "weight_category": self._get_weight_category(total_weight),
+            "foc_category": self._get_foc_category(foc_percentage)
+        }
+    
+    def _get_foc_status(self, foc_percentage: float, target_range: Dict[str, float]) -> str:
+        """Get FOC status relative to optimal range"""
+        
+        if foc_percentage < target_range["min"]:
+            return "too_low"
+        elif foc_percentage > target_range["max"]:
+            return "too_high"
+        elif abs(foc_percentage - target_range["optimal"]) <= 1:
+            return "optimal"
+        else:
+            return "acceptable"
+    
+    def _get_foc_performance_notes(self, foc_percentage: float, intended_use: str) -> List[str]:
+        """Generate performance notes based on FOC value"""
+        
+        notes = []
+        
+        if foc_percentage < 5:
+            notes.extend([
+                "Very low FOC may cause unstable flight",
+                "Arrow may plane or drift in crosswinds",
+                "Consider heavier points or inserts"
+            ])
+        elif foc_percentage < 8:
+            notes.extend([
+                "Good FOC for target accuracy",
+                "Excellent flat trajectory",
+                "May lack penetration for hunting"
+            ])
+        elif foc_percentage < 12:
+            notes.extend([
+                "Balanced FOC for most applications",
+                "Good stability and accuracy",
+                "Versatile for multiple shooting styles"
+            ])
+        elif foc_percentage < 16:
+            notes.extend([
+                "High FOC excellent for hunting",
+                "Superior penetration and wind resistance",
+                "May sacrifice some accuracy at long range"
+            ])
+        else:
+            notes.extend([
+                "Very high FOC may cause parabolic flight",
+                "Excellent penetration but reduced accuracy",
+                "Consider lighter points for better balance"
+            ])
+        
+        # Add use-specific notes
+        if intended_use == "hunting" and 10 <= foc_percentage <= 15:
+            notes.append("Ideal FOC range for hunting applications")
+        elif intended_use == "target" and 7 <= foc_percentage <= 9:
+            notes.append("Optimal FOC for target accuracy")
+        elif intended_use == "3d" and 8 <= foc_percentage <= 11:
+            notes.append("Good FOC balance for 3D competition")
+        
+        return notes
+    
+    def _get_foc_recommendations(self, foc_percentage: float, target_range: Dict[str, float], 
+                               intended_use: str) -> List[str]:
+        """Generate actionable FOC recommendations"""
+        
+        recommendations = []
+        optimal = target_range["optimal"]
+        difference = foc_percentage - optimal
+        
+        if abs(difference) <= 1:
+            recommendations.append("✅ Your FOC is optimal for " + intended_use)
+            return recommendations
+        
+        if difference < -3:
+            recommendations.extend([
+                f"🎯 Increase FOC by {abs(difference):.1f}% to reach optimal range",
+                "• Add 20-50gr to point weight",
+                "• Switch to heavier inserts (brass vs aluminum)",
+                "• Consider adding weight tubes or FOC weights"
+            ])
+        elif difference < 0:
+            recommendations.extend([
+                f"📈 Slightly increase FOC by {abs(difference):.1f}% for optimal performance",
+                "• Add 10-25gr to point weight",
+                "• Try slightly heavier inserts"
+            ])
+        elif difference > 3:
+            recommendations.extend([
+                f"📉 Reduce FOC by {difference:.1f}% for better balance",
+                "• Reduce point weight by 25-50gr",
+                "• Switch to lighter inserts",
+                "• Add weight to rear (heavier nocks/fletching)"
+            ])
+        else:
+            recommendations.extend([
+                f"🔧 Fine-tune FOC by {difference:.1f}% for optimal performance",
+                "• Adjust point weight by 10-20gr",
+                "• Minor insert weight adjustments"
+            ])
+        
+        return recommendations
+    
+    def _get_optimization_notes(self, point_weight_change: float) -> List[str]:
+        """Generate notes about optimization feasibility"""
+        
+        notes = []
+        
+        if abs(point_weight_change) <= 10:
+            notes.append("Minor point weight adjustment needed")
+        elif abs(point_weight_change) <= 25:
+            notes.append("Moderate point weight change recommended")
+        elif abs(point_weight_change) <= 50:
+            notes.append("Significant point weight adjustment required")
+        else:
+            notes.extend([
+                "Large point weight change needed",
+                "Consider alternative adjustments (inserts, fletching)",
+                "May require different arrow shaft selection"
+            ])
+        
+        if point_weight_change > 100:
+            notes.append("⚠️ Weight change may affect spine requirements")
+        
+        return notes
+    
+    def _get_weight_category(self, total_weight: float) -> str:
+        """Categorize arrow by total weight"""
+        
+        if total_weight < 350:
+            return "light"
+        elif total_weight < 450:
+            return "medium"
+        elif total_weight < 550:
+            return "heavy"
+        else:
+            return "very_heavy"
+    
+    def _get_foc_category(self, foc_percentage: float) -> str:
+        """Categorize FOC level"""
+        
+        if foc_percentage < 6:
+            return "very_low"
+        elif foc_percentage < 9:
+            return "low"
+        elif foc_percentage < 12:
+            return "moderate"
+        elif foc_percentage < 16:
+            return "high"
+        else:
+            return "very_high"
 
 # Example usage and testing
 if __name__ == "__main__":

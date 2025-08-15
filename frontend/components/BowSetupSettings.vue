@@ -57,10 +57,21 @@
         
         <!-- Bow Type Specific Configuration -->
         <div v-if="formData.bow_type" class="p-4 mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700/50 dark:border-gray-600">
-          <h4 class="flex items-center mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
-            <i class="mr-2 text-blue-600 fas fa-cog"></i>
-            {{ formData.bow_type?.charAt(0).toUpperCase() + formData.bow_type?.slice(1) }} Specific Configuration
-          </h4>
+          <button 
+            @click="showBowTypeConfig = !showBowTypeConfig"
+            type="button"
+            class="flex items-center justify-between w-full mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100 touch-target"
+          >
+            <div class="flex items-center">
+              <i class="mr-2 text-blue-600 fas fa-cog"></i>
+              {{ formData.bow_type?.charAt(0).toUpperCase() + formData.bow_type?.slice(1) }} Specific Configuration
+            </div>
+            <i class="fas transition-transform duration-200" :class="showBowTypeConfig ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+          
+          <div v-show="showBowTypeConfig" class="space-y-4"
+               :class="{ 'md:block': !showBowTypeConfig }"
+          >
 
           <!-- Compound Bow Configuration -->
           <div v-if="formData.bow_type === 'compound'" class="space-y-4">
@@ -372,20 +383,20 @@
               </div>
             </div>
           </div>
-
+          </div>
         </div>
         
         <!-- Bow Usage -->
         <div class="mb-4">
           <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Usage</label>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-2 md:flex md:flex-wrap gap-2">
             <button
               v-for="usage in usageOptions"
               :key="usage"
               type="button"
               @click="toggleUsage(usage)"
               :class="[
-                'px-3 py-1 text-sm rounded-full border transition-colors',
+                'px-4 py-3 text-sm rounded-lg border transition-colors touch-target flex items-center justify-center font-medium',
                 isUsageSelected(usage)
                   ? 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
@@ -596,6 +607,7 @@ const manufacturerData = ref({
   longbows: []
 })
 const loadingManufacturers = ref(true)
+const showBowTypeConfig = ref(true)
 const usageOptions = ['Target', 'Field', '3D', 'Hunting']
 
 // Computed

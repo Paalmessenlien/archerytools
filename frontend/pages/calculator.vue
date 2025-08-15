@@ -808,8 +808,291 @@
           </div>
         </div>
 
+        <!-- Performance Dashboard Toggle -->
+        <div class="mt-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+              Advanced Performance Analysis
+            </h3>
+            <CustomButton
+              @click="togglePerformanceDashboard"
+              :class="showPerformanceDashboard ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+              class="transition-all duration-200"
+            >
+              <i class="fas transition-transform" :class="showPerformanceDashboard ? 'fa-chart-area' : 'fa-analytics'"></i>
+              <span class="ml-2">{{ showPerformanceDashboard ? 'Hide Analysis' : 'Show Analysis' }}</span>
+            </CustomButton>
+          </div>
+        </div>
       </div>
     </md-elevated-card>
+
+    <!-- Enhanced Performance Dashboard -->
+    <div v-if="showPerformanceDashboard" class="mt-6">
+      <md-elevated-card class="light-surface light-elevation">
+        <div class="p-6">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+            <i class="fas fa-tachometer-alt mr-3 text-indigo-600"></i>
+            Comprehensive Performance Analysis
+          </h3>
+
+          <!-- Performance Summary -->
+          <div v-if="comprehensivePerformance" class="mb-8 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-indigo-900 dark:text-indigo-200">
+                <i class="fas fa-star mr-2"></i>
+                Overall Performance Score
+              </h4>
+              <div class="text-3xl font-bold text-indigo-600">
+                {{ comprehensivePerformance.performance_summary.overall_score }}/100
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-2">Primary Recommendation:</p>
+                <p class="font-medium text-indigo-900 dark:text-indigo-100">
+                  {{ comprehensivePerformance.performance_summary.primary_recommendation }}
+                </p>
+              </div>
+              <div>
+                <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-2">Estimated Speed:</p>
+                <p class="font-medium text-indigo-900 dark:text-indigo-100">
+                  {{ comprehensivePerformance.performance_summary.arrow_speed_fps }} fps
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Enhanced FOC Analysis -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <i class="fas fa-balance-scale text-green-600 mr-2"></i>
+                  FOC Analysis
+                </h4>
+                <CustomButton
+                  @click="calculateEnhancedFoc"
+                  :disabled="isCalculatingFoc"
+                  size="small"
+                  variant="text"
+                  class="text-green-600 hover:bg-green-50 dark:hover:bg-green-900"
+                >
+                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingFoc }"></i>
+                </CustomButton>
+              </div>
+
+              <div v-if="isCalculatingFoc" class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-green-600 border-t-transparent"></div>
+                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Calculating FOC...</span>
+              </div>
+
+              <div v-else-if="enhancedFocResult" class="space-y-4">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-green-600">
+                    {{ enhancedFocResult.foc_percentage }}%
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Current FOC
+                  </div>
+                  <div class="mt-2">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                          :class="getFocStatusClass(enhancedFocResult.foc_status)">
+                      {{ getFocStatusText(enhancedFocResult.foc_status) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Performance Metrics</h5>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Stability:</span>
+                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.stability }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Accuracy:</span>
+                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.accuracy }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Penetration:</span>
+                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.penetration }}/10</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Wind Resistance:</span>
+                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.wind_resistance }}/10</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="enhancedFocResult.optimization" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                  <h5 class="font-medium text-blue-900 dark:text-blue-200 mb-2">Optimization</h5>
+                  <div class="text-sm text-blue-800 dark:text-blue-300">
+                    <p v-if="enhancedFocResult.optimization.feasible">
+                      <strong>Optimal Point Weight:</strong> {{ enhancedFocResult.optimization.optimal_point_weight }}gr
+                      <span class="text-xs block mt-1">
+                        ({{ enhancedFocResult.optimization.point_weight_change > 0 ? '+' : '' }}{{ enhancedFocResult.optimization.point_weight_change }}gr change)
+                      </span>
+                    </p>
+                    <p v-else class="text-orange-700 dark:text-orange-300">
+                      Large adjustment needed - consider alternative modifications
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8">
+                <i class="fas fa-calculator text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to calculate enhanced FOC analysis</p>
+              </div>
+            </div>
+
+            <!-- Ballistics Analysis -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <i class="fas fa-crosshairs text-red-600 mr-2"></i>
+                  Ballistics
+                </h4>
+                <CustomButton
+                  @click="calculateBallistics"
+                  :disabled="isCalculatingBallistics"
+                  size="small"
+                  variant="text"
+                  class="text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                >
+                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingBallistics }"></i>
+                </CustomButton>
+              </div>
+
+              <div v-if="isCalculatingBallistics" class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-red-600 border-t-transparent"></div>
+                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Calculating trajectory...</span>
+              </div>
+
+              <div v-else-if="ballisticsResult" class="space-y-4">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-red-600">
+                    {{ ballisticsResult.ballistic_coefficient }}
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Ballistic Coefficient
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Performance at Distance</h5>
+                  <div class="space-y-2 text-sm">
+                    <div v-for="(data, distance) in ballisticsResult.performance_metrics.performance_at_distance" 
+                         :key="distance" class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">{{ distance }}:</span>
+                      <span class="font-medium">{{ data.velocity_fps }}fps, {{ data.kinetic_energy }}ft-lbs</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                  <h5 class="font-medium text-orange-900 dark:text-orange-200 mb-2">Flight Characteristics</h5>
+                  <div class="text-sm text-orange-800 dark:text-orange-300">
+                    <p><strong>Max Range:</strong> {{ ballisticsResult.performance_metrics.max_effective_range_yards }} yards</p>
+                    <p><strong>Flatness Score:</strong> {{ ballisticsResult.performance_metrics.trajectory_flatness_score }}/100</p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8">
+                <i class="fas fa-chart-area text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to calculate ballistics analysis</p>
+              </div>
+            </div>
+
+            <!-- Performance Summary -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <i class="fas fa-award text-purple-600 mr-2"></i>
+                  Performance
+                </h4>
+                <CustomButton
+                  @click="calculateComprehensivePerformance"
+                  :disabled="isCalculatingPerformance"
+                  size="small"
+                  variant="text"
+                  class="text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900"
+                >
+                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingPerformance }"></i>
+                </CustomButton>
+              </div>
+
+              <div v-if="isCalculatingPerformance" class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
+                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing performance...</span>
+              </div>
+
+              <div v-else-if="comprehensivePerformance" class="space-y-4">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-purple-600">
+                    {{ comprehensivePerformance.penetration_analysis.penetration_score }}
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Penetration Score
+                  </div>
+                  <div class="mt-2">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                          :class="getPenetrationClass(comprehensivePerformance.penetration_analysis.category)">
+                      {{ comprehensivePerformance.penetration_analysis.category }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Key Strengths</h5>
+                  <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <li v-for="strength in comprehensivePerformance.performance_summary.key_strengths" 
+                        :key="strength" class="flex items-start">
+                      <i class="fas fa-check text-green-500 mr-2 mt-0.5 text-xs"></i>
+                      <span>{{ strength }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div v-if="comprehensivePerformance.performance_summary.improvement_areas.length > 0" 
+                     class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+                  <h5 class="font-medium text-yellow-900 dark:text-yellow-200 mb-2">Improvement Areas</h5>
+                  <ul class="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
+                    <li v-for="area in comprehensivePerformance.performance_summary.improvement_areas" 
+                        :key="area" class="flex items-start">
+                      <i class="fas fa-wrench text-yellow-500 mr-2 mt-0.5 text-xs"></i>
+                      <span>{{ area }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8">
+                <i class="fas fa-trophy text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to analyze comprehensive performance</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comprehensive Analysis Button -->
+          <div class="mt-6 text-center">
+            <CustomButton
+              @click="calculateAllPerformanceMetrics"
+              :disabled="isCalculatingFoc || isCalculatingBallistics || isCalculatingPerformance"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3"
+            >
+              <i class="fas fa-calculator mr-2"></i>
+              Calculate Complete Analysis
+            </CustomButton>
+          </div>
+        </div>
+      </md-elevated-card>
+    </div>
 
     <!-- Arrow Recommendations -->
     <div class="mt-6 arrow-recommendations">
@@ -845,6 +1128,61 @@ const arrowFiltersStore = useArrowFiltersStore()
 const bowConfig = computed(() => bowConfigStore.bowConfig)
 const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
 const arrowSetupDescription = computed(() => bowConfigStore.arrowSetupDescription)
+
+// Enhanced performance analysis state
+const enhancedFocResult = ref(null)
+const isCalculatingFoc = ref(false)
+const ballisticsResult = ref(null)
+const isCalculatingBallistics = ref(false)
+const comprehensivePerformance = ref(null)
+const isCalculatingPerformance = ref(false)
+const showPerformanceDashboard = ref(false)
+
+// Helper functions for performance dashboard
+const togglePerformanceDashboard = () => {
+  showPerformanceDashboard.value = !showPerformanceDashboard.value
+  if (showPerformanceDashboard.value && !enhancedFocResult.value) {
+    calculateAllPerformanceMetrics()
+  }
+}
+
+const calculateAllPerformanceMetrics = async () => {
+  try {
+    // Calculate all three metrics in parallel for comprehensive analysis
+    await Promise.all([
+      calculateEnhancedFoc(),
+      calculateBallistics(),
+      calculateComprehensivePerformance()
+    ])
+  } catch (error) {
+    console.error('Error calculating performance metrics:', error)
+  }
+}
+
+const getFocStatusClass = (focResult) => {
+  if (!focResult || !focResult.foc_analysis) return 'text-gray-500'
+  const analysis = focResult.foc_analysis
+  if (analysis.is_optimal) return 'text-green-600 dark:text-green-400'
+  if (analysis.performance_impact === 'minimal') return 'text-yellow-600 dark:text-yellow-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+const getFocStatusText = (focResult) => {
+  if (!focResult || !focResult.foc_analysis) return 'Not calculated'
+  const analysis = focResult.foc_analysis
+  if (analysis.is_optimal) return 'Optimal'
+  if (analysis.performance_impact === 'minimal') return 'Good'
+  return 'Needs adjustment'
+}
+
+const getPenetrationClass = (penetrationResult) => {
+  if (!penetrationResult) return 'text-gray-500'
+  const category = penetrationResult.category
+  if (category === 'excellent') return 'text-green-600 dark:text-green-400'
+  if (category === 'good') return 'text-blue-600 dark:text-blue-400'
+  if (category === 'fair') return 'text-yellow-600 dark:text-yellow-400'
+  return 'text-red-600 dark:text-red-400'
+}
 
 // Arrow filters store references
 const filters = computed(() => arrowFiltersStore.filters)
@@ -1101,6 +1439,152 @@ const handleVaneWeightModeChange = (value) => {
     })
   }
 }
+
+// Enhanced Performance Analysis Functions
+// =====================================
+
+const calculateEnhancedFoc = async () => {
+  isCalculatingFoc.value = true
+  try {
+    const totalComponentWeight = calculateTotalComponentWeight()
+    const shaftWeight = totalComponentWeight - (bowConfig.value.point_weight || 125) - 
+                      (bowConfig.value.nock_weight || 10) - 
+                      (getVaneWeight() * (bowConfig.value.number_of_vanes || 3)) - 
+                      (bowConfig.value.insert_weight || 0)
+    
+    const response = await api.post('/calculator/enhanced-foc', {
+      arrow_length: bowConfig.value.arrow_length || 29,
+      point_weight: bowConfig.value.point_weight || 125,
+      shaft_weight: Math.max(200, shaftWeight), // Estimate shaft weight
+      nock_weight: bowConfig.value.nock_weight || 10,
+      fletching_weight: getVaneWeight() * (bowConfig.value.number_of_vanes || 3),
+      insert_weight: bowConfig.value.insert_weight || 0,
+      intended_use: getIntendedUse()
+    })
+    
+    enhancedFocResult.value = response
+  } catch (error) {
+    console.error('Error calculating enhanced FOC:', error)
+    showNotification('Failed to calculate enhanced FOC analysis', 'error')
+  } finally {
+    isCalculatingFoc.value = false
+  }
+}
+
+const calculateBallistics = async () => {
+  isCalculatingBallistics.value = true
+  try {
+    const totalWeight = calculateTotalComponentWeight()
+    const estimatedSpeed = await estimateArrowSpeed()
+    
+    const response = await api.post('/calculator/ballistics', {
+      arrow_speed_fps: estimatedSpeed,
+      arrow_weight_grains: totalWeight,
+      arrow_diameter_inches: 0.246, // Default, could be made configurable
+      arrow_type: getIntendedUse(),
+      environmental: {
+        temperature_f: 70,
+        humidity_percent: 50,
+        altitude_feet: 0,
+        wind_speed_mph: 0,
+        wind_direction_degrees: 0
+      },
+      shooting: {
+        shot_angle_degrees: 0,
+        sight_height_inches: 7,
+        zero_distance_yards: 20,
+        max_range_yards: 100
+      }
+    })
+    
+    ballisticsResult.value = response
+  } catch (error) {
+    console.error('Error calculating ballistics:', error)
+    showNotification('Failed to calculate ballistics analysis', 'error')
+  } finally {
+    isCalculatingBallistics.value = false
+  }
+}
+
+const calculateComprehensivePerformance = async () => {
+  isCalculatingPerformance.value = true
+  try {
+    const totalWeight = calculateTotalComponentWeight()
+    const shaftWeight = totalWeight - (bowConfig.value.point_weight || 125) - 
+                      (bowConfig.value.nock_weight || 10) - 
+                      (getVaneWeight() * (bowConfig.value.number_of_vanes || 3)) - 
+                      (bowConfig.value.insert_weight || 0)
+    
+    const response = await api.post('/calculator/comprehensive-performance', {
+      bow_config: {
+        draw_weight: bowConfig.value.draw_weight || 50,
+        draw_length: bowConfig.value.draw_length || 29,
+        ibo_speed: 310 // Default IBO speed
+      },
+      arrow_specs: {
+        arrow_length: bowConfig.value.arrow_length || 29,
+        point_weight: bowConfig.value.point_weight || 125,
+        shaft_weight: Math.max(200, shaftWeight),
+        total_weight: totalWeight,
+        nock_weight: bowConfig.value.nock_weight || 10,
+        fletching_weight: getVaneWeight() * (bowConfig.value.number_of_vanes || 3),
+        insert_weight: bowConfig.value.insert_weight || 0,
+        diameter: 0.246,
+        intended_use: getIntendedUse()
+      }
+    })
+    
+    comprehensivePerformance.value = response
+  } catch (error) {
+    console.error('Error calculating comprehensive performance:', error)
+    showNotification('Failed to calculate comprehensive performance analysis', 'error')
+  } finally {
+    isCalculatingPerformance.value = false
+  }
+}
+
+const estimateArrowSpeed = async () => {
+  try {
+    const response = await api.post('/calculator/arrow-speed-estimate', {
+      bow_ibo_speed: 310, // Default IBO speed
+      bow_draw_weight: bowConfig.value.draw_weight || 50,
+      bow_draw_length: bowConfig.value.draw_length || 29,
+      arrow_weight_grains: calculateTotalComponentWeight()
+    })
+    return response.estimated_speed_fps
+  } catch (error) {
+    console.error('Error estimating arrow speed:', error)
+    return 280 // Fallback speed
+  }
+}
+
+const getIntendedUse = () => {
+  // Determine intended use based on arrow specifications or default
+  const material = bowConfig.value.arrow_material
+  if (material === 'wood') return 'traditional'
+  
+  const pointWeight = bowConfig.value.point_weight || 125
+  if (pointWeight >= 150) return 'hunting'
+  if (pointWeight <= 100) return 'target'
+  return '3d'
+}
+
+// Trigger performance calculations when configuration changes
+watch([bowConfig], async () => {
+  if (showPerformanceDashboard.value) {
+    // Debounce calculations to avoid too frequent updates
+    clearTimeout(performanceCalculationTimeout.value)
+    performanceCalculationTimeout.value = setTimeout(async () => {
+      await Promise.all([
+        calculateEnhancedFoc(),
+        calculateBallistics(),
+        calculateComprehensivePerformance()
+      ])
+    }, 1000)
+  }
+}, { deep: true })
+
+const performanceCalculationTimeout = ref(null)
 
 // Watch for changes to the selected bow setup from the global picker
 watch(selectedBowSetup, (newBowSetup) => {

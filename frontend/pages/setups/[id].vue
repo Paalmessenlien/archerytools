@@ -89,6 +89,30 @@
 
           <!-- Arrows Tab -->
           <div v-if="activeTab === 'arrows'" class="space-y-6">
+            <!-- Performance Calculation Controls -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                    <i class="fas fa-tachometer-alt mr-2"></i>
+                    Arrow Performance Analysis
+                  </h3>
+                  <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    Calculate performance metrics for all arrows in this setup
+                  </p>
+                </div>
+                <CustomButton
+                  @click="calculatePerformanceForAllArrows"
+                  :loading="calculatingPerformance"
+                  variant="filled"
+                  class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                >
+                  <i class="fas fa-calculator mr-2"></i>
+                  {{ calculatingPerformance ? 'Calculating...' : 'Calculate Performance' }}
+                </CustomButton>
+              </div>
+            </div>
+            
             <BowSetupArrowsList 
               :bowSetup="setup" 
               :expanded="true"
@@ -212,6 +236,9 @@ const notification = ref({
   message: '',
   type: 'success'
 })
+
+// Performance calculation state
+const calculatingPerformance = ref(false)
 
 // Tab configuration
 const tabs = computed(() => [
@@ -396,6 +423,27 @@ const getNotificationIcon = (type) => {
       return 'fas fa-exclamation-triangle'
     default:
       return 'fas fa-info-circle'
+  }
+}
+
+// Performance calculation function
+const calculatePerformanceForAllArrows = async () => {
+  calculatingPerformance.value = true
+  try {
+    const response = await api.post(`/bow-setups/${setup.value.id}/arrows/calculate-performance`, {})
+    
+    if (response.updated_arrows && response.updated_arrows.length > 0) {
+      showNotification(`Performance calculated for ${response.updated_arrows.length} arrows`, 'success')
+      // Reload the setup to show updated performance data
+      await loadSetup()
+    } else {
+      showNotification('No arrows found to calculate performance for', 'warning')
+    }
+  } catch (error) {
+    console.error('Error calculating performance:', error)
+    showNotification('Failed to calculate arrow performance', 'error')
+  } finally {
+    calculatingPerformance.value = false
   }
 }
 

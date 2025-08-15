@@ -71,6 +71,125 @@
     z-index: 1000;
   }
   
+  /* Mobile viewport and safe area support */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    .mobile-bottom-nav {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Adjust main content for mobile safe areas */
+    @media (max-width: 768px) {
+      main {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+    }
+  }
+  
+  /* Touch-friendly button sizing */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Ensure all buttons meet touch target requirements on mobile */
+  @media (max-width: 768px) {
+    button:not(.touch-target) {
+      @apply min-h-[44px] px-4;
+    }
+    
+    /* Custom button improvements */
+    .btn-primary, .btn-secondary {
+      @apply min-h-[48px] px-6;
+    }
+    
+    /* Form controls */
+    select, input[type="text"], input[type="number"], input[type="email"], textarea {
+      @apply min-h-[48px];
+    }
+    
+    /* Material Design components */
+    md-filled-button, md-outlined-button, md-text-button {
+      min-height: 44px !important;
+    }
+    
+    md-filled-select, md-outlined-text-field {
+      min-height: 48px !important;
+    }
+  }
+  
+  /* Mobile-optimized form controls */
+  @media (max-width: 768px) {
+    .form-input, .form-select, .form-textarea {
+      @apply text-base; /* Prevent zoom on iOS */
+      font-size: 16px !important;
+    }
+  }
+  
+  /* Touch-friendly slider styling */
+  .slider-touch {
+    height: 12px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  .slider-touch::-webkit-slider-track {
+    background: #e5e7eb;
+    height: 12px;
+    border-radius: 6px;
+  }
+  
+  .dark .slider-touch::-webkit-slider-track {
+    background: #374151;
+  }
+  
+  .slider-touch::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #3b82f6;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+  }
+  
+  .dark .slider-touch::-webkit-slider-thumb {
+    background: #a78bfa;
+  }
+  
+  .slider-touch::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .slider-touch::-moz-range-track {
+    background: #e5e7eb;
+    height: 12px;
+    border-radius: 6px;
+    border: none;
+  }
+  
+  .dark .slider-touch::-moz-range-track {
+    background: #374151;
+  }
+  
+  .slider-touch::-moz-range-thumb {
+    background: #3b82f6;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+  }
+  
+  .dark .slider-touch::-moz-range-thumb {
+    background: #a78bfa;
+  }
+  
   /* Glassmorphism card effect */
   .glass-card {
     @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;

@@ -113,6 +113,46 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   {{ recommendation.reasons?.join(', ') || 'Compatible with your setup' }}
                 </p>
+                
+                <!-- Performance Metrics -->
+                <div v-if="recommendation.performance?.performance_summary" class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-3">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                      <i class="fas fa-tachometer-alt mr-1"></i>
+                      Performance Analysis
+                    </h4>
+                    <span :class="getPerformanceScoreClass(recommendation.performance.performance_summary)" class="text-xs font-medium">
+                      {{ getPerformanceScore(recommendation.performance.performance_summary) }}/100
+                    </span>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div class="text-center">
+                      <div class="text-blue-600 dark:text-blue-400 font-medium">
+                        {{ recommendation.performance.performance_summary.estimated_speed_fps }} fps
+                      </div>
+                      <div class="text-gray-500 dark:text-gray-400">Speed</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-green-600 dark:text-green-400 font-medium">
+                        {{ recommendation.performance.performance_summary.kinetic_energy_40yd }} ft·lbs
+                      </div>
+                      <div class="text-gray-500 dark:text-gray-400">KE @40yd</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-purple-600 dark:text-purple-400 font-medium">
+                        {{ recommendation.performance.performance_summary.foc_percentage?.toFixed(1) || 0 }}%
+                      </div>
+                      <div class="text-gray-500 dark:text-gray-400">FOC</div>
+                    </div>
+                    <div class="text-center">
+                      <div :class="getPenetrationClass(recommendation.performance.performance_summary.penetration_category)" class="font-medium capitalize">
+                        {{ recommendation.performance.performance_summary.penetration_category }}
+                      </div>
+                      <div class="text-gray-500 dark:text-gray-400">Penetration</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <!-- Compatibility & Price -->
@@ -959,4 +999,36 @@ onMounted(() => {
   loadManufacturers() // Load manufacturers first
   loadRecommendations()
 })
+
+// Performance helper functions
+const getPerformanceScore = (performanceSummary) => {
+  if (!performanceSummary) return 0
+  
+  // Calculate composite performance score based on multiple factors
+  const keScore = Math.min(100, (performanceSummary.kinetic_energy_40yd / 80) * 100) // 80 ft-lbs = 100%
+  const penetrationScore = performanceSummary.penetration_score || 0
+  const focScore = performanceSummary.foc_percentage ? 
+    Math.max(0, 100 - Math.abs((performanceSummary.foc_percentage || 0) - 12) * 5) : 50 // Optimal FOC around 12%
+  
+  // Weighted average: 40% penetration, 30% KE, 30% FOC
+  const compositeScore = (penetrationScore * 0.4) + (keScore * 0.3) + (focScore * 0.3)
+  return Math.round(compositeScore)
+}
+
+const getPerformanceScoreClass = (performanceSummary) => {
+  const score = getPerformanceScore(performanceSummary)
+  if (score >= 80) return 'text-green-600 dark:text-green-400'
+  if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+const getPenetrationClass = (category) => {
+  switch (category) {
+    case 'excellent': return 'text-green-600 dark:text-green-400'
+    case 'good': return 'text-blue-600 dark:text-blue-400'
+    case 'fair': return 'text-yellow-600 dark:text-yellow-400'
+    case 'poor': return 'text-red-600 dark:text-red-400'
+    default: return 'text-gray-500 dark:text-gray-400'
+  }
+}
 </script>

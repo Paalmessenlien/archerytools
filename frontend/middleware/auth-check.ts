@@ -1,5 +1,3 @@
-import { useAuth } from '~/composables/useAuth';
-
 export default defineNuxtRouteMiddleware(async (to, from) => {
   console.log('Auth middleware running for route:', to.path);
   const { user, token, fetchUser } = useAuth();

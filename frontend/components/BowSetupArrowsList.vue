@@ -158,6 +158,46 @@
                   <span class="text-purple-800 dark:text-purple-200">Total Arrow: <span class="font-medium">{{ calculateTotalArrowWeight(arrowSetup) }} gr</span></span>
                 </div>
               </div>
+              
+              <!-- Performance Metrics -->
+              <div v-if="arrowSetup.performance?.performance_summary" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 mt-2">
+                <div class="flex items-center justify-between mb-2">
+                  <h5 class="text-xs font-semibold text-green-800 dark:text-green-200 uppercase tracking-wide">
+                    <i class="fas fa-tachometer-alt mr-1"></i>
+                    Performance Metrics
+                  </h5>
+                  <span :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xs font-medium">
+                    {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
+                  </span>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
+                    <div class="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                      {{ arrowSetup.performance.performance_summary.estimated_speed_fps }}
+                    </div>
+                    <div class="text-gray-500 dark:text-gray-400 text-xs">fps</div>
+                  </div>
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
+                    <div class="text-green-600 dark:text-green-400 font-bold text-sm">
+                      {{ arrowSetup.performance.performance_summary.kinetic_energy_40yd }}
+                    </div>
+                    <div class="text-gray-500 dark:text-gray-400 text-xs">ft·lbs @40yd</div>
+                  </div>
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
+                    <div class="text-purple-600 dark:text-purple-400 font-bold text-sm">
+                      {{ arrowSetup.performance.performance_summary.foc_percentage?.toFixed(1) || 0 }}%
+                    </div>
+                    <div class="text-gray-500 dark:text-gray-400 text-xs">FOC</div>
+                  </div>
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
+                    <div :class="getPenetrationClass(arrowSetup.performance.performance_summary.penetration_category)" class="font-bold text-sm capitalize">
+                      {{ arrowSetup.performance.performance_summary.penetration_category }}
+                    </div>
+                    <div class="text-gray-500 dark:text-gray-400 text-xs">Penetration</div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- Match Score & Notes -->
@@ -566,6 +606,38 @@ defineExpose({
   loadArrows,
   refresh: loadArrows
 })
+
+// Performance helper functions
+const getPerformanceScore = (performanceSummary) => {
+  if (!performanceSummary) return 0
+  
+  // Calculate composite performance score based on multiple factors
+  const keScore = Math.min(100, (performanceSummary.kinetic_energy_40yd / 80) * 100) // 80 ft-lbs = 100%
+  const penetrationScore = performanceSummary.penetration_score || 0
+  const focScore = performanceSummary.foc_percentage ? 
+    Math.max(0, 100 - Math.abs((performanceSummary.foc_percentage || 0) - 12) * 5) : 50 // Optimal FOC around 12%
+  
+  // Weighted average: 40% penetration, 30% KE, 30% FOC
+  const compositeScore = (penetrationScore * 0.4) + (keScore * 0.3) + (focScore * 0.3)
+  return Math.round(compositeScore)
+}
+
+const getPerformanceScoreClass = (performanceSummary) => {
+  const score = getPerformanceScore(performanceSummary)
+  if (score >= 80) return 'text-green-600 dark:text-green-400'
+  if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+const getPenetrationClass = (category) => {
+  switch (category) {
+    case 'excellent': return 'text-green-600 dark:text-green-400'
+    case 'good': return 'text-blue-600 dark:text-blue-400'
+    case 'fair': return 'text-yellow-600 dark:text-yellow-400'
+    case 'poor': return 'text-red-600 dark:text-red-400'
+    default: return 'text-gray-500 dark:text-gray-400'
+  }
+}
 </script>
 
 <style scoped>

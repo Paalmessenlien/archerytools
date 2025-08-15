@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8 pb-24 md:pb-8">
     <!-- Notification Toast -->
     <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
       <div 
@@ -152,120 +152,102 @@
               <CustomButton
                 @click="openAddSetupModal"
                 variant="filled"
-                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 w-full md:w-auto touch-target"
               >
                 <i class="fas fa-plus mr-2"></i>
                 Add New Setup
               </CustomButton>
             </div>
-            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6 w-full">
               <div 
                 v-for="setup in bowSetups" 
                 :key="setup.id" 
-                class="card p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer"
+                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer touch-target overflow-hidden w-full max-w-md mx-auto"
                 @click="navigateToBowDetail(setup.id)"
               >
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <!-- Bow Name and Type -->
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                      {{ setup.name }} 
-                      <span class="text-sm font-normal text-gray-600 dark:text-gray-400">({{ formatBowType(setup.bow_type) }})</span>
-                    </h4>
-                    
-                    <!-- Main Bow Info - Simplified -->
-                    <div class="space-y-1 text-sm">
-                      <div class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Draw Weight:</span> {{ setup.draw_weight }} lbs
+                <!-- Bow Card Content -->
+                <div class="p-4">
+                  <div class="w-full max-w-none mx-0">
+                    <!-- Card Header -->
+                    <div class="flex items-start justify-between mb-4 w-full">
+                    <div class="flex-1 min-w-0">
+                      <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight truncate">
+                        {{ setup.name }}
+                      </h4>
+                      <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ formatBowType(setup.bow_type) }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0" @click.stop>
+                      <CustomButton
+                        @click="navigateToCalculatorWithSetup(setup.id)"
+                        variant="text"
+                        size="small"
+                        class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 touch-target p-2"
+                        title="Find Arrows"
+                      >
+                        <i class="fas fa-search text-sm"></i>
+                      </CustomButton>
+                      <CustomButton
+                        @click="navigateToBowDetail(setup.id)"
+                        variant="text"
+                        size="small"
+                        class="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900 touch-target p-2"
+                        title="View Details"
+                      >
+                        <i class="fas fa-eye text-sm"></i>
+                      </CustomButton>
+                    </div>
+                  </div>
+                  <!-- Main Bow Info - Compact Design -->
+                  <div class="space-y-3 w-full">
+                    <!-- Key Specs Row -->
+                    <div class="grid grid-cols-2 gap-4 text-sm w-full">
+                      <div class="min-w-0">
+                        <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Draw Weight</span>
+                        <div class="font-semibold text-gray-900 dark:text-gray-100 text-base mt-1 truncate">{{ setup.draw_weight }} lbs</div>
                       </div>
-                      
-                      <!-- Show bow model based on type -->
-                      <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Bow:</span> {{ setup.compound_brand }} {{ setup.compound_model }}
-                        <span v-if="setup.ibo_speed" class="ml-1 text-xs text-gray-500">({{ setup.ibo_speed }} fps)</span>
-                      </div>
-                      <div v-else-if="setup.riser_brand" class="text-gray-700 dark:text-gray-300">
-                        <span class="font-medium">Riser:</span> {{ setup.riser_brand }} {{ setup.riser_model }}
+                      <div v-if="setup.draw_length" class="min-w-0">
+                        <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Draw Length</span>
+                        <div class="font-semibold text-gray-900 dark:text-gray-100 text-base mt-1 truncate">{{ setup.draw_length }}"</div>
                       </div>
                     </div>
                     
-                    <!-- Bow Usage Tags -->
-                    <div v-if="setup.bow_usage" class="mt-3">
-                      <div class="flex flex-wrap gap-1">
+                    <!-- Bow Model Info -->
+                    <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="text-sm w-full">
+                      <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Bow Model</span>
+                      <div class="font-medium text-gray-900 dark:text-gray-100 mt-1 truncate">
+                        {{ setup.compound_brand }} {{ setup.compound_model }}
+                        <span v-if="setup.ibo_speed" class="ml-2 text-xs text-blue-600 dark:text-blue-400">({{ setup.ibo_speed }} fps)</span>
+                      </div>
+                    </div>
+                    <div v-else-if="setup.riser_brand" class="text-sm w-full">
+                      <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Riser</span>
+                      <div class="font-medium text-gray-900 dark:text-gray-100 mt-1 truncate">{{ setup.riser_brand }} {{ setup.riser_model }}</div>
+                    </div>
+                    
+                    <!-- Status Row -->
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700 w-full">
+                      <!-- Left side - Usage tags and status -->
+                      <div class="flex flex-wrap gap-1 flex-1 min-w-0">
                         <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
-                              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                           {{ formatBowUsage(usage) }}
                         </span>
                       </div>
-                    </div>
-
-                    <!-- Arrow Count Badge -->
-                    <div v-if="setup.arrows && setup.arrows.length > 0" class="mt-3">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                        <i class="fas fa-location-arrow mr-1"></i>
-                        {{ setup.arrows.length }} {{ setup.arrows.length === 1 ? 'arrow' : 'arrows' }} selected
-                      </span>
-                    </div>
-
-                    <!-- Equipment Count Badge -->
-                    <div v-if="setup.equipment && setup.equipment.length > 0" class="mt-2">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                        <i class="fas fa-cogs mr-1"></i>
-                        {{ setup.equipment.length }} {{ setup.equipment.length === 1 ? 'equipment' : 'equipment items' }}
-                      </span>
-                    </div>
-
-                    <!-- Equipment Summary -->
-                    <div v-if="setup.equipment && setup.equipment.length > 0" class="mt-2">
-                      <div class="flex flex-wrap gap-1">
-                        <span 
-                          v-for="equipment in setup.equipment.slice(0, 3)" 
-                          :key="equipment.id"
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                        >
-                          <i :class="getCategoryIcon(equipment.category_name)" class="mr-1 text-xs"></i>
-                          {{ equipment.category_name }}
-                        </span>
-                        <span 
-                          v-if="setup.equipment.length > 3"
-                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                        >
-                          +{{ setup.equipment.length - 3 }} more
-                        </span>
+                      
+                      <!-- Right side - Counts -->
+                      <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                        <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center">
+                          <i class="fas fa-location-arrow mr-1 text-green-600 dark:text-green-400"></i>
+                          {{ setup.arrows.length }}
+                        </div>
+                        <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center">
+                          <i class="fas fa-cogs mr-1 text-purple-600 dark:text-purple-400"></i>
+                          {{ setup.equipment.length }}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <!-- Quick Actions -->
-                  <div class="flex flex-col space-y-2 ml-4" @click.stop>
-                    <CustomButton
-                      @click="navigateToBowDetail(setup.id)"
-                      variant="text"
-                      size="small"
-                      class="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900"
-                      title="View Details"
-                    >
-                      <i class="fas fa-eye"></i>
-                    </CustomButton>
-                    <CustomButton
-                      @click="openEditBowSetupModal(setup)"
-                      variant="text"
-                      size="small"
-                      class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900"
-                      title="Edit Setup"
-                    >
-                      <i class="fas fa-edit"></i>
-                    </CustomButton>
-                    <CustomButton
-                      @click="confirmDeleteSetup(setup.id)"
-                      variant="text"
-                      size="small"
-                      class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-                      title="Delete Setup"
-                    >
-                      <i class="fas fa-trash"></i>
-                    </CustomButton>
-                  </div>
+                </div>
                 </div>
               </div>
             </div>
@@ -610,6 +592,10 @@ const navigateToArrowCalculator = (setup) => {
   
   // Navigate to the arrow calculator page
   navigateTo('/calculator');
+};
+
+const navigateToCalculatorWithSetup = (setupId) => {
+  navigateTo(`/calculator?setupId=${setupId}`);
 };
 
 
