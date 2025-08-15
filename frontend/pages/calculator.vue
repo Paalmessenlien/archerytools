@@ -25,15 +25,12 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Arrow Calculator</h1>
-      <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-        Find the perfect arrows for your bow setup with professional spine calculations and compatibility scoring.
-      </p>
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Arrow Calculator</h1>
     </div>
 
     <!-- Bow Setup Loaded Notification -->
-    <div v-if="selectedBowSetup" class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+    <div v-if="selectedBowSetup" class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <i class="fas fa-crosshairs text-green-600 dark:text-green-400 mr-3"></i>
@@ -56,9 +53,9 @@
     </div>
 
     <!-- Bow Selection Section -->
-    <div class="mb-8">
-      <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-4">
+    <div class="mb-6">
+      <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
           <i class="fas fa-crosshairs mr-2"></i>
           Bow Configuration
         </h3>
@@ -84,7 +81,7 @@
         </div>
 
         <!-- Manual Configuration (shown when no bow setup selected or for overrides) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Bow Type (hidden when bow setup is selected) -->
           <div v-if="!selectedBowSetup">
             <md-filled-select
@@ -111,20 +108,29 @@
 
           <!-- Draw Weight (hidden when bow setup is selected) -->
           <div v-if="!selectedBowSetup">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Draw Weight: <span class="font-semibold text-primary">{{ bowConfig.draw_weight }} lbs</span>
             </label>
-            <md-slider
-              ref="drawWeightSlider"
-              min="20"
-              max="80"
-              step="0.5"
-              :value="bowConfig.draw_weight"
-              @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
-              labeled
-              ticks
-              class="w-full"
-            ></md-slider>
+            <div class="flex items-center gap-3">
+              <input
+                type="range"
+                min="20"
+                max="80"
+                step="0.5"
+                :value="bowConfig.draw_weight"
+                @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
+                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+              />
+              <input
+                type="number"
+                :value="bowConfig.draw_weight"
+                @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
+                min="20"
+                max="80"
+                step="0.5"
+                class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 form-input touch-target"
+              />
+            </div>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>20 lbs</span>
               <span>80 lbs</span>
@@ -163,30 +169,70 @@
 
           <!-- Arrow Length (always shown) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Arrow Length: <span class="font-semibold text-primary">{{ bowConfig.arrow_length || 29 }}"</span>
             </label>
-            <md-slider
-              ref="arrowLengthSlider"
-              min="24"
-              max="34"
-              step="0.5"
-              :value="bowConfig.arrow_length || 29"
-              @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
-              labeled
-              ticks
-              class="w-full"
-            ></md-slider>
+            <div class="flex items-center gap-3">
+              <input
+                type="range"
+                min="24"
+                max="34"
+                step="0.5"
+                :value="bowConfig.arrow_length || 29"
+                @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
+                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+              />
+              <input
+                type="number"
+                :value="bowConfig.arrow_length || 29"
+                @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
+                min="24"
+                max="34"
+                step="0.5"
+                class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 form-input touch-target"
+              />
+            </div>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>24"</span>
               <span>34"</span>
             </div>
           </div>
+
+          <!-- Point Weight (always shown) -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gn</span>
+            </label>
+            <div class="flex items-center gap-3">
+              <input
+                type="range"
+                min="40"
+                max="300"
+                step="5"
+                :value="bowConfig.point_weight || 125"
+                @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
+                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+              />
+              <input
+                type="number"
+                :value="bowConfig.point_weight || 125"
+                @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
+                min="40"
+                max="300"
+                step="5"
+                class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 form-input touch-target"
+              />
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span>40 gn</span>
+              <span>300 gn</span>
+            </div>
+          </div>
         </div>
 
         <!-- Arrow Components Section -->
-        <div class="mt-6">
-          <div class="flex items-center justify-between mb-4">
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-3">
             <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100">
               <i class="fas fa-puzzle-piece mr-2"></i>
               Arrow Components
@@ -195,36 +241,14 @@
               @click="showComponents = !showComponents"
               variant="text"
               size="small"
-              class="text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900"
+              class="text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 touch-target"
             >
               <i class="fas transition-transform" :class="showComponents ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-              {{ showComponents ? 'Hide' : 'Show' }} Details
+              <span class="ml-2">{{ showComponents ? 'Hide' : 'Show' }} Details</span>
             </CustomButton>
           </div>
 
-          <div v-if="showComponents" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Point Weight -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gn</span>
-              </label>
-              <md-slider
-                ref="pointWeightSlider"
-                min="40"
-                max="300"
-                step="5"
-                :value="bowConfig.point_weight || 125"
-                @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
-                labeled
-                ticks
-                class="w-full"
-              ></md-slider>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>40 gn</span>
-                <span>300 gn</span>
-              </div>
-            </div>
-
+          <div v-if="showComponents" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <!-- Insert Weight -->
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -257,7 +281,6 @@
                 </div>
               </div>
             </div>
-
 
             <!-- Vane Type -->
             <div>
@@ -410,29 +433,16 @@
       </div>
     </div>
 
-    <!-- Manufacturer Spine Chart Selector -->
-    <div class="mb-8">
-      <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
-        <h3 class="text-lg font-semibold text-green-900 dark:text-green-200 mb-4">
-          <i class="fas fa-chart-line mr-2"></i>
-          Professional Spine Calculation
-        </h3>
-        
-        <ManufacturerSpineChartSelector
-          :bow-type="bowConfig.bow_type"
-          @selection-change="handleSpineChartSelection"
-        />
-      </div>
-    </div>
+
 
     <!-- Calculated Specifications -->
-    <md-elevated-card class="mb-8 light-surface light-elevation">
-      <div class="p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+    <md-elevated-card class="mb-6 light-surface light-elevation">
+      <div class="p-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
           <i class="fas fa-calculator" style="margin-right: 8px; color: #6366f1;"></i>
           Calculated Specifications
         </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="flex flex-col">
             <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">
               <i class="fas fa-bullseye" style="margin-right: 6px; color: #6366f1;"></i>
@@ -464,13 +474,13 @@
         </div>
 
         <!-- Enhanced Spine Calculation Results -->
-        <div v-if="enhancedSpineResult" class="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <h4 class="text-sm font-semibold text-green-900 dark:text-green-200 mb-3">
+        <div v-if="enhancedSpineResult" class="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <h4 class="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
             <i class="fas fa-chart-line mr-2"></i>
             Enhanced Calculation Results
           </h4>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <!-- Effective Bow Weight -->
             <div>
               <p class="text-xs text-green-700 dark:text-green-300 mb-1">Effective Bow Weight:</p>
@@ -515,7 +525,7 @@
         </div>
 
         <!-- Calculation Loading State -->
-        <div v-else-if="isCalculatingEnhancedSpine" class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div v-else-if="isCalculatingEnhancedSpine" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div class="flex items-center">
             <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent dark:border-blue-400"></div>
             <span class="ml-2 text-sm text-blue-700 dark:text-blue-300">Calculating enhanced spine recommendation...</span>
@@ -523,7 +533,7 @@
         </div>
         
         <!-- Material-specific calculation notes -->
-        <div v-if="bowConfig.arrow_material && bowConfig.arrow_material === 'wood'" class="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+        <div v-if="bowConfig.arrow_material && bowConfig.arrow_material === 'wood'" class="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
           <p class="text-sm text-orange-800 dark:text-orange-200">
             <i class="fas fa-info-circle mr-2"></i>
             <strong>Wood Arrow Calculation:</strong> Uses traditional wood arrow spine charts with pound-based measurements. 
@@ -531,7 +541,7 @@
           </p>
         </div>
         
-        <div v-else-if="!bowConfig.arrow_material || bowConfig.arrow_material === ''" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div v-else-if="!bowConfig.arrow_material || bowConfig.arrow_material === ''" class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p class="text-sm text-blue-800 dark:text-blue-200">
             <i class="fas fa-info-circle mr-2"></i>
             <strong>All Materials:</strong> Shows recommendations for all arrow materials. 
@@ -539,20 +549,277 @@
           </p>
         </div>
 
-        <!-- Spine Conversion Widget -->
-        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <SpineConversionWidget />
+        <!-- Match Summary -->
+        <div v-if="hasMatchDistribution" class="mt-4">
+          <div class="flex items-center justify-between gap-4">
+            <h4 class="text-base font-medium text-gray-900 dark:text-gray-100">
+              <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+              Match Summary
+            </h4>
+            <button
+              @click="showMatchSummary = !showMatchSummary"
+              class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 rounded-md transition-colors touch-target"
+            >
+              <i class="fas transition-transform text-xs" :class="showMatchSummary ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              <span class="ml-1">{{ showMatchSummary ? 'Hide' : 'Show' }}</span>
+            </button>
+          </div>
+          
+          <!-- Match Distribution Content -->
+          <div v-if="showMatchSummary" class="mt-2 pt-2">
+            <div class="border-t border-gray-200 dark:border-gray-700 mb-2"></div>
+            
+            <!-- Compact Match Distribution Grid -->
+            <div class="grid grid-cols-5 gap-1 mb-2">
+              <!-- Perfect Matches -->
+              <div class="text-center p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ matchDistribution.perfect }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Perfect</div>
+              </div>
+              
+              <!-- Excellent Matches -->
+              <div class="text-center p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ matchDistribution.excellent }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Excellent</div>
+              </div>
+              
+              <!-- Good Matches -->
+              <div class="text-center p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">{{ matchDistribution.good }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Good</div>
+              </div>
+              
+              <!-- Fair Matches -->
+              <div class="text-center p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div class="text-lg font-bold text-orange-600 dark:text-orange-400">{{ matchDistribution.fair }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Fair</div>
+              </div>
+              
+              <!-- Acceptable Matches -->
+              <div class="text-center p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div class="text-lg font-bold text-gray-600 dark:text-gray-400">{{ matchDistribution.acceptable }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Acceptable</div>
+              </div>
+            </div>
+            
+            <!-- Compact Visual Bar -->
+            <div class="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+              <div 
+                v-if="matchDistribution.perfect > 0"
+                class="bg-green-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.perfect / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.excellent > 0"
+                class="bg-blue-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.excellent / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.good > 0"
+                class="bg-indigo-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.good / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.fair > 0"
+                class="bg-orange-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.fair / matchDistribution.total) * 100}%`"
+              ></div>
+              <div 
+                v-if="matchDistribution.acceptable > 0"
+                class="bg-gray-500 transition-all duration-500"
+                :style="`width: ${(matchDistribution.acceptable / matchDistribution.total) * 100}%`"
+              ></div>
+            </div>
+          </div>
         </div>
+
+        <!-- Advanced Filters -->
+        <div class="mt-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CustomButton
+              @click="arrowFiltersStore.toggleAdvancedFilters()"
+              variant="text"
+              class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 touch-target"
+            >
+              <i class="fas transition-transform" :class="showAdvancedFilters ? 'fa-chevron-up' : 'fa-chevron-down'" style="margin-right: 8px;"></i>
+              {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
+            </CustomButton>
+            
+            <div class="flex items-center gap-4">
+              <!-- Clear Filters Button -->
+              <CustomButton
+                v-if="hasActiveFilters" 
+                @click="handleClearFilters"
+                variant="text"
+                size="small"
+                class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 touch-target"
+              >
+                <i class="fas fa-times-circle mr-2"></i>
+                Clear Filters
+              </CustomButton>
+            </div>
+          </div>
+        
+          <!-- Advanced Filters Content -->
+          <div v-if="showAdvancedFilters" class="mt-4 pt-3">
+            <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+            
+            <!-- Primary Filters Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <!-- Manufacturer Filter -->
+              <md-filled-select :value="filters.manufacturer" @change="arrowFiltersStore.updateFilter('manufacturer', $event.target.value)" label="Manufacturer">
+                <md-select-option value="">
+                  <div slot="headline">All Manufacturers</div>
+                </md-select-option>
+                <md-select-option v-for="mfr in availableManufacturers" :key="mfr" :value="mfr">
+                  <div slot="headline">{{ mfr }}</div>
+                </md-select-option>
+              </md-filled-select>
+              
+              <!-- Match Quality Filter -->
+              <md-filled-select :value="filters.match_quality" @change="arrowFiltersStore.updateFilter('match_quality', $event.target.value)" label="Match Quality">
+                <md-select-option value="">
+                  <div slot="headline">All Matches</div>
+                </md-select-option>
+                <md-select-option value="100">
+                  <div slot="headline">100% Matches Only</div>
+                </md-select-option>
+                <md-select-option value="90">
+                  <div slot="headline">90%+ Matches</div>
+                </md-select-option>
+                <md-select-option value="80">
+                  <div slot="headline">80%+ Matches</div>
+                </md-select-option>
+              </md-filled-select>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="mb-3">
+              <md-outlined-text-field 
+                :value="filters.search"
+                @input="arrowFiltersStore.updateFilter('search', $event.target.value)"
+                label="Search arrows..."
+                type="search"
+                class="w-full"
+              >
+                <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
+              </md-outlined-text-field>
+            </div>
+            
+            <!-- Sort By -->
+            <div class="mb-3">
+              <md-filled-select :value="filters.sortBy" @change="arrowFiltersStore.updateFilter('sortBy', $event.target.value)" label="Sort By" class="w-full md:w-1/2">
+                <md-select-option value="compatibility">
+                  <div slot="headline">Best Match</div>
+                </md-select-option>
+                <md-select-option value="manufacturer">
+                  <div slot="headline">Manufacturer</div>
+                </md-select-option>
+                <md-select-option value="diameter_asc">
+                  <div slot="headline">Diameter (Small to Large)</div>
+                </md-select-option>
+                <md-select-option value="diameter_desc">
+                  <div slot="headline">Diameter (Large to Small)</div>
+                </md-select-option>
+                <md-select-option value="weight_asc">
+                  <div slot="headline">Weight (Light to Heavy)</div>
+                </md-select-option>
+                <md-select-option value="weight_desc">
+                  <div slot="headline">Weight (Heavy to Light)</div>
+                </md-select-option>
+                <md-select-option value="material">
+                  <div slot="headline">Material</div>
+                </md-select-option>
+              </md-filled-select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+              <!-- Diameter Range Dropdown -->
+              <md-filled-select :value="filters.diameter_range" @change="arrowFiltersStore.updateFilter('diameter_range', $event.target.value)" label="Diameter Range">
+                <md-select-option value="">
+                  <div slot="headline">All Diameters</div>
+                </md-select-option>
+                <md-select-option value="0.200-0.250">
+                  <div slot="headline">0.200" - 0.250"</div>
+                </md-select-option>
+                <md-select-option value="0.250-0.300">
+                  <div slot="headline">0.250" - 0.300"</div>
+                </md-select-option>
+                <md-select-option value="0.300-0.350">
+                  <div slot="headline">0.300" - 0.350"</div>
+                </md-select-option>
+                <md-select-option value="0.350-0.400">
+                  <div slot="headline">0.350" - 0.400"</div>
+                </md-select-option>
+                <md-select-option value="0.400-0.450">
+                  <div slot="headline">0.400" - 0.450"</div>
+                </md-select-option>
+              </md-filled-select>
+              
+              <!-- Weight Range -->
+              <md-outlined-text-field 
+                :value="filters.weight_min"
+                @input="arrowFiltersStore.updateFilter('weight_min', $event.target.value)"
+                type="number" 
+                step="0.1"
+                label="Min Weight (GPI)"
+              ></md-outlined-text-field>
+              <md-outlined-text-field 
+                :value="filters.weight_max"
+                @input="arrowFiltersStore.updateFilter('weight_max', $event.target.value)"
+                type="number" 
+                step="0.1"
+                label="Max Weight (GPI)"
+              ></md-outlined-text-field>
+            </div>
+            
+            <!-- Professional Spine Calculation -->
+            <div class="mb-3">
+              <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Professional Spine Calculation
+                  </h4>
+                  <CustomButton
+                    @click="showProfessionalSpine = !showProfessionalSpine"
+                    variant="text"
+                    size="small"
+                    class="text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900 touch-target"
+                  >
+                    <i class="fas transition-transform" :class="showProfessionalSpine ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span class="ml-2">{{ showProfessionalSpine ? 'Hide' : 'Show' }}</span>
+                  </CustomButton>
+                </div>
+                
+                <div v-if="showProfessionalSpine">
+                  <ManufacturerSpineChartSelector
+                    :bow-type="bowConfig.bow_type"
+                    @selection-change="handleSpineChartSelection"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Spine Conversion Widget -->
+            <div>
+              <SpineConversionWidget />
+            </div>
+          </div>
+        </div>
+
       </div>
     </md-elevated-card>
 
     <!-- Arrow Recommendations -->
-    <div class="mt-8">
+    <div class="mt-6 arrow-recommendations">
       <ArrowRecommendationsList 
         :bow-config="bowConfig"
         :show-search-filters="true"
         :selected-bow-setup="selectedBowSetup"
         @arrow-added-to-setup="handleArrowAddedToSetup"
+        @error="handleError"
+        @recommendations-updated="handleRecommendationsUpdated"
       />
     </div>
   </div>
@@ -561,8 +828,10 @@
 <script setup lang="ts">
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
+import { useArrowFiltersStore } from '~/stores/arrowFilters'
 import ManufacturerSpineChartSelector from '~/components/ManufacturerSpineChartSelector.vue'
 import SpineConversionWidget from '~/components/SpineConversionWidget.vue'
+import CustomButton from '~/components/CustomButton.vue'
 
 // API
 const api = useApi()
@@ -570,22 +839,71 @@ const { user, fetchBowSetups } = useAuth()
 
 const bowConfigStore = useBowConfigStore()
 const bowSetupPickerStore = useBowSetupPickerStore()
+const arrowFiltersStore = useArrowFiltersStore()
 
 // Reactive references from stores
 const bowConfig = computed(() => bowConfigStore.bowConfig)
 const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
 const arrowSetupDescription = computed(() => bowConfigStore.arrowSetupDescription)
 
+// Arrow filters store references
+const filters = computed(() => arrowFiltersStore.filters)
+const showAdvancedFilters = computed(() => arrowFiltersStore.showAdvancedFilters)
+
 // Global bow setup picker state
 const selectedBowSetup = computed(() => bowSetupPickerStore.selectedBowSetup)
 const selectedBowSetupId = ref('')
 const userBowSetups = ref([])
+
+// Arrow recommendations state for match summary
+const recommendations = ref([])
+
+// Computed properties for match summary
+const matchDistribution = computed(() => {
+  const distribution = {
+    perfect: 0,     // 100%
+    excellent: 0,   // 90-99%
+    good: 0,        // 80-89%
+    fair: 0,        // 70-79%
+    acceptable: 0,  // 60-69%
+    total: 0
+  }
+  
+  recommendations.value.forEach(rec => {
+    const match = rec.match_percentage || 0
+    distribution.total++
+    
+    if (match === 100) {
+      distribution.perfect++
+    } else if (match >= 90) {
+      distribution.excellent++
+    } else if (match >= 80) {
+      distribution.good++
+    } else if (match >= 70) {
+      distribution.fair++
+    } else if (match >= 60) {
+      distribution.acceptable++
+    }
+  })
+  
+  return distribution
+})
+
+const hasMatchDistribution = computed(() => {
+  return matchDistribution.value.total > 0
+})
 
 // Store actions
 const { updateBowConfig } = bowConfigStore
 
 // UI state
 const showComponents = ref(false)
+const showMatchSummary = ref(false) // Default hidden
+const showProfessionalSpine = ref(false) // Default hidden
+
+// Advanced filters state
+const availableManufacturers = ref([])
+const hasActiveFilters = ref(false)
 
 // Notification state
 const notification = ref({
@@ -662,8 +980,18 @@ const hideNotification = () => {
   notification.value.show = false;
 };
 
+// Scroll to recommendations section
+const scrollToRecommendations = () => {
+  const element = document.querySelector('.arrow-recommendations')
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+};
+
 // Handle arrow added to bow setup
 const handleArrowAddedToSetup = (arrowData) => {
+  console.log('Arrow added to setup:', arrowData)
+  
   // Show success message
   showNotification(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
   
@@ -671,67 +999,27 @@ const handleArrowAddedToSetup = (arrowData) => {
   // User can continue browsing and adding more arrows
 }
 
-// Spine chart selection state
-const spineChartSelection = ref({
-  manufacturer: null,
-  chartId: null,
-  chart: null,
-  calculationMode: 'simple',
-  professionalSettings: {
-    bowSpeed: null,
-    releaseType: 'mechanical'
-  }
-})
-
-// Enhanced spine calculation state
-const enhancedSpineResult = ref(null)
-const isCalculatingEnhancedSpine = ref(false)
-
-// Handle spine chart selection change
-const handleSpineChartSelection = async (selection) => {
-  spineChartSelection.value = selection
-  
-  // Trigger enhanced spine calculation if manufacturer is selected
-  if (selection.manufacturer || selection.calculationMode === 'professional') {
-    await calculateEnhancedSpine()
-  } else {
-    enhancedSpineResult.value = null
-  }
+// Handle errors from arrow recommendations
+const handleError = (errorMessage) => {
+  showNotification(errorMessage, 'error')
 }
 
-// Calculate enhanced spine using manufacturer charts
-const calculateEnhancedSpine = async () => {
-  if (isCalculatingEnhancedSpine.value) return
-  
-  isCalculatingEnhancedSpine.value = true
-  
-  try {
-    const requestData = {
-      bow_config: {
-        ...bowConfig.value,
-        // Add professional settings if in professional mode
-        ...(spineChartSelection.value.calculationMode === 'professional' ? spineChartSelection.value.professionalSettings : {})
-      },
-      manufacturer_preference: spineChartSelection.value.manufacturer,
-      chart_id: spineChartSelection.value.chartId
-    }
-    
-    const response = await api.post('/calculator/spine-recommendation-enhanced', requestData)
-    enhancedSpineResult.value = response
-    
-    // Update the recommended spine display with enhanced calculation
-    if (response.recommended_spine) {
-      // Update the bow config store with the enhanced spine
-      bowConfigStore.setRecommendedSpine(response.recommended_spine)
-    }
-    
-  } catch (error) {
-    console.error('Error calculating enhanced spine:', error)
-    showNotification('Failed to calculate enhanced spine recommendation', 'error')
-  } finally {
-    isCalculatingEnhancedSpine.value = false
-  }
+// Handle recommendations updates for match summary
+const handleRecommendationsUpdated = (newRecommendations) => {
+  recommendations.value = newRecommendations
 }
+
+// Handle clear filters
+const handleClearFilters = () => {
+  arrowFiltersStore.clearFilters()
+}
+
+// Handle spine chart selection
+const handleSpineChartSelection = (selection) => {
+  // Handle the spine chart selection if needed
+  console.log('Spine chart selection:', selection)
+}
+
 
 // Calculate vane weight based on type and length
 const calculateVaneWeight = () => {

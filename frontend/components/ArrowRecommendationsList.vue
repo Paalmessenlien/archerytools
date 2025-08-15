@@ -1,14 +1,5 @@
 <template>
   <div>
-    <!-- Recommendations Header -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 mb-2">
-        Arrow Recommendations
-      </h2>
-      <p class="text-gray-600">
-        Based on your bow configuration: <span class="font-medium">{{ bowConfigStore.configSummary }}</span>
-      </p>
-    </div>
 
     <!-- Comparison Bar removed per requirements -->
 
@@ -55,241 +46,7 @@
 
     <!-- Filters & Controls (Always Visible) -->
     <div v-if="!pending">
-      <!-- Filters & Controls -->
-      <md-elevated-card class="mb-6">
-        <div class="p-6">
-          <!-- Basic Filters Row -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <!-- Manufacturer Filter -->
-            <md-filled-select :value="filters.manufacturer" @change="arrowFiltersStore.updateFilter('manufacturer', $event.target.value)" label="Manufacturer">
-              <md-select-option value="">
-                <div slot="headline">All Manufacturers</div>
-              </md-select-option>
-              <md-select-option v-for="mfr in availableManufacturers" :key="mfr" :value="mfr">
-                <div slot="headline">{{ mfr }}</div>
-              </md-select-option>
-            </md-filled-select>
-            
-            <!-- Match Quality Filter -->
-            <md-filled-select :value="filters.match_quality" @change="arrowFiltersStore.updateFilter('match_quality', $event.target.value)" label="Match Quality">
-              <md-select-option value="">
-                <div slot="headline">All Matches</div>
-              </md-select-option>
-              <md-select-option value="100">
-                <div slot="headline">100% Matches Only</div>
-              </md-select-option>
-              <md-select-option value="90">
-                <div slot="headline">90%+ Matches</div>
-              </md-select-option>
-              <md-select-option value="80">
-                <div slot="headline">80%+ Matches</div>
-              </md-select-option>
-            </md-filled-select>
-          </div>
-        
-          <!-- Advanced Filters Toggle -->
-          <div class="flex items-center justify-between">
-            <md-text-button @click="arrowFiltersStore.toggleAdvancedFilters()">
-              <i class="fas transition-transform" :class="showAdvancedFilters ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" style="margin-right: 8px;"></i>
-              {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
-            </md-text-button>
-            
-            <div class="flex items-center gap-4">
-              <!-- Clear Filters Button -->
-              <md-text-button 
-                v-if="hasActiveFilters" 
-                @click="handleClearFilters"
-                class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-              >
-                <i class="fas fa-times-circle" style="margin-right: 6px;"></i>
-                Clear Filters
-              </md-text-button>
-              
-              <div class="text-sm text-gray-600">
-                Showing {{ filteredRecommendations.length }} arrows
-                <span v-if="recommendedSpine" class="ml-2 font-medium text-primary">
-                  (Target Spine: {{ recommendedSpine }})
-                </span>
-              </div>
-            </div>
-          </div>
-        
-          <!-- Advanced Filters -->
-          <div v-if="showAdvancedFilters" class="mt-6 pt-4">
-            <md-divider class="mb-4"></md-divider>
-            
-            <!-- Search Bar -->
-            <div class="mb-4">
-              <md-outlined-text-field 
-                :value="filters.search"
-                @input="arrowFiltersStore.updateFilter('search', $event.target.value)"
-                label="Search arrows..."
-                type="search"
-                class="w-full"
-              >
-                <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
-              </md-outlined-text-field>
-            </div>
-            
-            <!-- Sort By -->
-            <div class="mb-4">
-              <md-filled-select :value="sortBy" @change="arrowFiltersStore.updateFilter('sortBy', $event.target.value)" label="Sort By" class="w-full md:w-1/2">
-                <md-select-option value="compatibility">
-                  <div slot="headline">Best Match</div>
-                </md-select-option>
-                <md-select-option value="manufacturer">
-                  <div slot="headline">Manufacturer</div>
-                </md-select-option>
-                <md-select-option value="diameter_asc">
-                  <div slot="headline">Diameter (Small to Large)</div>
-                </md-select-option>
-                <md-select-option value="diameter_desc">
-                  <div slot="headline">Diameter (Large to Small)</div>
-                </md-select-option>
-                <md-select-option value="weight_asc">
-                  <div slot="headline">Weight (Light to Heavy)</div>
-                </md-select-option>
-                <md-select-option value="weight_desc">
-                  <div slot="headline">Weight (Heavy to Light)</div>
-                </md-select-option>
-                <md-select-option value="material">
-                  <div slot="headline">Material</div>
-                </md-select-option>
-              </md-filled-select>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <!-- Diameter Range Dropdown -->
-              <md-filled-select :value="filters.diameter_range" @change="arrowFiltersStore.updateFilter('diameter_range', $event.target.value)" label="Diameter Range">
-                <md-select-option value="">
-                  <div slot="headline">All Diameters</div>
-                </md-select-option>
-                <md-select-option value="0.200-0.250">
-                  <div slot="headline">0.200" - 0.250"</div>
-                </md-select-option>
-                <md-select-option value="0.250-0.300">
-                  <div slot="headline">0.250" - 0.300"</div>
-                </md-select-option>
-                <md-select-option value="0.300-0.350">
-                  <div slot="headline">0.300" - 0.350"</div>
-                </md-select-option>
-                <md-select-option value="0.350-0.400">
-                  <div slot="headline">0.350" - 0.400"</div>
-                </md-select-option>
-                <md-select-option value="0.400-0.450">
-                  <div slot="headline">0.400" - 0.450"</div>
-                </md-select-option>
-              </md-filled-select>
-              
-              <!-- Weight Range -->
-              <md-outlined-text-field 
-                :value="filters.weight_min"
-                @input="arrowFiltersStore.updateFilter('weight_min', $event.target.value)"
-                type="number" 
-                step="0.1"
-                label="Min Weight (GPI)"
-              ></md-outlined-text-field>
-              <md-outlined-text-field 
-                :value="filters.weight_max"
-                @input="arrowFiltersStore.updateFilter('weight_max', $event.target.value)"
-                type="number" 
-                step="0.1"
-                label="Max Weight (GPI)"
-              ></md-outlined-text-field>
-            </div>
-          </div>
-        </div>
-      </md-elevated-card>
       
-      <!-- Match Summary -->
-      <div v-if="hasMatchDistribution && !pending" class="mb-6">
-        <md-elevated-card class="!bg-gradient-to-r !from-blue-50 !to-purple-50 dark:!from-blue-900/20 dark:!to-purple-900/20 border border-blue-200 dark:border-blue-800">
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
-                Match Summary
-              </h3>
-              <div class="text-sm text-gray-600 dark:text-gray-400">
-                {{ matchDistribution.total }} total arrows analyzed
-              </div>
-            </div>
-            
-            <!-- Match Distribution Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <!-- Perfect Matches -->
-              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ matchDistribution.perfect }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Perfect</div>
-                <div class="text-xs font-medium text-green-600 dark:text-green-400">100%</div>
-              </div>
-              
-              <!-- Excellent Matches -->
-              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ matchDistribution.excellent }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Excellent</div>
-                <div class="text-xs font-medium text-blue-600 dark:text-blue-400">90-99%</div>
-              </div>
-              
-              <!-- Good Matches -->
-              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ matchDistribution.good }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Good</div>
-                <div class="text-xs font-medium text-indigo-600 dark:text-indigo-400">80-89%</div>
-              </div>
-              
-              <!-- Fair Matches -->
-              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ matchDistribution.fair }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Fair</div>
-                <div class="text-xs font-medium text-orange-600 dark:text-orange-400">70-79%</div>
-              </div>
-              
-              <!-- Acceptable Matches -->
-              <div class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ matchDistribution.acceptable }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Acceptable</div>
-                <div class="text-xs font-medium text-gray-600 dark:text-gray-400">60-69%</div>
-              </div>
-            </div>
-            
-            <!-- Visual Bar -->
-            <div class="mt-4 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
-              <div 
-                v-if="matchDistribution.perfect > 0"
-                class="bg-green-500 transition-all duration-500"
-                :style="`width: ${(matchDistribution.perfect / matchDistribution.total) * 100}%`"
-              ></div>
-              <div 
-                v-if="matchDistribution.excellent > 0"
-                class="bg-blue-500 transition-all duration-500"
-                :style="`width: ${(matchDistribution.excellent / matchDistribution.total) * 100}%`"
-              ></div>
-              <div 
-                v-if="matchDistribution.good > 0"
-                class="bg-indigo-500 transition-all duration-500"
-                :style="`width: ${(matchDistribution.good / matchDistribution.total) * 100}%`"
-              ></div>
-              <div 
-                v-if="matchDistribution.fair > 0"
-                class="bg-orange-500 transition-all duration-500"
-                :style="`width: ${(matchDistribution.fair / matchDistribution.total) * 100}%`"
-              ></div>
-              <div 
-                v-if="matchDistribution.acceptable > 0"
-                class="bg-gray-500 transition-all duration-500"
-                :style="`width: ${(matchDistribution.acceptable / matchDistribution.total) * 100}%`"
-              ></div>
-            </div>
-            
-            <!-- Recommendation Note -->
-            <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-              <i class="fas fa-info-circle mr-1"></i>
-              Showing all compatible arrows from 100% down to 60% match. Use the match quality filter above to narrow results.
-            </div>
-          </div>
-        </md-elevated-card>
-      </div>
       
       <!-- No Recommendations Message (shown after filters) -->
       <md-elevated-card v-if="!filteredRecommendations.length" class="text-center mb-6">
@@ -444,6 +201,8 @@
 import type { BowConfiguration, ArrowRecommendation } from '~/types/arrow'
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useArrowFiltersStore } from '~/stores/arrowFilters'
+import ManufacturerSpineChartSelector from '~/components/ManufacturerSpineChartSelector.vue'
+import SpineConversionWidget from '~/components/SpineConversionWidget.vue'
 
 // Props
 const props = defineProps({
@@ -458,7 +217,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['arrow-added-to-setup', 'error'])
+const emit = defineEmits(['arrow-added-to-setup', 'error', 'recommendations-updated'])
 
 // Stores
 const bowConfigStore = useBowConfigStore()
@@ -706,39 +465,6 @@ const remainingResults = computed(() => {
 })
 
 // Match distribution statistics
-const matchDistribution = computed(() => {
-  const distribution = {
-    perfect: 0,     // 100%
-    excellent: 0,   // 90-99%
-    good: 0,        // 80-89%
-    fair: 0,        // 70-79%
-    acceptable: 0,  // 60-69%
-    total: 0
-  }
-  
-  recommendations.value.forEach(rec => {
-    const match = rec.match_percentage || 0
-    distribution.total++
-    
-    if (match === 100) {
-      distribution.perfect++
-    } else if (match >= 90) {
-      distribution.excellent++
-    } else if (match >= 80) {
-      distribution.good++
-    } else if (match >= 70) {
-      distribution.fair++
-    } else if (match >= 60) {
-      distribution.acceptable++
-    }
-  })
-  
-  return distribution
-})
-
-const hasMatchDistribution = computed(() => {
-  return matchDistribution.value.total > 0
-})
 
 // Methods
 const getSpineDisplay = (arrow) => {
@@ -845,13 +571,9 @@ const hasActiveFilters = computed(() => {
            f.sortBy !== 'compatibility')
 })
 
-const handleClearFilters = () => {
+const clearFilters = () => {
   arrowFiltersStore.clearFilters()
   currentPage.value = 1
-}
-
-const clearFilters = () => {
-  handleClearFilters()
 }
 
 const loadMoreResults = () => {
@@ -922,7 +644,10 @@ const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) =>
 }
 
 const addToSetup = async (recommendation) => {
+  console.log('Add to setup called for:', recommendation.arrow.manufacturer, recommendation.arrow.model_name)
+  
   if (!props.selectedBowSetup) {
+    console.error('No bow setup selected')
     emit('error', 'No bow setup selected')
     return
   }
@@ -951,9 +676,12 @@ const addToSetup = async (recommendation) => {
     }
 
     // Call the API to add arrow to setup
-    await addArrowToSetup(props.selectedBowSetup.id, arrowData)
+    console.log('Calling API to add arrow to setup...')
+    const result = await addArrowToSetup(props.selectedBowSetup.id, arrowData)
+    console.log('API call successful:', result)
 
     // Emit event to parent component
+    console.log('Emitting arrow-added-to-setup event')
     emit('arrow-added-to-setup', {
       arrow: recommendation.arrow,
       setup: props.selectedBowSetup,
@@ -962,7 +690,7 @@ const addToSetup = async (recommendation) => {
 
   } catch (error) {
     console.error('Error adding arrow to setup:', error)
-    emit('error', 'Failed to add arrow to setup. Please try again.')
+    emit('error', `Failed to add arrow to setup: ${error.message}`)
   }
 }
 
@@ -991,6 +719,8 @@ const viewArrowDetails = (arrowId, recommendation = null) => {
     query: Object.keys(query).length > 0 ? query : undefined
   })
 }
+
+// Handle spine chart selection
 
 const loadManufacturers = async () => {
   try {
@@ -1191,6 +921,8 @@ watch(recommendations, () => {
   // Force reactivity update for manufacturers
   nextTick(() => {
     console.log('Recommendations updated, available manufacturers:', availableManufacturers.value)
+    // Emit recommendations data to parent
+    emit('recommendations-updated', recommendations.value)
   })
 }, { deep: true })
 
