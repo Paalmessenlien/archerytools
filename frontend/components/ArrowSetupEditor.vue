@@ -5,21 +5,25 @@
       <!-- Arrow Length -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Arrow Length (inches)
+          Arrow Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.arrow_length || 32 }}"</span>
           <PerformanceTooltip 
             :title="'Arrow Length'"
             :content="'The cut length of the arrow shaft. Affects spine, weight, and performance. Standard hunting arrows: 28-32 inches.'"
           />
         </label>
         <input
-          v-model.number="editableConfig.arrow_length"
-          @input="handleChange"
-          type="number"
+          type="range"
           min="20"
           max="36"
           step="0.25"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          :value="editableConfig.arrow_length || 32"
+          @input="editableConfig.arrow_length = parseFloat($event.target.value); handleChange()"
+          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
         />
+        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <span>20"</span>
+          <span>36"</span>
+        </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Recommended: {{ getRecommendedLength() }}"
         </p>
@@ -28,21 +32,25 @@
       <!-- Point Weight -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Point Weight (grains)
+          Point Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.point_weight || 100 }} gr</span>
           <PerformanceTooltip 
             :title="'Point Weight'"
             :content="'Weight of the arrow tip/broadhead. Affects FOC, penetration, and trajectory. Hunting: 100-150gr, Target: 80-120gr.'"
           />
         </label>
         <input
-          v-model.number="editableConfig.point_weight"
-          @input="handleChange"
-          type="number"
+          type="range"
           min="40"
           max="300"
           step="5"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          :value="editableConfig.point_weight || 100"
+          @input="editableConfig.point_weight = parseFloat($event.target.value); handleChange()"
+          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
         />
+        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <span>40 gr</span>
+          <span>300 gr</span>
+        </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Current FOC: {{ calculateFOC() }}%
         </p>
@@ -111,65 +119,81 @@
         <!-- Nock Weight -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Nock Weight (gr)
+            Nock Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.nock_weight || 10 }} gr</span>
           </label>
           <input
-            v-model.number="editableConfig.nock_weight"
-            @input="handleChange"
-            type="number"
+            type="range"
             min="0"
             max="50"
             step="0.5"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            :value="editableConfig.nock_weight || 10"
+            @input="editableConfig.nock_weight = parseFloat($event.target.value); handleChange()"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
+          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>0 gr</span>
+            <span>50 gr</span>
+          </div>
         </div>
         
         <!-- Insert Weight -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Insert Weight (gr)
+            Insert Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.insert_weight || 0 }} gr</span>
           </label>
           <input
-            v-model.number="editableConfig.insert_weight"
-            @input="handleChange"
-            type="number"
+            type="range"
             min="0"
             max="100"
             step="0.5"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            :value="editableConfig.insert_weight || 0"
+            @input="editableConfig.insert_weight = parseFloat($event.target.value); handleChange()"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
+          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>0 gr</span>
+            <span>100 gr</span>
+          </div>
         </div>
         
         <!-- Bushing Weight -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Bushing Weight (gr)
+            Bushing Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.bushing_weight || 0 }} gr</span>
           </label>
           <input
-            v-model.number="editableConfig.bushing_weight"
-            @input="handleChange"
-            type="number"
+            type="range"
             min="0"
             max="50"
             step="0.5"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            :value="editableConfig.bushing_weight || 0"
+            @input="editableConfig.bushing_weight = parseFloat($event.target.value); handleChange()"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
+          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>0 gr</span>
+            <span>50 gr</span>
+          </div>
         </div>
         
         <!-- Fletching Weight -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Fletching Weight (gr)
+            Fletching Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editableConfig.fletching_weight || 15 }} gr</span>
           </label>
           <input
-            v-model.number="editableConfig.fletching_weight"
-            @input="handleChange"
-            type="number"
+            type="range"
             min="0"
             max="50"
             step="0.5"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            :value="editableConfig.fletching_weight || 15"
+            @input="editableConfig.fletching_weight = parseFloat($event.target.value); handleChange()"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
+          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>0 gr</span>
+            <span>50 gr</span>
+          </div>
         </div>
       </div>
       
@@ -425,3 +449,99 @@ watch(() => props.setupArrow, () => {
   initializeConfig()
 }, { deep: true })
 </script>
+
+<style scoped>
+/* Slider Styling for Arrow Setup Editor */
+.slider-touch {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #3b82f6 0%, #3b82f6 50%, #d1d5db 50%, #d1d5db 100%);
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  border-radius: 6px;
+}
+
+.slider-touch:hover {
+  opacity: 1;
+}
+
+.slider-touch::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider-touch::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode slider styling */
+.dark .slider-touch {
+  background: linear-gradient(to right, #8b5cf6 0%, #8b5cf6 50%, #4b5563 50%, #4b5563 100%);
+}
+
+.dark .slider-touch::-webkit-slider-thumb {
+  background: #8b5cf6;
+}
+
+.dark .slider-touch::-moz-range-thumb {
+  background: #8b5cf6;
+}
+
+/* Component weight sliders - smaller styling */
+input[type="range"].h-2 {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  border-radius: 4px;
+}
+
+input[type="range"].h-2:hover {
+  opacity: 1;
+}
+
+input[type="range"].h-2::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 1px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].h-2::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 1px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark input[type="range"].h-2::-webkit-slider-thumb {
+  background: #8b5cf6;
+}
+
+.dark input[type="range"].h-2::-moz-range-thumb {
+  background: #8b5cf6;
+}
+</style>

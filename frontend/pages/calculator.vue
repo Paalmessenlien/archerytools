@@ -633,469 +633,183 @@
           </div>
         </div>
 
-        <!-- Advanced Filters -->
-        <div class="mt-4">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CustomButton
-              @click="arrowFiltersStore.toggleAdvancedFilters()"
-              variant="text"
-              class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 touch-target"
-            >
-              <i class="fas transition-transform" :class="showAdvancedFilters ? 'fa-chevron-up' : 'fa-chevron-down'" style="margin-right: 8px;"></i>
-              {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
-            </CustomButton>
-            
-            <div class="flex items-center gap-4">
-              <!-- Clear Filters Button -->
+        <!-- Professional Spine Calculation -->
+        <div v-if="hasMatchDistribution" class="mt-4">
+          <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
+                <i class="fas fa-chart-line mr-2"></i>
+                Professional Spine Calculation
+              </h4>
               <CustomButton
-                v-if="hasActiveFilters" 
-                @click="handleClearFilters"
+                @click="showProfessionalSpine = !showProfessionalSpine"
                 variant="text"
                 size="small"
-                class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 touch-target"
+                class="text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900 touch-target"
               >
-                <i class="fas fa-times-circle mr-2"></i>
-                Clear Filters
+                <i class="fas transition-transform" :class="showProfessionalSpine ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                <span class="ml-2">{{ showProfessionalSpine ? 'Hide' : 'Show' }}</span>
               </CustomButton>
             </div>
-          </div>
-        
-          <!-- Advanced Filters Content -->
-          <div v-if="showAdvancedFilters" class="mt-4 pt-3">
-            <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
             
-            <!-- Primary Filters Row -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              <!-- Manufacturer Filter -->
-              <md-filled-select :value="filters.manufacturer" @change="arrowFiltersStore.updateFilter('manufacturer', $event.target.value)" label="Manufacturer">
-                <md-select-option value="">
-                  <div slot="headline">All Manufacturers</div>
-                </md-select-option>
-                <md-select-option v-for="mfr in availableManufacturers" :key="mfr" :value="mfr">
-                  <div slot="headline">{{ mfr }}</div>
-                </md-select-option>
-              </md-filled-select>
-              
-              <!-- Match Quality Filter -->
-              <md-filled-select :value="filters.match_quality" @change="arrowFiltersStore.updateFilter('match_quality', $event.target.value)" label="Match Quality">
-                <md-select-option value="">
-                  <div slot="headline">All Matches</div>
-                </md-select-option>
-                <md-select-option value="100">
-                  <div slot="headline">100% Matches Only</div>
-                </md-select-option>
-                <md-select-option value="90">
-                  <div slot="headline">90%+ Matches</div>
-                </md-select-option>
-                <md-select-option value="80">
-                  <div slot="headline">80%+ Matches</div>
-                </md-select-option>
-              </md-filled-select>
-            </div>
-            
-            <!-- Search Bar -->
-            <div class="mb-3">
-              <md-outlined-text-field 
-                :value="filters.search"
-                @input="arrowFiltersStore.updateFilter('search', $event.target.value)"
-                label="Search arrows..."
-                type="search"
-                class="w-full"
-              >
-                <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
-              </md-outlined-text-field>
-            </div>
-            
-            <!-- Sort By -->
-            <div class="mb-3">
-              <md-filled-select :value="filters.sortBy" @change="arrowFiltersStore.updateFilter('sortBy', $event.target.value)" label="Sort By" class="w-full md:w-1/2">
-                <md-select-option value="compatibility">
-                  <div slot="headline">Best Match</div>
-                </md-select-option>
-                <md-select-option value="manufacturer">
-                  <div slot="headline">Manufacturer</div>
-                </md-select-option>
-                <md-select-option value="diameter_asc">
-                  <div slot="headline">Diameter (Small to Large)</div>
-                </md-select-option>
-                <md-select-option value="diameter_desc">
-                  <div slot="headline">Diameter (Large to Small)</div>
-                </md-select-option>
-                <md-select-option value="weight_asc">
-                  <div slot="headline">Weight (Light to Heavy)</div>
-                </md-select-option>
-                <md-select-option value="weight_desc">
-                  <div slot="headline">Weight (Heavy to Light)</div>
-                </md-select-option>
-                <md-select-option value="material">
-                  <div slot="headline">Material</div>
-                </md-select-option>
-              </md-filled-select>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-              <!-- Diameter Range Dropdown -->
-              <md-filled-select :value="filters.diameter_range" @change="arrowFiltersStore.updateFilter('diameter_range', $event.target.value)" label="Diameter Range">
-                <md-select-option value="">
-                  <div slot="headline">All Diameters</div>
-                </md-select-option>
-                <md-select-option value="0.200-0.250">
-                  <div slot="headline">0.200" - 0.250"</div>
-                </md-select-option>
-                <md-select-option value="0.250-0.300">
-                  <div slot="headline">0.250" - 0.300"</div>
-                </md-select-option>
-                <md-select-option value="0.300-0.350">
-                  <div slot="headline">0.300" - 0.350"</div>
-                </md-select-option>
-                <md-select-option value="0.350-0.400">
-                  <div slot="headline">0.350" - 0.400"</div>
-                </md-select-option>
-                <md-select-option value="0.400-0.450">
-                  <div slot="headline">0.400" - 0.450"</div>
-                </md-select-option>
-              </md-filled-select>
-              
-              <!-- Weight Range -->
-              <md-outlined-text-field 
-                :value="filters.weight_min"
-                @input="arrowFiltersStore.updateFilter('weight_min', $event.target.value)"
-                type="number" 
-                step="0.1"
-                label="Min Weight (GPI)"
-              ></md-outlined-text-field>
-              <md-outlined-text-field 
-                :value="filters.weight_max"
-                @input="arrowFiltersStore.updateFilter('weight_max', $event.target.value)"
-                type="number" 
-                step="0.1"
-                label="Max Weight (GPI)"
-              ></md-outlined-text-field>
-            </div>
-            
-            <!-- Professional Spine Calculation -->
-            <div class="mb-3">
-              <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
-                    <i class="fas fa-chart-line mr-2"></i>
-                    Professional Spine Calculation
-                  </h4>
-                  <CustomButton
-                    @click="showProfessionalSpine = !showProfessionalSpine"
-                    variant="text"
-                    size="small"
-                    class="text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900 touch-target"
-                  >
-                    <i class="fas transition-transform" :class="showProfessionalSpine ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                    <span class="ml-2">{{ showProfessionalSpine ? 'Hide' : 'Show' }}</span>
-                  </CustomButton>
-                </div>
-                
-                <div v-if="showProfessionalSpine">
-                  <ManufacturerSpineChartSelector
-                    :bow-type="bowConfig.bow_type"
-                    @selection-change="handleSpineChartSelection"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Spine Conversion Widget -->
-            <div>
-              <SpineConversionWidget />
+            <div v-if="showProfessionalSpine">
+              <ManufacturerSpineChartSelector
+                :bow-type="bowConfig.bow_type"
+                @selection-change="handleSpineChartSelection"
+              />
             </div>
           </div>
         </div>
 
-        <!-- Performance Dashboard Toggle -->
-        <div class="mt-6">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-              <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
-              Advanced Performance Analysis
-            </h3>
-            <CustomButton
-              @click="togglePerformanceDashboard"
-              :class="showPerformanceDashboard ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-              class="transition-all duration-200"
-            >
-              <i class="fas transition-transform" :class="showPerformanceDashboard ? 'fa-chart-area' : 'fa-analytics'"></i>
-              <span class="ml-2">{{ showPerformanceDashboard ? 'Hide Analysis' : 'Show Analysis' }}</span>
-            </CustomButton>
-          </div>
-        </div>
       </div>
     </md-elevated-card>
 
-    <!-- Enhanced Performance Dashboard -->
-    <div v-if="showPerformanceDashboard" class="mt-6">
-      <md-elevated-card class="light-surface light-elevation">
-        <div class="p-6">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-            <i class="fas fa-tachometer-alt mr-3 text-indigo-600"></i>
-            Comprehensive Performance Analysis
-          </h3>
-
-          <!-- Performance Summary -->
-          <div v-if="comprehensivePerformance" class="mb-8 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
-            <div class="flex items-center justify-between mb-4">
-              <h4 class="text-lg font-semibold text-indigo-900 dark:text-indigo-200">
-                <i class="fas fa-star mr-2"></i>
-                Overall Performance Score
-              </h4>
-              <div class="text-3xl font-bold text-indigo-600">
-                {{ comprehensivePerformance.performance_summary.overall_score }}/100
-              </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-2">Primary Recommendation:</p>
-                <p class="font-medium text-indigo-900 dark:text-indigo-100">
-                  {{ comprehensivePerformance.performance_summary.primary_recommendation }}
-                </p>
-              </div>
-              <div>
-                <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-2">Estimated Speed:</p>
-                <p class="font-medium text-indigo-900 dark:text-indigo-100">
-                  {{ comprehensivePerformance.performance_summary.arrow_speed_fps }} fps
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Enhanced FOC Analysis -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  <i class="fas fa-balance-scale text-green-600 mr-2"></i>
-                  FOC Analysis
-                </h4>
-                <CustomButton
-                  @click="calculateEnhancedFoc"
-                  :disabled="isCalculatingFoc"
-                  size="small"
-                  variant="text"
-                  class="text-green-600 hover:bg-green-50 dark:hover:bg-green-900"
-                >
-                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingFoc }"></i>
-                </CustomButton>
-              </div>
-
-              <div v-if="isCalculatingFoc" class="flex items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-2 border-green-600 border-t-transparent"></div>
-                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Calculating FOC...</span>
-              </div>
-
-              <div v-else-if="enhancedFocResult" class="space-y-4">
-                <div class="text-center">
-                  <div class="text-3xl font-bold text-green-600">
-                    {{ enhancedFocResult.foc_percentage }}%
-                  </div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    Current FOC
-                  </div>
-                  <div class="mt-2">
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
-                          :class="getFocStatusClass(enhancedFocResult.foc_status)">
-                      {{ getFocStatusText(enhancedFocResult.foc_status) }}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Performance Metrics</h5>
-                  <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Stability:</span>
-                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.stability }}/10</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Accuracy:</span>
-                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.accuracy }}/10</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Penetration:</span>
-                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.penetration }}/10</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Wind Resistance:</span>
-                      <span class="font-medium">{{ enhancedFocResult.foc_analysis.wind_resistance }}/10</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="enhancedFocResult.optimization" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-                  <h5 class="font-medium text-blue-900 dark:text-blue-200 mb-2">Optimization</h5>
-                  <div class="text-sm text-blue-800 dark:text-blue-300">
-                    <p v-if="enhancedFocResult.optimization.feasible">
-                      <strong>Optimal Point Weight:</strong> {{ enhancedFocResult.optimization.optimal_point_weight }}gr
-                      <span class="text-xs block mt-1">
-                        ({{ enhancedFocResult.optimization.point_weight_change > 0 ? '+' : '' }}{{ enhancedFocResult.optimization.point_weight_change }}gr change)
-                      </span>
-                    </p>
-                    <p v-else class="text-orange-700 dark:text-orange-300">
-                      Large adjustment needed - consider alternative modifications
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="text-center py-8">
-                <i class="fas fa-calculator text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to calculate enhanced FOC analysis</p>
-              </div>
-            </div>
-
-            <!-- Ballistics Analysis -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  <i class="fas fa-crosshairs text-red-600 mr-2"></i>
-                  Ballistics
-                </h4>
-                <CustomButton
-                  @click="calculateBallistics"
-                  :disabled="isCalculatingBallistics"
-                  size="small"
-                  variant="text"
-                  class="text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
-                >
-                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingBallistics }"></i>
-                </CustomButton>
-              </div>
-
-              <div v-if="isCalculatingBallistics" class="flex items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-2 border-red-600 border-t-transparent"></div>
-                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Calculating trajectory...</span>
-              </div>
-
-              <div v-else-if="ballisticsResult" class="space-y-4">
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-red-600">
-                    {{ ballisticsResult.ballistic_coefficient }}
-                  </div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    Ballistic Coefficient
-                  </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Performance at Distance</h5>
-                  <div class="space-y-2 text-sm">
-                    <div v-for="(data, distance) in ballisticsResult.performance_metrics.performance_at_distance" 
-                         :key="distance" class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">{{ distance }}:</span>
-                      <span class="font-medium">{{ data.velocity_fps }}fps, {{ data.kinetic_energy }}ft-lbs</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
-                  <h5 class="font-medium text-orange-900 dark:text-orange-200 mb-2">Flight Characteristics</h5>
-                  <div class="text-sm text-orange-800 dark:text-orange-300">
-                    <p><strong>Max Range:</strong> {{ ballisticsResult.performance_metrics.max_effective_range_yards }} yards</p>
-                    <p><strong>Flatness Score:</strong> {{ ballisticsResult.performance_metrics.trajectory_flatness_score }}/100</p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="text-center py-8">
-                <i class="fas fa-chart-area text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to calculate ballistics analysis</p>
-              </div>
-            </div>
-
-            <!-- Performance Summary -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  <i class="fas fa-award text-purple-600 mr-2"></i>
-                  Performance
-                </h4>
-                <CustomButton
-                  @click="calculateComprehensivePerformance"
-                  :disabled="isCalculatingPerformance"
-                  size="small"
-                  variant="text"
-                  class="text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900"
-                >
-                  <i class="fas fa-sync" :class="{ 'fa-spin': isCalculatingPerformance }"></i>
-                </CustomButton>
-              </div>
-
-              <div v-if="isCalculatingPerformance" class="flex items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
-                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">Analyzing performance...</span>
-              </div>
-
-              <div v-else-if="comprehensivePerformance" class="space-y-4">
-                <div class="text-center">
-                  <div class="text-3xl font-bold text-purple-600">
-                    {{ comprehensivePerformance.penetration_analysis.penetration_score }}
-                  </div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    Penetration Score
-                  </div>
-                  <div class="mt-2">
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
-                          :class="getPenetrationClass(comprehensivePerformance.penetration_analysis.category)">
-                      {{ comprehensivePerformance.penetration_analysis.category }}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                  <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Key Strengths</h5>
-                  <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <li v-for="strength in comprehensivePerformance.performance_summary.key_strengths" 
-                        :key="strength" class="flex items-start">
-                      <i class="fas fa-check text-green-500 mr-2 mt-0.5 text-xs"></i>
-                      <span>{{ strength }}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div v-if="comprehensivePerformance.performance_summary.improvement_areas.length > 0" 
-                     class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
-                  <h5 class="font-medium text-yellow-900 dark:text-yellow-200 mb-2">Improvement Areas</h5>
-                  <ul class="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
-                    <li v-for="area in comprehensivePerformance.performance_summary.improvement_areas" 
-                        :key="area" class="flex items-start">
-                      <i class="fas fa-wrench text-yellow-500 mr-2 mt-0.5 text-xs"></i>
-                      <span>{{ area }}</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div v-else class="text-center py-8">
-                <i class="fas fa-trophy text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Click refresh to analyze comprehensive performance</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Comprehensive Analysis Button -->
-          <div class="mt-6 text-center">
-            <CustomButton
-              @click="calculateAllPerformanceMetrics"
-              :disabled="isCalculatingFoc || isCalculatingBallistics || isCalculatingPerformance"
-              class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3"
-            >
-              <i class="fas fa-calculator mr-2"></i>
-              Calculate Complete Analysis
-            </CustomButton>
-          </div>
+    <!-- Advanced Filters Button -->
+    <div class="mt-6 mb-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <CustomButton
+          @click="arrowFiltersStore.toggleAdvancedFilters()"
+          variant="text"
+          class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 touch-target"
+        >
+          <i class="fas transition-transform" :class="showAdvancedFilters ? 'fa-chevron-up' : 'fa-chevron-down'" style="margin-right: 8px;"></i>
+          {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
+        </CustomButton>
+        
+        <div class="flex items-center gap-4">
+          <!-- Clear Filters Button -->
+          <CustomButton
+            v-if="hasActiveFilters" 
+            @click="handleClearFilters"
+            variant="text"
+            size="small"
+            class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 touch-target"
+          >
+            <i class="fas fa-times-circle mr-2"></i>
+            Clear Filters
+          </CustomButton>
         </div>
-      </md-elevated-card>
+      </div>
+      
+      <!-- Advanced Filters Content -->
+      <div v-if="showAdvancedFilters" class="mt-4 pt-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+        
+        <!-- Primary Filters Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <!-- Manufacturer Filter -->
+          <md-filled-select :value="filters.manufacturer" @change="arrowFiltersStore.updateFilter('manufacturer', $event.target.value)" label="Manufacturer">
+            <md-select-option value="">
+              <div slot="headline">All Manufacturers</div>
+            </md-select-option>
+            <md-select-option v-for="mfr in availableManufacturers" :key="mfr" :value="mfr">
+              <div slot="headline">{{ mfr }}</div>
+            </md-select-option>
+          </md-filled-select>
+          
+          <!-- Match Quality Filter -->
+          <md-filled-select :value="filters.match_quality" @change="arrowFiltersStore.updateFilter('match_quality', $event.target.value)" label="Match Quality">
+            <md-select-option value="">
+              <div slot="headline">All Matches</div>
+            </md-select-option>
+            <md-select-option value="100">
+              <div slot="headline">100% Matches Only</div>
+            </md-select-option>
+            <md-select-option value="90">
+              <div slot="headline">90%+ Matches</div>
+            </md-select-option>
+            <md-select-option value="80">
+              <div slot="headline">80%+ Matches</div>
+            </md-select-option>
+          </md-filled-select>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="mb-3">
+          <md-outlined-text-field 
+            :value="filters.search"
+            @input="arrowFiltersStore.updateFilter('search', $event.target.value)"
+            label="Search arrows..."
+            type="search"
+            class="w-full"
+          >
+            <i class="fas fa-search" slot="leading-icon" style="color: #6b7280;"></i>
+          </md-outlined-text-field>
+        </div>
+        
+        <!-- Sort By -->
+        <div class="mb-3">
+          <md-filled-select :value="filters.sortBy" @change="arrowFiltersStore.updateFilter('sortBy', $event.target.value)" label="Sort By" class="w-full md:w-1/2">
+            <md-select-option value="compatibility">
+              <div slot="headline">Best Match</div>
+            </md-select-option>
+            <md-select-option value="manufacturer">
+              <div slot="headline">Manufacturer</div>
+            </md-select-option>
+            <md-select-option value="diameter_asc">
+              <div slot="headline">Diameter (Small to Large)</div>
+            </md-select-option>
+            <md-select-option value="diameter_desc">
+              <div slot="headline">Diameter (Large to Small)</div>
+            </md-select-option>
+            <md-select-option value="weight_asc">
+              <div slot="headline">Weight (Light to Heavy)</div>
+            </md-select-option>
+            <md-select-option value="weight_desc">
+              <div slot="headline">Weight (Heavy to Light)</div>
+            </md-select-option>
+            <md-select-option value="material">
+              <div slot="headline">Material</div>
+            </md-select-option>
+          </md-filled-select>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+          <!-- Diameter Range Dropdown -->
+          <md-filled-select :value="filters.diameter_range" @change="arrowFiltersStore.updateFilter('diameter_range', $event.target.value)" label="Diameter Range">
+            <md-select-option value="">
+              <div slot="headline">All Diameters</div>
+            </md-select-option>
+            <md-select-option value="0.200-0.250">
+              <div slot="headline">0.200" - 0.250"</div>
+            </md-select-option>
+            <md-select-option value="0.250-0.300">
+              <div slot="headline">0.250" - 0.300"</div>
+            </md-select-option>
+            <md-select-option value="0.300-0.350">
+              <div slot="headline">0.300" - 0.350"</div>
+            </md-select-option>
+            <md-select-option value="0.350-0.400">
+              <div slot="headline">0.350" - 0.400"</div>
+            </md-select-option>
+            <md-select-option value="0.400-0.450">
+              <div slot="headline">0.400" - 0.450"</div>
+            </md-select-option>
+          </md-filled-select>
+          
+          <!-- Weight Range -->
+          <md-outlined-text-field 
+            :value="filters.weight_min"
+            @input="arrowFiltersStore.updateFilter('weight_min', $event.target.value)"
+            type="number" 
+            step="0.1"
+            label="Min Weight (GPI)"
+          ></md-outlined-text-field>
+          <md-outlined-text-field 
+            :value="filters.weight_max"
+            @input="arrowFiltersStore.updateFilter('weight_max', $event.target.value)"
+            type="number" 
+            step="0.1"
+            label="Max Weight (GPI)"
+          ></md-outlined-text-field>
+        </div>
+        
+
+      </div>
     </div>
 
     <!-- Arrow Recommendations -->
-    <div class="mt-6 arrow-recommendations">
+    <div class="arrow-recommendations">
       <ArrowRecommendationsList 
         :bow-config="bowConfig"
         :show-search-filters="true"
@@ -1242,6 +956,18 @@ const showProfessionalSpine = ref(false) // Default hidden
 // Advanced filters state
 const availableManufacturers = ref([])
 const hasActiveFilters = ref(false)
+
+// Load manufacturers for filter dropdown
+const loadManufacturers = async () => {
+  try {
+    const result = await api.getManufacturers()
+    console.log('Loaded manufacturers for calculator filters:', result)
+    availableManufacturers.value = result?.map(m => m.manufacturer).sort() || []
+  } catch (err) {
+    console.error('Error loading manufacturers for calculator filters:', err)
+    availableManufacturers.value = []
+  }
+}
 
 // Notification state
 const notification = ref({
@@ -1613,6 +1339,9 @@ watch(selectedBowSetup, (newBowSetup) => {
 onMounted(async () => {
   // Load user's bow setups for the dropdown
   await loadUserBowSetups()
+  
+  // Load manufacturers for filter dropdown
+  await loadManufacturers()
   
   // Check for URL query parameters (setupId from bow detail page)
   const route = useRoute()
