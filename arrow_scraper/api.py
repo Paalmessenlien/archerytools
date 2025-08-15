@@ -2335,6 +2335,10 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
     """Calculate performance metrics for a single arrow in a bow setup"""
     conn = None
     try:
+        # Parse request data for bow configuration
+        data = request.get_json() or {}
+        bow_config = data.get('bow_config', {})
+        
         # Get user database connection
         from user_database import UserDatabase
         user_db = UserDatabase()
@@ -2343,7 +2347,7 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
         
         # Get the arrow setup and verify ownership
         cursor.execute('''
-            SELECT sa.*, bs.user_id, bs.draw_weight, bs.draw_length, bs.bow_type, bs.ibo_speed
+            SELECT sa.*, bs.user_id, bs.draw_weight, bs.bow_type, bs.ibo_speed
             FROM setup_arrows sa
             JOIN bow_setups bs ON sa.setup_id = bs.id
             WHERE sa.id = ?
@@ -2391,20 +2395,28 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                     self.arrow_id = setup_arrow['arrow_id']
             
             class MockArcherProfile:
-                def __init__(self, setup_data):
+                def __init__(self, setup_data, bow_config_override=None):
                     self.arrow_length = setup_data['arrow_length']
                     self.point_weight_preference = setup_data['point_weight']
                     self.shooting_style = 'hunting'
                     
                     class MockBowConfig:
-                        def __init__(self, bow_data):
-                            self.draw_weight = bow_data['draw_weight'] or 50
-                            self.bow_type = type('BowType', (), {'value': bow_data['bow_type'] or 'compound'})()
+                        def __init__(self, bow_data, config_override=None):
+                            # Use bow_config from request if provided, otherwise fall back to database
+                            if config_override:
+                                self.draw_weight = config_override.get('draw_weight', bow_data.get('draw_weight', 50))
+                                self.bow_type = type('BowType', (), {'value': config_override.get('bow_type', bow_data.get('bow_type', 'compound'))})()
+                                # Add draw_length from request bow_config
+                                self.draw_length = config_override.get('draw_length', 29.0)
+                            else:
+                                self.draw_weight = bow_data.get('draw_weight', 50)
+                                self.bow_type = type('BowType', (), {'value': bow_data.get('bow_type', 'compound')})()
+                                self.draw_length = 29.0  # Default fallback
                     
-                    self.bow_config = MockBowConfig(setup_data)
+                    self.bow_config = MockBowConfig(setup_data, bow_config_override)
             
             mock_arrow = MockArrowRec(dict(arrow_data), dict(spine_data) if spine_data else None, dict(setup_arrow))
-            mock_profile = MockArcherProfile(dict(setup_arrow))
+            mock_profile = MockArcherProfile(dict(setup_arrow), bow_config)
             
             # Calculate performance
             performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
@@ -5426,7 +5438,7 @@ def get_guide_session_details(current_user, session_id):
         
         # Get session info
         cursor.execute('''
-            SELECT gs.*, bs.name as bow_name, bs.bow_type, bs.draw_weight, bs.draw_length
+            SELECT gs.*, bs.name as bow_name, bs.bow_type, bs.draw_weight
             FROM guide_sessions gs
             LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
             WHERE gs.id = ? AND gs.user_id = ?
