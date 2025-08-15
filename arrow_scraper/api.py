@@ -30,7 +30,8 @@ import uuid
 
 # Import our arrow tuning system components
 from arrow_tuning_system import ArrowTuningSystem, ArcherProfile, TuningSession
-from spine_calculator import BowConfiguration, BowType
+from spine_calculator import SpineCalculator, BowConfiguration, BowType
+from ballistics_calculator import BallisticsCalculator, EnvironmentalConditions, ShootingConditions, ArrowType as BallisticsArrowType
 from tuning_calculator import TuningGoal, ArrowType
 from arrow_database import ArrowDatabase
 from component_database import ComponentDatabase
@@ -82,6 +83,118 @@ def get_tuning_system():
             import traceback
             tuning_system = None
     return tuning_system
+
+def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None):
+    """Calculate comprehensive performance metrics for a specific arrow recommendation"""
+    try:
+        ballistics_calc = BallisticsCalculator()
+        
+        # Extract arrow properties
+        raw_gpi = getattr(arrow_rec, 'gpi_weight', None)
+        arrow_weight = raw_gpi if raw_gpi and raw_gpi > 0 else 8.5  # Default realistic GPI (grains per inch)
+        arrow_length = archer_profile.arrow_length or 29.0
+        point_weight = archer_profile.point_weight_preference or 125.0
+        
+        # Calculate total arrow weight (GPI * length + point weight + nock/fletching)
+        total_arrow_weight = (arrow_weight * arrow_length) + point_weight + 25  # 25gr for nock+fletching
+        
+        # Estimate arrow speed based on bow configuration if not provided
+        if not estimated_speed:
+            draw_weight = archer_profile.bow_config.draw_weight
+            # Simple speed estimation: compound bows ~10 fps per pound, recurve ~8 fps per pound
+            if archer_profile.bow_config.bow_type.value == 'compound':
+                estimated_speed = (draw_weight * 10) - (total_arrow_weight - 350) * 0.1  # Speed loss for heavier arrows
+            else:
+                estimated_speed = (draw_weight * 8) - (total_arrow_weight - 350) * 0.08
+            estimated_speed = max(180, min(350, estimated_speed))  # Reasonable bounds
+        
+        # Determine arrow type for ballistics
+        arrow_type_str = getattr(arrow_rec, 'arrow_type', 'hunting') or 'hunting'
+        try:
+            arrow_type = BallisticsArrowType(arrow_type_str.lower())
+        except:
+            arrow_type = BallisticsArrowType.HUNTING
+        
+        # Get arrow diameter for ballistics
+        arrow_diameter = getattr(arrow_rec, 'outer_diameter', 0.246) or 0.246  # Default .246"
+        
+        # Standard environmental conditions
+        env = EnvironmentalConditions()
+        shooting = ShootingConditions()
+        
+        # Calculate enhanced FOC
+        spine_calc = SpineCalculator()
+        shaft_weight = arrow_weight * arrow_length  # GPI * length = total shaft weight
+        
+        # Debug logging
+        print(f"FOC Debug - arrow_weight (GPI): {arrow_weight}, arrow_length: {arrow_length}, shaft_weight: {shaft_weight}, point_weight: {point_weight}")
+        
+        foc_result = spine_calc.calculate_enhanced_foc(
+            arrow_length=arrow_length,
+            point_weight=point_weight,
+            shaft_weight=shaft_weight,
+            intended_use=archer_profile.shooting_style
+        )
+        
+        # Calculate kinetic energy and penetration at key distances
+        ke_20yd = ballistics_calc.calculate_kinetic_energy(estimated_speed, total_arrow_weight, 20)
+        ke_40yd = ballistics_calc.calculate_kinetic_energy(estimated_speed, total_arrow_weight, 40)
+        
+        penetration_analysis = ballistics_calc.calculate_penetration_potential(
+            ke_40yd['kinetic_energy_ft_lbs'],
+            ke_40yd['momentum_slug_fps'],
+            arrow_type
+        )
+        
+        # Calculate trajectory for flight characteristics
+        trajectory = ballistics_calc.calculate_trajectory(
+            arrow_speed_fps=estimated_speed,
+            arrow_weight_grains=total_arrow_weight,
+            arrow_diameter_inches=arrow_diameter,
+            arrow_type=arrow_type,
+            environmental=env,
+            shooting=shooting
+        )
+        
+        return {
+            'performance_summary': {
+                'estimated_speed_fps': round(estimated_speed, 1),
+                'total_arrow_weight_grains': round(total_arrow_weight, 1),
+                'kinetic_energy_40yd': ke_40yd['kinetic_energy_ft_lbs'],
+                'momentum_40yd': ke_40yd['momentum_slug_fps'],
+                'penetration_score': penetration_analysis['penetration_score'],
+                'penetration_category': penetration_analysis['category'],
+                'foc_percentage': foc_result.get('foc_percentage', 0),
+                'foc_category': foc_result.get('foc_analysis', {}).get('category', 'unknown')
+            },
+            'detailed_foc': foc_result,
+            'kinetic_energy_data': {
+                '20_yards': ke_20yd,
+                '40_yards': ke_40yd
+            },
+            'penetration_analysis': penetration_analysis,
+            'flight_characteristics': {
+                'max_range_yards': trajectory['performance_metrics'].get('max_effective_range_yards', 0),
+                'trajectory_flatness_score': trajectory['performance_metrics'].get('trajectory_flatness_score', 0),
+                'ballistic_coefficient': trajectory.get('ballistic_coefficient', 0)
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error calculating arrow performance: {e}")
+        return {
+            'performance_summary': {
+                'estimated_speed_fps': estimated_speed or 250,
+                'total_arrow_weight_grains': 400,
+                'kinetic_energy_40yd': 0,
+                'momentum_40yd': 0,
+                'penetration_score': 0,
+                'penetration_category': 'unknown',
+                'foc_percentage': 0,
+                'foc_category': 'unknown'
+            },
+            'error': f'Performance calculation failed: {str(e)}'
+        }
 
 def get_database():
     """Get database with unified path resolution"""
@@ -1010,6 +1123,25 @@ def get_arrow_recommendations():
                 min_outer_diameter = min(outer_diameter_values) if outer_diameter_values else None
                 max_outer_diameter = max(outer_diameter_values) if outer_diameter_values else None
                 
+                # Calculate performance metrics for this arrow
+                try:
+                    performance_data = calculate_arrow_performance(archer_profile, rec)
+                except Exception as perf_error:
+                    print(f"Performance calculation failed for arrow {getattr(rec, 'arrow_id', 'unknown')}: {perf_error}")
+                    performance_data = {
+                        'performance_summary': {
+                            'estimated_speed_fps': 250,
+                            'total_arrow_weight_grains': 400,
+                            'kinetic_energy_40yd': 0,
+                            'momentum_40yd': 0,
+                            'penetration_score': 0,
+                            'penetration_category': 'unknown',
+                            'foc_percentage': 0,
+                            'foc_category': 'unknown'
+                        },
+                        'error': f'Performance calculation failed: {str(perf_error)}'
+                    }
+
                 # Safely access attributes with error handling
                 rec_data = {
                     'arrow': {
@@ -1053,7 +1185,9 @@ def get_arrow_recommendations():
                     'compatibility_rating': getattr(rec, 'confidence_level', 'unknown'),
                     'match_percentage': int(getattr(rec, 'match_score', 0)),
                     'reasons': getattr(rec, 'match_reasons', []),
-                    'potential_issues': getattr(rec, 'potential_issues', [])
+                    'potential_issues': getattr(rec, 'potential_issues', []),
+                    # Add comprehensive performance data
+                    'performance': performance_data
                 }
                 api_recommendations.append(rec_data)
         except Exception as e:
@@ -1734,6 +1868,53 @@ def add_arrow_to_setup(current_user, setup_id):
                     'material': arrow_data[2]
                 }
         
+        # Calculate performance metrics for the added arrow
+        try:
+            # Create a mock arrow recommendation object for performance calculation
+            class MockArrowRec:
+                def __init__(self, arrow_data, data):
+                    self.gpi_weight = data.get('gpi_weight', 400) or 400  # Default if not provided
+                    self.outer_diameter = data.get('outer_diameter', 0.246) or 0.246
+                    self.arrow_type = arrow_data[2] if arrow_data and len(arrow_data) > 2 else 'hunting'  # material
+                    self.arrow_id = data['arrow_id']
+            
+            # Create a mock archer profile from bow setup data  
+            class MockArcherProfile:
+                def __init__(self, bow_setup, arrow_data):
+                    self.arrow_length = arrow_data['arrow_length']
+                    self.point_weight_preference = arrow_data['point_weight']
+                    self.shooting_style = 'hunting'  # Default
+                    
+                    # Create mock bow config
+                    class MockBowConfig:
+                        def __init__(self, setup_data):
+                            self.draw_weight = setup_data.get('draw_weight', 50) or 50
+                            self.bow_type = type('BowType', (), {'value': setup_data.get('bow_type', 'compound') or 'compound'})()
+                    
+                    self.bow_config = MockBowConfig(dict(bow_setup))
+            
+            mock_arrow = MockArrowRec(arrow_data, data)
+            mock_profile = MockArcherProfile(bow_setup, data)
+            
+            performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+            response_data['performance'] = performance_data
+            
+        except Exception as perf_error:
+            print(f"Performance calculation failed for added arrow: {perf_error}")
+            response_data['performance'] = {
+                'performance_summary': {
+                    'estimated_speed_fps': 250,
+                    'total_arrow_weight_grains': 400,
+                    'kinetic_energy_40yd': 0,
+                    'momentum_40yd': 0,
+                    'penetration_score': 0,
+                    'penetration_category': 'unknown',
+                    'foc_percentage': 0,
+                    'foc_category': 'unknown'
+                },
+                'error': f'Performance calculation failed: {str(perf_error)}'
+            }
+        
         return jsonify(response_data)
         
     except sqlite3.IntegrityError as e:
@@ -1885,6 +2066,30 @@ def get_setup_arrows(current_user, setup_id):
                     'spine_specifications': []
                 }
             
+            # Extract performance data from notes field if present
+            try:
+                # Load performance data from dedicated performance_data column
+                if row.get('performance_data'):
+                    import json
+                    performance_data = json.loads(row['performance_data'])
+                    arrow_info['performance'] = performance_data
+                # Fallback: check for legacy performance data in notes field
+                elif row['notes'] and 'Performance:' in row['notes']:
+                    import json
+                    # Extract JSON from notes field (legacy format)
+                    notes = row['notes']
+                    if 'Performance: {' in notes:
+                        json_start = notes.find('Performance: {') + len('Performance: ')
+                        json_str = notes[json_start:]
+                        # Handle cases where there might be additional text after JSON
+                        if ' | Performance:' in json_str:
+                            json_str = json_str[:json_str.find(' | Performance:')]
+                        performance_data = json.loads(json_str)
+                        arrow_info['performance'] = performance_data
+            except Exception as perf_error:
+                print(f"Error parsing performance data for arrow {row['arrow_id']}: {perf_error}")
+                # Continue without performance data rather than failing
+            
             arrows.append(arrow_info)
         
         return jsonify({'arrows': arrows})
@@ -1953,6 +2158,151 @@ def remove_arrow_from_setup(current_user, arrow_setup_id):
         if conn:
             conn.close()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/arrows/calculate-performance', methods=['POST'])
+@token_required
+def calculate_setup_arrows_performance(current_user, setup_id):
+    """Calculate performance metrics for all arrows in a bow setup"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify the bow setup belongs to the current user
+        cursor.execute("SELECT * FROM bow_setups WHERE id = ? AND user_id = ?", (setup_id, current_user['id']))
+        bow_setup = cursor.fetchone()
+        
+        if not bow_setup:
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Get all arrows in the setup
+        cursor.execute("SELECT * FROM setup_arrows WHERE setup_id = ?", (setup_id,))
+        setup_arrows = cursor.fetchall()
+        
+        if not setup_arrows:
+            return jsonify({'message': 'No arrows found in setup', 'updated_arrows': []})
+        
+        # Get arrow database connection
+        arrow_conn = get_arrow_db()
+        if not arrow_conn:
+            print("ERROR: Could not connect to arrow database")
+            return jsonify({'error': 'Arrow database not available'}), 500
+        
+        print(f"Successfully connected to arrow database")
+        
+        updated_arrows = []
+        
+        for setup_arrow in setup_arrows:
+            try:
+                # Get arrow details from arrow database
+                arrow_cursor = arrow_conn.cursor()
+                arrow_cursor.execute('''
+                    SELECT id, manufacturer, model_name, material, arrow_type
+                    FROM arrows WHERE id = ?
+                ''', (setup_arrow['arrow_id'],))
+                arrow_data = arrow_cursor.fetchone()
+                
+                print(f"Arrow data query for arrow_id {setup_arrow['arrow_id']}: {dict(arrow_data) if arrow_data else 'Not found'}")
+                
+                if not arrow_data:
+                    print(f"Skipping arrow_id {setup_arrow['arrow_id']} - not found in arrow database")
+                    continue
+                
+                # Get spine specifications
+                print(f"Querying spine specs for arrow_id: {setup_arrow['arrow_id']}")
+                arrow_cursor.execute('''
+                    SELECT spine, outer_diameter, inner_diameter, gpi_weight
+                    FROM spine_specifications WHERE arrow_id = ?
+                    ORDER BY spine ASC LIMIT 1
+                ''', (setup_arrow['arrow_id'],))
+                spine_data = arrow_cursor.fetchone()
+                
+                if spine_data:
+                    print(f"Found spine data: {dict(spine_data)}")
+                else:
+                    print(f"No spine data found for arrow_id: {setup_arrow['arrow_id']}")
+                    # Try to see if ANY spine data exists for this arrow
+                    arrow_cursor.execute('SELECT COUNT(*) as count FROM spine_specifications WHERE arrow_id = ?', (setup_arrow['arrow_id'],))
+                    count_result = arrow_cursor.fetchone()
+                    print(f"  Total spine specs for this arrow: {count_result['count'] if count_result else 'unknown'}")
+                
+                # Create mock objects for performance calculation
+                class MockArrowRec:
+                    def __init__(self, arrow_data, spine_data, setup_arrow):
+                        # Handle None/0 GPI weight with debugging
+                        raw_gpi = spine_data['gpi_weight'] if spine_data else None
+                        self.gpi_weight = raw_gpi if raw_gpi and raw_gpi > 0 else 8.5  # Default realistic GPI
+                        self.outer_diameter = spine_data['outer_diameter'] if spine_data else 0.246
+                        self.arrow_type = arrow_data['arrow_type'] if arrow_data['arrow_type'] else 'hunting'
+                        self.arrow_id = setup_arrow['arrow_id']
+                        
+                        # Debug logging
+                        print(f"MockArrow Debug - raw_gpi: {raw_gpi}, final_gpi: {self.gpi_weight}, arrow_id: {self.arrow_id}")
+                        if spine_data:
+                            print(f"  Spine data available: spine={spine_data.get('spine')}, outer_diameter={spine_data.get('outer_diameter')}, gpi_weight={spine_data.get('gpi_weight')}")
+                        else:
+                            print(f"  No spine data found for arrow_id: {self.arrow_id}")
+                
+                class MockArcherProfile:
+                    def __init__(self, bow_setup, setup_arrow):
+                        self.arrow_length = setup_arrow['arrow_length']
+                        self.point_weight_preference = setup_arrow['point_weight']
+                        self.shooting_style = 'hunting'  # Default
+                        
+                        class MockBowConfig:
+                            def __init__(self, setup_data):
+                                self.draw_weight = setup_data['draw_weight'] or 50
+                                self.bow_type = type('BowType', (), {'value': setup_data['bow_type'] or 'compound'})()
+                        
+                        self.bow_config = MockBowConfig(dict(bow_setup))
+                
+                mock_arrow = MockArrowRec(dict(arrow_data), dict(spine_data) if spine_data else None, dict(setup_arrow))
+                mock_profile = MockArcherProfile(bow_setup, dict(setup_arrow))
+                
+                # Calculate performance
+                performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+                
+                # Store performance data as JSON in dedicated performance_data column
+                import json
+                performance_json = json.dumps(performance_data)
+                
+                # Update the setup_arrows record with performance data in dedicated column
+                cursor.execute('''
+                    UPDATE setup_arrows 
+                    SET performance_data = ?
+                    WHERE id = ?
+                ''', (performance_json, setup_arrow['id']))
+                
+                updated_arrows.append({
+                    'arrow_setup_id': setup_arrow['id'],
+                    'arrow_id': setup_arrow['arrow_id'],
+                    'performance': performance_data
+                })
+                
+            except Exception as arrow_error:
+                print(f"Error calculating performance for arrow {setup_arrow['arrow_id']}: {arrow_error}")
+                continue
+        
+        arrow_conn.close()
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': f'Performance calculated for {len(updated_arrows)} arrows',
+            'updated_arrows': updated_arrows,
+            'setup_id': setup_id
+        })
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        if 'arrow_conn' in locals() and arrow_conn:
+            arrow_conn.close()
+        print(f"Error calculating setup arrows performance: {e}")
+        return jsonify({'error': 'Failed to calculate performance'}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>/arrows/<int:arrow_id>', methods=['PUT'])
 @token_required  
@@ -8662,6 +9012,390 @@ def get_global_statistics(current_user):
     except Exception as e:
         print(f"Error getting global statistics: {e}")
         return jsonify({'error': str(e)}), 500
+
+# Enhanced Performance Analysis API Endpoints
+# ==========================================
+
+@app.route('/api/calculator/enhanced-foc', methods=['POST'])
+def calculate_enhanced_foc():
+    """Calculate enhanced FOC with optimization recommendations and performance analysis"""
+    try:
+        data = request.get_json()
+        
+        # Extract arrow specifications
+        arrow_length = data.get('arrow_length', 29.0)
+        point_weight = data.get('point_weight', 125.0)
+        shaft_weight = data.get('shaft_weight', 300.0)
+        nock_weight = data.get('nock_weight', 10.0)
+        fletching_weight = data.get('fletching_weight', 15.0)
+        insert_weight = data.get('insert_weight', 15.0)
+        intended_use = data.get('intended_use', 'hunting')
+        
+        # Initialize spine calculator
+        calculator = SpineCalculator()
+        
+        # Calculate enhanced FOC
+        result = calculator.calculate_enhanced_foc(
+            arrow_length=arrow_length,
+            point_weight=point_weight,
+            shaft_weight=shaft_weight,
+            nock_weight=nock_weight,
+            fletching_weight=fletching_weight,
+            insert_weight=insert_weight,
+            intended_use=intended_use
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error calculating enhanced FOC: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Failed to calculate enhanced FOC analysis'}), 500
+
+@app.route('/api/calculator/ballistics', methods=['POST'])
+def calculate_ballistics():
+    """Calculate comprehensive ballistics analysis including trajectory and performance metrics"""
+    try:
+        data = request.get_json()
+        
+        # Extract arrow and bow specifications
+        arrow_speed_fps = data.get('arrow_speed_fps', 280.0)
+        arrow_weight_grains = data.get('arrow_weight_grains', 420.0)
+        arrow_diameter_inches = data.get('arrow_diameter_inches', 0.246)
+        arrow_type = data.get('arrow_type', 'hunting')
+        
+        # Environmental conditions
+        env_data = data.get('environmental', {})
+        environmental = EnvironmentalConditions(
+            temperature_f=env_data.get('temperature_f', 70.0),
+            humidity_percent=env_data.get('humidity_percent', 50.0),
+            altitude_feet=env_data.get('altitude_feet', 0.0),
+            wind_speed_mph=env_data.get('wind_speed_mph', 0.0),
+            wind_direction_degrees=env_data.get('wind_direction_degrees', 0.0),
+            air_pressure_inHg=env_data.get('air_pressure_inHg', 29.92)
+        )
+        
+        # Shooting conditions
+        shoot_data = data.get('shooting', {})
+        shooting = ShootingConditions(
+            shot_angle_degrees=shoot_data.get('shot_angle_degrees', 0.0),
+            sight_height_inches=shoot_data.get('sight_height_inches', 7.0),
+            zero_distance_yards=shoot_data.get('zero_distance_yards', 20.0),
+            max_range_yards=shoot_data.get('max_range_yards', 100.0)
+        )
+        
+        # Map arrow type string to enum
+        arrow_type_map = {
+            'hunting': BallisticsArrowType.HUNTING,
+            'target': BallisticsArrowType.TARGET,
+            'field': BallisticsArrowType.FIELD,
+            '3d': BallisticsArrowType.THREE_D
+        }
+        arrow_type_enum = arrow_type_map.get(arrow_type, BallisticsArrowType.HUNTING)
+        
+        # Initialize ballistics calculator
+        calculator = BallisticsCalculator()
+        
+        # Calculate trajectory
+        result = calculator.calculate_trajectory(
+            arrow_speed_fps=arrow_speed_fps,
+            arrow_weight_grains=arrow_weight_grains,
+            arrow_diameter_inches=arrow_diameter_inches,
+            arrow_type=arrow_type_enum,
+            environmental=environmental,
+            shooting=shooting
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error calculating ballistics: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Failed to calculate ballistics analysis'}), 500
+
+@app.route('/api/calculator/kinetic-energy', methods=['POST'])
+def calculate_kinetic_energy():
+    """Calculate kinetic energy and momentum at specified distances"""
+    try:
+        data = request.get_json()
+        
+        arrow_speed_fps = data.get('arrow_speed_fps', 280.0)
+        arrow_weight_grains = data.get('arrow_weight_grains', 420.0)
+        distances = data.get('distances', [20, 30, 40, 50, 60, 80, 100])
+        
+        # Initialize ballistics calculator
+        calculator = BallisticsCalculator()
+        
+        results = {}
+        for distance in distances:
+            ke_data = calculator.calculate_kinetic_energy(
+                arrow_speed_fps=arrow_speed_fps,
+                arrow_weight_grains=arrow_weight_grains,
+                distance_yards=distance
+            )
+            results[f"{distance}yd"] = ke_data
+        
+        return jsonify({
+            'kinetic_energy_by_distance': results,
+            'arrow_speed_fps': arrow_speed_fps,
+            'arrow_weight_grains': arrow_weight_grains
+        })
+        
+    except Exception as e:
+        print(f"Error calculating kinetic energy: {e}")
+        return jsonify({'error': 'Failed to calculate kinetic energy'}), 500
+
+@app.route('/api/calculator/penetration-analysis', methods=['POST'])
+def calculate_penetration_analysis():
+    """Calculate penetration potential based on kinetic energy and momentum"""
+    try:
+        data = request.get_json()
+        
+        kinetic_energy_ft_lbs = data.get('kinetic_energy_ft_lbs')
+        momentum_slug_fps = data.get('momentum_slug_fps')
+        arrow_type = data.get('arrow_type', 'hunting')
+        
+        # If KE and momentum not provided, calculate from speed and weight
+        if kinetic_energy_ft_lbs is None or momentum_slug_fps is None:
+            arrow_speed_fps = data.get('arrow_speed_fps', 280.0)
+            arrow_weight_grains = data.get('arrow_weight_grains', 420.0)
+            distance_yards = data.get('distance_yards', 0.0)
+            
+            calculator = BallisticsCalculator()
+            ke_data = calculator.calculate_kinetic_energy(
+                arrow_speed_fps=arrow_speed_fps,
+                arrow_weight_grains=arrow_weight_grains,
+                distance_yards=distance_yards
+            )
+            kinetic_energy_ft_lbs = ke_data['kinetic_energy_ft_lbs']
+            momentum_slug_fps = ke_data['momentum_slug_fps']
+        
+        # Map arrow type string to enum
+        arrow_type_map = {
+            'hunting': BallisticsArrowType.HUNTING,
+            'target': BallisticsArrowType.TARGET,
+            'field': BallisticsArrowType.FIELD,
+            '3d': BallisticsArrowType.THREE_D
+        }
+        arrow_type_enum = arrow_type_map.get(arrow_type, BallisticsArrowType.HUNTING)
+        
+        # Calculate penetration potential
+        calculator = BallisticsCalculator()
+        result = calculator.calculate_penetration_potential(
+            kinetic_energy_ft_lbs=kinetic_energy_ft_lbs,
+            momentum_slug_fps=momentum_slug_fps,
+            arrow_type=arrow_type_enum
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error calculating penetration analysis: {e}")
+        return jsonify({'error': 'Failed to calculate penetration analysis'}), 500
+
+@app.route('/api/calculator/arrow-speed-estimate', methods=['POST'])
+def estimate_arrow_speed():
+    """Estimate arrow speed based on bow specifications and arrow weight"""
+    try:
+        data = request.get_json()
+        
+        # Bow specifications
+        bow_ibo_speed = data.get('bow_ibo_speed', 310.0)
+        bow_draw_weight = data.get('bow_draw_weight', 70.0)
+        bow_draw_length = data.get('bow_draw_length', 29.0)
+        
+        # Arrow specifications
+        arrow_weight_grains = data.get('arrow_weight_grains', 420.0)
+        
+        # Initialize spine calculator for speed estimation
+        calculator = SpineCalculator()
+        
+        # Create bow configuration
+        bow_config = BowConfiguration(
+            draw_weight=bow_draw_weight,
+            draw_length=bow_draw_length,
+            bow_type=BowType.COMPOUND,
+            ibo_speed=bow_ibo_speed
+        )
+        
+        # Estimate arrow speed
+        estimated_speed = calculator._estimate_arrow_speed(bow_config, arrow_weight_grains)
+        
+        # Calculate velocity factors
+        standard_arrow_weight = 5 * bow_draw_weight  # Standard: 5 grains per pound
+        weight_ratio = arrow_weight_grains / standard_arrow_weight
+        length_factor = bow_draw_length / 30.0  # Standard: 30" draw
+        
+        return jsonify({
+            'estimated_speed_fps': round(estimated_speed, 1),
+            'bow_ibo_speed': bow_ibo_speed,
+            'arrow_weight_grains': arrow_weight_grains,
+            'standard_arrow_weight': standard_arrow_weight,
+            'weight_ratio': round(weight_ratio, 2),
+            'length_factor': round(length_factor, 3),
+            'speed_factors': {
+                'weight_effect': f"{'Heavier' if weight_ratio > 1 else 'Lighter'} than standard",
+                'length_effect': f"{'Longer' if bow_draw_length > 30 else 'Shorter'} than standard draw"
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error estimating arrow speed: {e}")
+        return jsonify({'error': 'Failed to estimate arrow speed'}), 500
+
+@app.route('/api/calculator/comprehensive-performance', methods=['POST'])
+def calculate_comprehensive_performance():
+    """Calculate comprehensive arrow performance analysis combining FOC, ballistics, and penetration"""
+    try:
+        data = request.get_json()
+        
+        # Extract all specifications
+        bow_config_data = data.get('bow_config', {})
+        arrow_specs = data.get('arrow_specs', {})
+        environmental_data = data.get('environmental', {})
+        shooting_data = data.get('shooting', {})
+        
+        # Initialize calculators
+        spine_calculator = SpineCalculator()
+        ballistics_calculator = BallisticsCalculator()
+        
+        # Extract arrow specifications
+        arrow_length = arrow_specs.get('arrow_length', 29.0)
+        point_weight = arrow_specs.get('point_weight', 125.0)
+        shaft_weight = arrow_specs.get('shaft_weight', 300.0)
+        total_arrow_weight = arrow_specs.get('total_weight', 
+            point_weight + shaft_weight + arrow_specs.get('nock_weight', 10.0) + 
+            arrow_specs.get('fletching_weight', 15.0) + arrow_specs.get('insert_weight', 15.0))
+        arrow_diameter = arrow_specs.get('diameter', 0.246)
+        intended_use = arrow_specs.get('intended_use', 'hunting')
+        
+        # Estimate arrow speed if not provided
+        arrow_speed = arrow_specs.get('speed_fps')
+        if not arrow_speed:
+            bow_config = BowConfiguration(
+                draw_weight=bow_config_data.get('draw_weight', 70.0),
+                draw_length=bow_config_data.get('draw_length', 29.0),
+                bow_type=BowType.COMPOUND,
+                ibo_speed=bow_config_data.get('ibo_speed', 310.0)
+            )
+            arrow_speed = spine_calculator._estimate_arrow_speed(bow_config, total_arrow_weight)
+        
+        # Calculate enhanced FOC
+        foc_result = spine_calculator.calculate_enhanced_foc(
+            arrow_length=arrow_length,
+            point_weight=point_weight,
+            shaft_weight=shaft_weight,
+            nock_weight=arrow_specs.get('nock_weight', 10.0),
+            fletching_weight=arrow_specs.get('fletching_weight', 15.0),
+            insert_weight=arrow_specs.get('insert_weight', 15.0),
+            intended_use=intended_use
+        )
+        
+        # Calculate kinetic energy at multiple distances
+        ke_distances = [20, 30, 40, 50, 60, 80]
+        kinetic_energy_data = {}
+        for distance in ke_distances:
+            ke_data = ballistics_calculator.calculate_kinetic_energy(
+                arrow_speed_fps=arrow_speed,
+                arrow_weight_grains=total_arrow_weight,
+                distance_yards=distance
+            )
+            kinetic_energy_data[f"{distance}yd"] = ke_data
+        
+        # Calculate penetration analysis
+        arrow_type_map = {
+            'hunting': BallisticsArrowType.HUNTING,
+            'target': BallisticsArrowType.TARGET,
+            'field': BallisticsArrowType.FIELD,
+            '3d': BallisticsArrowType.THREE_D
+        }
+        arrow_type_enum = arrow_type_map.get(intended_use, BallisticsArrowType.HUNTING)
+        
+        penetration_result = ballistics_calculator.calculate_penetration_potential(
+            kinetic_energy_ft_lbs=kinetic_energy_data['20yd']['kinetic_energy_ft_lbs'],
+            momentum_slug_fps=kinetic_energy_data['20yd']['momentum_slug_fps'],
+            arrow_type=arrow_type_enum
+        )
+        
+        # Calculate overall performance score
+        overall_score = (
+            foc_result['performance_metrics']['overall_performance'] * 0.3 +
+            penetration_result['penetration_score'] * 0.4 +
+            (arrow_speed / 350 * 100) * 0.3  # Speed factor
+        )
+        
+        return jsonify({
+            'foc_analysis': foc_result,
+            'kinetic_energy_analysis': kinetic_energy_data,
+            'penetration_analysis': penetration_result,
+            'performance_summary': {
+                'overall_score': round(overall_score, 1),
+                'arrow_speed_fps': round(arrow_speed, 1),
+                'total_arrow_weight': total_arrow_weight,
+                'primary_recommendation': get_primary_recommendation(overall_score, intended_use),
+                'key_strengths': get_key_strengths(foc_result, penetration_result, arrow_speed),
+                'improvement_areas': get_improvement_areas(foc_result, penetration_result, arrow_speed, intended_use)
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error calculating comprehensive performance: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Failed to calculate comprehensive performance analysis'}), 500
+
+def get_primary_recommendation(overall_score: float, intended_use: str) -> str:
+    """Get primary recommendation based on overall performance score"""
+    if overall_score >= 85:
+        return f"Excellent setup for {intended_use} - ready for field use"
+    elif overall_score >= 70:
+        return f"Good setup for {intended_use} - minor optimizations possible"
+    elif overall_score >= 55:
+        return f"Adequate setup for {intended_use} - consider improvements"
+    else:
+        return f"Setup needs optimization for {intended_use} applications"
+
+def get_key_strengths(foc_result: dict, penetration_result: dict, arrow_speed: float) -> List[str]:
+    """Identify key strengths of the arrow setup"""
+    strengths = []
+    
+    if foc_result.get('foc_status') == 'optimal':
+        strengths.append("Optimal FOC balance")
+    
+    if penetration_result.get('penetration_score', 0) >= 80:
+        strengths.append("Excellent penetration power")
+    
+    if arrow_speed >= 300:
+        strengths.append("High velocity for flat trajectory")
+    
+    if foc_result.get('performance_metrics', {}).get('overall_performance', 0) >= 80:
+        strengths.append("Well-balanced performance characteristics")
+    
+    return strengths or ["Functional arrow setup"]
+
+def get_improvement_areas(foc_result: dict, penetration_result: dict, 
+                         arrow_speed: float, intended_use: str) -> List[str]:
+    """Identify areas for improvement"""
+    improvements = []
+    
+    foc_status = foc_result.get('foc_status')
+    if foc_status in ['too_low', 'too_high']:
+        improvements.append(f"FOC optimization needed ({foc_status.replace('_', ' ')})")
+    
+    penetration_score = penetration_result.get('penetration_score', 0)
+    if penetration_score < 60 and intended_use == 'hunting':
+        improvements.append("Increase arrow weight for better penetration")
+    
+    if arrow_speed < 250:
+        improvements.append("Consider lighter arrow or higher draw weight for better speed")
+    
+    overall_performance = foc_result.get('performance_metrics', {}).get('overall_performance', 0)
+    if overall_performance < 70:
+        improvements.append("Overall setup tuning needed for intended use")
+    
+    return improvements or ["Setup is well-optimized"]
 
 # Run the app
 if __name__ == '__main__':
