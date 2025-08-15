@@ -148,43 +148,29 @@
 import { ref, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 import { useApi } from '~/composables/useApi'
-// Dynamic import for Chart.js to avoid SSR issues
-let Chart = null
-let chartComponents = null
-
+// Chart.js loaded from CDN to avoid build issues
 const initializeChart = async () => {
   if (typeof window === 'undefined') return null
   
-  if (!Chart) {
-    const chartModule = await import('chart.js')
-    Chart = chartModule.Chart
-    chartComponents = {
-      CategoryScale: chartModule.CategoryScale,
-      LinearScale: chartModule.LinearScale,
-      PointElement: chartModule.PointElement,
-      LineElement: chartModule.LineElement,
-      LineController: chartModule.LineController,
-      Title: chartModule.Title,
-      Tooltip: chartModule.Tooltip,
-      Legend: chartModule.Legend,
-      Filler: chartModule.Filler
-    }
-    
-    // Register Chart.js components
-    Chart.register(
-      chartComponents.CategoryScale,
-      chartComponents.LinearScale,
-      chartComponents.PointElement,
-      chartComponents.LineElement,
-      chartComponents.LineController,
-      chartComponents.Title,
-      chartComponents.Tooltip,
-      chartComponents.Legend,
-      chartComponents.Filler
-    )
+  // Check if Chart.js is already loaded from CDN
+  if (window.Chart) {
+    return window.Chart
   }
   
-  return Chart
+  // Load Chart.js from CDN if not available
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js'
+    script.onload = () => {
+      if (window.Chart) {
+        resolve(window.Chart)
+      } else {
+        reject(new Error('Chart.js failed to load from CDN'))
+      }
+    }
+    script.onerror = () => reject(new Error('Failed to load Chart.js script'))
+    document.head.appendChild(script)
+  })
 }
 
 const props = defineProps({

@@ -58,6 +58,10 @@ export default defineNuxtConfig({
         // Roboto font for Material Design
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap' }
       ],
+      script: [
+        // Chart.js from CDN to avoid build issues
+        { src: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js', defer: true }
+      ],
       // Set default dark mode class on HTML element for SSR
       htmlAttrs: {
         class: 'dark'
@@ -67,7 +71,7 @@ export default defineNuxtConfig({
 
   // Build Configuration
   build: {
-    transpile: ['@headlessui/vue', 'chart.js']
+    transpile: ['@headlessui/vue']
   },
   
   // Vue Configuration for Material Web Components
@@ -108,9 +112,6 @@ export default defineNuxtConfig({
     },
     define: {
       global: 'globalThis'
-    },
-    optimizeDeps: {
-      include: ['chart.js']
     }
   },
 
