@@ -67,7 +67,7 @@ export default defineNuxtConfig({
 
   // Build Configuration
   build: {
-    transpile: ['@headlessui/vue']
+    transpile: ['@headlessui/vue', 'chart.js']
   },
   
   // Vue Configuration for Material Web Components
@@ -94,6 +94,23 @@ export default defineNuxtConfig({
     // Fix for internal paths resolution
     experimental: {
       wasm: true
+    },
+    // Fix for Vite Node IPC socket path issue
+    dev: process.env.NODE_ENV === 'development'
+  },
+
+  // Vite configuration to fix IPC socket issues
+  vite: {
+    server: {
+      fs: {
+        strict: false
+      }
+    },
+    define: {
+      global: 'globalThis'
+    },
+    optimizeDeps: {
+      include: ['chart.js']
     }
   },
 
