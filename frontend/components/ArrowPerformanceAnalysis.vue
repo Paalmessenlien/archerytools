@@ -1,15 +1,17 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+    <!-- Header - Mobile & Desktop Responsive -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- Title -->
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 min-w-0">
         <i class="fas fa-chart-line mr-3 text-green-600"></i>
         Performance Analysis
       </h3>
       
-      <div class="flex items-center space-x-3">
+      <!-- Controls Section -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-4">
         <!-- Overall Score -->
-        <div v-if="performanceData?.performance_summary" class="flex items-center space-x-2">
+        <div v-if="performanceData?.performance_summary" class="flex items-center space-x-2 justify-center sm:justify-start">
           <span class="text-sm text-gray-600 dark:text-gray-400">Overall Score:</span>
           <span :class="getPerformanceScoreClass(performanceData.performance_summary)" class="text-xl font-bold">
             {{ getPerformanceScore(performanceData.performance_summary) }}/100
@@ -24,13 +26,14 @@
         <button
           @click="calculatePerformance"
           :disabled="isCalculating"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors w-full sm:w-auto whitespace-nowrap"
           :class="performanceData?.performance_summary 
             ? 'text-blue-600 border border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-900/20' 
             : 'text-white bg-green-600 hover:bg-green-700'"
         >
           <i :class="isCalculating ? 'fas fa-spinner fa-spin' : 'fas fa-calculator'" class="mr-2"></i>
-          {{ isCalculating ? 'Calculating...' : (performanceData?.performance_summary ? 'Recalculate' : 'Calculate Performance') }}
+          <span class="hidden sm:inline">{{ isCalculating ? 'Calculating...' : (performanceData?.performance_summary ? 'Recalculate' : 'Calculate Performance') }}</span>
+          <span class="sm:hidden">{{ isCalculating ? 'Calculating...' : (performanceData?.performance_summary ? 'Recalculate' : 'Calculate') }}</span>
         </button>
       </div>
     </div>
