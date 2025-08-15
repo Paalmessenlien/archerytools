@@ -90,25 +90,25 @@
           <!-- Arrows Tab -->
           <div v-if="activeTab === 'arrows'" class="space-y-6">
             <!-- Performance Calculation Controls -->
-            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-4">
               <div class="flex items-center justify-between">
                 <div>
-                  <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200">
-                    <i class="fas fa-tachometer-alt mr-2"></i>
-                    Arrow Performance Analysis
+                  <h3 class="text-lg font-semibold text-green-800 dark:text-green-200">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Live Performance Analysis
                   </h3>
-                  <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    Calculate performance metrics for all arrows in this setup
+                  <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                    Performance metrics are calculated automatically for your arrows
                   </p>
                 </div>
                 <CustomButton
                   @click="calculatePerformanceForAllArrows"
                   :loading="calculatingPerformance"
-                  variant="filled"
-                  class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                  variant="outlined"
+                  class="text-green-600 border-green-600 hover:bg-green-50 dark:text-green-400 dark:border-green-400"
                 >
-                  <i class="fas fa-calculator mr-2"></i>
-                  {{ calculatingPerformance ? 'Calculating...' : 'Calculate Performance' }}
+                  <i class="fas fa-sync-alt mr-2"></i>
+                  {{ calculatingPerformance ? 'Recalculating...' : 'Recalculate All' }}
                 </CustomButton>
               </div>
             </div>

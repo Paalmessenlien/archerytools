@@ -159,43 +159,108 @@
                 </div>
               </div>
               
-              <!-- Performance Metrics -->
-              <div v-if="arrowSetup.performance?.performance_summary" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 mt-2">
-                <div class="flex items-center justify-between mb-2">
-                  <h5 class="text-xs font-semibold text-green-800 dark:text-green-200 uppercase tracking-wide">
-                    <i class="fas fa-tachometer-alt mr-1"></i>
-                    Performance Metrics
+              <!-- Performance Analysis Section -->
+              <div v-if="true" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 mt-2">
+                <!-- Performance Header -->
+                <div class="flex items-center justify-between mb-3">
+                  <h5 class="text-sm font-semibold text-green-800 dark:text-green-200 uppercase tracking-wide">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Performance Analysis
                   </h5>
-                  <span :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xs font-medium">
-                    {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
-                  </span>
+                  <div class="flex items-center space-x-2">
+                    <!-- Overall Score -->
+                    <span v-if="arrowSetup.performance?.performance_summary" :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xl font-bold">
+                      {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
+                    </span>
+                    <!-- Calculate Performance Button -->
+                    <CustomButton
+                      v-if="!arrowSetup.performance?.performance_summary && canCalculatePerformance(arrowSetup)"
+                      @click="calculatePerformance(arrowSetup)"
+                      :disabled="calculatingPerformance === arrowSetup.id"
+                      variant="filled"
+                      size="small"
+                      class="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 whitespace-nowrap"
+                    >
+                      <i v-if="calculatingPerformance === arrowSetup.id" class="fas fa-spinner fa-spin mr-1"></i>
+                      <i v-else class="fas fa-calculator mr-1"></i>
+                      <span class="text-xs">Calculate Performance</span>
+                    </CustomButton>
+                    <!-- Recalculate Button -->
+                    <CustomButton
+                      v-if="arrowSetup.performance?.performance_summary"
+                      @click="calculatePerformance(arrowSetup)"
+                      :disabled="calculatingPerformance === arrowSetup.id"
+                      variant="outlined"
+                      size="small"
+                      class="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-400 whitespace-nowrap"
+                    >
+                      <i v-if="calculatingPerformance === arrowSetup.id" class="fas fa-spinner fa-spin mr-1"></i>
+                      <i v-else class="fas fa-sync-alt mr-1"></i>
+                      <span class="text-xs hidden sm:inline">Recalculate</span>
+                    </CustomButton>
+                  </div>
                 </div>
                 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
-                    <div class="text-blue-600 dark:text-blue-400 font-bold text-sm">
-                      {{ arrowSetup.performance.performance_summary.estimated_speed_fps }}
+                <!-- Performance Metrics Display -->
+                <div v-if="arrowSetup.performance?.performance_summary" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <!-- Speed -->
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {{ formatSpeedValue(arrowSetup.performance.performance_summary.estimated_speed_fps) }}
                     </div>
-                    <div class="text-gray-500 dark:text-gray-400 text-xs">fps</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Speed</div>
                   </div>
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
-                    <div class="text-green-600 dark:text-green-400 font-bold text-sm">
-                      {{ arrowSetup.performance.performance_summary.kinetic_energy_40yd }}
+                  
+                  <!-- Kinetic Energy -->
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                      {{ formatKineticEnergy(arrowSetup.performance.performance_summary.kinetic_energy_40yd) }}
                     </div>
-                    <div class="text-gray-500 dark:text-gray-400 text-xs">ft·lbs @40yd</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">KE @40yd</div>
                   </div>
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
-                    <div class="text-purple-600 dark:text-purple-400 font-bold text-sm">
-                      {{ arrowSetup.performance.performance_summary.foc_percentage?.toFixed(1) || 0 }}%
+                  
+                  <!-- FOC -->
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      {{ formatFocPercentage(arrowSetup.performance.performance_summary.foc_percentage) }}
                     </div>
-                    <div class="text-gray-500 dark:text-gray-400 text-xs">FOC</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">FOC</div>
                   </div>
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded p-2">
-                    <div :class="getPenetrationClass(arrowSetup.performance.performance_summary.penetration_category)" class="font-bold text-sm capitalize">
+                  
+                  <!-- Penetration -->
+                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div :class="getPenetrationClass(arrowSetup.performance.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
                       {{ arrowSetup.performance.performance_summary.penetration_category }}
                     </div>
-                    <div class="text-gray-500 dark:text-gray-400 text-xs">Penetration</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Penetration</div>
                   </div>
+                </div>
+                
+                <!-- Calculate Performance Message -->
+                <div v-else-if="canCalculatePerformance(arrowSetup)" class="text-center py-4">
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Calculate performance metrics to see detailed ballistics analysis
+                  </p>
+                  <!-- Debug Info -->
+                  <div class="text-xs text-gray-500 mt-2">
+                    <p>Debug: Can calculate = {{ canCalculatePerformance(arrowSetup) }}</p>
+                    <p>Has arrow: {{ !!arrowSetup.arrow }}</p>
+                    <p>Arrow length: {{ arrowSetup.arrow_length }}</p>
+                    <p>Point weight: {{ arrowSetup.point_weight }}</p>
+                    <p>Bow draw weight: {{ props.bowSetup?.draw_weight }}</p>
+                    <p>Performance data: {{ arrowSetup.performance ? 'YES' : 'NO' }}</p>
+                    <p>Performance summary: {{ arrowSetup.performance?.performance_summary ? 'YES' : 'NO' }}</p>
+                    <p>Full arrowSetup.performance: {{ JSON.stringify(arrowSetup.performance) }}</p>
+                  </div>
+                </div>
+                
+                <!-- Cannot Calculate Message -->
+                <div v-else class="text-center py-4">
+                  <p class="text-xs text-gray-500 dark:text-gray-500">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Performance calculation requires complete bow setup data
+                  </p>
                 </div>
               </div>
             </div>
@@ -357,7 +422,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow', 'duplicate-arrow', 'arrow-updated'])
+const emit = defineEmits(['remove-arrow', 'view-details', 'edit-arrow', 'duplicate-arrow', 'arrow-updated', 'show-notification'])
 
 // Composables
 const api = useApi()
@@ -386,11 +451,61 @@ const loadArrows = async () => {
     internalLoading.value = true
     const response = await api.get(`/bow-setups/${props.bowSetup.id}/arrows`)
     internalArrows.value = response.arrows || []
+    
+    // Calculate performance for arrows that don't have it yet (live calculation)
+    await calculateMissingPerformance()
+    
   } catch (error) {
     console.error('Error loading arrows:', error)
     internalArrows.value = []
   } finally {
     internalLoading.value = false
+  }
+}
+
+// Live performance calculation for arrows without performance data
+const calculateMissingPerformance = async () => {
+  const arrowsWithoutPerformance = displayedArrows.value.filter(arrow => 
+    !arrow.performance?.performance_summary && canCalculatePerformance(arrow)
+  )
+  
+  if (arrowsWithoutPerformance.length === 0) return
+  
+  console.log(`🔄 Calculating performance for ${arrowsWithoutPerformance.length} arrows automatically`)
+  
+  // Calculate performance for each arrow without overwhelming the API
+  for (const arrow of arrowsWithoutPerformance) {
+    try {
+      await calculatePerformanceQuiet(arrow)
+      // Small delay to avoid overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 100))
+    } catch (error) {
+      console.error(`Failed to calculate performance for arrow ${arrow.id}:`, error)
+    }
+  }
+}
+
+// Quiet performance calculation (no notifications)
+const calculatePerformanceQuiet = async (arrowSetup) => {
+  if (!canCalculatePerformance(arrowSetup)) return
+  
+  try {
+    const response = await api.post(`/setup-arrows/${arrowSetup.id}/calculate-performance`, {
+      bow_config: {
+        draw_weight: props.bowSetup.draw_weight,
+        draw_length: 29.0, // Default draw length for calculations
+        bow_type: props.bowSetup.bow_type || 'compound',
+        ibo_speed: props.bowSetup.ibo_speed || 320
+      }
+    })
+    
+    // Update the arrow setup with performance data
+    if (response.performance) {
+      arrowSetup.performance = response.performance
+    }
+    
+  } catch (error) {
+    console.error('Error calculating performance quietly:', error)
   }
 }
 
@@ -601,6 +716,20 @@ watch(() => props.bowSetup?.id, (newId) => {
   }
 })
 
+// Watch for arrows array changes to calculate missing performance
+watch(
+  () => props.arrows,
+  (newArrows) => {
+    if (newArrows && newArrows.length > 0) {
+      // Trigger live calculation after a short delay to allow UI to render
+      setTimeout(() => {
+        calculateMissingPerformance()
+      }, 500)
+    }
+  },
+  { deep: true, immediate: true }
+)
+
 // Expose methods to parent component
 defineExpose({
   loadArrows,
@@ -637,6 +766,69 @@ const getPenetrationClass = (category) => {
     case 'poor': return 'text-red-600 dark:text-red-400'
     default: return 'text-gray-500 dark:text-gray-400'
   }
+}
+
+// Performance calculation and display functions
+const calculatingPerformance = ref(null) // Track which arrow is being calculated
+
+const canCalculatePerformance = (arrowSetup) => {
+  // Check if we have enough data to calculate performance
+  // Note: draw_length is not needed for basic performance calculations
+  return arrowSetup.arrow && 
+         arrowSetup.arrow_length && 
+         arrowSetup.point_weight && 
+         props.bowSetup?.draw_weight
+}
+
+const calculatePerformance = async (arrowSetup) => {
+  if (!canCalculatePerformance(arrowSetup)) {
+    emit('show-notification', 'Insufficient data to calculate performance', 'error')
+    return
+  }
+
+  calculatingPerformance.value = arrowSetup.id
+  try {
+    // Use the same endpoint that the bulk calculation uses
+    const response = await api.post(`/setup-arrows/${arrowSetup.id}/calculate-performance`, {
+      bow_config: {
+        draw_weight: props.bowSetup.draw_weight,
+        draw_length: 29.0, // Default draw length for calculations
+        bow_type: props.bowSetup.bow_type || 'compound',
+        ibo_speed: props.bowSetup.ibo_speed || 320
+      }
+    })
+    
+    // Update the arrow setup with performance data
+    if (response.performance) {
+      arrowSetup.performance = response.performance
+    }
+    
+    // Emit event to notify parent of update
+    emit('arrow-updated')
+    emit('show-notification', 'Performance calculated successfully', 'success')
+    
+  } catch (error) {
+    console.error('Error calculating performance:', error)
+    emit('show-notification', 'Failed to calculate performance', 'error')
+  } finally {
+    calculatingPerformance.value = null
+  }
+}
+
+// Performance display formatting functions to match calculator format
+const formatSpeedValue = (speed) => {
+  if (!speed) return '0 fps'
+  return `${parseFloat(speed).toFixed(1)} fps`
+}
+
+const formatKineticEnergy = (ke) => {
+  if (!ke) return '0 ft·lbs'
+  return `${parseFloat(ke).toFixed(2)} ft·lbs`
+}
+
+const formatFocPercentage = (foc) => {
+  if (!foc) return '0%'
+  return `${parseFloat(foc).toFixed(1)}%`
 }
 </script>
 

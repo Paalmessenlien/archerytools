@@ -2069,27 +2069,34 @@ def get_setup_arrows(current_user, setup_id):
             # Extract performance data from notes field if present
             try:
                 # Load performance data from dedicated performance_data column
-                if row.get('performance_data'):
+                # Handle SQLite3 Row objects (use bracket notation instead of .get())
+                performance_data_raw = row['performance_data'] if 'performance_data' in row and row['performance_data'] else None
+                print(f"🔍 [get_setup_arrows] Arrow {row['id']} performance_data_raw: {performance_data_raw}")
+                if performance_data_raw:
                     import json
-                    performance_data = json.loads(row['performance_data'])
+                    performance_data = json.loads(performance_data_raw)
+                    print(f"🔍 [get_setup_arrows] Arrow {row['id']} parsed performance_data: {performance_data}")
                     
-                    # Convert enhanced FOC format to expected performance_summary format
-                    if 'foc_percentage' in performance_data:
-                        # Convert enhanced FOC format to performance_summary format
+                    # Check if we have the correct performance_summary structure
+                    if 'performance_summary' in performance_data:
+                        # Already in correct format from calculate_arrow_performance
+                        arrow_info['performance'] = performance_data
+                    elif 'foc_percentage' in performance_data:
+                        # Legacy enhanced FOC format - convert to performance_summary format
                         performance_summary = {
                             'foc_percentage': performance_data.get('foc_percentage', 0),
-                            'estimated_speed_fps': 260,  # Default estimate
-                            'kinetic_energy_40yd': 45.0,  # Default estimate  
-                            'total_arrow_weight_grains': performance_data.get('total_weight', 400),
-                            'penetration_category': performance_data.get('foc_status', 'acceptable').lower(),
-                            'penetration_score': performance_data.get('performance_metrics', {}).get('penetration_power', 75)
+                            'estimated_speed_fps': performance_data.get('estimated_speed_fps', 260),
+                            'kinetic_energy_40yd': performance_data.get('kinetic_energy_40yd', 45.0),
+                            'total_arrow_weight_grains': performance_data.get('total_arrow_weight_grains', 400),
+                            'penetration_category': performance_data.get('penetration_category', 'acceptable'),
+                            'penetration_score': performance_data.get('penetration_score', 75)
                         }
                         arrow_info['performance'] = {
                             'performance_summary': performance_summary,
                             'detailed_data': performance_data  # Keep original data
                         }
                     else:
-                        # Already in correct format
+                        # Unknown format - use as-is
                         arrow_info['performance'] = performance_data
                 # Fallback: check for legacy performance data in notes field
                 elif row['notes'] and 'Performance:' in row['notes']:
@@ -2321,6 +2328,117 @@ def calculate_setup_arrows_performance(current_user, setup_id):
             arrow_conn.close()
         print(f"Error calculating setup arrows performance: {e}")
         return jsonify({'error': 'Failed to calculate performance'}), 500
+
+@app.route('/api/setup-arrows/<int:setup_arrow_id>/calculate-performance', methods=['POST'])
+@token_required
+def calculate_individual_arrow_performance(current_user, setup_arrow_id):
+    """Calculate performance metrics for a single arrow in a bow setup"""
+    conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get the arrow setup and verify ownership
+        cursor.execute('''
+            SELECT sa.*, bs.user_id, bs.draw_weight, bs.draw_length, bs.bow_type, bs.ibo_speed
+            FROM setup_arrows sa
+            JOIN bow_setups bs ON sa.setup_id = bs.id
+            WHERE sa.id = ?
+        ''', (setup_arrow_id,))
+        setup_arrow = cursor.fetchone()
+        
+        if not setup_arrow:
+            return jsonify({'error': 'Arrow setup not found'}), 404
+            
+        if setup_arrow['user_id'] != current_user['id']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Get arrow database connection
+        arrow_conn = get_arrow_db()
+        if not arrow_conn:
+            return jsonify({'error': 'Arrow database not available'}), 500
+        
+        try:
+            # Get arrow details from arrow database
+            arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.execute('''
+                SELECT id, manufacturer, model_name, material, arrow_type
+                FROM arrows WHERE id = ?
+            ''', (setup_arrow['arrow_id'],))
+            arrow_data = arrow_cursor.fetchone()
+            
+            if not arrow_data:
+                return jsonify({'error': 'Arrow not found in database'}), 404
+            
+            # Get spine specifications
+            arrow_cursor.execute('''
+                SELECT spine, outer_diameter, inner_diameter, gpi_weight
+                FROM spine_specifications WHERE arrow_id = ?
+                ORDER BY spine ASC LIMIT 1
+            ''', (setup_arrow['arrow_id'],))
+            spine_data = arrow_cursor.fetchone()
+            
+            # Create mock objects for performance calculation
+            class MockArrowRec:
+                def __init__(self, arrow_data, spine_data, setup_arrow):
+                    raw_gpi = spine_data['gpi_weight'] if spine_data else None
+                    self.gpi_weight = raw_gpi if raw_gpi and raw_gpi > 0 else 8.5
+                    self.outer_diameter = spine_data['outer_diameter'] if spine_data else 0.246
+                    self.arrow_type = arrow_data['arrow_type'] if arrow_data['arrow_type'] else 'hunting'
+                    self.arrow_id = setup_arrow['arrow_id']
+            
+            class MockArcherProfile:
+                def __init__(self, setup_data):
+                    self.arrow_length = setup_data['arrow_length']
+                    self.point_weight_preference = setup_data['point_weight']
+                    self.shooting_style = 'hunting'
+                    
+                    class MockBowConfig:
+                        def __init__(self, bow_data):
+                            self.draw_weight = bow_data['draw_weight'] or 50
+                            self.bow_type = type('BowType', (), {'value': bow_data['bow_type'] or 'compound'})()
+                    
+                    self.bow_config = MockBowConfig(setup_data)
+            
+            mock_arrow = MockArrowRec(dict(arrow_data), dict(spine_data) if spine_data else None, dict(setup_arrow))
+            mock_profile = MockArcherProfile(dict(setup_arrow))
+            
+            # Calculate performance
+            performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+            
+            # Store performance data as JSON in dedicated performance_data column
+            import json
+            performance_json = json.dumps(performance_data)
+            
+            # Update the setup_arrows record with performance data
+            cursor.execute('''
+                UPDATE setup_arrows 
+                SET performance_data = ?
+                WHERE id = ?
+            ''', (performance_json, setup_arrow_id))
+            
+            conn.commit()
+            
+            return jsonify({
+                'message': 'Performance calculated successfully',
+                'arrow_setup_id': setup_arrow_id,
+                'performance': performance_data
+            })
+            
+        finally:
+            arrow_conn.close()
+            
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"Error calculating individual arrow performance: {e}")
+        return jsonify({'error': 'Failed to calculate performance'}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/api/bow-setups/<int:setup_id>/arrows/<int:arrow_id>', methods=['PUT'])
 @token_required  

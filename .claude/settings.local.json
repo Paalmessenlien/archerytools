@@ -2,7 +2,14 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(docker exec:*)",
+      "Bash(python3:*)",
+      "Bash(sqlite3:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
