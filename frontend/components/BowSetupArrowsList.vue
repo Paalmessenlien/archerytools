@@ -265,12 +265,12 @@
                     </div>
                   </div>
                 </div>
-                
-                <!-- Calculate Performance Message -->
-                <div v-else-if="canCalculatePerformance(arrowSetup)" class="text-center py-4">
+
+                <!-- Performance Summary Message -->
+                <div v-if="!arrowSetup.performance?.performance_summary && canCalculatePerformance(arrowSetup)" class="text-center py-4">
                   <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Calculate performance metrics to see detailed ballistics analysis
+                    Calculate performance metrics or view arrow details for complete analysis
                   </p>
                 </div>
                 
@@ -341,13 +341,22 @@
                     <span class="hidden sm:inline">Duplicate</span>
                   </CustomButton>
                   <CustomButton
+                    @click="viewArrowSetupDetails(arrowSetup.id)"
+                    variant="filled"
+                    size="small"
+                    class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap"
+                  >
+                    <i class="fas fa-cog mr-1"></i>
+                    <span class="hidden sm:inline">Setup Details</span>
+                  </CustomButton>
+                  <CustomButton
                     @click="viewArrowDetails(arrowSetup.arrow_id)"
                     variant="outlined"
                     size="small"
-                    class="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 whitespace-nowrap"
+                    class="text-gray-600 border-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-400 whitespace-nowrap"
                   >
-                    <i class="fas fa-info-circle mr-1"></i>
-                    <span class="hidden sm:inline">Details</span>
+                    <i class="fas fa-database mr-1"></i>
+                    <span class="hidden sm:inline">Arrow Info</span>
                   </CustomButton>
                   <CustomButton
                     @click="removeArrow(arrowSetup.id)"
@@ -629,7 +638,13 @@ const calculateTotalArrowWeight = (arrowSetup: any) => {
   return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
 }
 
+const viewArrowSetupDetails = (setupArrowId: number) => {
+  // Navigate directly to the setup arrow detail page
+  router.push(`/setup-arrows/${setupArrowId}`)
+}
+
 const viewArrowDetails = (arrowId: number) => {
+  // Legacy function for database arrow details - kept for compatibility
   emit('view-details', arrowId)
 }
 
@@ -850,6 +865,7 @@ const formatFocPercentage = (foc) => {
   if (!foc) return '0%'
   return `${parseFloat(foc).toFixed(1)}%`
 }
+
 </script>
 
 <style scoped>

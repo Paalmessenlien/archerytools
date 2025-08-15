@@ -2627,6 +2627,136 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
             conn.close()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/setup-arrows/<int:setup_arrow_id>/details', methods=['GET'])
+@token_required
+def get_setup_arrow_details(current_user, setup_arrow_id):
+    """Get comprehensive details for a specific arrow setup including arrow data, setup configuration, and performance"""
+    conn = None
+    arrow_conn = None
+    try:
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get the arrow setup with bow setup context
+        cursor.execute('''
+            SELECT sa.*, 
+                   bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
+                   bs.draw_weight, bs.ibo_speed,
+                   u.draw_length
+            FROM setup_arrows sa
+            JOIN bow_setups bs ON sa.setup_id = bs.id
+            JOIN users u ON bs.user_id = u.id
+            WHERE sa.id = ? AND bs.user_id = ?
+        ''', (setup_arrow_id, current_user['id']))
+        
+        setup_arrow = cursor.fetchone()
+        
+        if not setup_arrow:
+            return jsonify({'error': 'Arrow setup not found or access denied'}), 404
+        
+        # Convert to dict for easier access
+        setup_dict = dict(setup_arrow)
+        
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
+        arrow_data = None
+        spine_specifications = []
+        
+        print(f"[setup_arrow_details] Arrow ID: {setup_dict['arrow_id']}, Connection: {'OK' if arrow_conn else 'FAILED'}")  # Debug
+        
+        if arrow_conn and setup_dict['arrow_id']:
+            try:
+                arrow_cursor = arrow_conn.cursor()
+                
+                # Get comprehensive arrow information
+                arrow_cursor.execute('''
+                    SELECT id, manufacturer, model_name, material, description, 
+                           arrow_type, carbon_content, image_url, source_url
+                    FROM arrows WHERE id = ?
+                ''', (setup_dict['arrow_id'],))
+                arrow_data = arrow_cursor.fetchone()
+                
+                if arrow_data:
+                    arrow_data = dict(arrow_data)
+                    print(f"[setup_arrow_details] Arrow data found: {arrow_data.get('manufacturer')} {arrow_data.get('model_name')}")  # Debug
+                    
+                    # Get spine specifications
+                    arrow_cursor.execute('''
+                        SELECT id, spine, outer_diameter, inner_diameter, gpi_weight, 
+                               length_options, wall_thickness, insert_weight_range, 
+                               nock_size, notes, straightness_tolerance, weight_tolerance
+                        FROM spine_specifications 
+                        WHERE arrow_id = ?
+                        ORDER BY spine ASC
+                    ''', (setup_dict['arrow_id'],))
+                    spine_specs = arrow_cursor.fetchall()
+                    spine_specifications = [dict(spec) for spec in spine_specs] if spine_specs else []
+                else:
+                    print(f"[setup_arrow_details] Arrow ID {setup_dict['arrow_id']} NOT FOUND in arrow database")  # Debug
+                    
+                arrow_conn.close()
+            except Exception as e:
+                print(f"Error fetching arrow details: {e}")
+                if arrow_conn:
+                    arrow_conn.close()
+        
+        # Get performance data if available
+        performance_data = None
+        if 'performance_data' in setup_dict and setup_dict['performance_data']:
+            try:
+                import json
+                performance_data = json.loads(setup_dict['performance_data'])
+            except:
+                performance_data = None
+        
+        # Build comprehensive response
+        response_data = {
+            'setup_arrow': {
+                'id': setup_dict['id'],
+                'arrow_id': setup_dict['arrow_id'],
+                'setup_id': setup_dict['setup_id'],
+                'arrow_length': setup_dict['arrow_length'],
+                'point_weight': setup_dict['point_weight'],
+                'calculated_spine': setup_dict['calculated_spine'],
+                'compatibility_score': setup_dict['compatibility_score'],
+                'notes': setup_dict['notes'],
+                'created_at': setup_dict['created_at'],
+                # Component weights
+                'nock_weight': setup_dict.get('nock_weight', 10),
+                'insert_weight': setup_dict.get('insert_weight', 0),
+                'bushing_weight': setup_dict.get('bushing_weight', 0),
+                'fletching_weight': setup_dict.get('fletching_weight', 15),
+                # Performance data
+                'performance': performance_data
+            },
+            'arrow': arrow_data,
+            'spine_specifications': spine_specifications,
+            'bow_setup': {
+                'id': setup_dict['bow_setup_id'],
+                'name': setup_dict['bow_setup_name'],
+                'bow_type': setup_dict['bow_type'],
+                'draw_weight': setup_dict['draw_weight'],
+                'draw_length': setup_dict['draw_length'],
+                'ibo_speed': setup_dict['ibo_speed']
+            }
+        }
+        
+        conn.close()
+        return jsonify(response_data)
+        
+    except Exception as e:
+        if conn:
+            conn.close()
+        if arrow_conn:
+            arrow_conn.close()
+        print(f"Error in get_setup_arrow_details: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/tuning/sessions/<session_id>', methods=['GET'])
 def get_tuning_session(session_id):
@@ -5421,6 +5551,120 @@ def get_guide_sessions(current_user):
         if conn:
             conn.close()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/calculate-trajectory', methods=['POST'])
+@token_required
+def calculate_trajectory(current_user):
+    """Calculate arrow trajectory for visualization"""
+    from ballistics_calculator import BallisticsCalculator, EnvironmentalConditions, ShootingConditions, ArrowType
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        arrow_data = data.get('arrow_data', {})
+        bow_config = data.get('bow_config', {})
+        env_conditions = data.get('environmental_conditions', {})
+        shooting_conditions = data.get('shooting_conditions', {})
+
+        # Extract arrow parameters
+        arrow_speed = arrow_data.get('estimated_speed_fps', 280)
+        arrow_weight = arrow_data.get('total_weight', 400)
+        arrow_diameter = arrow_data.get('outer_diameter', 0.246)
+        
+        # Determine arrow type based on arrow data
+        arrow_type_str = arrow_data.get('arrow_type', 'hunting').lower()
+        if 'target' in arrow_type_str:
+            arrow_type = ArrowType.TARGET
+        elif 'field' in arrow_type_str:
+            arrow_type = ArrowType.FIELD
+        elif '3d' in arrow_type_str:
+            arrow_type = ArrowType.THREE_D
+        else:
+            arrow_type = ArrowType.HUNTING
+
+        # Create environmental conditions
+        environmental = EnvironmentalConditions(
+            temperature_f=env_conditions.get('temperature_f', 70.0),
+            humidity_percent=env_conditions.get('humidity_percent', 50.0),
+            altitude_feet=env_conditions.get('altitude_feet', 0.0),
+            wind_speed_mph=env_conditions.get('wind_speed_mph', 0.0),
+            wind_direction_degrees=env_conditions.get('wind_direction_degrees', 0.0),
+            air_pressure_inHg=env_conditions.get('air_pressure_inHg', 29.92)
+        )
+
+        # Create shooting conditions
+        shooting = ShootingConditions(
+            shot_angle_degrees=shooting_conditions.get('shot_angle_degrees', 0.0),
+            sight_height_inches=shooting_conditions.get('sight_height_inches', 7.0),
+            zero_distance_yards=shooting_conditions.get('zero_distance_yards', 20.0),
+            max_range_yards=shooting_conditions.get('max_range_yards', 100.0)
+        )
+
+        # Calculate trajectory
+        calculator = BallisticsCalculator()
+        result = calculator.calculate_trajectory(
+            arrow_speed_fps=arrow_speed,
+            arrow_weight_grains=arrow_weight,
+            arrow_diameter_inches=arrow_diameter,
+            arrow_type=arrow_type,
+            environmental=environmental,
+            shooting=shooting
+        )
+
+        return jsonify({
+            'success': True,
+            'trajectory_data': result,
+            'calculation_parameters': {
+                'arrow_speed_fps': arrow_speed,
+                'arrow_weight_grains': arrow_weight,
+                'arrow_diameter_inches': arrow_diameter,
+                'arrow_type': arrow_type.value,
+                'environmental_conditions': {
+                    'temperature_f': environmental.temperature_f,
+                    'wind_speed_mph': environmental.wind_speed_mph,
+                    'altitude_feet': environmental.altitude_feet
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Error calculating trajectory: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'fallback_data': {
+                'trajectory_points': generate_fallback_trajectory(
+                    arrow_data.get('estimated_speed_fps', 280),
+                    shooting_conditions.get('max_range_yards', 100)
+                )
+            }
+        }), 500
+
+def generate_fallback_trajectory(arrow_speed_fps, max_range_yards):
+    """Generate basic trajectory for fallback when ballistics calculation fails"""
+    trajectory_points = []
+    
+    for distance in range(0, int(max_range_yards) + 1, 5):
+        if distance == 0:
+            height = 7.0  # Sight height
+        else:
+            # Basic ballistic trajectory calculation
+            time_of_flight = (distance * 3) / arrow_speed_fps  # Convert yards to feet, calculate time
+            drop_feet = 16.1 * time_of_flight * time_of_flight  # Gravity drop in feet
+            height = 7.0 - (drop_feet * 12)  # Convert to inches, adjust for sight height
+        
+        trajectory_points.append({
+            'time': round(time_of_flight if distance > 0 else 0, 3),
+            'distance_yards': distance,
+            'height_inches': round(height, 2),
+            'velocity_fps': round(arrow_speed_fps * (0.95 ** (distance / 10)), 1),  # Simple velocity decay
+            'drop_inches': round(7.0 - height, 2) if height < 7.0 else 0,
+            'wind_drift_inches': 0
+        })
+    
+    return trajectory_points
 
 @app.route('/api/guide-sessions/<int:session_id>', methods=['GET'])
 @token_required
