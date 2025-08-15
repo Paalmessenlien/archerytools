@@ -13,6 +13,19 @@
           <i class="fas fa-flask mr-2"></i>
           BETA VERSION
         </div>
+        
+        <!-- Frustrated Archer Comic -->
+        <div class="mb-6">
+          <img 
+            src="/assets/images/frustrated-archer-comic.webp" 
+            alt="Frustrated archer struggling with equipment management" 
+            class="mx-auto max-w-full h-auto rounded-lg shadow-md border border-gray-200 dark:border-gray-700"
+            style="max-height: 300px;"
+          />
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">
+            Tired of equipment confusion? Let Archery Tools simplify your setup!
+          </p>
+        </div>
       </div>
 
       <!-- Beta Disclaimer Card -->
