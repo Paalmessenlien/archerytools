@@ -61,8 +61,9 @@
       />
 
       <!-- Header -->
-      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-        <div class="min-w-0 flex-1">
+      <div class="space-y-6 mb-8">
+        <!-- Title and Info -->
+        <div>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             {{ getArrowDisplayName() }}
           </h1>
@@ -94,7 +95,7 @@
         </div>
         
         <!-- Actions - Mobile Responsive -->
-        <div class="flex flex-col sm:flex-row gap-3 w-full">
+        <div class="flex flex-col sm:flex-row gap-3">
           <button
             @click="editMode = !editMode"
             class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
