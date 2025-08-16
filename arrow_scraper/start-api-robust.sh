@@ -396,19 +396,36 @@ export USER_DATABASE_PATH="$USER_DB"
 
 # Run migrations if migration runner exists
 if [ -f "run_migrations.py" ]; then
-    echo "🔧 Running migrations with migration runner..."
+    echo "🔧 Running arrow database migrations..."
     
     if python3 run_migrations.py --status-only > /dev/null 2>&1; then
         if python3 run_migrations.py; then
-            echo "✅ Database migrations completed successfully"
+            echo "✅ Arrow database migrations completed successfully"
         else
-            echo "⚠️  Some migrations failed, but continuing startup"
+            echo "⚠️  Some arrow database migrations failed, but continuing startup"
         fi
     else
-        echo "⚠️  Could not check migration status, but continuing startup"
+        echo "⚠️  Could not check arrow database migration status, but continuing startup"
     fi
 else
-    echo "⚠️  Migration runner not found, skipping migrations"
+    echo "⚠️  Arrow database migration runner not found, skipping migrations"
+fi
+
+# Run user database migrations
+if [ -f "run_user_migrations.py" ]; then
+    echo "🔧 Running user database migrations..."
+    
+    if python3 run_user_migrations.py --status-only > /dev/null 2>&1; then
+        if python3 run_user_migrations.py; then
+            echo "✅ User database migrations completed successfully"
+        else
+            echo "⚠️  Some user database migrations failed, but continuing startup"
+        fi
+    else
+        echo "⚠️  Could not check user database migration status, but continuing startup"
+    fi
+else
+    echo "⚠️  User database migration runner not found, skipping user migrations"
 fi
 
 # Start the application
