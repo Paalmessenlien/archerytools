@@ -6357,7 +6357,7 @@ def upload_image(current_user):
 @token_required
 @admin_required
 def create_backup(current_user):
-    """Create database backup and upload to CDN"""
+    """Create unified database backup and upload to CDN"""
     try:
         from backup_manager import BackupManager
         from cdn_uploader import CDNUploader
@@ -6367,11 +6367,10 @@ def create_backup(current_user):
         
         data = request.get_json() or {}
         backup_name = data.get('backup_name')
-        include_arrow_db = data.get('include_arrow_db', True)
-        include_user_db = data.get('include_user_db', True)
         
-        if not include_arrow_db and not include_user_db:
-            return jsonify({'error': 'At least one database must be selected for backup'}), 400
+        # With unified database, we always backup the single database
+        include_arrow_db = True
+        include_user_db = False  # Not applicable with unified architecture
         
         # Create backup manager
         backup_manager = BackupManager()
@@ -6379,12 +6378,7 @@ def create_backup(current_user):
         # Generate backup name if not provided
         if not backup_name:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            db_types = []
-            if include_arrow_db:
-                db_types.append("arrows")
-            if include_user_db:
-                db_types.append("users")
-            backup_name = f"admin_backup_{'-'.join(db_types)}_{timestamp}"
+            backup_name = f"admin_backup_unified_{timestamp}"
         
         # Create local backup
         local_backup_path = backup_manager.create_backup(
@@ -6406,11 +6400,7 @@ def create_backup(current_user):
             
             # Create environment-aware backup filename
             environment = os.getenv('FLASK_ENV', 'development')
-            backup_type = 'full'
-            if not include_arrow_db:
-                backup_type = 'user_only'
-            elif not include_user_db:
-                backup_type = 'arrow_only'
+            backup_type = 'full'  # Always full backup with unified database
             
             # Generate structured filename: {env}_{type}_{timestamp}.tar.gz
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -6508,8 +6498,7 @@ def create_backup(current_user):
             'cdn_type': result['cdn_type'],
             'file_size_mb': backup_size,
             'includes': {
-                'arrow_database': include_arrow_db,
-                'user_database': include_user_db
+                'unified_database': True
             },
             'created_by': current_user['email'],
             'local_path': local_backup_path
@@ -6785,19 +6774,18 @@ def list_backups(current_user):
 @token_required
 @admin_required
 def restore_backup_from_cdn(current_user, backup_id):
-    """Restore database from CDN backup"""
+    """Restore unified database from CDN backup"""
     try:
         from backup_manager import BackupManager
         import tempfile
         import requests
         
         data = request.get_json() or {}
-        restore_arrow_db = data.get('restore_arrow_db', True)
-        restore_user_db = data.get('restore_user_db', True)
         force = data.get('force', False)
         
-        if not restore_arrow_db and not restore_user_db:
-            return jsonify({'error': 'At least one database must be selected for restore'}), 400
+        # With unified database, always restore the single database
+        restore_arrow_db = True
+        restore_user_db = False  # Not applicable with unified architecture
         
         # Get backup metadata from database
         from user_database import UserDatabase
@@ -6814,11 +6802,8 @@ def restore_backup_from_cdn(current_user, backup_id):
         
         backup_record = dict(backup_record)
         
-        # Check if backup contains the requested databases
-        if restore_arrow_db and not backup_record['include_arrow_db']:
-            return jsonify({'error': 'Backup does not contain arrow database'}), 400
-        if restore_user_db and not backup_record['include_user_db']:
-            return jsonify({'error': 'Backup does not contain user database'}), 400
+        # With unified database, all backups contain the unified database
+        # No need to check separate database flags
         
         # Try to use local file first if it exists
         backup_file_path = None
@@ -6864,7 +6849,7 @@ def restore_backup_from_cdn(current_user, backup_id):
             INSERT INTO backup_restore_log 
             (backup_id, restored_by, restore_arrow_db, restore_user_db)
             VALUES (?, ?, ?, ?)
-        ''', (backup_id, current_user['id'], restore_arrow_db, restore_user_db))
+        ''', (backup_id, current_user['id'], True, False))  # Always unified database restore
         
         conn.commit()
         conn.close()
@@ -6874,8 +6859,7 @@ def restore_backup_from_cdn(current_user, backup_id):
             'message': f'Successfully restored from backup "{backup_record["backup_name"]}"',
             'backup_name': backup_record['backup_name'],
             'restored': {
-                'arrow_database': restore_arrow_db,
-                'user_database': restore_user_db
+                'unified_database': True
             },
             'restored_by': current_user['email']
         })
@@ -6975,10 +6959,9 @@ def restore_backup_new_format(current_user, backup_id):
         if success:
             return jsonify({
                 'success': True,
-                'message': 'Backup restored successfully',
+                'message': 'Unified backup restored successfully',
                 'restored_databases': {
-                    'arrow_db': restore_arrow_db,
-                    'user_db': restore_user_db
+                    'unified_db': True
                 }
             })
         else:
@@ -7177,7 +7160,7 @@ def delete_database_backup(backup_id):
 @token_required
 @admin_required
 def upload_backup_file(current_user):
-    """Upload and restore from backup file"""
+    """Upload and restore from unified backup file"""
     try:
         from backup_manager import BackupManager
         from user_database import UserDatabase
@@ -7199,13 +7182,10 @@ def upload_backup_file(current_user):
         if not (filename_lower.endswith('.tar.gz') or filename_lower.endswith('.gz')):
             return jsonify({'error': 'Invalid file format. Only .tar.gz and .gz files are supported'}), 400
         
-        # Get restore options from form data
-        restore_arrow_db = request.form.get('restore_arrow_db', 'true').lower() == 'true'
-        restore_user_db = request.form.get('restore_user_db', 'true').lower() == 'true'
+        # With unified database, always restore the single database
+        restore_arrow_db = True
+        restore_user_db = False  # Not applicable with unified architecture
         force_restore = request.form.get('force_restore', 'false').lower() == 'true'
-        
-        if not restore_arrow_db and not restore_user_db:
-            return jsonify({'error': 'At least one database must be selected for restore'}), 400
         
         # Create secure filename
         filename = secure_filename(file.filename)
@@ -7231,9 +7211,8 @@ def upload_backup_file(current_user):
         print(f"✅ Backup verification successful")
         
         # Perform the restore
-        print(f"🔄 Restoring from uploaded backup...")
-        print(f"   Arrow DB: {'Yes' if restore_arrow_db else 'No'}")
-        print(f"   User DB: {'Yes' if restore_user_db else 'No'}")
+        print(f"🔄 Restoring from uploaded unified backup...")
+        print(f"   Unified DB: Yes")
         print(f"   Force: {'Yes' if force_restore else 'No'}")
         
         success = backup_manager.restore_backup(
@@ -7271,8 +7250,7 @@ def upload_backup_file(current_user):
                 current_user['email'],
                 datetime.now().isoformat(),
                 json.dumps({
-                    'restore_arrow_db': restore_arrow_db,
-                    'restore_user_db': restore_user_db,
+                    'restore_unified_db': True,
                     'uploaded_filename': filename,
                     'file_size_bytes': os.path.getsize(temp_file_path) if os.path.exists(temp_file_path) else 0
                 }),
@@ -7289,8 +7267,7 @@ def upload_backup_file(current_user):
             'success': True,
             'message': f'Successfully restored from uploaded backup: {filename}',
             'restored': {
-                'arrow_database': restore_arrow_db,
-                'user_database': restore_user_db
+                'unified_database': True
             },
             'restored_by': current_user['email'],
             'timestamp': datetime.now().isoformat()

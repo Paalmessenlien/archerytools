@@ -1516,26 +1516,14 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Databases to Backup
-                  </label>
-                  <div class="space-y-2">
-                    <label class="flex items-center">
-                      <input 
-                        v-model="backupForm.includeArrowDb" 
-                        type="checkbox" 
-                        class="mr-2"
-                      />
-                      <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database</span>
-                    </label>
-                    <label class="flex items-center">
-                      <input 
-                        v-model="backupForm.includeUserDb" 
-                        type="checkbox" 
-                        class="mr-2"
-                      />
-                      <span class="text-sm text-gray-700 dark:text-gray-300">User Database</span>
-                    </label>
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div class="flex items-center">
+                      <i class="fas fa-database text-blue-600 dark:text-blue-400 mr-2"></i>
+                      <div>
+                        <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Unified Database Backup</p>
+                        <p class="text-xs text-blue-700 dark:text-blue-300">Backs up the complete unified database including arrows, users, and configurations</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1544,7 +1532,7 @@
                 <CustomButton
                   type="submit"
                   variant="filled"
-                  :disabled="isCreatingBackup || (!backupForm.includeArrowDb && !backupForm.includeUserDb)"
+                  :disabled="isCreatingBackup"
                   class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
                 >
                   <span v-if="isCreatingBackup">
@@ -1601,28 +1589,16 @@
                 </div>
               </div>
 
-              <!-- Restore Options -->
+              <!-- Restore Information -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Databases to Restore
-                </label>
-                <div class="space-y-2">
-                  <label class="flex items-center">
-                    <input
-                      type="checkbox"
-                      v-model="uploadForm.restoreArrowDb"
-                      class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
-                    />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">Arrow Database (specifications, spine data)</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input
-                      type="checkbox"
-                      v-model="uploadForm.restoreUserDb"
-                      class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
-                    />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">User Database (accounts, bow setups)</span>
-                  </label>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div class="flex items-center">
+                    <i class="fas fa-database text-blue-600 dark:text-blue-400 mr-2"></i>
+                    <div>
+                      <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Unified Database Restore</p>
+                      <p class="text-xs text-blue-700 dark:text-blue-300">Will restore the complete unified database including arrows, users, and configurations</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1643,7 +1619,7 @@
               <div class="flex justify-end">
                 <CustomButton
                   type="submit"
-                  :disabled="isUploadingBackup || !selectedFile || (!uploadForm.restoreArrowDb && !uploadForm.restoreUserDb)"
+                  :disabled="isUploadingBackup || !selectedFile"
                   class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
                 >
                   <span v-if="isUploadingBackup">
@@ -2042,34 +2018,14 @@
 
         <form @submit.prevent="restoreBackup" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Databases to Restore
-            </label>
-            <div class="space-y-2">
-              <label class="flex items-center">
-                <input 
-                  v-model="restoreForm.restoreArrowDb" 
-                  type="checkbox" 
-                  class="mr-2"
-                  :disabled="backupToRestore?.include_arrow_db === false"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300">
-                  Arrow Database 
-                  <span v-if="backupToRestore?.include_arrow_db === false" class="text-xs text-gray-400">(not in backup)</span>
-                </span>
-              </label>
-              <label class="flex items-center">
-                <input 
-                  v-model="restoreForm.restoreUserDb" 
-                  type="checkbox" 
-                  class="mr-2"
-                  :disabled="backupToRestore?.include_user_db === false"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300">
-                  User Database
-                  <span v-if="backupToRestore?.include_user_db === false" class="text-xs text-gray-400">(not in backup)</span>
-                </span>
-              </label>
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div class="flex items-center">
+                <i class="fas fa-database text-blue-600 dark:text-blue-400 mr-2"></i>
+                <div>
+                  <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Unified Database Restore</p>
+                  <p class="text-xs text-blue-700 dark:text-blue-300">Will restore the complete unified database including arrows, users, and configurations</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2094,7 +2050,7 @@
             <CustomButton
               type="submit"
               variant="filled"
-              :disabled="isRestoringBackup || (!restoreForm.restoreArrowDb && !restoreForm.restoreUserDb)"
+              :disabled="isRestoringBackup"
               class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
             >
               <span v-if="isRestoringBackup">
@@ -2194,22 +2150,19 @@ const isLoadingSystemInfo = ref(false)
 const systemInfoError = ref(null)
 
 const backupForm = ref({
-  name: '',
-  includeArrowDb: true,
-  includeUserDb: true
+  name: ''
+  // Unified database - no separate options needed
 })
 
 const restoreForm = ref({
-  restoreArrowDb: true,
-  restoreUserDb: false
+  // Unified database - no separate options needed
 })
 
 // Upload backup state
 const selectedFile = ref(null)
 const isUploadingBackup = ref(false)
 const uploadForm = ref({
-  restoreArrowDb: true,
-  restoreUserDb: true
+  // Unified database - no separate options needed
 })
 
 // Batch fill state
@@ -2581,18 +2534,15 @@ const createBackup = async () => {
     isCreatingBackup.value = true
     
     const result = await api.post('/admin/backup', {
-      backup_name: backupForm.value.name || undefined,
-      include_arrow_db: backupForm.value.includeArrowDb,
-      include_user_db: backupForm.value.includeUserDb
+      backup_name: backupForm.value.name || undefined
+      // Unified database - no separate options needed
     })
     
     showNotification(result.message || 'Backup created successfully')
     
     // Reset form
     backupForm.value = {
-      name: '',
-      includeArrowDb: true,
-      includeUserDb: true
+      name: ''
     }
     
     // Reload backups list
@@ -2610,21 +2560,10 @@ const showRestoreModal = (backup) => {
   console.log('Opening restore modal for backup:', backup)
   backupToRestore.value = backup
   
-  // Intelligently detect what's in the backup using various property names
-  const hasArrowDb = backup.include_arrow_db || backup.includes?.arrow_database || 
-                     backup.arrow_db_stats || backup.backup_name?.includes('arrows') ||
-                     !backup.backup_name?.includes('users') // If not user-only, likely has arrows
-  const hasUserDb = backup.include_user_db || backup.includes?.user_database || 
-                    backup.user_db_stats || backup.backup_name?.includes('users')
-  
-  // Set backup properties for the modal to use
-  backup.include_arrow_db = hasArrowDb
-  backup.include_user_db = hasUserDb
-  
-  // Set default restore options - ensure at least one is selected
+  // With unified database, all backups contain the complete database
+  // No need for separate detection or options
   restoreForm.value = {
-    restoreArrowDb: hasArrowDb, // Default to true if backup contains arrow data
-    restoreUserDb: false // Default to false for safety, but allow user to choose
+    // Unified database - no separate options needed
   }
   
   console.log('Backup analysis:', { hasArrowDb, hasUserDb, backup_name: backup.backup_name })
@@ -2640,9 +2579,8 @@ const restoreBackup = async () => {
     isRestoringBackup.value = true
     
     const result = await api.post(`/admin/backup/${backupToRestore.value.id}/restore`, {
-      restore_arrow_db: restoreForm.value.restoreArrowDb,
-      restore_user_db: restoreForm.value.restoreUserDb,
       force: true
+      // Unified database - no separate options needed
     })
     
     showNotification(result.message || 'Backup restored successfully')
@@ -2737,18 +2675,8 @@ const confirmDeleteBackup = (backup) => {
 }
 
 const getBackupContents = (backup) => {
-  const contents = []
-  
-  // Check various property names that might indicate database inclusion
-  const hasArrowDb = backup.include_arrow_db || backup.includes?.arrow_database || 
-                     backup.arrow_db_stats || backup.backup_name?.includes('arrows') ||
-                     !backup.backup_name?.includes('users') // If not user-only, likely has arrows
-  const hasUserDb = backup.include_user_db || backup.includes?.user_database || 
-                    backup.user_db_stats || backup.backup_name?.includes('users')
-  
-  if (hasArrowDb) contents.push('Arrows')
-  if (hasUserDb) contents.push('Users')
-  return contents.join(', ') || 'Both'
+  // With unified database, all backups contain the complete database
+  return 'Unified Database'
 }
 
 // File upload functions
@@ -2774,10 +2702,7 @@ const uploadAndRestoreBackup = async () => {
     return
   }
   
-  if (!uploadForm.value.restoreArrowDb && !uploadForm.value.restoreUserDb) {
-    showNotification('Please select at least one database to restore', 'error')
-    return
-  }
+  // With unified database, no validation needed for separate databases
   
   try {
     isUploadingBackup.value = true
@@ -2785,12 +2710,10 @@ const uploadAndRestoreBackup = async () => {
     // Create FormData for file upload
     const formData = new FormData()
     formData.append('backup_file', selectedFile.value)
-    formData.append('restore_arrow_db', uploadForm.value.restoreArrowDb.toString())
-    formData.append('restore_user_db', uploadForm.value.restoreUserDb.toString())
     formData.append('force_restore', 'true')
+    // Unified database - no separate options needed
     
-    console.log('Uploading backup file:', selectedFile.value.name)
-    console.log('Restore options:', uploadForm.value)
+    console.log('Uploading unified backup file:', selectedFile.value.name)
     
     // Upload and restore
     const result = await api.post('/admin/backup/upload', formData)
@@ -2800,8 +2723,7 @@ const uploadAndRestoreBackup = async () => {
     // Reset form
     selectedFile.value = null
     uploadForm.value = {
-      restoreArrowDb: true,
-      restoreUserDb: true
+      // Unified database - no separate options needed
     }
     
     // Clear file input
@@ -2813,10 +2735,8 @@ const uploadAndRestoreBackup = async () => {
     // Reload backups list
     await loadBackups()
     
-    // Show additional warning if user database was restored
-    if (uploadForm.value.restoreUserDb) {
-      showNotification('User database restored. You may need to refresh the page.', 'warning')
-    }
+    // Show additional warning for unified database restore
+    showNotification('Unified database restored. You may need to refresh the page.', 'warning')
     
   } catch (error) {
     console.error('Error uploading backup:', error)
