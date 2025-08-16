@@ -91,7 +91,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         chronograph_result = None
         if setup_id and arrow_id:
             try:
-                user_db = get_user_database()
+                user_db = get_database()
                 cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
@@ -8817,7 +8817,8 @@ def get_migration_status(current_user):
         
         # Get database paths with unified architecture support
         arrow_db = get_database()
-        user_db = get_user_database()
+        # With unified architecture, user data is in the same database
+        user_db = arrow_db
         
         if not arrow_db:
             return jsonify({'error': 'Arrow database not available'}), 500
@@ -9591,7 +9592,7 @@ def get_global_change_log(current_user):
         days_back = request.args.get('days_back')
         
         # Get all user's bow setups
-        user_db = get_user_database()
+        user_db = get_database()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -9674,7 +9675,7 @@ def get_global_statistics(current_user):
         change_service = ChangeLogService()
         
         # Get all user's bow setups
-        user_db = get_user_database()
+        user_db = get_database()
         conn = user_db.get_connection()
         cursor = conn.cursor()
         
@@ -9949,7 +9950,7 @@ def estimate_arrow_speed():
         chronograph_result = None
         if setup_id and arrow_id:
             try:
-                user_db = get_user_database()
+                user_db = get_database()
                 cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
@@ -10192,7 +10193,7 @@ def create_chronograph_data(current_user):
                 return jsonify({'error': f'Field {field} is required'}), 400
         
         # Get user database
-        user_db = get_user_database()
+        user_db = get_database()
         cursor = user_db.get_connection().cursor()
         
         # Insert chronograph data
@@ -10246,7 +10247,7 @@ def create_chronograph_data(current_user):
 def get_chronograph_data_for_setup(current_user, setup_id):
     """Get all chronograph data for a specific bow setup"""
     try:
-        user_db = get_user_database()
+        user_db = get_database()
         cursor = user_db.get_connection().cursor()
         
         # Get chronograph data with arrow information
@@ -10302,7 +10303,7 @@ def update_chronograph_data(current_user, data_id):
     try:
         data = request.get_json()
         
-        user_db = get_user_database()
+        user_db = get_database()
         cursor = user_db.get_connection().cursor()
         
         # Update chronograph data
@@ -10337,7 +10338,7 @@ def update_chronograph_data(current_user, data_id):
 def delete_chronograph_data(current_user, data_id):
     """Delete chronograph data entry"""
     try:
-        user_db = get_user_database()
+        user_db = get_database()
         cursor = user_db.get_connection().cursor()
         
         cursor.execute('DELETE FROM chronograph_data WHERE id = ?', (data_id,))
@@ -10363,7 +10364,7 @@ def estimate_speed_from_chronograph(current_user, arrow_id):
         if not target_weight:
             return jsonify({'error': 'target_weight is required'}), 400
         
-        user_db = get_user_database()
+        user_db = get_database()
         cursor = user_db.get_connection().cursor()
         
         # Find chronograph data for this arrow or similar setup
