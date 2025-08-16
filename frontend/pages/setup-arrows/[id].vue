@@ -165,7 +165,8 @@
           <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <ChronographDataEntry
               :bow-setup-id="setupArrowData.bow_setup.id"
-              :setup-arrows="[setupArrowData.setup_arrow]"
+              :current-setup-arrow="setupArrowData.setup_arrow"
+              :current-arrow="setupArrowData.arrow"
               @data-updated="handleChronographDataUpdate"
               @speed-calculated="handleSpeedCalculated"
             />

@@ -56,34 +56,26 @@
 
     <!-- Entry form -->
     <div v-if="showEntry" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Arrow Selection -->
-        <div>
-          <label class="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-            Arrow Used *
-          </label>
-          <md-filled-select 
-            :value="chronoData.setup_arrow_id?.toString() || ''" 
-            @change="chronoData.setup_arrow_id = parseInt($event.target.value)"
-            label="Select arrow configuration"
-            class="w-full"
-            required
-          >
-            <md-select-option value="">
-              <div slot="headline">Select an arrow...</div>
-            </md-select-option>
-            <md-select-option 
-              v-for="arrow in setupArrows" 
-              :key="arrow.id" 
-              :value="arrow.id.toString()"
-            >
-              <div slot="headline">
-                {{ arrow.arrow?.manufacturer || 'Unknown' }} {{ arrow.arrow?.model_name || 'Arrow' }} 
-                ({{ calculateArrowWeight(arrow) }}gr, {{ arrow.arrow_length }}")
-              </div>
-            </md-select-option>
-          </md-filled-select>
+      <!-- Current Arrow Display -->
+      <div v-if="currentArrow" class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100">Recording for:</h5>
+            <p class="text-base font-semibold text-blue-900 dark:text-blue-200">
+              {{ currentArrow.arrow?.manufacturer || 'Unknown' }} {{ currentArrow.arrow?.model_name || 'Arrow' }}
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ currentArrow.arrow_length }}" length, {{ currentArrow.point_weight }}gr point, {{ calculateArrowWeight(currentArrow) }}gr total
+            </p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500 dark:text-gray-400">Auto-calculated weight</div>
+            <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ calculateArrowWeight(currentArrow) }} gr</div>
+          </div>
         </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <!-- Measured Speed -->
         <div>
@@ -264,6 +256,14 @@ const props = defineProps({
   setupArrows: {
     type: Array,
     default: () => []
+  },
+  currentSetupArrow: {
+    type: Object,
+    default: null
+  },
+  currentArrow: {
+    type: Object,
+    default: null
   }
 })
 
@@ -280,7 +280,6 @@ const editingId = ref(null)
 
 // Form data
 const chronoData = ref({
-  setup_arrow_id: null,
   measured_speed_fps: null,
   shot_count: 3,
   std_deviation: null,
@@ -293,8 +292,20 @@ const chronoData = ref({
 })
 
 // Computed
+const currentArrow = computed(() => {
+  // Use direct props if available (new approach)
+  if (props.currentSetupArrow && props.currentArrow) {
+    return {
+      ...props.currentSetupArrow,
+      arrow: props.currentArrow
+    }
+  }
+  // Fallback to setupArrows array (legacy approach)
+  return props.setupArrows && props.setupArrows.length > 0 ? props.setupArrows[0] : null
+})
+
 const canSave = computed(() => {
-  return chronoData.value.setup_arrow_id && 
+  return currentArrow.value && 
          chronoData.value.measured_speed_fps && 
          chronoData.value.measured_speed_fps > 0
 })
@@ -339,14 +350,14 @@ const saveChronographData = async () => {
   
   saving.value = true
   try {
-    // Calculate arrow weight for the selected setup arrow
-    const selectedArrow = props.setupArrows.find(a => a.id === chronoData.value.setup_arrow_id)
-    const arrowWeight = calculateArrowWeight(selectedArrow)
+    // Use the current arrow being viewed (auto-populated)
+    const arrowWeight = calculateArrowWeight(currentArrow.value)
     
     const payload = {
       ...chronoData.value,
       setup_id: props.bowSetupId,
-      arrow_id: selectedArrow?.arrow_id || null,
+      arrow_id: currentArrow.value?.arrow_id || null,
+      setup_arrow_id: currentArrow.value?.id || null,
       arrow_weight_grains: arrowWeight
     }
     
@@ -368,7 +379,7 @@ const saveChronographData = async () => {
     emit('speed-calculated', {
       speed: chronoData.value.measured_speed_fps,
       arrow_weight: arrowWeight,
-      setup_arrow_id: chronoData.value.setup_arrow_id
+      setup_arrow_id: currentArrow.value?.id
     })
     
     showEntry.value = false
@@ -400,7 +411,6 @@ const deleteChronographData = async (id) => {
 
 const resetForm = () => {
   chronoData.value = {
-    setup_arrow_id: null,
     measured_speed_fps: null,
     shot_count: 3,
     std_deviation: null,

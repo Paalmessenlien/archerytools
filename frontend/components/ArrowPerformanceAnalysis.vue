@@ -55,6 +55,18 @@
         <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
           {{ getSpeedRating(performanceData.performance_summary.estimated_speed_fps) }}
         </div>
+        <!-- Speed Source & Confidence Indicator -->
+        <div v-if="performanceData.performance_summary.speed_source" class="flex items-center justify-between mt-2">
+          <div class="flex items-center">
+            <span class="text-xs px-2 py-1 rounded-full" :class="getSpeedSourceClass(performanceData.performance_summary.speed_source)">
+              <i :class="getSpeedSourceIcon(performanceData.performance_summary.speed_source)" class="mr-1"></i>
+              {{ getSpeedSourceText(performanceData.performance_summary.speed_source) }}
+            </span>
+          </div>
+          <div v-if="performanceData.performance_summary.confidence" class="text-xs text-blue-600 dark:text-blue-400">
+            {{ performanceData.performance_summary.confidence }}% confidence
+          </div>
+        </div>
       </div>
       
       <!-- Kinetic Energy -->
@@ -409,7 +421,12 @@ const getArrowDataForTrajectory = () => {
     arrow_type: props.arrow?.arrow_type || 'hunting',
     manufacturer: props.arrow?.manufacturer || 'Unknown',
     model_name: props.arrow?.model_name || 'Unknown',
-    spine: props.setupArrow.calculated_spine
+    spine: props.setupArrow.calculated_spine,
+    // Include IDs for chronograph data lookup in trajectory calculation
+    setup_id: props.setupArrow.setup_id,
+    arrow_id: props.setupArrow.arrow_id,
+    // Include source information if available
+    speed_source: performance.speed_source || 'estimated'
   }
 }
 
@@ -444,6 +461,37 @@ const calculateTotalWeight = () => {
   const totalWeight = shaftWeight + pointWeight + nockWeight + insertWeight + bushingWeight + fletchingWeight
   
   return Math.round(totalWeight * 10) / 10
+}
+
+// Speed source indicator methods
+const getSpeedSourceClass = (source) => {
+  if (source === 'chronograph') {
+    return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+  } else if (source === 'enhanced_estimated') {
+    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+  } else {
+    return 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200'
+  }
+}
+
+const getSpeedSourceIcon = (source) => {
+  if (source === 'chronograph') {
+    return 'fas fa-tachometer-alt'
+  } else if (source === 'enhanced_estimated') {
+    return 'fas fa-cog'
+  } else {
+    return 'fas fa-calculator'
+  }
+}
+
+const getSpeedSourceText = (source) => {
+  if (source === 'chronograph') {
+    return 'Measured'
+  } else if (source === 'enhanced_estimated') {
+    return 'Enhanced'
+  } else {
+    return 'Estimated'
+  }
 }
 
 // Lifecycle

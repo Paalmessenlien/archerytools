@@ -18,10 +18,19 @@
       <!-- Header - Mobile Responsive -->
       <div class="mb-4">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h4 class="text-base font-medium text-gray-900 dark:text-white flex items-center">
-            <span class="mr-2 text-sm">🎯</span>
-            Flight Trajectory
-          </h4>
+          <div class="flex flex-col">
+            <h4 class="text-base font-medium text-gray-900 dark:text-white flex items-center">
+              <span class="mr-2 text-sm">🎯</span>
+              Flight Trajectory
+            </h4>
+            <!-- Speed Source Indicator -->
+            <div v-if="props.arrowData?.speed_source" class="flex items-center mt-1">
+              <span class="text-xs px-2 py-1 rounded-full" :class="getSpeedSourceClass()">
+                <i :class="getSpeedSourceIcon()" class="mr-1"></i>
+                {{ getSpeedSourceText() }}
+              </span>
+            </div>
+          </div>
           
           <!-- Controls - Responsive Layout -->
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-1">
@@ -136,15 +145,15 @@
     <div v-if="trajectorySummary" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
       <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center sm:text-left">
         <div class="text-blue-600 dark:text-blue-400 font-medium">Max Range</div>
-        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.maxRange }} yards</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayMaxRange() }} {{ getDistanceUnit() }}</div>
       </div>
       <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg text-center sm:text-left">
         <div class="text-green-600 dark:text-green-400 font-medium">Peak Height</div>
-        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.peakHeight }}"</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayPeakHeight() }}{{ getHeightUnit() }}</div>
       </div>
       <div class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-lg text-center sm:text-left">
-        <div class="text-orange-600 dark:text-orange-400 font-medium">Drop at 40yd</div>
-        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ trajectorySummary.dropAt40yd }}"</div>
+        <div class="text-orange-600 dark:text-orange-400 font-medium">Drop at {{ getDisplayDropReference() }}{{ getDistanceUnit() }}</div>
+        <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayDropAt40() }}{{ getHeightUnit() }}</div>
       </div>
     </div>
 
@@ -412,21 +421,29 @@ const initializeChartComponent = async () => {
             cornerRadius: 8,
             callbacks: {
               title: function(context) {
-                return `Distance: ${context[0].label} yards`
+                return `Distance: ${context[0].label} ${getDistanceUnit()}`
               },
               label: function(context) {
                 const height = context.parsed.y
+                const unit = getHeightUnit()
                 if (height >= 0) {
-                  return `Height: ${height.toFixed(1)}" above sight line`
+                  return `Height: ${height.toFixed(1)}${unit} above sight line`
                 } else {
-                  return `Drop: ${Math.abs(height).toFixed(1)}" below sight line`
+                  return `Drop: ${Math.abs(height).toFixed(1)}${unit} below sight line`
                 }
               },
               afterLabel: function(context) {
                 const distance = parseFloat(context.label)
-                if (distance === 20) return 'Zero Distance'
-                if (distance === 40) return 'Common Hunting Distance'
-                if (distance === 60) return 'Extended Range'
+                const distanceUnit = getDistanceUnit()
+                
+                // Convert reference distances based on current units
+                const zeroDistance = units.value === 'metric' ? convertDistance(20).toFixed(0) : '20'
+                const huntingDistance = units.value === 'metric' ? convertDistance(40).toFixed(0) : '40'
+                const extendedDistance = units.value === 'metric' ? convertDistance(60).toFixed(0) : '60'
+                
+                if (Math.abs(distance - parseFloat(zeroDistance)) <= 1) return 'Zero Distance'
+                if (Math.abs(distance - parseFloat(huntingDistance)) <= 2) return 'Common Hunting Distance'
+                if (Math.abs(distance - parseFloat(extendedDistance)) <= 3) return 'Extended Range'
                 return ''
               }
             }
@@ -560,6 +577,58 @@ const estimateArrowSpeed = () => {
   const weightFactor = Math.sqrt(350 / arrowWeight)
   
   return Math.max(200, Math.min(350, baseSpeed * weightFactor))
+}
+
+// Speed source indicator methods
+const getSpeedSourceClass = () => {
+  const source = props.arrowData?.speed_source
+  if (source === 'chronograph') {
+    return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+  } else {
+    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+  }
+}
+
+const getSpeedSourceIcon = () => {
+  const source = props.arrowData?.speed_source
+  if (source === 'chronograph') {
+    return 'fas fa-tachometer-alt'
+  } else {
+    return 'fas fa-calculator'
+  }
+}
+
+const getSpeedSourceText = () => {
+  const source = props.arrowData?.speed_source
+  if (source === 'chronograph') {
+    return 'Measured Speed'
+  } else {
+    return 'Estimated Speed'
+  }
+}
+
+// Trajectory summary unit conversion methods
+const getDisplayMaxRange = () => {
+  if (!trajectorySummary.value) return 0
+  const range = trajectorySummary.value.maxRange
+  return units.value === 'metric' ? convertDistance(range).toFixed(1) : Math.round(range)
+}
+
+const getDisplayPeakHeight = () => {
+  if (!trajectorySummary.value) return '0'
+  const height = parseFloat(trajectorySummary.value.peakHeight)
+  return units.value === 'metric' ? convertHeight(height).toFixed(1) : trajectorySummary.value.peakHeight
+}
+
+const getDisplayDropAt40 = () => {
+  if (!trajectorySummary.value) return '0'
+  const drop = parseFloat(trajectorySummary.value.dropAt40yd)
+  return units.value === 'metric' ? convertHeight(drop).toFixed(1) : trajectorySummary.value.dropAt40yd
+}
+
+const getDisplayDropReference = () => {
+  const referenceDistance = 40
+  return units.value === 'metric' ? convertDistance(referenceDistance).toFixed(0) : referenceDistance
 }
 </script>
 
