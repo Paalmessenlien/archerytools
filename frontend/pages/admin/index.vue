@@ -744,8 +744,48 @@
               </div>
             </div>
 
+            <!-- Database Migration Legend -->
+            <div v-if="migrationStatus" class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                <i class="fas fa-info-circle mr-2 text-blue-600 dark:text-blue-400"></i>
+                Database Migration System
+              </h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Database Types:</h5>
+                  <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                        Arrow DB
+                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">Arrow specifications & spine data</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-full text-xs font-medium">
+                        User DB
+                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">User accounts & bow setups</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Status Indicators:</h5>
+                  <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded text-xs">A</span>
+                      <span class="text-gray-600 dark:text-gray-400">Applied to Arrow Database</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded text-xs">U</span>
+                      <span class="text-gray-600 dark:text-gray-400">Applied to User Database</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Pending Migrations -->
-            <div v-if="migrationStatus?.pending_count > 0" class="mb-4">
+            <div v-if="migrationStatus?.pending_count > 0" class="mb-6">
               <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                 Pending Migrations
               </h3>
@@ -755,46 +795,116 @@
                   :key="migration.version"
                   class="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg"
                 >
-                  <div>
-                    <span class="font-mono text-sm text-yellow-800 dark:text-yellow-300">
-                      {{ migration.version }}
-                    </span>
-                    <span class="text-gray-600 dark:text-gray-400 ml-2">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono text-sm text-yellow-800 dark:text-yellow-300">
+                        {{ migration.version }}
+                      </span>
+                      <!-- Database Target Badge -->
+                      <span v-if="migration.target_database" 
+                            class="text-xs px-2 py-1 rounded-full font-medium"
+                            :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': migration.target_database === 'arrow',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': migration.target_database === 'user'
+                            }">
+                        {{ migration.target_database === 'arrow' ? 'Arrow DB' : 'User DB' }}
+                      </span>
+                    </div>
+                    <span class="text-gray-600 dark:text-gray-400 text-sm">
                       {{ migration.description }}
                     </span>
                   </div>
-                  <span class="text-xs px-2 py-1 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded">
-                    Pending
-                  </span>
+                  <div class="flex items-center space-x-2">
+                    <!-- Database Status Indicators -->
+                    <div v-if="migration.status_in_arrow_db !== undefined || migration.status_in_user_db !== undefined" 
+                         class="flex space-x-1">
+                      <span v-if="migration.status_in_arrow_db !== undefined"
+                            class="text-xs px-1.5 py-0.5 rounded"
+                            :class="{
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_arrow_db === 'applied',
+                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300': migration.status_in_arrow_db === 'pending'
+                            }"
+                            :title="'Arrow DB: ' + migration.status_in_arrow_db">
+                        A
+                      </span>
+                      <span v-if="migration.status_in_user_db !== undefined"
+                            class="text-xs px-1.5 py-0.5 rounded"
+                            :class="{
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_user_db === 'applied',
+                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300': migration.status_in_user_db === 'pending'
+                            }"
+                            :title="'User DB: ' + migration.status_in_user_db">
+                        U
+                      </span>
+                    </div>
+                    <span class="text-xs px-2 py-1 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded">
+                      Pending
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Applied Migrations History -->
-            <div v-if="migrationStatus?.applied_count > 0" class="mb-4">
+            <div v-if="migrationStatus?.applied_count > 0" class="mb-6">
               <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                 Recent Applied Migrations
               </h3>
               <div class="space-y-2 max-h-60 overflow-y-auto">
                 <div
-                  v-for="migration in migrationStatus.applied_details.slice(0, 5)"
+                  v-for="migration in migrationStatus.applied_details.slice(0, 10)"
                   :key="migration.version"
                   class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
                 >
-                  <div>
-                    <span class="font-mono text-sm text-green-800 dark:text-green-300">
-                      {{ migration.version }}
-                    </span>
-                    <span class="text-gray-600 dark:text-gray-400 ml-2">
-                      {{ migration.name }}
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono text-sm text-green-800 dark:text-green-300">
+                        {{ migration.version }}
+                      </span>
+                      <!-- Database Target Badge -->
+                      <span v-if="migration.target_database" 
+                            class="text-xs px-2 py-1 rounded-full font-medium"
+                            :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': migration.target_database === 'arrow',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': migration.target_database === 'user'
+                            }">
+                        {{ migration.target_database === 'arrow' ? 'Arrow DB' : 'User DB' }}
+                      </span>
+                    </div>
+                    <span class="text-gray-600 dark:text-gray-400 text-sm">
+                      {{ migration.name || migration.description }}
                     </span>
                   </div>
                   <div class="text-right">
-                    <span class="text-xs px-2 py-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded">
-                      Applied
-                    </span>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {{ new Date(migration.applied_at).toLocaleDateString() }}
+                    <div class="flex items-center space-x-2 mb-1">
+                      <!-- Database Status Indicators -->
+                      <div v-if="migration.status_in_arrow_db !== undefined || migration.status_in_user_db !== undefined" 
+                           class="flex space-x-1">
+                        <span v-if="migration.status_in_arrow_db !== undefined"
+                              class="text-xs px-1.5 py-0.5 rounded"
+                              :class="{
+                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_arrow_db === 'applied',
+                                'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300': migration.status_in_arrow_db === 'pending'
+                              }"
+                              :title="'Arrow DB: ' + migration.status_in_arrow_db">
+                          A
+                        </span>
+                        <span v-if="migration.status_in_user_db !== undefined"
+                              class="text-xs px-1.5 py-0.5 rounded"
+                              :class="{
+                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_user_db === 'applied',
+                                'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300': migration.status_in_user_db === 'pending'
+                              }"
+                              :title="'User DB: ' + migration.status_in_user_db">
+                          U
+                        </span>
+                      </div>
+                      <span class="text-xs px-2 py-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded">
+                        Applied
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                      {{ migration.applied_at ? new Date(migration.applied_at).toLocaleDateString() : 'Applied' }}
                     </div>
                   </div>
                 </div>
