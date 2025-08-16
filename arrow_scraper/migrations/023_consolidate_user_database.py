@@ -560,3 +560,39 @@ class Migration023ConsolidateUserDatabase(BaseMigration):
 
 # Create the migration instance for discovery
 migration = Migration023ConsolidateUserDatabase()
+
+def main():
+    """Main function for standalone execution"""
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python 023_consolidate_user_database.py <arrow_database_path> [--rollback]")
+        sys.exit(1)
+    
+    arrow_db_path = sys.argv[1]
+    rollback = '--rollback' in sys.argv
+    
+    migration = Migration023ConsolidateUserDatabase()
+    
+    try:
+        if rollback:
+            print("🔄 Rolling back database consolidation...")
+            success = migration.down(arrow_db_path, 'manual')
+        else:
+            print("🚀 Applying database consolidation...")
+            success = migration.up(arrow_db_path, 'manual')
+        
+        if success:
+            action = "rolled back" if rollback else "applied"
+            print(f"✅ Migration 023 {action} successfully!")
+        else:
+            print("❌ Migration 023 failed!")
+            sys.exit(1)
+            
+    except Exception as e:
+        print(f"❌ Migration failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
