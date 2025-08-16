@@ -33,7 +33,8 @@
       "Bash(docker rm:*)",
       "Bash(docker-compose:*)",
       "Bash(mv:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

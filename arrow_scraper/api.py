@@ -8782,26 +8782,101 @@ def create_manufacturer_override(current_user, chart_id):
 @token_required
 @admin_required
 def get_migration_status(current_user):
-    """Get comprehensive migration status"""
+    """Get comprehensive migration status for both arrow and user databases"""
     try:
         from database_migration_manager import DatabaseMigrationManager
         import json
         
-        # Find database path and ensure it's a string
-        db = get_database()
-        if not db:
-            return jsonify({'error': 'Database not available'}), 500
+        # Migration target mapping based on typical migration patterns
+        migration_targets = {
+            # User database migrations (setup_arrows, users, bow_setups, etc.)
+            '001': 'user',    # Initial user database schema
+            '002': 'user',    # User authentication tables
+            '003': 'user',    # Bow setups and setup_arrows
+            '004': 'user',    # Enhanced user profiles
+            '005': 'user',    # Tuning sessions
+            '006': 'user',    # Guide sessions
+            '007': 'user',    # Equipment management
+            '008': 'user',    # Equipment field standards
+            '009': 'user',    # Equipment categories
+            '010': 'user',    # User database enhancements
+            '011': 'user',    # Database logging
+            '012': 'user',    # Admin system
+            '013': 'user',    # Equipment change logging
+            '014': 'user',    # Enhanced equipment management
+            '015': 'user',    # Manufacturer equipment categories
+            '016': 'user',    # Bow equipment enhancements
+            '017': 'user',    # Setup arrows duplicate constraint removal
+            '018': 'user',    # Equipment ID nullable
+            '019': 'user',    # Chronograph data
+            '020': 'user',    # Enhanced string equipment fields
+            
+            # Arrow database migrations (arrow specs, spine data, components)
+            'spine_calc': 'arrow',  # Spine calculation system
+        }
+        
+        # Get both database paths
+        arrow_db = get_database()
+        user_db = get_user_database()
+        
+        if not arrow_db or not user_db:
+            return jsonify({'error': 'Databases not available'}), 500
         
         # Always convert Path objects to strings
-        if hasattr(db, 'db_path'):
-            db_path = str(db.db_path)
-        else:
-            db_path = 'arrow_database.db'
+        arrow_db_path = str(arrow_db.db_path) if hasattr(arrow_db, 'db_path') else 'arrow_database.db'
+        user_db_path = str(user_db.db_path) if hasattr(user_db, 'db_path') else 'user_data.db'
         
-        # Initialize migration manager with correct migrations directory
+        # Initialize migration managers
         migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
-        manager = DatabaseMigrationManager(db_path, migrations_dir)
-        status = manager.get_migration_status()
+        arrow_manager = DatabaseMigrationManager(arrow_db_path, migrations_dir)
+        user_manager = DatabaseMigrationManager(user_db_path, migrations_dir)
+        
+        # Get status from both databases
+        arrow_status = arrow_manager.get_migration_status()
+        user_status = user_manager.get_migration_status()
+        
+        # Create combined status with database targeting
+        combined_status = {}
+        all_migrations = set()
+        
+        # Collect all migration versions
+        if arrow_status:
+            all_migrations.update(arrow_status.keys())
+        if user_status:
+            all_migrations.update(user_status.keys())
+        
+        for migration_version in sorted(all_migrations):
+            # Determine target database
+            target_db = migration_targets.get(migration_version, 'user')  # Default to user for new migrations
+            
+            # Get migration info from appropriate manager
+            if target_db == 'arrow':
+                migration_info = arrow_status.get(migration_version, {
+                    'description': f'Migration {migration_version}',
+                    'applied': False,
+                    'applied_at': None
+                })
+                status_in_arrow = migration_info.get('applied', False)
+                status_in_user = None  # Not applicable
+            else:
+                migration_info = user_status.get(migration_version, {
+                    'description': f'Migration {migration_version}',
+                    'applied': False,
+                    'applied_at': None
+                })
+                status_in_user = migration_info.get('applied', False)
+                status_in_arrow = None  # Not applicable
+            
+            combined_status[migration_version] = {
+                'description': migration_info.get('description', f'Migration {migration_version}'),
+                'target_database': target_db,
+                'applied': migration_info.get('applied', False),
+                'applied_at': migration_info.get('applied_at'),
+                'status_in_arrow_db': status_in_arrow,
+                'status_in_user_db': status_in_user,
+                'arrow_db_path': arrow_db_path if target_db == 'arrow' else None,
+                'user_db_path': user_db_path if target_db == 'user' else None
+            }
         
         # Ensure all paths are strings for JSON serialization
         def convert_paths_to_strings(obj):
@@ -8819,11 +8894,33 @@ def get_migration_status(current_user):
                 return obj
         
         # Clean the status to ensure JSON serialization
-        clean_status = convert_paths_to_strings(status)
+        clean_status = convert_paths_to_strings(combined_status)
         
-        return jsonify(clean_status), 200
+        # Add summary information
+        total_migrations = len(clean_status)
+        applied_migrations = len([m for m in clean_status.values() if m['applied']])
+        pending_migrations = total_migrations - applied_migrations
+        arrow_db_migrations = len([m for m in clean_status.values() if m['target_database'] == 'arrow'])
+        user_db_migrations = len([m for m in clean_status.values() if m['target_database'] == 'user'])
+        
+        result = {
+            'migrations': clean_status,
+            'summary': {
+                'total_migrations': total_migrations,
+                'applied_migrations': applied_migrations,
+                'pending_migrations': pending_migrations,
+                'arrow_db_migrations': arrow_db_migrations,
+                'user_db_migrations': user_db_migrations,
+                'arrow_db_path': arrow_db_path,
+                'user_db_path': user_db_path
+            }
+        }
+        
+        return jsonify(result), 200
     except Exception as e:
         print(f"Error getting migration status: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Failed to get migration status'}), 500
 
 @app.route('/api/admin/migrations/run', methods=['POST'])

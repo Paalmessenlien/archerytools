@@ -509,17 +509,77 @@ ensure_unified_databases() {
     run_database_migrations
 }
 
+# Function to run database consolidation migration
+run_database_consolidation() {
+    print_message "$BLUE" "🎯 Running database consolidation migration..."
+    
+    local arrow_db_path="$SCRIPT_DIR/databases/arrow_database.db"
+    local user_db_path="$SCRIPT_DIR/databases/user_data.db"
+    
+    # Check if consolidation is needed
+    if [[ ! -f "$user_db_path" ]]; then
+        print_message "$GREEN" "✅ No user database found - consolidation not needed"
+        return 0
+    fi
+    
+    # Check if consolidation already completed by looking for user tables in arrow database
+    if sqlite3 "$arrow_db_path" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+        print_message "$GREEN" "✅ Database consolidation already completed (users table exists in arrow database)"
+        return 0
+    fi
+    
+    print_message "$YELLOW" "🔄 Running database consolidation: User DB → Arrow DB"
+    print_message "$BLUE" "   Source: $user_db_path"
+    print_message "$BLUE" "   Target: $arrow_db_path"
+    
+    # Run consolidation migration
+    cd arrow_scraper
+    if python3 migrations/023_consolidate_user_database.py "$arrow_db_path"; then
+        print_message "$GREEN" "✅ Database consolidation completed successfully!"
+        
+        # Create backup of old user database
+        local backup_name="user_data_pre_consolidation_$(date +%Y%m%d_%H%M%S).db"
+        cp "$user_db_path" "$SCRIPT_DIR/databases/$backup_name"
+        print_message "$GREEN" "💾 User database backup created: $backup_name"
+        
+        # Optional: Remove old user database (commented out for safety)
+        # rm "$user_db_path"
+        # print_message "$GREEN" "🗑️  Original user database removed"
+        
+        cd "$SCRIPT_DIR"
+        return 0
+    else
+        print_message "$RED" "❌ Database consolidation failed!"
+        cd "$SCRIPT_DIR"
+        return 1
+    fi
+}
+
 # Function to run database migrations
 run_database_migrations() {
     print_message "$BLUE" "🔄 Running comprehensive database migrations..."
     
-    # Use the comprehensive migration runner
+    # Step 1: Run database consolidation first
+    if ! run_database_consolidation; then
+        print_message "$RED" "❌ Database consolidation failed, stopping migration process"
+        return 1
+    fi
+    
+    # Step 2: Use the comprehensive migration runner
     if [[ -f "$SCRIPT_DIR/comprehensive-migration-runner.sh" ]]; then
         print_message "$BLUE" "🎯 Using comprehensive migration runner..."
         
         # Set environment variables for migration
         export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
-        export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        
+        # After consolidation, both database paths point to unified arrow database
+        if sqlite3 "$SCRIPT_DIR/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+            print_message "$BLUE" "   🎯 Using unified database (post-consolidation)"
+            export USER_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+        else
+            print_message "$BLUE" "   🔄 Using separate user database (pre-consolidation)"
+            export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        fi
         
         # Determine environment for migration
         local migration_environment="development"
@@ -559,7 +619,15 @@ run_database_migrations() {
         
         # Set environment variables for migration
         export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
-        export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        
+        # After consolidation, both database paths point to unified arrow database
+        if sqlite3 "$SCRIPT_DIR/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+            print_message "$BLUE" "   🎯 Using unified database (post-consolidation)"
+            export USER_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+        else
+            print_message "$BLUE" "   🔄 Using separate user database (pre-consolidation)"
+            export USER_DATABASE_PATH="$SCRIPT_DIR/databases/user_data.db"
+        fi
         
         # Try to run migrations with Python
         if command -v python3 &> /dev/null; then
@@ -665,9 +733,32 @@ run_spine_data_import() {
     fi
 }
 
+# Function to set Docker environment variables for unified database
+setup_docker_database_environment() {
+    print_message "$BLUE" "🔧 Setting up Docker database environment..."
+    
+    # Check if consolidation has been completed
+    if sqlite3 "$SCRIPT_DIR/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+        print_message "$GREEN" "🎯 Database consolidation detected - using unified database"
+        # Both database paths point to the unified arrow database
+        export ARROW_DATABASE_PATH="/app/databases/arrow_database.db"
+        export USER_DATABASE_PATH="/app/databases/arrow_database.db"
+    else
+        print_message "$BLUE" "🔄 Using separate databases (pre-consolidation)"
+        # Use separate database paths
+        export ARROW_DATABASE_PATH="/app/databases/arrow_database.db"
+        export USER_DATABASE_PATH="/app/databases/user_data.db"
+    fi
+    
+    print_message "$GREEN" "✅ Docker database environment configured"
+}
+
 # Function to start the services
 start_services() {
     print_message "$BLUE" "🚀 Starting ArrowTuner services..."
+    
+    # Setup database environment variables for Docker
+    setup_docker_database_environment
     
     # Try to build first, but handle network issues gracefully
     print_message "$YELLOW" "📦 Building services (this may take a moment)..."

@@ -39,6 +39,12 @@ class DatabaseHealthReport:
     query_performance: Dict[str, float]
     storage_analysis: Dict[str, Any]
     last_maintenance: Optional[str]
+    # Unified database architecture information
+    is_unified_database: bool
+    database_architecture: str  # "unified", "separate", "unknown"
+    user_table_count: int
+    arrow_table_count: int
+    consolidation_status: str  # "completed", "pending", "not_applicable"
 
 class DatabaseHealthChecker:
     """Comprehensive database health analysis and maintenance"""
@@ -46,6 +52,7 @@ class DatabaseHealthChecker:
     def __init__(self, database_path: str = None):
         self.database_path = database_path or self._resolve_database_path()
         self.logger = logging.getLogger(__name__)
+        self.is_unified_database = self._check_unified_database()
         
     def _resolve_database_path(self) -> str:
         """Resolve database path with fallback options"""
@@ -79,6 +86,106 @@ class DatabaseHealthChecker:
         # Default fallback
         return './arrow_database.db'
     
+    def _check_unified_database(self) -> bool:
+        """Check if this database contains both arrow and user data (unified architecture)"""
+        try:
+            if not Path(self.database_path).exists():
+                return False
+                
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            
+            # Check for user tables that indicate unified architecture
+            cursor.execute("""
+                SELECT COUNT(*) FROM sqlite_master 
+                WHERE type='table' AND name IN ('users', 'bow_setups', 'guide_sessions')
+            """)
+            user_table_count = cursor.fetchone()[0]
+            
+            # Check for arrow tables
+            cursor.execute("""
+                SELECT COUNT(*) FROM sqlite_master 
+                WHERE type='table' AND name IN ('arrows', 'spine_specifications', 'manufacturers')
+            """)
+            arrow_table_count = cursor.fetchone()[0]
+            
+            conn.close()
+            
+            # If we have both user and arrow tables, it's unified
+            return user_table_count >= 2 and arrow_table_count >= 2
+            
+        except Exception as e:
+            self.logger.warning(f"Could not determine database architecture: {e}")
+            return False
+    
+    def _get_database_architecture_info(self) -> Dict[str, Any]:
+        """Get detailed database architecture information"""
+        try:
+            if not Path(self.database_path).exists():
+                return {
+                    'is_unified_database': False,
+                    'database_architecture': 'unknown',
+                    'user_table_count': 0,
+                    'arrow_table_count': 0,
+                    'consolidation_status': 'not_applicable'
+                }
+                
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            
+            # Check for user tables
+            cursor.execute("""
+                SELECT COUNT(*) FROM sqlite_master 
+                WHERE type='table' AND name IN ('users', 'bow_setups', 'guide_sessions', 
+                'setup_arrows', 'tuning_history', 'bow_equipment', 'backup_metadata')
+            """)
+            user_table_count = cursor.fetchone()[0]
+            
+            # Check for arrow tables
+            cursor.execute("""
+                SELECT COUNT(*) FROM sqlite_master 
+                WHERE type='table' AND name IN ('arrows', 'spine_specifications', 'manufacturers',
+                'equipment_field_standards', 'manufacturer_equipment_categories')
+            """)
+            arrow_table_count = cursor.fetchone()[0]
+            
+            conn.close()
+            
+            # Determine architecture type
+            has_user_tables = user_table_count >= 3
+            has_arrow_tables = arrow_table_count >= 3
+            
+            if has_user_tables and has_arrow_tables:
+                architecture = 'unified'
+                consolidation_status = 'completed'
+            elif has_arrow_tables and not has_user_tables:
+                architecture = 'separate'
+                consolidation_status = 'pending'
+            elif has_user_tables and not has_arrow_tables:
+                architecture = 'user_only'
+                consolidation_status = 'not_applicable'
+            else:
+                architecture = 'unknown'
+                consolidation_status = 'not_applicable'
+            
+            return {
+                'is_unified_database': architecture == 'unified',
+                'database_architecture': architecture,
+                'user_table_count': user_table_count,
+                'arrow_table_count': arrow_table_count,
+                'consolidation_status': consolidation_status
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Could not analyze database architecture: {e}")
+            return {
+                'is_unified_database': False,
+                'database_architecture': 'unknown',
+                'user_table_count': 0,
+                'arrow_table_count': 0,
+                'consolidation_status': 'error'
+            }
+    
     def run_comprehensive_health_check(self) -> DatabaseHealthReport:
         """Run complete database health analysis"""
         try:
@@ -96,7 +203,12 @@ class DatabaseHealthChecker:
                     table_stats=[],
                     query_performance={},
                     storage_analysis={},
-                    last_maintenance=None
+                    last_maintenance=None,
+                    is_unified_database=False,
+                    database_architecture='unknown',
+                    user_table_count=0,
+                    arrow_table_count=0,
+                    consolidation_status='not_applicable'
                 )
             
             conn = sqlite3.connect(self.database_path)
@@ -123,6 +235,9 @@ class DatabaseHealthChecker:
             total_tables = len(table_stats)
             total_indexes = sum(stat.index_count for stat in table_stats)
             
+            # Get architecture information
+            arch_info = self._get_database_architecture_info()
+            
             conn.close()
             
             report = DatabaseHealthReport(
@@ -136,7 +251,12 @@ class DatabaseHealthChecker:
                 table_stats=table_stats,
                 query_performance=query_performance,
                 storage_analysis=storage_analysis,
-                last_maintenance=self._get_last_maintenance_time()
+                last_maintenance=self._get_last_maintenance_time(),
+                is_unified_database=arch_info['is_unified_database'],
+                database_architecture=arch_info['database_architecture'],
+                user_table_count=arch_info['user_table_count'],
+                arrow_table_count=arch_info['arrow_table_count'],
+                consolidation_status=arch_info['consolidation_status']
             )
             
             print(f"✅ Health check completed - Score: {performance_score}/100")
@@ -155,7 +275,12 @@ class DatabaseHealthChecker:
                 table_stats=[],
                 query_performance={},
                 storage_analysis={},
-                last_maintenance=None
+                last_maintenance=None,
+                is_unified_database=False,
+                database_architecture='error',
+                user_table_count=0,
+                arrow_table_count=0,
+                consolidation_status='error'
             )
     
     def _check_integrity(self, conn: sqlite3.Connection) -> str:
@@ -457,18 +582,26 @@ class DatabaseHealthChecker:
         return results
     
     def verify_schema_integrity(self) -> Dict[str, Any]:
-        """Verify database schema matches expected structure"""
+        """Verify database schema matches expected structure for unified or separate databases"""
         verification_results = {
             'schema_valid': True,
             'missing_tables': [],
             'missing_columns': [],
             'extra_tables': [],
             'schema_version': None,
-            'recommendations': []
+            'recommendations': [],
+            'architecture_type': 'unknown',
+            'unified_schema_valid': False,
+            'separate_schema_valid': False
         }
         
-        # Expected schema definition - Updated August 2025 to match current production schema
-        expected_schema = {
+        # Get architecture information
+        arch_info = self._get_database_architecture_info()
+        verification_results['architecture_type'] = arch_info['database_architecture']
+        
+        # Expected schema definitions for different architectures
+        # Arrow database tables (always expected)
+        arrow_schema = {
             'arrows': [
                 'id', 'manufacturer', 'model_name', 'material', 'carbon_content',
                 'arrow_type', 'description', 'image_url', 'source_url', 'scraped_at', 
@@ -479,8 +612,59 @@ class DatabaseHealthChecker:
                 'inner_diameter', 'diameter_category', 'length_options', 
                 'wall_thickness', 'insert_weight_range', 'nock_size', 'notes',
                 'straightness_tolerance', 'weight_tolerance', 'created_at'
+            ],
+            'manufacturers': [
+                'id', 'name', 'website', 'country', 'established', 'arrow_types',
+                'contact_info', 'created_at', 'updated_at'
+            ],
+            'equipment_field_standards': [
+                'id', 'category_name', 'field_name', 'field_type', 'label', 'unit',
+                'required', 'validation_rules', 'field_options', 'default_value',
+                'help_text', 'display_order', 'created_at', 'updated_at'
             ]
         }
+        
+        # User database tables (expected in unified architecture)
+        user_schema = {
+            'users': [
+                'id', 'google_id', 'email', 'name', 'picture', 'is_admin',
+                'created_at', 'updated_at', 'last_login'
+            ],
+            'bow_setups': [
+                'id', 'user_id', 'setup_name', 'bow_type', 'bow_make', 'bow_model',
+                'brace_height', 'draw_weight', 'arrow_length', 'point_weight',
+                'created_at', 'updated_at'
+            ],
+            'setup_arrows': [
+                'id', 'setup_id', 'arrow_id', 'arrow_length', 'point_weight',
+                'notes', 'created_at'
+            ],
+            'guide_sessions': [
+                'id', 'user_id', 'setup_id', 'guide_type', 'status', 'current_step',
+                'session_data', 'created_at', 'updated_at', 'completed_at'
+            ],
+            'bow_equipment': [
+                'id', 'setup_id', 'equipment_id', 'category', 'manufacturer',
+                'model', 'specifications', 'installation_notes', 'installed_at',
+                'created_at', 'updated_at'
+            ],
+            'backup_metadata': [
+                'id', 'backup_name', 'backup_type', 'file_path', 'cdn_url',
+                'file_size', 'created_at', 'created_by', 'includes'
+            ]
+        }
+        
+        # Determine expected schema based on architecture
+        if arch_info['database_architecture'] == 'unified':
+            expected_schema = {**arrow_schema, **user_schema}
+        elif arch_info['database_architecture'] == 'separate':
+            expected_schema = arrow_schema
+        else:
+            # For unknown architecture, check for minimal arrow schema
+            expected_schema = {
+                'arrows': arrow_schema['arrows'],
+                'spine_specifications': arrow_schema['spine_specifications']
+            }
         
         try:
             conn = sqlite3.connect(self.database_path)
@@ -508,33 +692,82 @@ class DatabaseHealthChecker:
                         f"{table_name}.{col}" for col in missing_cols
                     ])
             
-            # Determine if schema is valid
+            # Determine if schema is valid based on architecture
             verification_results['schema_valid'] = (
                 not verification_results['missing_tables'] and
                 not verification_results['missing_columns']
             )
             
-            # Generate recommendations
+            # Additional architecture-specific validation
+            if arch_info['database_architecture'] == 'unified':
+                # Check if unified schema is complete
+                arrow_tables_present = all(table in actual_tables for table in arrow_schema.keys())
+                user_tables_present = all(table in actual_tables for table in user_schema.keys())
+                verification_results['unified_schema_valid'] = arrow_tables_present and user_tables_present
+                
+                if not verification_results['unified_schema_valid']:
+                    if not arrow_tables_present:
+                        verification_results['recommendations'].append(
+                            "⚠️ Unified database missing core arrow tables - may need migration"
+                        )
+                    if not user_tables_present:
+                        verification_results['recommendations'].append(
+                            "⚠️ Unified database missing user tables - consolidation may be incomplete"
+                        )
+            
+            elif arch_info['database_architecture'] == 'separate':
+                # For separate databases, only check arrow tables
+                arrow_tables_present = all(table in actual_tables for table in arrow_schema.keys())
+                verification_results['separate_schema_valid'] = arrow_tables_present
+                
+                # Check if user tables are present (indicating potential for unification)
+                user_tables_present = any(table in actual_tables for table in user_schema.keys())
+                if user_tables_present:
+                    verification_results['recommendations'].append(
+                        "💡 User tables detected in arrow database - consider unified architecture"
+                    )
+            
+            # Generate general recommendations
             if verification_results['missing_tables']:
                 verification_results['recommendations'].append(
-                    f"Create missing tables: {', '.join(verification_results['missing_tables'])}"
+                    f"🏗️ Create missing tables: {', '.join(verification_results['missing_tables'])}"
                 )
             
             if verification_results['missing_columns']:
                 verification_results['recommendations'].append(
-                    f"Add missing columns: {', '.join(verification_results['missing_columns'])}"
+                    f"🔧 Add missing columns: {', '.join(verification_results['missing_columns'])}"
                 )
             
             if verification_results['extra_tables']:
+                # Filter out common extra tables that are expected
+                extra_filtered = [t for t in verification_results['extra_tables'] 
+                                if t not in ['sqlite_sequence', 'sqlite_stat1', 'sqlite_stat4']]
+                if extra_filtered:
+                    verification_results['recommendations'].append(
+                        f"📋 Review extra tables: {', '.join(extra_filtered)}"
+                    )
+            
+            # Architecture-specific recommendations
+            if arch_info['database_architecture'] == 'unified' and verification_results['schema_valid']:
                 verification_results['recommendations'].append(
-                    f"Review extra tables: {', '.join(verification_results['extra_tables'])}"
+                    "✅ Unified database schema is complete and valid"
+                )
+            elif arch_info['database_architecture'] == 'separate' and verification_results['schema_valid']:
+                verification_results['recommendations'].append(
+                    "✅ Separate database schema is valid - consider migration to unified architecture"
+                )
+            elif arch_info['database_architecture'] == 'unknown':
+                verification_results['recommendations'].append(
+                    "❓ Database architecture unclear - manual review recommended"
                 )
             
             conn.close()
             
         except Exception as e:
             verification_results['schema_valid'] = False
-            verification_results['recommendations'].append(f"Schema verification failed: {str(e)}")
+            verification_results['unified_schema_valid'] = False
+            verification_results['separate_schema_valid'] = False
+            verification_results['recommendations'].append(f"❌ Schema verification failed: {str(e)}")
         
         return verification_results
 
@@ -567,7 +800,13 @@ def run_health_check(database_path: str = None) -> Dict[str, Any]:
         ],
         'query_performance': report.query_performance,
         'storage_analysis': report.storage_analysis,
-        'last_maintenance': report.last_maintenance
+        'last_maintenance': report.last_maintenance,
+        # Unified database architecture information
+        'is_unified_database': report.is_unified_database,
+        'database_architecture': report.database_architecture,
+        'user_table_count': report.user_table_count,
+        'arrow_table_count': report.arrow_table_count,
+        'consolidation_status': report.consolidation_status
     }
 
 # For testing

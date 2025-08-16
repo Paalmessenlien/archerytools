@@ -750,19 +750,42 @@
                 <i class="fas fa-info-circle mr-2 text-blue-600 dark:text-blue-400"></i>
                 Database Migration System
               </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Database Types:</h5>
+                  <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Architecture:</h5>
+                  <div class="space-y-1">
+                    <div v-if="databaseHealth?.database_architecture === 'unified'" class="flex items-center space-x-2">
+                      <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full text-xs font-medium">
+                        <i class="fas fa-check mr-1"></i>Unified
+                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">Single database with all data</span>
+                    </div>
+                    <div v-else-if="databaseHealth?.database_architecture === 'separate'" class="flex items-center space-x-2">
+                      <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
+                        <i class="fas fa-database mr-1"></i>Separate
+                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">Dual database architecture</span>
+                    </div>
+                    <div v-else class="flex items-center space-x-2">
+                      <span class="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 rounded-full text-xs font-medium">
+                        <i class="fas fa-question mr-1"></i>Unknown
+                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">Architecture not detected</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Database Content:</h5>
                   <div class="space-y-1">
                     <div class="flex items-center space-x-2">
                       <span class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
-                        Arrow DB
+                        Arrow {{ databaseHealth?.arrow_table_count || 0 }}
                       </span>
                       <span class="text-gray-600 dark:text-gray-400">Arrow specifications & spine data</span>
                     </div>
                     <div class="flex items-center space-x-2">
                       <span class="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-full text-xs font-medium">
-                        User DB
+                        User {{ databaseHealth?.user_table_count || 0 }}
                       </span>
                       <span class="text-gray-600 dark:text-gray-400">User accounts & bow setups</span>
                     </div>
@@ -781,6 +804,36 @@
                     </div>
                   </div>
                 </div>
+              </div>
+              
+              <!-- Consolidation Status -->
+              <div v-if="databaseHealth?.consolidation_status" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-merge text-indigo-600 dark:text-indigo-400"></i>
+                  <span class="font-medium text-gray-800 dark:text-gray-200">Consolidation Status:</span>
+                  <span v-if="databaseHealth.consolidation_status === 'completed'" 
+                        class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full text-xs font-medium">
+                    <i class="fas fa-check mr-1"></i>Completed
+                  </span>
+                  <span v-else-if="databaseHealth.consolidation_status === 'pending'" 
+                        class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
+                    <i class="fas fa-clock mr-1"></i>Pending
+                  </span>
+                  <span v-else-if="databaseHealth.consolidation_status === 'not_applicable'" 
+                        class="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 rounded-full text-xs font-medium">
+                    <i class="fas fa-minus mr-1"></i>Not Applicable
+                  </span>
+                  <span v-else 
+                        class="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-xs font-medium">
+                    <i class="fas fa-exclamation mr-1"></i>{{ databaseHealth.consolidation_status }}
+                  </span>
+                </div>
+                <p v-if="databaseHealth.consolidation_status === 'completed'" class="text-xs text-gray-600 dark:text-gray-400 mt-1 ml-6">
+                  Database consolidation completed - all data unified in single database
+                </p>
+                <p v-else-if="databaseHealth.consolidation_status === 'pending'" class="text-xs text-gray-600 dark:text-gray-400 mt-1 ml-6">
+                  User database can be consolidated into arrow database for unified architecture
+                </p>
               </div>
             </div>
 
@@ -1060,7 +1113,7 @@
                 <div class="flex items-center justify-between mb-3">
                   <div>
                     <h3 class="font-medium text-gray-900 dark:text-gray-100">Schema Verification</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Verify database schema integrity</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Verify database schema integrity for unified architecture</p>
                   </div>
                   <CustomButton
                     @click="verifySchema"
@@ -1071,6 +1124,113 @@
                     <i class="fas fa-check-double mr-2"></i>
                     {{ isVerifying ? 'Checking...' : 'Verify' }}
                   </CustomButton>
+                </div>
+                
+                <!-- Schema Verification Results -->
+                <div v-if="schemaVerification" class="mt-4 space-y-3">
+                  <!-- Architecture Type and Validity -->
+                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-database mr-2"></i>Database Architecture
+                      </span>
+                      <span class="px-2 py-1 rounded-full text-xs font-medium"
+                            :class="{
+                              'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': schemaVerification.architecture_type === 'unified',
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': schemaVerification.architecture_type === 'separate',
+                              'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300': schemaVerification.architecture_type === 'unknown'
+                            }">
+                        {{ schemaVerification.architecture_type === 'unified' ? 'Unified Database' : 
+                           schemaVerification.architecture_type === 'separate' ? 'Separate Databases' :
+                           'Unknown Architecture' }}
+                      </span>
+                    </div>
+                    
+                    <!-- Schema Validity Indicators -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div class="flex items-center space-x-2">
+                        <i class="fas fa-shield-alt"
+                           :class="{
+                             'text-green-600': schemaVerification.schema_valid,
+                             'text-red-600': !schemaVerification.schema_valid
+                           }"></i>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          General Schema: 
+                          <span :class="schemaVerification.schema_valid ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                            {{ schemaVerification.schema_valid ? 'Valid' : 'Invalid' }}
+                          </span>
+                        </span>
+                      </div>
+                      
+                      <div v-if="schemaVerification.architecture_type === 'unified'" class="flex items-center space-x-2">
+                        <i class="fas fa-layer-group"
+                           :class="{
+                             'text-green-600': schemaVerification.unified_schema_valid,
+                             'text-orange-600': !schemaVerification.unified_schema_valid
+                           }"></i>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          Unified Schema: 
+                          <span :class="schemaVerification.unified_schema_valid ? 'text-green-600' : 'text-orange-600'" class="font-medium">
+                            {{ schemaVerification.unified_schema_valid ? 'Complete' : 'Incomplete' }}
+                          </span>
+                        </span>
+                      </div>
+                      
+                      <div v-if="schemaVerification.architecture_type === 'separate'" class="flex items-center space-x-2">
+                        <i class="fas fa-layer-group"
+                           :class="{
+                             'text-green-600': schemaVerification.separate_schema_valid,
+                             'text-orange-600': !schemaVerification.separate_schema_valid
+                           }"></i>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                          Arrow Schema: 
+                          <span :class="schemaVerification.separate_schema_valid ? 'text-green-600' : 'text-orange-600'" class="font-medium">
+                            {{ schemaVerification.separate_schema_valid ? 'Valid' : 'Invalid' }}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Issues Summary -->
+                  <div v-if="schemaVerification.missing_tables?.length || schemaVerification.missing_columns?.length" 
+                       class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                    <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                      <i class="fas fa-exclamation-triangle mr-2"></i>Schema Issues Found
+                    </h4>
+                    
+                    <div v-if="schemaVerification.missing_tables?.length" class="mb-2">
+                      <span class="text-xs font-medium text-orange-700 dark:text-orange-300">Missing Tables:</span>
+                      <ul class="text-xs text-orange-600 dark:text-orange-400 ml-4 mt-1">
+                        <li v-for="table in schemaVerification.missing_tables" :key="table" class="list-disc">
+                          {{ table }}
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div v-if="schemaVerification.missing_columns?.length">
+                      <span class="text-xs font-medium text-orange-700 dark:text-orange-300">Missing Columns:</span>
+                      <ul class="text-xs text-orange-600 dark:text-orange-400 ml-4 mt-1">
+                        <li v-for="column in schemaVerification.missing_columns" :key="column" class="list-disc">
+                          {{ column }}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <!-- Recommendations -->
+                  <div v-if="schemaVerification.recommendations?.length" class="space-y-1">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <i class="fas fa-lightbulb mr-2"></i>Recommendations
+                    </h4>
+                    <ul class="space-y-1">
+                      <li v-for="(rec, index) in schemaVerification.recommendations" :key="index" 
+                          class="text-xs text-gray-600 dark:text-gray-400 flex items-start space-x-2">
+                        <span class="text-gray-400 mt-0.5">•</span>
+                        <span>{{ rec }}</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2076,6 +2236,7 @@ const databaseHealth = ref(null)
 const isOptimizing = ref(false)
 const isVacuuming = ref(false)
 const isVerifying = ref(false)
+const schemaVerification = ref(null)
 const lastMaintenanceResults = ref([])
 
 // Notification state
@@ -2985,22 +3146,51 @@ const verifySchema = async () => {
   try {
     const data = await api.get('/admin/database/schema-verify')
     
+    // Store complete verification results for display
+    schemaVerification.value = data
+    
+    // Enhanced result message based on architecture type
+    let message = 'Schema verification completed'
+    if (data.architecture_type === 'unified') {
+      if (data.unified_schema_valid) {
+        message = 'Unified database schema is complete and valid'
+      } else {
+        message = `Unified schema incomplete - ${(data.missing_tables?.length || 0) + (data.missing_columns?.length || 0)} issues found`
+      }
+    } else if (data.architecture_type === 'separate') {
+      if (data.separate_schema_valid) {
+        message = 'Separate database schema is valid'
+      } else {
+        message = `Separate schema issues - ${(data.missing_tables?.length || 0) + (data.missing_columns?.length || 0)} problems found`
+      }
+    } else {
+      message = `Schema verification completed - architecture: ${data.architecture_type || 'unknown'}`
+    }
+    
     const result = {
       operation: 'Schema Verification',
-      message: data.schema_valid ? 'Schema is valid' : `Issues found: ${data.missing_tables.length + data.missing_columns.length}`,
+      message: message,
       success: data.schema_valid,
       timestamp: new Date().toISOString()
     }
     lastMaintenanceResults.value.unshift(result)
     
+    // Enhanced notifications
     if (data.schema_valid) {
-      showNotification('Database schema is valid', 'success')
+      if (data.architecture_type === 'unified' && data.unified_schema_valid) {
+        showNotification('✅ Unified database schema is complete and valid', 'success')
+      } else {
+        showNotification('✅ Database schema is valid', 'success')
+      }
     } else {
-      const issues = [...data.missing_tables, ...data.missing_columns]
-      showNotification(`Schema issues found: ${issues.join(', ')}`, 'warning')
+      const totalIssues = (data.missing_tables?.length || 0) + (data.missing_columns?.length || 0)
+      showNotification(`⚠️ Schema issues found: ${totalIssues} problems detected`, 'warning')
     }
   } catch (error) {
     console.error('Error verifying schema:', error)
+    
+    // Clear verification results on error
+    schemaVerification.value = null
     
     const result = {
       operation: 'Schema Verification',
@@ -3010,7 +3200,7 @@ const verifySchema = async () => {
     }
     lastMaintenanceResults.value.unshift(result)
     
-    showNotification('Failed to verify schema', 'error')
+    showNotification('❌ Failed to verify schema', 'error')
   } finally {
     isVerifying.value = false
   }
