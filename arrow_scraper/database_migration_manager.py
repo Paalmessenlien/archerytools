@@ -67,6 +67,9 @@ class DatabaseMigrationManager:
         self.database_path = self._resolve_database_path(database_path)
         self.migrations_dir = Path(migrations_dir)
         self.environment = self._detect_environment()
+        self.database_type = self._detect_database_type(self.database_path)
+        
+        self.logger.info(f"🎯 Database type detected: {self.database_type} (path: {self.database_path})")
         
         # Ensure migrations table exists
         self._ensure_migrations_table()
@@ -138,6 +141,21 @@ class DatabaseMigrationManager:
             return "production"
         else:
             return "development"
+    
+    def _detect_database_type(self, db_path: str) -> str:
+        """Detect whether this is an arrow or user database"""
+        db_path_lower = db_path.lower()
+        if 'user' in db_path_lower or 'user_data' in db_path_lower:
+            return 'user'
+        elif 'arrow' in db_path_lower or 'arrow_database' in db_path_lower:
+            return 'arrow'
+        else:
+            # Default based on filename
+            filename = Path(db_path).name.lower()
+            if 'user' in filename:
+                return 'user'
+            else:
+                return 'arrow'  # Default to arrow for backwards compatibility
     
     def _ensure_migrations_table(self):
         """Ensure the migrations tracking table exists"""
@@ -528,6 +546,12 @@ class DatabaseMigrationManager:
         pending = []
         for version, migration in all_migrations.items():
             if version not in applied_versions and migration.can_run_in_environment(self.environment):
+                # Filter by target database if specified
+                if hasattr(migration, 'target_database'):
+                    if migration.target_database != self.database_type:
+                        self.logger.debug(f"🚫 Skipping migration {version}: targets {migration.target_database}, current database is {self.database_type}")
+                        continue
+                
                 pending.append(migration)
         
         # Sort by dependencies and version
@@ -702,11 +726,13 @@ class DatabaseMigrationManager:
                 'description': migration.description or migration.__class__.__name__,
                 'dependencies': migration.dependencies,
                 'environments': migration.environments,
-                'can_run': migration.can_run_in_environment(self.environment)
+                'can_run': migration.can_run_in_environment(self.environment),
+                'target_database': getattr(migration, 'target_database', 'unknown')
             })
         
         return {
             "database_path": self.database_path,
+            "database_type": self.database_type,
             "environment": self.environment,
             "total_migrations": len(all_migrations),
             "applied_count": len(applied_migrations),
