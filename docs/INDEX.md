@@ -101,6 +101,33 @@ Intelligent manufacturer detection and linking system:
 - **Enhanced Autocomplete**: Intelligent suggestions with category-aware ranking
 - **Quality Improvement**: Standardizes manufacturer names for data consistency
 
+#### [Chronograph Data System Documentation](CHRONOGRAPH_DATA_SYSTEM.md) ⚡
+**NEW (August 2025)** - Comprehensive measured arrow speed integration:
+- **Database Schema**: Complete chronograph_data table with measurement tracking
+- **API Endpoints**: Full CRUD operations for chronograph data management
+- **Frontend Component**: ChronographDataEntry.vue for data collection and display
+- **Performance Integration**: Automatic integration with arrow performance calculations
+- **Data Priority**: Measured speeds prioritized over estimated calculations
+- **Real-time Updates**: Performance recalculation when measurements change
+
+#### [Enhanced Arrow Speed Calculations](ENHANCED_ARROW_SPEED_CALCULATIONS.md) ⚡
+**NEW (August 2025)** - Sophisticated arrow velocity estimation system:
+- **Calculation Hierarchy**: Chronograph data → Enhanced estimation → Basic fallback
+- **String Material Integration**: Speed modifiers for 6 string materials (Dacron to SK75)
+- **Bow Type Efficiency**: Compound (95%) to Traditional (70%) efficiency factors
+- **IBO-Based Calculations**: Enhanced formulas with weight/length adjustments
+- **Weight Adjustment**: Kinetic energy conservation for different arrow weights
+- **Confidence Scoring**: 50-100% confidence levels based on data quality
+
+#### [String Equipment Integration](STRING_EQUIPMENT_INTEGRATION.md) ⚡
+**NEW (August 2025)** - Complete string equipment management with speed integration:
+- **Enhanced Equipment Fields**: 7 string-specific fields including material and speed rating
+- **Speed Calculation Integration**: Automatic string material detection for calculations
+- **Material Speed Modifiers**: Dacron (-8%) to SK75 Dyneema (+4%) speed effects
+- **Equipment Form Enhancement**: Dynamic forms with string-specific validation
+- **Database Migration**: Migration 020 for enhanced string equipment fields
+- **Frontend Integration**: Automatic material detection in calculator and performance pages
+
 ---
 
 ## Quick Reference
@@ -167,6 +194,8 @@ curl https://yourdomain.com/api/health
 - **setup_arrows**: Arrow selections for each bow setup
 - **tuning_sessions**: Tuning session tracking
 - **guide_sessions**: Interactive guide progress
+- **chronograph_data**: Measured arrow speeds with environmental data (NEW August 2025)
+- **bow_equipment**: Equipment configurations with enhanced string fields (Enhanced August 2025)
 
 ---
 
@@ -211,6 +240,14 @@ curl https://yourdomain.com/api/health
 - ✅ **Calculator Spacing**: Systematic spacing optimization throughout calculator interface
 - ✅ **Mobile Navigation**: Enhanced bottom navigation and touch-friendly interactions
 - ✅ **Responsive Design**: Improved mobile/tablet experience across all components
+
+### New Calculation System (August 2025)
+- ✅ **Chronograph Data Integration**: Complete system for storing and utilizing measured arrow speeds
+- ✅ **Enhanced Speed Calculations**: Sophisticated 3-tier calculation hierarchy with data priority
+- ✅ **String Equipment Integration**: Automatic string material detection with speed modifiers
+- ✅ **Performance Integration**: Real-time arrow performance updates with measured data
+- ✅ **Database Migrations**: Migrations 019 & 020 for chronograph and string equipment enhancements
+- ✅ **Frontend Components**: ChronographDataEntry.vue with full measurement management
 
 ### Bug Fixes & Improvements
 - ✅ **UserDatabase Import Errors**: Fixed API endpoint import issues
