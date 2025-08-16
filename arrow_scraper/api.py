@@ -8815,25 +8815,48 @@ def get_migration_status(current_user):
             'spine_calc': 'arrow',  # Spine calculation system
         }
         
-        # Get both database paths
+        # Get database paths with unified architecture support
         arrow_db = get_database()
         user_db = get_user_database()
         
-        if not arrow_db or not user_db:
-            return jsonify({'error': 'Databases not available'}), 500
+        if not arrow_db:
+            return jsonify({'error': 'Arrow database not available'}), 500
         
         # Always convert Path objects to strings
         arrow_db_path = str(arrow_db.db_path) if hasattr(arrow_db, 'db_path') else 'arrow_database.db'
-        user_db_path = str(user_db.db_path) if hasattr(user_db, 'db_path') else 'user_data.db'
         
-        # Initialize migration managers
+        # Check if we have unified architecture (user_db might point to same file as arrow_db)
+        user_db_path = None
+        user_manager = None
+        user_status = {}
+        
+        if user_db:
+            user_db_path = str(user_db.db_path) if hasattr(user_db, 'db_path') else 'user_data.db'
+            
+            # Check if user database is separate from arrow database
+            if user_db_path != arrow_db_path and os.path.exists(user_db_path):
+                # Separate user database exists
+                migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+                user_manager = DatabaseMigrationManager(user_db_path, migrations_dir)
+                try:
+                    user_status = user_manager.get_migration_status() or {}
+                except Exception as e:
+                    print(f"Warning: Could not get user database migration status: {e}")
+                    user_status = {}
+            else:
+                # Unified architecture - user tables are in arrow database
+                user_db_path = arrow_db_path
+        
+        # Initialize arrow database migration manager
         migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations')
         arrow_manager = DatabaseMigrationManager(arrow_db_path, migrations_dir)
-        user_manager = DatabaseMigrationManager(user_db_path, migrations_dir)
         
-        # Get status from both databases
-        arrow_status = arrow_manager.get_migration_status()
-        user_status = user_manager.get_migration_status()
+        # Get status from arrow database (includes user tables in unified architecture)
+        try:
+            arrow_status = arrow_manager.get_migration_status() or {}
+        except Exception as e:
+            print(f"Error getting arrow database migration status: {e}")
+            arrow_status = {}
         
         # Create combined status with database targeting
         combined_status = {}
