@@ -6,12 +6,19 @@ Adds all missing columns identified in schema verification to ensure complete un
 
 import sqlite3
 import os
+import sys
 from pathlib import Path
 
-class Migration024:
+# Add parent directory to path to import BaseMigration
+sys.path.append(str(Path(__file__).parent.parent))
+from database_migration_manager import BaseMigration
+
+class Migration024(BaseMigration):
     def __init__(self):
+        super().__init__()
         self.version = "024"
         self.description = "Add Missing Schema Columns for Complete Unified Database"
+        self.environments = ['all']  # Can run in any environment
         
     def get_database_path(self):
         """Get the database path, prioritizing environment variables"""
@@ -34,9 +41,10 @@ class Migration024:
         
         raise FileNotFoundError("Database file not found in any expected location")
     
-    def up(self):
+    def up(self, db_path: str, environment: str) -> bool:
         """Apply the migration - add missing columns"""
-        db_path = self.get_database_path()
+        if not db_path:
+            db_path = self.get_database_path()
         
         try:
             conn = sqlite3.connect(db_path)
@@ -211,7 +219,7 @@ class Migration024:
             print(f"  ❌ Error fixing schema_migrations table: {e}")
             raise
     
-    def down(self):
+    def down(self, db_path: str, environment: str) -> bool:
         """Rollback the migration - remove added columns"""
         # Note: SQLite doesn't support DROP COLUMN, so rollback is not implemented
         # In practice, these columns are safe to keep
