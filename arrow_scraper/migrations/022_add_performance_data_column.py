@@ -27,7 +27,7 @@ class Migration022AddPerformanceDataColumn(BaseMigration):
         super().__init__()
         self.version = "022"
         self.description = "Add Performance Data Column - Clean up UI debug information"
-        self.dependencies = ["021"]  # Depends on performance calculation fix
+        self.dependencies = ["020"]  # Depends on equipment learning tables (user database)
         self.environments = ['all']  # Apply to all environments
         self.target_database = 'user'  # User database contains setup_arrows table
     

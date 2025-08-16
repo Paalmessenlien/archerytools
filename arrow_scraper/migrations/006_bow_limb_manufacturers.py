@@ -16,6 +16,7 @@ class Migration006BowLimbManufacturers(BaseMigration):
         self.description = "Integrate bow and limb manufacturers into unified manufacturer system"
         self.dependencies = ["005"]
         self.environments = ['all']
+        self.target_database = 'arrow'  # Works with manufacturers table in arrow database
     
     def up(self, db_path: str, environment: str) -> bool:
         """Add bow and limb manufacturers to unified manufacturer system"""
