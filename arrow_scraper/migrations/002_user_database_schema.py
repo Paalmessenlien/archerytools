@@ -21,6 +21,7 @@ class UserDatabaseSchemaMigration(BaseMigration):
         self.description = "Ensure user database tables exist with proper schema"
         self.dependencies = []
         self.environments = ['all']
+        self.target_database = 'user'  # This migration creates user database schema
     
     def up(self, db_path: str, environment: str) -> bool:
         """Apply the migration - ensure user database schema"""

@@ -16,6 +16,7 @@ class Migration005UnifiedManufacturers(BaseMigration):
         self.description = "Create unified manufacturer management system"
         self.dependencies = ["004"]
         self.environments = ['all']
+        self.target_database = 'arrow'  # This migration works with arrows and equipment tables
     
     def up(self, db_path: str, environment: str) -> bool:
         """Create unified manufacturer tables and migrate existing data"""

@@ -22,6 +22,7 @@ class SpineCalculatorTablesMigration(BaseMigration):
         self.description = "Create enhanced spine calculation tables and import spine data"
         self.dependencies = []
         self.environments = ['all']
+        self.target_database = 'arrow'  # Spine calculation tables belong with arrow data
     
     def up(self, db_path: str, environment: str) -> bool:
         """Apply the migration - create spine tables and import data"""

@@ -23,6 +23,7 @@ class JsonDataImportMigration(BaseMigration):
         self.description = "Import arrow data from JSON files in data/processed/ directory"
         self.dependencies = []  # Can run independently
         self.environments = ['all']
+        self.target_database = 'arrow'  # Imports arrow data into arrow database
     
     def up(self, db_path: str, environment: str) -> bool:
         """Apply the migration - import JSON data"""

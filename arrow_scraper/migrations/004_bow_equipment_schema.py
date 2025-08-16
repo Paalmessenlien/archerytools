@@ -16,6 +16,7 @@ class Migration004BowEquipmentSchema(BaseMigration):
         self.description = "Create bow equipment management schema"
         self.dependencies = ["003"]
         self.environments = ['all']
+        self.target_database = 'arrow'  # Equipment schema belongs in arrow database
     
     def up(self, db_path: str, environment: str) -> bool:
         """Create equipment management tables"""
