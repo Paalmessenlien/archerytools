@@ -61,11 +61,11 @@ class Migration024:
                 ('manufacturers', 'arrow_types', 'TEXT'),
                 ('manufacturers', 'website', 'TEXT'),
                 
-                # guide_sessions table columns
+                # guide_sessions table columns  
                 ('guide_sessions', 'session_data', 'TEXT'),
-                ('guide_sessions', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
+                ('guide_sessions', 'updated_at', 'TIMESTAMP'),
                 ('guide_sessions', 'setup_id', 'INTEGER'),
-                ('guide_sessions', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
+                ('guide_sessions', 'created_at', 'TIMESTAMP'),
                 
                 # bow_equipment table columns (in case they're missing)
                 ('bow_equipment', 'setup_id', 'INTEGER'),
@@ -73,18 +73,18 @@ class Migration024:
                 ('bow_equipment', 'manufacturer', 'TEXT'),
                 ('bow_equipment', 'category', 'TEXT'),
                 ('bow_equipment', 'model', 'TEXT'),
-                ('bow_equipment', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
+                ('bow_equipment', 'updated_at', 'TIMESTAMP'),
                 ('bow_equipment', 'specifications', 'TEXT'),
                 
                 # bow_setups table columns (in case they're missing)
                 ('bow_setups', 'bow_make', 'TEXT'),
                 ('bow_setups', 'setup_name', 'TEXT'),
-                ('bow_setups', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
+                ('bow_setups', 'updated_at', 'TIMESTAMP'),
                 ('bow_setups', 'brace_height', 'REAL'),
                 ('bow_setups', 'bow_model', 'TEXT'),
                 
                 # users table columns (in case they're missing)
-                ('users', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
+                ('users', 'updated_at', 'TIMESTAMP'),
                 ('users', 'last_login', 'TIMESTAMP'),
                 ('users', 'picture', 'TEXT'),
                 ('users', 'is_admin', 'BOOLEAN DEFAULT FALSE'),
@@ -152,7 +152,7 @@ class Migration024:
                 cursor.execute("""
                     CREATE TABLE schema_migrations (
                         version TEXT PRIMARY KEY,
-                        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        applied_at TIMESTAMP,
                         migration_name TEXT,
                         success BOOLEAN DEFAULT TRUE
                     )
@@ -180,7 +180,7 @@ class Migration024:
                 cursor.execute("""
                     CREATE TABLE schema_migrations (
                         version TEXT PRIMARY KEY,
-                        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        applied_at TIMESTAMP,
                         migration_name TEXT,
                         success BOOLEAN DEFAULT TRUE
                     )
