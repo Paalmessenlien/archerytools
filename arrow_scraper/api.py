@@ -6464,12 +6464,17 @@ def create_backup(current_user):
                 print(f"❌ Both CDN methods failed: {fallback_error}")
                 result = {'success': False}
         
+        # Make CDN upload optional - backup can succeed without CDN
         if not result or not result.get('success'):
-            return jsonify({'error': 'Failed to upload backup to CDN'}), 500
-        
-        # Ensure result has required keys
-        if 'cdn_url' not in result:
-            return jsonify({'error': 'Backup creation failed: CDN URL not available'}), 500
+            print("⚠️  CDN upload failed, but backup file created successfully locally")
+            result = {
+                'success': True,
+                'url': None,
+                'cdn_url': None,
+                'cdn_type': 'local',
+                'filename': backup_name,
+                'local_only': True
+            }
         
         # Get backup file size
         backup_size = os.path.getsize(local_backup_path) / (1024 * 1024)  # MB

@@ -25,6 +25,18 @@ services:
       - FORCE_DATABASE_IMPORT=true  # Enable database import in dev
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db  # Use unified database path
       - USER_DATABASE_PATH=/app/databases/user_data.db       # Use unified user database path
+      # CDN Configuration for backup system
+      - CDN_TYPE=${CDN_TYPE:-bunnycdn}
+      - BUNNY_STORAGE_ZONE=${BUNNY_STORAGE_ZONE:-not-set}
+      - BUNNY_ACCESS_KEY=${BUNNY_ACCESS_KEY:-not-set}
+      - BUNNY_HOSTNAME=${BUNNY_HOSTNAME:-not-set}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-not-set}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-not-set}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-not-set}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-not-set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-not-set}
+      - AWS_REGION=${AWS_REGION:-not-set}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-not-set}
     volumes:
       - ./arrow_scraper:/app:rw  # Mount source code for hot reload
       - ./arrow_scraper/databases:/app/databases_source:ro  # Source databases for initialization
