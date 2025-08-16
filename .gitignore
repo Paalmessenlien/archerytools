@@ -40,6 +40,9 @@ Thumbs.db
 *.swo
 *~
 
+# Claude Code settings (local configuration)
+.claude/settings.local.json
+
 # Backup files
 *.bak
 *.backup
