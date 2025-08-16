@@ -37,12 +37,15 @@ This guide provides a comprehensive overview of the Archery Tools platform archi
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Dual Database System                    │
-│  ┌─────────────────┐                   ┌─────────────────┐ │
-│  │  Arrow Database │                   │  User Database  │ │
-│  │   (Read-Only    │                   │ (Read/Write     │ │
-│  │   Production)   │                   │  User Data)     │ │
-│  └─────────────────┘                   └─────────────────┘ │
+│                  Unified Database System (2025)           │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │              Single Database (arrow_database.db)        │ │
+│  │  ┌─────────────────┐     ┌─────────────────────────────┐ │ │
+│  │  │  Arrow Data     │     │        User Data            │ │ │
+│  │  │  (Arrows, Spine │     │  (Users, Setups, Sessions)  │ │ │
+│  │  │   Components)   │     │     (Read/Write)            │ │ │
+│  │  └─────────────────┘     └─────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,7 +61,7 @@ This guide provides a comprehensive overview of the Archery Tools platform archi
 
 **Backend:**
 - **Framework**: Flask (Python 3.9+)
-- **Database**: SQLite (dual-database architecture)
+- **Database**: SQLite (unified database architecture - August 2025)
 - **Authentication**: JWT tokens + Google OAuth validation
 - **API Style**: RESTful JSON API
 - **File Handling**: Local storage + CDN integration

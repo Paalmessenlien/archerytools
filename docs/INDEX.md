@@ -10,11 +10,12 @@ This documentation provides everything needed to understand, develop, and mainta
 
 #### [Database Schema Documentation](DATABASE_SCHEMA.md)
 Complete database structure including:
-- **Dual Database Architecture**: Arrow database (read-only) + User database (read/write)
+- **Unified Database Architecture**: Single consolidated database (arrow_database.db) with both arrow and user data
+- **Database Consolidation**: Automatic migration from separate to unified architecture  
 - **Table Structures**: All tables with field definitions, constraints, and relationships
 - **Data Types & Formats**: Normalized values, JSON fields, and measurement units
 - **Indexes & Performance**: Database optimization and query performance
-- **Migration Scripts**: Schema updates and backup procedures
+- **Migration Scripts**: Schema updates, consolidation migrations, and backup procedures
 
 #### [API Endpoints Documentation](API_ENDPOINTS.md)
 Comprehensive REST API reference including:
@@ -133,8 +134,9 @@ Intelligent manufacturer detection and linking system:
 ## Quick Reference
 
 ### Database Locations
-- **Development**: `/home/paal/archerytools/arrow_scraper/databases/`
-- **Production**: `/app/databases/` (Docker volumes)
+- **Development**: `./databases/arrow_database.db` (unified architecture)
+- **Production**: `/app/databases/arrow_database.db` (Docker volumes - unified architecture)
+- **Legacy**: Separate user_data.db files (automatically migrated to unified)
 
 ### Key API Endpoints
 - **Health Check**: `GET /api/health`
@@ -176,26 +178,36 @@ curl https://yourdomain.com/api/health
 
 ## Database Architecture Overview
 
-### Arrow Database (`arrow_database.db`)
+### Unified Database Architecture (`arrow_database.db`)
+
+**🎯 Consolidated Database (August 2025)**: All data in single unified database for improved performance and simplified management.
+
+#### Arrow Data Tables
 - **arrows**: Main arrow specifications (1,143+ models)
 - **spine_specifications**: Detailed spine data for each arrow
 - **components**: Arrow components (nocks, inserts, points)
 - **component_categories**: Component organization
-- **Spine Calculation Tables**: 7 tables for advanced spine calculations
-  - `calculation_parameters`: Admin-configurable calculation coefficients
-  - `arrow_material_properties`: Material characteristics and factors
-  - `manufacturer_spine_charts`: Brand-specific recommendations
-  - `flight_problem_diagnostics`: Troubleshooting guidance
-  - `tuning_methodologies`: Step-by-step tuning procedures
+- **manufacturers**: Manufacturer information with enhanced metadata
 
-### User Database (`user_data.db`)
-- **users**: User accounts and preferences
-- **bow_setups**: User bow configurations
+#### User Data Tables (Consolidated)
+- **users**: User accounts, authentication, and admin privileges
+- **bow_setups**: User bow configurations with complete specifications
 - **setup_arrows**: Arrow selections for each bow setup
-- **tuning_sessions**: Tuning session tracking
-- **guide_sessions**: Interactive guide progress
-- **chronograph_data**: Measured arrow speeds with environmental data (NEW August 2025)
-- **bow_equipment**: Equipment configurations with enhanced string fields (Enhanced August 2025)
+- **guide_sessions**: Interactive guide progress and session data
+- **bow_equipment**: Equipment configurations with enhanced string fields
+- **chronograph_data**: Measured arrow speeds with environmental data
+- **backup_metadata**: Backup system tracking and CDN integration
+
+#### Spine Calculation Tables
+- **calculation_parameters**: Admin-configurable calculation coefficients
+- **arrow_material_properties**: Material characteristics and factors
+- **manufacturer_spine_charts**: Brand-specific recommendations
+- **flight_problem_diagnostics**: Troubleshooting guidance
+- **tuning_methodologies**: Step-by-step tuning procedures
+
+#### Migration & System Tables
+- **schema_migrations**: Database migration tracking and versioning
+- **equipment_field_standards**: Dynamic equipment form generation (46 field definitions)
 
 ---
 
@@ -240,6 +252,24 @@ curl https://yourdomain.com/api/health
 - ✅ **Calculator Spacing**: Systematic spacing optimization throughout calculator interface
 - ✅ **Mobile Navigation**: Enhanced bottom navigation and touch-friendly interactions
 - ✅ **Responsive Design**: Improved mobile/tablet experience across all components
+
+### Admin Panel & Database Management (August 2025)
+- ✅ **Unified Database Architecture**: Complete migration from dual to single database system
+- ✅ **Enhanced Admin Panel**: Comprehensive maintenance interface with architecture detection
+- ✅ **Database Health Monitoring**: Real-time performance scoring and integrity checking
+- ✅ **Schema Verification**: Advanced verification supporting unified and separate architectures
+- ✅ **Migration Management**: Visual migration status with applied/pending tracking
+- ✅ **Database Maintenance**: VACUUM, ANALYZE, and optimization operations
+- ✅ **Production Diagnostic Tools**: Robust scripts for production database troubleshooting
+
+#### [Admin Panel & Database Management Documentation](ADMIN_PANEL_DATABASE_MANAGEMENT.md) 🔧
+**NEW (August 2025)** - Comprehensive admin system and database management documentation:
+- **Admin Panel Interface**: Complete web-based database management with Material Design 3
+- **Database Health Monitoring**: Real-time performance scoring (0-100) with integrity checking
+- **Migration Management System**: Visual migration control with dependency resolution
+- **Schema Verification**: Advanced verification supporting unified and separate architectures
+- **Maintenance Operations**: VACUUM, ANALYZE, and optimization with real-time progress
+- **Production Diagnostic Tools**: Robust scripts for troubleshooting production database issues
 
 ### New Calculation System (August 2025)
 - ✅ **Chronograph Data Integration**: Complete system for storing and utilizing measured arrow speeds

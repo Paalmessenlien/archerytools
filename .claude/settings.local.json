@@ -34,7 +34,9 @@
       "Bash(docker-compose:*)",
       "Bash(mv:*)",
       "Bash(python:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker restart:*)"
     ],
     "deny": []
   }

@@ -4,25 +4,30 @@ This document provides comprehensive documentation of the Archery Tools database
 
 ## Overview
 
-The system uses a dual-database architecture:
-- **Arrow Database** (`arrow_database.db`) - Arrow specifications, spine data, components
-- **User Database** (`user_data.db`) - User accounts, bow setups, sessions, preferences
+**🎯 Unified Database Architecture (August 2025)**: The system uses a single consolidated database containing both arrow and user data for improved performance and simplified management.
+
+- **Unified Database** (`arrow_database.db`) - Complete system data including arrows, users, bow setups, and sessions
+- **Legacy Migration**: Automatic migration from dual-database architecture (arrow_database.db + user_data.db) to unified system
 
 ## Database Locations
 
 ### Development Environment
-- Arrow Database: `/home/paal/archerytools/arrow_scraper/databases/arrow_database.db`
-- User Database: `/home/paal/archerytools/arrow_scraper/databases/user_data.db`
+- Unified Database: `./databases/arrow_database.db`
+- Migration Path: Automatic consolidation from separate user_data.db if present
 
 ### Docker Production Environment
-- Arrow Database: `/app/databases/arrow_database.db` (Docker volume: `arrowtuner-arrowdata`)
-- User Database: `/app/databases/user_data.db` (Docker volume: `arrowtuner-userdata`)
+- Unified Database: `/app/databases/arrow_database.db` (Docker volume: `arrowtuner-databases`)
+- Legacy Migration: Automatic detection and consolidation during startup
 
 ---
 
-## Arrow Database (`arrow_database.db`)
+## Unified Database Structure (`arrow_database.db`)
 
-Contains all arrow specifications, components, and manufacturer data. This database is read-only in production and populated from JSON files during deployment.
+Contains all system data in a single database for optimal performance and simplified management. The database includes arrow specifications, user accounts, bow setups, and all related data.
+
+### Arrow Data Section
+
+Arrow specifications, components, and manufacturer data. This section is populated from JSON files during deployment.
 
 ### Tables
 
@@ -125,13 +130,27 @@ CREATE TABLE component_categories (
 );
 ```
 
----
+### User Data Section
 
-## User Database (`user_data.db`)
+User-specific data including accounts, bow configurations, and session tracking. Consolidated from separate user_data.db into unified architecture.
 
-Contains all user-specific data including accounts, bow configurations, and session tracking.
+### Migration System Tables
 
-### Tables
+Tables for managing database schema migrations and system metadata.
+
+#### `schema_migrations`
+Database migration tracking and versioning.
+
+```sql
+CREATE TABLE schema_migrations (
+    version TEXT PRIMARY KEY,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    migration_name TEXT,
+    success BOOLEAN DEFAULT TRUE
+);
+```
+
+### User Data Tables
 
 #### `users`
 User account information and preferences.
@@ -356,16 +375,47 @@ CREATE INDEX idx_sessions_user_id ON tuning_sessions(user_id);
 
 ---
 
-## Migration and Backup
+## Database Architecture Migration
+
+### Unified Database Migration (August 2025)
+
+**Migration 023: Database Consolidation** - Automatic migration from dual-database to unified architecture:
+
+1. **Data Consolidation**: Merges user_data.db tables into arrow_database.db
+2. **Table Creation**: Creates user tables (users, bow_setups, guide_sessions, etc.) in unified database
+3. **Data Migration**: Preserves all user data during consolidation
+4. **Schema Updates**: Adds missing columns to manufacturers and other tables
+5. **Cleanup**: Removes dependency on separate user database file
+
+### Migration System
+
+**Enhanced Migration Manager** (August 2025):
+- **Migration Discovery**: Supports 4 different migration patterns for comprehensive discovery
+- **Dependency Management**: Tracks migration dependencies and execution order  
+- **Production Compatibility**: Handles Docker containerized deployments
+- **Admin Interface**: Web-based migration management with visual status
+- **Rollback Support**: Safe migration rollback capabilities
 
 ### Migration Scripts
+- `migration_023_database_consolidation.py` - Consolidates dual to unified database
 - `migrate_diameter_categories.py` - Adds diameter classification
 - `migrate_spine_specifications.py` - Updates spine table schema
+- Enhanced migration manager supporting 16+ migrations with dependency resolution
 
 ### Backup System
-- Full database backups via admin panel
-- Selective backup (arrow-only or user-only)
-- CDN storage integration for production backups
-- Restore functionality with verification
+- **Unified Backup**: Single database backup simplifies restore procedures
+- **CDN Integration**: Backup storage with Bunny CDN, Cloudinary, AWS S3
+- **Environment Awareness**: Production/development backup tagging
+- **Selective Restore**: Arrow-only or user-only restoration capabilities
+- **Admin Interface**: Complete backup management through admin panel
 
-This schema supports the complete archery tools workflow from arrow browsing to personalized recommendations and tuning session tracking.
+### Database Health Monitoring
+
+**Enhanced Database Health Checker** (August 2025):
+- **Architecture Detection**: Automatically detects unified vs separate database setup
+- **Performance Scoring**: 0-100 health score based on multiple metrics
+- **Schema Verification**: Validates table structure and column presence
+- **Integrity Checking**: Comprehensive database consistency validation
+- **Maintenance Operations**: VACUUM, ANALYZE, and optimization recommendations
+
+This unified schema supports the complete archery tools workflow with improved performance, simplified management, and enhanced administrative capabilities.
