@@ -160,6 +160,16 @@
               @performance-updated="handlePerformanceUpdate"
             />
           </div>
+
+          <!-- Chronograph Data -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <ChronographDataEntry
+              :bow-setup-id="setupArrowData.bow_setup.id"
+              :setup-arrows="[setupArrowData.setup_arrow]"
+              @data-updated="handleChronographDataUpdate"
+              @speed-calculated="handleSpeedCalculated"
+            />
+          </div>
         </div>
 
         <!-- Right Column: Arrow Information -->
@@ -267,6 +277,7 @@ import ArrowSetupDisplay from '~/components/ArrowSetupDisplay.vue'
 import ArrowPerformanceAnalysis from '~/components/ArrowPerformanceAnalysis.vue'
 import ArrowDatabaseInfo from '~/components/ArrowDatabaseInfo.vue'
 import BowSetupContext from '~/components/BowSetupContext.vue'
+import ChronographDataEntry from '~/components/ChronographDataEntry.vue'
 import ConfirmationModal from '~/components/ConfirmationModal.vue'
 import NotificationToast from '~/components/NotificationToast.vue'
 
@@ -432,6 +443,19 @@ const handlePerformanceUpdate = (performanceData) => {
   if (setupArrowData.value) {
     setupArrowData.value.setup_arrow.performance = performanceData
   }
+}
+
+const handleChronographDataUpdate = (data) => {
+  console.log('Chronograph data updated:', data)
+  // Optionally reload performance data when chronograph data changes
+  if (setupArrowData.value) {
+    loadSetupArrowDetails()
+  }
+}
+
+const handleSpeedCalculated = (speedData) => {
+  console.log('Speed calculated from chronograph:', speedData)
+  showNotification(`Speed updated: ${speedData.speed} FPS for ${speedData.arrow_weight}gr arrow`, 'success')
 }
 
 const calculatePerformance = async () => {

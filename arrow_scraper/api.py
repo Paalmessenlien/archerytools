@@ -84,6 +84,110 @@ def get_tuning_system():
             tuning_system = None
     return tuning_system
 
+def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_draw_length, bow_type, arrow_weight_grains, string_material='dacron', setup_id=None, arrow_id=None):
+    """Internal helper for enhanced arrow speed calculation with chronograph data and string materials"""
+    try:
+        # Check for chronograph data first (most accurate)
+        chronograph_result = None
+        if setup_id and arrow_id:
+            try:
+                user_db = get_user_database()
+                cursor = user_db.get_connection().cursor()
+                
+                cursor.execute('''
+                    SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
+                    FROM chronograph_data 
+                    WHERE setup_id = ? AND arrow_id = ? AND verified = 1
+                    ORDER BY measurement_date DESC
+                    LIMIT 1
+                ''', (setup_id, arrow_id))
+                
+                chronograph_data = cursor.fetchone()
+                
+                if chronograph_data:
+                    measured_speed, measured_weight, std_dev, shot_count = chronograph_data
+                    
+                    # Adjust for different arrow weight using kinetic energy conservation
+                    if measured_weight != arrow_weight_grains:
+                        speed_ratio = (measured_weight / arrow_weight_grains) ** 0.5
+                        adjusted_speed = measured_speed * speed_ratio
+                    else:
+                        adjusted_speed = measured_speed
+                    
+                    confidence = min(100, (shot_count * 10) + (85 if std_dev and std_dev < 5 else 70))
+                    
+                    chronograph_result = {
+                        'speed': adjusted_speed,
+                        'confidence': confidence,
+                        'source': 'chronograph',
+                        'shot_count': shot_count,
+                        'std_deviation': std_dev
+                    }
+            except Exception as chrono_error:
+                print(f"Warning: Could not retrieve chronograph data: {chrono_error}")
+        
+        # If chronograph data available, use it
+        if chronograph_result:
+            return chronograph_result['speed']
+        
+        # String material speed modifiers
+        string_speed_modifiers = {
+            'dacron': 0.92,           # Slowest, most forgiving (default)
+            'fastflight': 1.00,       # Standard modern string  
+            'dyneema': 1.02,          # Faster, low stretch
+            'vectran': 1.03,          # High performance
+            'sk75_dyneema': 1.04,     # Premium racing strings
+            'custom_blend': 1.01      # Custom string materials
+        }
+        
+        # Get string material modifier
+        string_modifier = string_speed_modifiers.get(string_material.lower(), 0.92)  # Default to dacron
+        
+        # Bow type specific efficiency factors
+        bow_type_factors = {
+            'compound': 0.95,         # Most efficient transfer
+            'recurve': 0.85,          # Traditional recurve efficiency
+            'longbow': 0.75,          # Traditional longbow efficiency  
+            'traditional': 0.70,      # Traditional bow efficiency
+            'barebow': 0.80          # Barebow efficiency
+        }
+        
+        bow_efficiency = bow_type_factors.get(bow_type.lower(), 0.95)
+        
+        # Enhanced IBO-based speed calculation
+        # IBO standard: 350gr arrow, 30" draw, 70lb bow = 'ibo_speed' FPS
+        reference_weight = 350.0  # IBO standard arrow weight
+        reference_draw_weight = 70.0  # IBO standard draw weight
+        reference_draw_length = 30.0  # IBO standard draw length
+        
+        # Adjust for draw weight difference (approximately 10 fps per pound for compounds)
+        weight_adjustment = (bow_draw_weight - reference_draw_weight) * 10
+        
+        # Adjust for draw length difference (approximately 10 fps per inch)
+        length_adjustment = (bow_draw_length - reference_draw_length) * 10
+        
+        # Adjust for arrow weight difference using kinetic energy conservation
+        # Heavier arrows = slower speed, lighter arrows = faster speed
+        weight_ratio = (reference_weight / arrow_weight_grains) ** 0.5
+        
+        # Calculate base speed with adjustments
+        adjusted_ibo = bow_ibo_speed + weight_adjustment + length_adjustment
+        estimated_speed = adjusted_ibo * weight_ratio * string_modifier * bow_efficiency
+        
+        # Apply reasonable bounds
+        estimated_speed = max(150, min(450, estimated_speed))
+        
+        return estimated_speed
+        
+    except Exception as e:
+        print(f"Enhanced speed calculation error: {e}, falling back to basic calculation")
+        # Fallback to basic calculation
+        if bow_type.lower() == 'compound':
+            basic_speed = (bow_draw_weight * 10) - (arrow_weight_grains - 350) * 0.1
+        else:
+            basic_speed = (bow_draw_weight * 8) - (arrow_weight_grains - 350) * 0.08
+        return max(180, min(350, basic_speed))
+
 def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None):
     """Calculate comprehensive performance metrics for a specific arrow recommendation"""
     try:
@@ -1896,7 +2000,31 @@ def add_arrow_to_setup(current_user, setup_id):
             mock_arrow = MockArrowRec(arrow_data, data)
             mock_profile = MockArcherProfile(bow_setup, data)
             
-            performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+            # Enhanced arrow speed estimation for new arrow addition
+            enhanced_speed = None
+            try:
+                # Prepare speed calculation data
+                arrow_weight_grains = (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25
+                string_material = 'dacron'  # Default for new arrows (no string equipment likely configured yet)
+                
+                # Call enhanced speed calculation (no chronograph data for new arrows)
+                enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                    bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
+                    bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
+                    bow_draw_length=29,  # Default for new arrow addition
+                    bow_type=dict(bow_setup).get('bow_type', 'compound'),
+                    arrow_weight_grains=arrow_weight_grains,
+                    string_material=string_material,
+                    setup_id=None,  # No setup_id for new arrow
+                    arrow_id=None   # No chronograph data for new arrow
+                )
+                print(f"Enhanced speed for new arrow addition: {enhanced_speed} FPS")
+                
+            except Exception as speed_error:
+                print(f"Enhanced speed calculation failed for new arrow: {speed_error}")
+                enhanced_speed = None
+            
+            performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
             response_data['performance'] = performance_data
             
         except Exception as perf_error:
@@ -2285,8 +2413,50 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                 mock_arrow = MockArrowRec(dict(arrow_data), dict(spine_data) if spine_data else None, dict(setup_arrow))
                 mock_profile = MockArcherProfile(bow_setup, dict(setup_arrow))
                 
-                # Calculate performance
-                performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+                # Enhanced arrow speed estimation for bulk calculation
+                enhanced_speed = None
+                try:
+                    # Prepare speed calculation data
+                    arrow_weight_grains = (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25
+                    string_material = 'dacron'  # Default for bulk calculation
+                    
+                    # Try to get string equipment data for this setup
+                    try:
+                        cursor.execute('''
+                            SELECT specifications 
+                            FROM bow_equipment 
+                            WHERE setup_id = ? AND category = 'String'
+                            LIMIT 1
+                        ''', (setup_arrow['setup_id'],))
+                        string_equipment = cursor.fetchone()
+                        
+                        if string_equipment and string_equipment['specifications']:
+                            import json
+                            spec_data = json.loads(string_equipment['specifications'])
+                            if spec_data.get('material'):
+                                string_material = spec_data['material'].lower()
+                    except Exception:
+                        pass  # Use default string material
+                    
+                    # Call enhanced speed calculation
+                    enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                        bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
+                        bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
+                        bow_draw_length=29,  # Default for bulk calculation
+                        bow_type=dict(bow_setup).get('bow_type', 'compound'),
+                        arrow_weight_grains=arrow_weight_grains,
+                        string_material=string_material,
+                        setup_id=setup_arrow['setup_id'],
+                        arrow_id=setup_arrow['arrow_id']
+                    )
+                    print(f"Bulk enhanced speed for arrow {setup_arrow['arrow_id']}: {enhanced_speed} FPS")
+                    
+                except Exception as speed_error:
+                    print(f"Bulk enhanced speed calculation failed for arrow {setup_arrow['arrow_id']}: {speed_error}")
+                    enhanced_speed = None
+                
+                # Calculate performance with enhanced speed
+                performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
                 
                 # Store performance data as JSON in dedicated performance_data column
                 import json
@@ -2416,8 +2586,58 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
             mock_arrow = MockArrowRec(dict(arrow_data), dict(spine_data) if spine_data else None, dict(setup_arrow))
             mock_profile = MockArcherProfile(dict(setup_arrow), bow_config)
             
-            # Calculate performance
-            performance_data = calculate_arrow_performance(mock_profile, mock_arrow)
+            # Enhanced arrow speed estimation using chronograph data and string materials
+            enhanced_speed = None
+            try:
+                # Prepare data for enhanced speed calculation
+                speed_request_data = {
+                    'bow_ibo_speed': bow_config.get('ibo_speed', setup_arrow.get('ibo_speed', 320)),
+                    'bow_draw_weight': bow_config.get('draw_weight', setup_arrow.get('draw_weight', 50)),
+                    'bow_draw_length': bow_config.get('draw_length', 29),
+                    'bow_type': bow_config.get('bow_type', setup_arrow.get('bow_type', 'compound')),
+                    'arrow_weight_grains': (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25,
+                    'string_material': 'dacron',  # Default to slowest for safety
+                    'setup_id': setup_arrow['setup_id'],
+                    'arrow_id': setup_arrow['arrow_id']
+                }
+                
+                # Get string equipment data for speed calculation
+                try:
+                    cursor.execute('''
+                        SELECT specifications 
+                        FROM bow_equipment 
+                        WHERE setup_id = ? AND category = 'String'
+                        LIMIT 1
+                    ''', (setup_arrow['setup_id'],))
+                    string_equipment = cursor.fetchone()
+                    
+                    if string_equipment and string_equipment['specifications']:
+                        import json
+                        spec_data = json.loads(string_equipment['specifications'])
+                        if spec_data.get('material'):
+                            speed_request_data['string_material'] = spec_data['material'].lower()
+                except Exception as string_error:
+                    print(f"Warning: Could not retrieve string equipment data: {string_error}")
+                
+                # Call enhanced speed calculation function directly
+                enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                    bow_ibo_speed=speed_request_data['bow_ibo_speed'],
+                    bow_draw_weight=speed_request_data['bow_draw_weight'],
+                    bow_draw_length=speed_request_data['bow_draw_length'],
+                    bow_type=speed_request_data['bow_type'],
+                    arrow_weight_grains=speed_request_data['arrow_weight_grains'],
+                    string_material=speed_request_data['string_material'],
+                    setup_id=speed_request_data['setup_id'],
+                    arrow_id=speed_request_data['arrow_id']
+                )
+                print(f"Enhanced speed calculated: {enhanced_speed} FPS (vs old method would be ~{(speed_request_data['bow_draw_weight'] * 10) - (speed_request_data['arrow_weight_grains'] - 350) * 0.1})")
+                
+            except Exception as speed_error:
+                print(f"Enhanced speed calculation failed, falling back to basic calculation: {speed_error}")
+                enhanced_speed = None
+            
+            # Calculate performance with enhanced speed
+            performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
             
             # Store performance data as JSON in dedicated performance_data column
             import json
@@ -9587,7 +9807,7 @@ def calculate_penetration_analysis():
 
 @app.route('/api/calculator/arrow-speed-estimate', methods=['POST'])
 def estimate_arrow_speed():
-    """Estimate arrow speed based on bow specifications and arrow weight"""
+    """Enhanced arrow speed estimation with chronograph data and string material factors"""
     try:
         data = request.get_json()
         
@@ -9595,39 +9815,137 @@ def estimate_arrow_speed():
         bow_ibo_speed = data.get('bow_ibo_speed', 310.0)
         bow_draw_weight = data.get('bow_draw_weight', 70.0)
         bow_draw_length = data.get('bow_draw_length', 29.0)
+        bow_type = data.get('bow_type', 'compound')
         
         # Arrow specifications
         arrow_weight_grains = data.get('arrow_weight_grains', 420.0)
         
-        # Initialize spine calculator for speed estimation
+        # Enhanced parameters
+        string_material = data.get('string_material', 'dacron')
+        setup_id = data.get('setup_id')
+        arrow_id = data.get('arrow_id')
+        
+        # Check for chronograph data first (most accurate)
+        chronograph_result = None
+        if setup_id and arrow_id:
+            try:
+                user_db = get_user_database()
+                cursor = user_db.get_connection().cursor()
+                
+                cursor.execute('''
+                    SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
+                    FROM chronograph_data 
+                    WHERE setup_id = ? AND arrow_id = ? AND verified = 1
+                    ORDER BY measurement_date DESC
+                    LIMIT 1
+                ''', (setup_id, arrow_id))
+                
+                chronograph_data = cursor.fetchone()
+                
+                if chronograph_data:
+                    measured_speed, measured_weight, std_dev, shot_count = chronograph_data
+                    
+                    # Adjust for different arrow weight using kinetic energy conservation
+                    if measured_weight != arrow_weight_grains:
+                        speed_ratio = (measured_weight / arrow_weight_grains) ** 0.5
+                        adjusted_speed = measured_speed * speed_ratio
+                    else:
+                        adjusted_speed = measured_speed
+                    
+                    confidence = min(100, (shot_count * 10) + (85 if std_dev and std_dev < 5 else 70))
+                    
+                    chronograph_result = {
+                        'speed': adjusted_speed,
+                        'confidence': confidence,
+                        'original_data': {
+                            'measured_speed_fps': measured_speed,
+                            'measured_weight_grains': measured_weight,
+                            'shot_count': shot_count,
+                            'std_deviation': std_dev
+                        }
+                    }
+                    
+            except Exception as e:
+                print(f"Error checking chronograph data: {e}")
+                # Continue with estimation if chronograph lookup fails
+        
+        # If chronograph data available, use it
+        if chronograph_result:
+            return jsonify({
+                'estimated_speed_fps': round(chronograph_result['speed'], 1),
+                'calculation_method': 'chronograph_data',
+                'confidence_percent': chronograph_result['confidence'],
+                'chronograph_data': chronograph_result['original_data'],
+                'string_material': string_material
+            }), 200
+        
+        # String material speed modifiers
+        string_speed_modifiers = {
+            'dacron': 0.92,           # Slowest, most forgiving (default)
+            'fastflight': 1.00,       # Standard modern string
+            'dyneema': 1.02,          # Faster, low stretch
+            'vectran': 1.03,          # High performance
+            'sk75_dyneema': 1.04,     # Premium racing strings
+            'custom_blend': 1.01      # Custom string materials
+        }
+        
+        # Get string modifier (default to slowest for safety)
+        string_modifier = string_speed_modifiers.get(string_material.lower(), 0.92)
+        
+        # Use existing spine calculator for base calculation
         calculator = SpineCalculator()
+        
+        # Map bow type string to enum
+        bow_type_map = {
+            'compound': BowType.COMPOUND,
+            'recurve': BowType.RECURVE,
+            'longbow': BowType.LONGBOW,
+            'traditional': BowType.TRADITIONAL
+        }
+        bow_type_enum = bow_type_map.get(bow_type.lower(), BowType.COMPOUND)
         
         # Create bow configuration
         bow_config = BowConfiguration(
             draw_weight=bow_draw_weight,
             draw_length=bow_draw_length,
-            bow_type=BowType.COMPOUND,
+            bow_type=bow_type_enum,
             ibo_speed=bow_ibo_speed
         )
         
-        # Estimate arrow speed
-        estimated_speed = calculator._estimate_arrow_speed(bow_config, arrow_weight_grains)
+        # Estimate arrow speed using existing calculator
+        base_estimated_speed = calculator._estimate_arrow_speed(bow_config, arrow_weight_grains)
         
-        # Calculate velocity factors
+        # Apply string material modifier
+        final_speed = base_estimated_speed * string_modifier
+        
+        # Ensure reasonable bounds
+        final_speed = max(100, min(450, final_speed))
+        
+        # Calculate velocity factors for reporting
         standard_arrow_weight = 5 * bow_draw_weight  # Standard: 5 grains per pound
         weight_ratio = arrow_weight_grains / standard_arrow_weight
         length_factor = bow_draw_length / 30.0  # Standard: 30" draw
         
         return jsonify({
-            'estimated_speed_fps': round(estimated_speed, 1),
+            'estimated_speed_fps': round(final_speed, 1),
+            'calculation_method': f'{bow_type}_estimation_with_string_material',
+            'confidence_percent': 75,  # Moderate confidence for estimation
             'bow_ibo_speed': bow_ibo_speed,
             'arrow_weight_grains': arrow_weight_grains,
-            'standard_arrow_weight': standard_arrow_weight,
-            'weight_ratio': round(weight_ratio, 2),
-            'length_factor': round(length_factor, 3),
+            'string_material': string_material,
+            'factors': {
+                'base_speed_estimate': round(base_estimated_speed, 1),
+                'string_modifier': string_modifier,
+                'string_speed_effect': f"{((string_modifier - 1) * 100):+.1f}%",
+                'bow_type': bow_type,
+                'standard_arrow_weight': standard_arrow_weight,
+                'weight_ratio': round(weight_ratio, 2),
+                'length_factor': round(length_factor, 3)
+            },
             'speed_factors': {
                 'weight_effect': f"{'Heavier' if weight_ratio > 1 else 'Lighter'} than standard",
-                'length_effect': f"{'Longer' if bow_draw_length > 30 else 'Shorter'} than standard draw"
+                'length_effect': f"{'Longer' if bow_draw_length > 30 else 'Shorter'} than standard draw",
+                'string_effect': f"String material: {string_material} ({((string_modifier - 1) * 100):+.1f}% speed)"
             }
         })
         
@@ -9735,6 +10053,240 @@ def calculate_comprehensive_performance():
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Failed to calculate comprehensive performance analysis'}), 500
+
+# ============================================================================
+# CHRONOGRAPH DATA API ENDPOINTS
+# ============================================================================
+
+@app.route('/api/chronograph-data', methods=['POST'])
+@token_required
+def create_chronograph_data(current_user):
+    """Create new chronograph data entry"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['setup_id', 'setup_arrow_id', 'measured_speed_fps', 'arrow_weight_grains']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Field {field} is required'}), 400
+        
+        # Get user database
+        user_db = get_user_database()
+        cursor = user_db.get_connection().cursor()
+        
+        # Insert chronograph data
+        cursor.execute('''
+            INSERT INTO chronograph_data 
+            (setup_id, arrow_id, setup_arrow_id, measured_speed_fps, arrow_weight_grains,
+             temperature_f, humidity_percent, chronograph_model, shot_count, std_deviation,
+             min_speed_fps, max_speed_fps, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data['setup_id'], data.get('arrow_id'), data['setup_arrow_id'],
+            data['measured_speed_fps'], data['arrow_weight_grains'],
+            data.get('temperature_f', 70), data.get('humidity_percent', 50),
+            data.get('chronograph_model', ''), data.get('shot_count', 1),
+            data.get('std_deviation'), data.get('min_speed_fps'), data.get('max_speed_fps'),
+            data.get('notes', '')
+        ))
+        
+        chronograph_id = cursor.lastrowid
+        user_db.get_connection().commit()
+        
+        # Return the created data
+        cursor.execute('SELECT * FROM chronograph_data WHERE id = ?', (chronograph_id,))
+        created_data = cursor.fetchone()
+        
+        return jsonify({
+            'id': created_data[0],
+            'setup_id': created_data[1],
+            'arrow_id': created_data[2],
+            'setup_arrow_id': created_data[3],
+            'measured_speed_fps': created_data[4],
+            'arrow_weight_grains': created_data[5],
+            'temperature_f': created_data[6],
+            'humidity_percent': created_data[7],
+            'measurement_date': created_data[8],
+            'chronograph_model': created_data[9],
+            'shot_count': created_data[10],
+            'std_deviation': created_data[11],
+            'min_speed_fps': created_data[12],
+            'max_speed_fps': created_data[13],
+            'verified': created_data[14],
+            'notes': created_data[15]
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating chronograph data: {e}")
+        return jsonify({'error': 'Failed to create chronograph data'}), 500
+
+@app.route('/api/chronograph-data/setup/<int:setup_id>', methods=['GET'])
+@token_required
+def get_chronograph_data_for_setup(current_user, setup_id):
+    """Get all chronograph data for a specific bow setup"""
+    try:
+        user_db = get_user_database()
+        cursor = user_db.get_connection().cursor()
+        
+        # Get chronograph data with arrow information
+        cursor.execute('''
+            SELECT cd.*, sa.arrow_length, sa.point_weight, sa.calculated_spine,
+                   a.manufacturer, a.model_name
+            FROM chronograph_data cd
+            LEFT JOIN setup_arrows sa ON cd.setup_arrow_id = sa.id
+            LEFT JOIN arrows a ON cd.arrow_id = a.id
+            WHERE cd.setup_id = ?
+            ORDER BY cd.measurement_date DESC
+        ''', (setup_id,))
+        
+        rows = cursor.fetchall()
+        chronograph_data = []
+        
+        for row in rows:
+            arrow_name = f"{row[18]} {row[19]}" if row[18] and row[19] else "Unknown Arrow"
+            
+            chronograph_data.append({
+                'id': row[0],
+                'setup_id': row[1],
+                'arrow_id': row[2],
+                'setup_arrow_id': row[3],
+                'measured_speed_fps': row[4],
+                'arrow_weight_grains': row[5],
+                'temperature_f': row[6],
+                'humidity_percent': row[7],
+                'measurement_date': row[8],
+                'chronograph_model': row[9],
+                'shot_count': row[10],
+                'std_deviation': row[11],
+                'min_speed_fps': row[12],
+                'max_speed_fps': row[13],
+                'verified': row[14],
+                'notes': row[15],
+                'arrow_name': arrow_name,
+                'arrow_length': row[16],
+                'point_weight': row[17],
+                'calculated_spine': row[18]
+            })
+        
+        return jsonify(chronograph_data), 200
+        
+    except Exception as e:
+        print(f"Error getting chronograph data: {e}")
+        return jsonify({'error': 'Failed to get chronograph data'}), 500
+
+@app.route('/api/chronograph-data/<int:data_id>', methods=['PUT'])
+@token_required
+def update_chronograph_data(current_user, data_id):
+    """Update chronograph data entry"""
+    try:
+        data = request.get_json()
+        
+        user_db = get_user_database()
+        cursor = user_db.get_connection().cursor()
+        
+        # Update chronograph data
+        cursor.execute('''
+            UPDATE chronograph_data SET
+                measured_speed_fps = ?, arrow_weight_grains = ?, temperature_f = ?,
+                humidity_percent = ?, chronograph_model = ?, shot_count = ?,
+                std_deviation = ?, min_speed_fps = ?, max_speed_fps = ?, notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (
+            data.get('measured_speed_fps'), data.get('arrow_weight_grains'),
+            data.get('temperature_f'), data.get('humidity_percent'),
+            data.get('chronograph_model', ''), data.get('shot_count', 1),
+            data.get('std_deviation'), data.get('min_speed_fps'), data.get('max_speed_fps'),
+            data.get('notes', ''), data_id
+        ))
+        
+        user_db.get_connection().commit()
+        
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Chronograph data not found'}), 404
+        
+        return jsonify({'message': 'Chronograph data updated successfully'}), 200
+        
+    except Exception as e:
+        print(f"Error updating chronograph data: {e}")
+        return jsonify({'error': 'Failed to update chronograph data'}), 500
+
+@app.route('/api/chronograph-data/<int:data_id>', methods=['DELETE'])
+@token_required
+def delete_chronograph_data(current_user, data_id):
+    """Delete chronograph data entry"""
+    try:
+        user_db = get_user_database()
+        cursor = user_db.get_connection().cursor()
+        
+        cursor.execute('DELETE FROM chronograph_data WHERE id = ?', (data_id,))
+        user_db.get_connection().commit()
+        
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Chronograph data not found'}), 404
+        
+        return jsonify({'message': 'Chronograph data deleted successfully'}), 200
+        
+    except Exception as e:
+        print(f"Error deleting chronograph data: {e}")
+        return jsonify({'error': 'Failed to delete chronograph data'}), 500
+
+@app.route('/api/chronograph-data/arrow/<int:arrow_id>/estimate-speed', methods=['POST'])
+@token_required
+def estimate_speed_from_chronograph(current_user, arrow_id):
+    """Estimate arrow speed for different weights using chronograph data"""
+    try:
+        data = request.get_json()
+        target_weight = data.get('target_weight')
+        
+        if not target_weight:
+            return jsonify({'error': 'target_weight is required'}), 400
+        
+        user_db = get_user_database()
+        cursor = user_db.get_connection().cursor()
+        
+        # Find chronograph data for this arrow or similar setup
+        cursor.execute('''
+            SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
+            FROM chronograph_data 
+            WHERE arrow_id = ? AND verified = 1
+            ORDER BY measurement_date DESC
+            LIMIT 5
+        ''', (arrow_id,))
+        
+        chronograph_records = cursor.fetchall()
+        
+        if not chronograph_records:
+            return jsonify({'error': 'No chronograph data found for this arrow'}), 404
+        
+        # Use the most recent measurement for calculation
+        measured_speed, measured_weight, std_dev, shot_count = chronograph_records[0]
+        
+        # Calculate speed for target weight using kinetic energy conservation
+        # KE = 0.5 * m * v², so v₂ = v₁ * √(m₁/m₂)
+        speed_ratio = (measured_weight / target_weight) ** 0.5
+        estimated_speed = measured_speed * speed_ratio
+        
+        # Calculate confidence based on data quality
+        confidence = min(100, (shot_count * 10) + (85 if std_dev and std_dev < 5 else 60))
+        
+        return jsonify({
+            'estimated_speed_fps': round(estimated_speed, 1),
+            'confidence_percent': confidence,
+            'based_on': {
+                'measured_speed_fps': measured_speed,
+                'measured_weight_grains': measured_weight,
+                'target_weight_grains': target_weight,
+                'shot_count': shot_count,
+                'std_deviation': std_dev
+            },
+            'calculation_method': 'kinetic_energy_conservation'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error estimating speed from chronograph: {e}")
+        return jsonify({'error': 'Failed to estimate speed'}), 500
 
 def get_primary_recommendation(overall_score: float, intended_use: str) -> str:
     """Get primary recommendation based on overall performance score"""

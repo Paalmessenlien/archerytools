@@ -1271,11 +1271,39 @@ const calculateComprehensivePerformance = async () => {
 
 const estimateArrowSpeed = async () => {
   try {
+    // Get string equipment data if bow setup is selected
+    let stringMaterial = 'dacron' // Default to slowest for safety
+    let actualIboSpeed = 310 // Default IBO speed
+    
+    if (selectedBowSetup.value) {
+      // Try to get string equipment data
+      try {
+        const stringEquipment = await api.get(`/bow-setups/${selectedBowSetup.value.id}/equipment/String`)
+        if (stringEquipment && stringEquipment.length > 0) {
+          const string = stringEquipment[0]
+          if (string.specifications && string.specifications.material) {
+            stringMaterial = string.specifications.material.toLowerCase()
+          }
+        }
+      } catch (err) {
+        console.log('No string equipment found, using default material')
+      }
+      
+      // Use actual IBO speed from bow setup if available
+      if (selectedBowSetup.value.ibo_speed) {
+        actualIboSpeed = selectedBowSetup.value.ibo_speed
+      }
+    }
+    
     const response = await api.post('/calculator/arrow-speed-estimate', {
-      bow_ibo_speed: 310, // Default IBO speed
+      bow_ibo_speed: actualIboSpeed,
       bow_draw_weight: bowConfig.value.draw_weight || 50,
       bow_draw_length: bowConfig.value.draw_length || 29,
-      arrow_weight_grains: calculateTotalComponentWeight()
+      bow_type: bowConfig.value.bow_type || 'compound',
+      arrow_weight_grains: calculateTotalComponentWeight(),
+      string_material: stringMaterial,
+      setup_id: selectedBowSetup.value?.id || null,
+      arrow_id: null // Could be enhanced to track specific arrows
     })
     return response.estimated_speed_fps
   } catch (error) {

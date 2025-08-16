@@ -32,7 +32,8 @@
       "Bash(docker stop:*)",
       "Bash(docker rm:*)",
       "Bash(docker-compose:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }
