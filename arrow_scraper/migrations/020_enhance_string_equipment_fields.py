@@ -184,7 +184,7 @@ def get_migration_info():
     return {
         'version': 20,
         'description': 'Enhance string equipment fields for speed calculation',
-        'dependencies': [8]  # Depends on equipment_field_standards table
+        'dependencies': ["008"]  # Depends on equipment_field_standards table
     }
 
 def main():
