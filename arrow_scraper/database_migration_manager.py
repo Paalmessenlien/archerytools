@@ -73,29 +73,45 @@ class DatabaseMigrationManager:
     
     def _resolve_database_path(self, db_path: str) -> str:
         """Resolve database path with environment awareness"""
-        # Check for environment variable first (Docker deployment)
-        env_db_path = os.environ.get('ARROW_DATABASE_PATH')
-        if env_db_path:
-            self.logger.info(f"🔧 Using ARROW_DATABASE_PATH: {env_db_path}")
-            return env_db_path
+        # If an absolute path is provided, use it directly (highest priority)
+        if Path(db_path).is_absolute():
+            self.logger.info(f"🔧 Using provided absolute path: {db_path}")
+            return db_path
         
-        # Try Docker container paths
-        docker_paths = [
-            "/app/databases/arrow_database.db",
-            "/app/arrow_database.db",
-            "/app/arrow_data/arrow_database.db"
-        ]
+        # Determine which environment variable to check based on the database path
+        env_var = None
+        if 'user' in db_path.lower() or 'user_data' in db_path.lower():
+            env_var = 'USER_DATABASE_PATH'
+        elif 'arrow' in db_path.lower() or db_path == 'arrow_database.db':
+            env_var = 'ARROW_DATABASE_PATH'
+        
+        # Check for environment variable (Docker deployment)
+        if env_var:
+            env_db_path = os.environ.get(env_var)
+            if env_db_path:
+                self.logger.info(f"🔧 Using {env_var}: {env_db_path}")
+                return env_db_path
+        
+        # Try Docker container paths based on database type
+        if 'user' in db_path.lower() or 'user_data' in db_path.lower():
+            docker_paths = [
+                "/app/databases/user_data.db",
+                "/app/user_data.db",
+                "/app/user_data/user_data.db"
+            ]
+        else:
+            docker_paths = [
+                "/app/databases/arrow_database.db",
+                "/app/arrow_database.db",
+                "/app/arrow_data/arrow_database.db"
+            ]
         
         for docker_path in docker_paths:
             if os.path.exists(docker_path) or os.path.exists(os.path.dirname(docker_path)):
                 self.logger.info(f"🐳 Using Docker database path: {docker_path}")
                 return docker_path
         
-        # Fall back to provided path
-        if Path(db_path).is_absolute():
-            return db_path
-        
-        # Try relative paths
+        # Try relative paths based on the provided database path
         possible_paths = [
             f"databases/{db_path}",
             f"../databases/{db_path}",
