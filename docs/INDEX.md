@@ -17,6 +17,15 @@ Complete database structure including:
 - **Indexes & Performance**: Database optimization and query performance
 - **Migration Scripts**: Schema updates, consolidation migrations, and backup procedures
 
+#### [Unified Database Architecture](UNIFIED_DATABASE_ARCHITECTURE.md) ✨ NEW
+Comprehensive documentation of the unified database consolidation:
+- **Migration History**: From dual-database to unified architecture
+- **Migration Process**: Detailed steps for consolidation (migrations 023 & 024)
+- **Complete Schema**: All user and arrow tables in unified database
+- **Code Updates**: UnifiedDatabase class usage and API updates
+- **Benefits**: Performance improvements and simplified architecture
+- **Verification**: Data integrity checks and rollback procedures
+
 #### [API Endpoints Documentation](API_ENDPOINTS.md)
 Comprehensive REST API reference including:
 - **Authentication**: Google OAuth + JWT token system
