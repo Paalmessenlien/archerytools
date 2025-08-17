@@ -68,15 +68,20 @@ class UnifiedDatabase:
     # User-related methods (migrated from UserDatabase)
     
     def create_user(self, google_id: str, email: str, name: str = None, 
-                   profile_picture_url: str = None) -> int:
-        """Create a new user and return user ID"""
+                   profile_picture_url: str = None) -> Dict[str, Any]:
+        """Create a new user and return user dict"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO users (google_id, email, name, profile_picture_url)
                 VALUES (?, ?, ?, ?)
             ''', (google_id, email, name, profile_picture_url))
-            return cursor.lastrowid
+            user_id = cursor.lastrowid
+            
+            # Return the created user
+            cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
     
     def get_user_by_google_id(self, google_id: str) -> Optional[Dict[str, Any]]:
         """Get user by Google ID"""
@@ -107,9 +112,28 @@ class UnifiedDatabase:
             cursor.execute(f'UPDATE users SET {set_clause} WHERE id = ?', values)
             return cursor.rowcount > 0
     
-    def set_user_admin(self, user_id: int, is_admin: bool = True) -> bool:
+    def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Get user by ID"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+    
+    def set_admin_status(self, user_id: int, is_admin: bool = True) -> bool:
         """Set user admin status"""
         return self.update_user(user_id, is_admin=is_admin)
+    
+    def set_user_admin(self, user_id: int, is_admin: bool = True) -> bool:
+        """Set user admin status (alias for backwards compatibility)"""
+        return self.set_admin_status(user_id, is_admin)
+    
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        """Get all users"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM users ORDER BY created_at DESC')
+            return [dict(row) for row in cursor.fetchall()]
     
     # Bow setup methods
     

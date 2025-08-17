@@ -168,12 +168,12 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
   }, { immediate: true })
 
   return {
-    // State
-    bowConfig: readonly(bowConfig),
-    recommendedSpine: readonly(recommendedSpine),
-    recommendations: readonly(recommendations),
-    isLoading: readonly(isLoading),
-    lastCalculation: readonly(lastCalculation),
+    // State - exposed directly since actions need to modify them
+    bowConfig,
+    recommendedSpine,
+    recommendations,
+    isLoading,
+    lastCalculation,
 
     // Getters
     isCompoundBow,
@@ -181,7 +181,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     arrowSetupDescription,
     configSummary,
 
-    // Actions
+    // Actions - these are the only way to modify state
     updateBowConfig,
     syncWithUserProfile,
     resetBowConfig,

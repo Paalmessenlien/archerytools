@@ -847,6 +847,239 @@ class ArrowDatabase:
             'diameter_categories': diameter_categories
         }
     
+    # User management methods (added for consolidated database)
+    
+    def create_user(self, google_id: str, email: str, name: str = None, 
+                   profile_picture_url: str = None) -> Dict[str, Any]:
+        """Create a new user and return user dict"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO users (google_id, email, name, profile_picture_url)
+            VALUES (?, ?, ?, ?)
+        ''', (google_id, email, name, profile_picture_url))
+        user_id = cursor.lastrowid
+        
+        # Return the created user
+        cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        row = cursor.fetchone()
+        conn.commit()
+        return dict(row) if row else None
+    
+    def get_user_by_google_id(self, google_id: str) -> Optional[Dict[str, Any]]:
+        """Get user by Google ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE google_id = ?', (google_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get user by email"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Get user by ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def update_user(self, user_id: int, **kwargs) -> bool:
+        """Update user information"""
+        if not kwargs:
+            return False
+            
+        set_clause = ', '.join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [user_id]
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'UPDATE users SET {set_clause} WHERE id = ?', values)
+        conn.commit()
+        return cursor.rowcount > 0
+    
+    def set_admin_status(self, user_id: int, is_admin: bool = True) -> bool:
+        """Set user admin status"""
+        return self.update_user(user_id, is_admin=is_admin)
+    
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        """Get all users"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users ORDER BY created_at DESC')
+        return [dict(row) for row in cursor.fetchall()]
+    
+    # Bow setup management methods
+    
+    def create_bow_setup(self, user_id: int, **setup_data) -> int:
+        """Create a new bow setup"""
+        required_fields = ['name', 'bow_type', 'draw_weight']
+        for field in required_fields:
+            if field not in setup_data:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Define valid columns based on actual database schema
+        valid_columns = {
+            'user_id', 'name', 'bow_type', 'draw_weight', 'draw_length', 
+            'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
+            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model'
+        }
+        
+        # Filter setup_data to only include valid columns
+        filtered_data = {k: v for k, v in setup_data.items() if k in valid_columns}
+        filtered_data['user_id'] = user_id
+        
+        # Ensure all NOT NULL columns have values with reasonable defaults
+        if 'draw_length' not in filtered_data or filtered_data['draw_length'] is None:
+            filtered_data['draw_length'] = 28.0  # Standard default draw length
+        if 'arrow_length' not in filtered_data or filtered_data['arrow_length'] is None:
+            filtered_data['arrow_length'] = 29.0  # Standard default arrow length  
+        if 'point_weight' not in filtered_data or filtered_data['point_weight'] is None:
+            filtered_data['point_weight'] = 100.0  # Standard default point weight
+        
+        columns = ', '.join(filtered_data.keys())
+        placeholders = ', '.join(['?' for _ in filtered_data])
+        values = list(filtered_data.values())
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'''
+            INSERT INTO bow_setups ({columns})
+            VALUES ({placeholders})
+        ''', values)
+        setup_id = cursor.lastrowid
+        conn.commit()
+        return setup_id
+    
+    def get_user_bow_setups(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get all bow setups for a user"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM bow_setups WHERE user_id = ? ORDER BY created_at DESC', (user_id,))
+        return [dict(row) for row in cursor.fetchall()]
+    
+    def get_bow_setup(self, setup_id: int) -> Optional[Dict[str, Any]]:
+        """Get bow setup by ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM bow_setups WHERE id = ?', (setup_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def update_bow_setup(self, setup_id: int, **kwargs) -> bool:
+        """Update bow setup"""
+        if not kwargs:
+            return False
+        
+        # Define valid columns based on actual database schema
+        valid_columns = {
+            'name', 'bow_type', 'draw_weight', 'draw_length', 
+            'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
+            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model'
+        }
+        
+        # Filter kwargs to only include valid columns
+        filtered_data = {k: v for k, v in kwargs.items() if k in valid_columns}
+        
+        if not filtered_data:
+            return False
+            
+        set_clause = ', '.join([f"{key} = ?" for key in filtered_data.keys()])
+        values = list(filtered_data.values()) + [setup_id]
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'UPDATE bow_setups SET {set_clause} WHERE id = ?', values)
+        conn.commit()
+        return cursor.rowcount > 0
+    
+    def delete_bow_setup(self, setup_id: int) -> bool:
+        """Delete bow setup (cascades to related records)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM bow_setups WHERE id = ?', (setup_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    
+    # Setup arrows management
+    
+    def add_arrow_to_setup(self, setup_id: int, arrow_id: int, arrow_length: float,
+                          point_weight: float, **kwargs) -> int:
+        """Add arrow to bow setup"""
+        arrow_data = {
+            'setup_id': setup_id,
+            'arrow_id': arrow_id,
+            'arrow_length': arrow_length,
+            'point_weight': point_weight,
+            **kwargs
+        }
+        
+        columns = ', '.join(arrow_data.keys())
+        placeholders = ', '.join(['?' for _ in arrow_data])
+        values = list(arrow_data.values())
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'''
+            INSERT INTO setup_arrows ({columns})
+            VALUES ({placeholders})
+        ''', values)
+        setup_arrow_id = cursor.lastrowid
+        conn.commit()
+        return setup_arrow_id
+    
+    def get_setup_arrows(self, setup_id: int) -> List[Dict[str, Any]]:
+        """Get all arrows for a bow setup with full arrow details"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT sa.*, a.manufacturer, a.model_name, a.material,
+                   ss.spine, ss.outer_diameter, ss.gpi_weight
+            FROM setup_arrows sa
+            JOIN arrows a ON sa.arrow_id = a.id
+            LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id 
+                AND ss.spine = sa.calculated_spine
+            WHERE sa.setup_id = ?
+            ORDER BY sa.created_at DESC
+        ''', (setup_id,))
+        return [dict(row) for row in cursor.fetchall()]
+    
+    # Guide session methods
+    
+    def create_guide_session(self, user_id: int, guide_name: str, guide_type: str,
+                           bow_setup_id: int = None, total_steps: int = None) -> int:
+        """Create new guide session"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO guide_sessions 
+            (user_id, bow_setup_id, guide_name, guide_type, total_steps)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (user_id, bow_setup_id, guide_name, guide_type, total_steps))
+        session_id = cursor.lastrowid
+        conn.commit()
+        return session_id
+    
+    def get_user_guide_sessions(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get all guide sessions for user"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT gs.*, bs.name as bow_setup_name
+            FROM guide_sessions gs
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.user_id = ?
+            ORDER BY gs.started_at DESC
+        ''', (user_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
     def close(self):
         """Close database connection"""
         if hasattr(self.local, 'conn') and self.local.conn:

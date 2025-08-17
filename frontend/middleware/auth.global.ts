@@ -2,7 +2,15 @@
 import { useAuth } from '~/composables/useAuth';
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
-  const { token, fetchUser } = useAuth();
+  // Skip on server-side to avoid hydration issues
+  if (process.server) {
+    return;
+  }
+
+  const { token, fetchUser, initializeClientAuth } = useAuth();
+
+  // Initialize client auth first
+  initializeClientAuth();
 
   if (token.value) {
     await fetchUser();

@@ -122,10 +122,10 @@ export const useBowSetupPickerStore = defineStore('bowSetupPicker', () => {
   })
 
   return {
-    // State
-    selectedBowSetup: readonly(selectedBowSetup),
-    availableBowSetups: readonly(availableBowSetups),
-    isLoading: readonly(isLoading),
+    // State - exposed directly since actions need to modify them
+    selectedBowSetup,
+    availableBowSetups,
+    isLoading,
 
     // Getters
     hasSelectedBow,

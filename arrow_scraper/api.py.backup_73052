@@ -92,9 +92,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         if setup_id and arrow_id:
             try:
                 user_db = get_database()
-                if not db:
-                    return jsonify({"error": "Database not available"}), 500
-                cursor = db.get_connection().cursor()
+                cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
                     SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
@@ -318,12 +316,7 @@ def get_database():
     return database
 
 def get_arrow_db():
-    """
-    DEPRECATED: This function is no longer used due to unified database architecture.
-    Use get_database() instead for unified arrow/user database access.
-    
-    Legacy function for arrow database connection with fallback locations.
-    """
+    """Get arrow database connection with fallback locations - sync with ArrowDatabase class"""
     try:
         # UNIFIED DATABASE PATH RESOLUTION - NEW ARCHITECTURE (August 2025)
         db_paths = [
@@ -472,8 +465,6 @@ def health_check():
     try:
         # Test database connection with lazy initialization
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         if db:
             stats = db.get_statistics()
             db_status = "healthy" if stats else "error"
@@ -745,8 +736,6 @@ def get_manufacturer_suggestions():
         
         # Search in approved manufacturers first
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         if db:
             conn = db.get_connection()
             cursor = conn.cursor()
@@ -791,11 +780,9 @@ def get_manufacturer_suggestions():
         
         # Search in pending manufacturers and equipment models (user learning data)
         try:
-            # Using unified database - ArrowDatabase
-            db = get_database()
-            if not db:
-                return jsonify({"error": "Database not available"}), 500
-            user_conn = db.get_connection()
+            from user_database import UserDatabase
+            user_db = UserDatabase()
+            user_conn = user_db.get_connection()
             user_cursor = user_conn.cursor()
             
             # Add pending manufacturers
@@ -888,8 +875,6 @@ def get_manufacturer_status():
         
         # Check in approved manufacturers first
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         if db:
             conn = db.get_connection()
             cursor = conn.cursor()
@@ -915,11 +900,9 @@ def get_manufacturer_status():
         
         # Check in pending manufacturers
         try:
-            # Using unified database - ArrowDatabase
-            db = get_database()
-            if not db:
-                return jsonify({"error": "Database not available"}), 500
-            user_conn = db.get_connection()
+            from user_database import UserDatabase
+            user_db = UserDatabase()
+            user_conn = user_db.get_connection()
             user_cursor = user_conn.cursor()
             
             user_cursor.execute('''
@@ -1415,10 +1398,8 @@ def get_user(current_user):
 @token_required
 def update_user_profile(current_user):
     """Update current authenticated user's profile details including archer-specific fields"""
-    # Using unified database - ArrowDatabase
-    db = get_database()
-    if not db:
-        return jsonify({"error": "Database not available"}), 500
+    from user_database import UserDatabase
+    user_db = UserDatabase()
     data = request.get_json()
     
     # Extract all possible fields from request
@@ -1470,30 +1451,15 @@ def update_user_profile(current_user):
         preferred_manufacturers = json.dumps(preferred_manufacturers)
     
     try:
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
-        
-        # Build update dict with only provided fields
-        update_data = {}
-        if name is not None:
-            update_data['name'] = name
-        if draw_length is not None:
-            update_data['draw_length'] = draw_length
-        if skill_level is not None:
-            update_data['skill_level'] = skill_level
-        if shooting_style is not None:
-            update_data['shooting_style'] = shooting_style
-        if preferred_manufacturers is not None:
-            update_data['preferred_manufacturers'] = preferred_manufacturers
-        if notes is not None:
-            update_data['notes'] = notes
-            
-        # Update user profile
-        success = db.update_user(current_user['id'], **update_data)
-        
-        if success:
-            # Get updated user data
-            updated_user = db.get_user_by_id(current_user['id'])
+        updated_user = user_db.update_user_profile(
+            current_user['id'], 
+            name=name,
+            draw_length=draw_length,
+            skill_level=skill_level,
+            shooting_style=shooting_style,
+            preferred_manufacturers=preferred_manufacturers,
+            notes=notes
+        )
         
         if updated_user:
             # Convert preferred_manufacturers back to list for frontend
@@ -1517,11 +1483,9 @@ def update_user_profile(current_user):
 @token_required
 def get_bow_setups(current_user):
     """Get all bow setups for the current user"""
-    # Using unified database - ArrowDatabase
-    db = get_database()
-    if not db:
-        return jsonify({"error": "Database not available"}), 500
-    conn = db.get_connection()
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM bow_setups WHERE user_id = ?", (current_user['id'],))
     setups = cursor.fetchall()
@@ -1532,11 +1496,9 @@ def get_bow_setups(current_user):
 @token_required
 def get_bow_setup(current_user, setup_id):
     """Get a specific bow setup with its details"""
-    # Using unified database - ArrowDatabase
-    db = get_database()
-    if not db:
-        return jsonify({"error": "Database not available"}), 500
-    conn = db.get_connection()
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
     
     try:
@@ -1562,12 +1524,12 @@ def create_bow_setup(current_user):
         return jsonify({'error': 'No data provided'}), 400
 
     try:
-        # Use the ArrowDatabase for creating bow setups
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
-        new_setup_id = db.create_bow_setup(current_user['id'], **data)
+        # Use the UserDatabase class method for creating bow setups
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        new_setup = user_db.create_bow_setup(current_user['id'], data)
         
-        if not new_setup_id:
+        if not new_setup:
             return jsonify({'error': 'Failed to create bow setup'}), 500
         
         # Learn from manufacturer entries in the bow setup
@@ -1630,12 +1592,6 @@ def create_bow_setup(current_user):
         except Exception as e:
             print(f"Warning: Manufacturer learning failed during bow setup creation: {e}")
         
-        # Get the created setup data
-        new_setup = db.get_bow_setup(new_setup_id)
-        
-        if not new_setup:
-            return jsonify({'error': 'Failed to retrieve created bow setup'}), 500
-        
         # Add learning results to response for debugging
         response_data = dict(new_setup)
         if learning_results:
@@ -1654,14 +1610,12 @@ def update_bow_setup(current_user, setup_id):
         return jsonify({'error': 'No data provided'}), 400
 
     try:
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         from change_log_service import ChangeLogService
         
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
+        user_db = UserDatabase()
         change_service = ChangeLogService()
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get current setup data for change tracking
@@ -1675,19 +1629,8 @@ def update_bow_setup(current_user, setup_id):
         # Extract user_note from data for change logging
         user_note = data.pop('user_note', None)
         
-        # Update the setup using the unified database
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
-        
-        # First verify the setup belongs to the current user
-        setup = db.get_bow_setup(setup_id)
-        if not setup or setup.get('user_id') != current_user['id']:
-            conn.close()
-            return jsonify({'error': 'Setup not found or you do not have permission to edit it'}), 404
-            
-        # Update the setup
-        success = db.update_bow_setup(setup_id, **data)
-        updated_setup = db.get_bow_setup(setup_id) if success else None
+        # Update the setup using the existing method
+        updated_setup = user_db.update_bow_setup(current_user['id'], setup_id, data)
         
         if not updated_setup:
             conn.close()
@@ -1819,11 +1762,9 @@ def update_bow_setup(current_user, setup_id):
 @token_required
 def delete_bow_setup(current_user, setup_id):
     """Delete a bow setup"""
-    # Using unified database - ArrowDatabase
-    db = get_database()
-    if not db:
-        return jsonify({"error": "Database not available"}), 500
-    conn = db.get_connection()
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
 
     # Verify the setup belongs to the current user
@@ -1858,11 +1799,9 @@ def add_arrow_to_setup(current_user, setup_id):
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify the bow setup belongs to the current user
@@ -1917,7 +1856,7 @@ def add_arrow_to_setup(current_user, setup_id):
             cursor.execute('''
                 UPDATE setup_arrows 
                 SET calculated_spine = ?, compatibility_score = ?, notes = ?,
-                    nock_weight = ?, insert_weight = ?, wrap_weight = ?
+                    nock_weight = ?, insert_weight = ?, bushing_weight = ?
                 WHERE id = ?
             ''', (
                 calculated_spine,
@@ -1925,7 +1864,7 @@ def add_arrow_to_setup(current_user, setup_id):
                 data.get('notes'),
                 data.get('nock_weight', 10),
                 data.get('insert_weight', 0),
-                data.get('wrap_weight', 0),
+                data.get('bushing_weight', 0),
                 existing_record[0]
             ))
             arrow_association_id = existing_record[0]
@@ -1934,7 +1873,7 @@ def add_arrow_to_setup(current_user, setup_id):
             cursor.execute('''
                 INSERT INTO setup_arrows 
                 (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes,
-                 nock_weight, insert_weight, wrap_weight)
+                 nock_weight, insert_weight, bushing_weight)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 setup_id,
@@ -1946,7 +1885,7 @@ def add_arrow_to_setup(current_user, setup_id):
                 data.get('notes'),
                 data.get('nock_weight', 10),
                 data.get('insert_weight', 0),
-                data.get('wrap_weight', 0)
+                data.get('bushing_weight', 0)
             ))
             arrow_association_id = cursor.lastrowid
         
@@ -1974,24 +1913,23 @@ def add_arrow_to_setup(current_user, setup_id):
         except Exception as e:
             print(f"Warning: Failed to log arrow addition: {e}")
         
-        # Get the created association with arrow details from unified database
-        cursor.execute('''
-            SELECT sa.*, a.manufacturer, a.model_name, a.material
-            FROM setup_arrows sa
-            LEFT JOIN arrows a ON sa.arrow_id = a.id
-            WHERE sa.id = ?
-        ''', (arrow_association_id,))
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
+        if arrow_conn:
+            arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.execute('''
+                SELECT manufacturer, model_name, material
+                FROM arrows WHERE id = ?
+            ''', (data['arrow_id'],))
+            arrow_data = arrow_cursor.fetchone()
+            arrow_conn.close()
+        else:
+            arrow_data = None
+        
+        # Get the created association
+        cursor.execute('SELECT * FROM setup_arrows WHERE id = ?', (arrow_association_id,))
         result = cursor.fetchone()
         conn.close()
-        
-        # Extract arrow data from unified query
-        arrow_data = None
-        if result and result['manufacturer']:
-            arrow_data = {
-                'manufacturer': result['manufacturer'],
-                'model_name': result['model_name'], 
-                'material': result['material']
-            }
         
         # Safely access result data (handle both tuple and dict)
         if hasattr(result, 'keys'):  # Dictionary-like (sqlite3.Row)
@@ -2127,11 +2065,10 @@ def get_setup_arrows(current_user, setup_id):
     """Get all arrows associated with a bow setup"""
     conn = None
     try:
-        # Get unified database connection
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        # Get user database connection
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify the bow setup belongs to the current user
@@ -2141,55 +2078,68 @@ def get_setup_arrows(current_user, setup_id):
         if not bow_setup:
             return jsonify({'error': 'Bow setup not found or access denied'}), 404
         
-        # Get all arrows for this setup with arrow details in single query (unified database)
+        # Get all arrows for this setup
         cursor.execute('''
-            SELECT sa.*, a.manufacturer, a.model_name, a.material, a.description,
-                   a.image_url, a.arrow_type
-            FROM setup_arrows sa
-            LEFT JOIN arrows a ON sa.arrow_id = a.id
-            WHERE sa.setup_id = ?
-            ORDER BY sa.created_at DESC
+            SELECT * FROM setup_arrows
+            WHERE setup_id = ?
+            ORDER BY created_at DESC
         ''', (setup_id,))
         
         rows = cursor.fetchall()
         print(f"🔍 [get_setup_arrows] Found {len(rows)} arrows for setup_id {setup_id}")
-        
-        # Get arrow details with spine specifications (unified database)
-        arrow_details = {}
         for i, row in enumerate(rows):
             if hasattr(row, 'keys'):
+                # sqlite3.Row objects have keys but not .get() method
                 created_at = row['created_at'] if 'created_at' in row.keys() else 'unknown'
                 print(f"  - Arrow {i+1}: ID={row['id']}, arrow_id={row['arrow_id']}, created_at={created_at}")
-            
-            arrow_id = row['arrow_id']
-            print(f"Looking for spine specs for arrow_id: {arrow_id}")  # Debug log
-            
-            # Get spine specifications for this arrow (same unified database)
-            cursor.execute('''
-                SELECT spine, outer_diameter, inner_diameter, gpi_weight, length_options
-                FROM spine_specifications WHERE arrow_id = ?
-                ORDER BY spine ASC
-            ''', (arrow_id,))
-            spine_specs = cursor.fetchall()
-            
-            # Build arrow details from unified database
-            if row['manufacturer']:  # Arrow data exists
-                arrow_details[arrow_id] = {
-                    'basic_info': {
-                        'manufacturer': row['manufacturer'],
-                        'model_name': row['model_name'],
-                        'material': row['material'],
-                        'description': row['description'],
-                        'image_url': row['image_url'],
-                        'arrow_type': row['arrow_type']
-                    },
-                    'spine_specifications': [dict(spec) for spec in spine_specs] if spine_specs else []
-                }
-                print(f"Found arrow data in unified DB: {row['manufacturer']} {row['model_name']}")
             else:
-                print(f"Warning: Arrow ID {arrow_id} not found in unified database")
-        
+                print(f"  - Arrow {i+1}: ID={row[0] if len(row) > 0 else 'unknown'}")
         conn.close()
+        
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
+        arrow_details = {}
+        if arrow_conn:
+            try:
+                arrow_cursor = arrow_conn.cursor()
+                for row in rows:
+                    print(f"Looking for arrow_id: {row['arrow_id']}")  # Debug log
+                    # Get basic arrow info
+                    arrow_cursor.execute('''
+                        SELECT manufacturer, model_name, material, description
+                        FROM arrows WHERE id = ?
+                    ''', (row['arrow_id'],))
+                    arrow_data = arrow_cursor.fetchone()
+                    
+                    if arrow_data:
+                        print(f"Found arrow data: {dict(arrow_data) if hasattr(arrow_data, 'keys') else arrow_data}")  # Debug log
+                    else:
+                        print(f"No arrow found for arrow_id: {row['arrow_id']}")  # Debug log
+                    
+                    # Get spine specifications for this arrow
+                    arrow_cursor.execute('''
+                        SELECT spine, outer_diameter, inner_diameter, gpi_weight, length_options
+                        FROM spine_specifications WHERE arrow_id = ?
+                        ORDER BY spine ASC
+                    ''', (row['arrow_id'],))
+                    spine_specs = arrow_cursor.fetchall()
+                    
+                    if arrow_data:
+                        arrow_details[row['arrow_id']] = {
+                            'basic_info': arrow_data,
+                            'spine_specifications': [dict(spec) for spec in spine_specs] if spine_specs else []
+                        }
+                    else:
+                        print(f"Warning: Arrow ID {row['arrow_id']} not found in arrow database")
+                arrow_conn.close()
+            except Exception as e:
+                print(f"Error fetching arrow details: {e}")
+                import traceback
+                traceback.print_exc()
+                if arrow_conn:
+                    arrow_conn.close()
+        else:
+            print("Warning: Arrow database connection failed - arrow details will not be available")
         
         arrows = []
         for row in rows:
@@ -2230,7 +2180,7 @@ def get_setup_arrows(current_user, setup_id):
                     }
                 
                 # Add component weights from setup_arrows table if available
-                for field in ['nock_weight', 'insert_weight', 'wrap_weight', 'fletching_weight']:
+                for field in ['nock_weight', 'insert_weight', 'bushing_weight', 'fletching_weight']:
                     if field in row and row[field] is not None:
                         arrow_info[field] = row[field]
                 
@@ -2307,11 +2257,9 @@ def remove_arrow_from_setup(current_user, arrow_setup_id):
     conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get the arrow setup to verify ownership
@@ -2369,11 +2317,9 @@ def calculate_setup_arrows_performance(current_user, setup_id):
     conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify the bow setup belongs to the current user
@@ -2383,48 +2329,47 @@ def calculate_setup_arrows_performance(current_user, setup_id):
         if not bow_setup:
             return jsonify({'error': 'Bow setup not found or access denied'}), 404
         
-        # Get all arrows in the setup with arrow details (unified database)
-        cursor.execute('''
-            SELECT sa.*, a.id as arrow_id, a.manufacturer, a.model_name, a.material, a.arrow_type
-            FROM setup_arrows sa
-            LEFT JOIN arrows a ON sa.arrow_id = a.id
-            WHERE sa.setup_id = ?
-        ''', (setup_id,))
+        # Get all arrows in the setup
+        cursor.execute("SELECT * FROM setup_arrows WHERE setup_id = ?", (setup_id,))
         setup_arrows = cursor.fetchall()
         
         if not setup_arrows:
             return jsonify({'message': 'No arrows found in setup', 'updated_arrows': []})
         
-        print(f"Successfully connected to unified database with {len(setup_arrows)} arrows")
+        # Get arrow database connection
+        arrow_conn = get_arrow_db()
+        if not arrow_conn:
+            print("ERROR: Could not connect to arrow database")
+            return jsonify({'error': 'Arrow database not available'}), 500
+        
+        print(f"Successfully connected to arrow database")
         
         updated_arrows = []
         
         for setup_arrow in setup_arrows:
             try:
-                arrow_id = setup_arrow['arrow_id']
-                print(f"Processing arrow_id {arrow_id}: {setup_arrow['manufacturer']} {setup_arrow['model_name']}")
+                # Get arrow details from arrow database
+                arrow_cursor = arrow_conn.cursor()
+                arrow_cursor.execute('''
+                    SELECT id, manufacturer, model_name, material, arrow_type
+                    FROM arrows WHERE id = ?
+                ''', (setup_arrow['arrow_id'],))
+                arrow_data = arrow_cursor.fetchone()
                 
-                if not setup_arrow['manufacturer']:
-                    print(f"Skipping arrow_id {arrow_id} - not found in unified database")
+                print(f"Arrow data query for arrow_id {setup_arrow['arrow_id']}: {dict(arrow_data) if arrow_data else 'Not found'}")
+                
+                if not arrow_data:
+                    print(f"Skipping arrow_id {setup_arrow['arrow_id']} - not found in arrow database")
                     continue
                 
-                # Get spine specifications from unified database
-                print(f"Querying spine specs for arrow_id: {arrow_id}")
-                cursor.execute('''
+                # Get spine specifications
+                print(f"Querying spine specs for arrow_id: {setup_arrow['arrow_id']}")
+                arrow_cursor.execute('''
                     SELECT spine, outer_diameter, inner_diameter, gpi_weight
                     FROM spine_specifications WHERE arrow_id = ?
                     ORDER BY spine ASC LIMIT 1
-                ''', (arrow_id,))
-                spine_data = cursor.fetchone()
-                
-                # Create arrow data from unified query results
-                arrow_data = {
-                    'id': arrow_id,
-                    'manufacturer': setup_arrow['manufacturer'],
-                    'model_name': setup_arrow['model_name'], 
-                    'material': setup_arrow['material'],
-                    'arrow_type': setup_arrow['arrow_type']
-                }
+                ''', (setup_arrow['arrow_id'],))
+                spine_data = arrow_cursor.fetchone()
                 
                 if spine_data:
                     print(f"Found spine data: {dict(spine_data)}")
@@ -2534,6 +2479,7 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                 print(f"Error calculating performance for arrow {setup_arrow['arrow_id']}: {arrow_error}")
                 continue
         
+        arrow_conn.close()
         conn.commit()
         conn.close()
         
@@ -2546,6 +2492,8 @@ def calculate_setup_arrows_performance(current_user, setup_id):
     except Exception as e:
         if conn:
             conn.close()
+        if 'arrow_conn' in locals() and arrow_conn:
+            arrow_conn.close()
         print(f"Error calculating setup arrows performance: {e}")
         return jsonify({'error': 'Failed to calculate performance'}), 500
 
@@ -2566,13 +2514,11 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        # Get the arrow setup with arrow details and verify ownership (unified database)
+        # Get the arrow setup and verify ownership
         cursor.execute('''
-            SELECT sa.*, bs.user_id, bs.draw_weight, bs.bow_type, bs.ibo_speed,
-                   a.id as arrow_id, a.manufacturer, a.model_name, a.material, a.arrow_type
+            SELECT sa.*, bs.user_id, bs.draw_weight, bs.bow_type, bs.ibo_speed
             FROM setup_arrows sa
             JOIN bow_setups bs ON sa.setup_id = bs.id
-            LEFT JOIN arrows a ON sa.arrow_id = a.id
             WHERE sa.id = ?
         ''', (setup_arrow_id,))
         setup_arrow = cursor.fetchone()
@@ -2583,26 +2529,30 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
         if setup_arrow['user_id'] != current_user['id']:
             return jsonify({'error': 'Access denied'}), 403
         
-        if not setup_arrow['manufacturer']:
-            return jsonify({'error': 'Arrow not found in unified database'}), 404
+        # Get arrow database connection
+        arrow_conn = get_arrow_db()
+        if not arrow_conn:
+            return jsonify({'error': 'Arrow database not available'}), 500
         
         try:
-            # Create arrow data from unified query results
-            arrow_data = {
-                'id': setup_arrow['arrow_id'],
-                'manufacturer': setup_arrow['manufacturer'],
-                'model_name': setup_arrow['model_name'],
-                'material': setup_arrow['material'],
-                'arrow_type': setup_arrow['arrow_type']
-            }
+            # Get arrow details from arrow database
+            arrow_cursor = arrow_conn.cursor()
+            arrow_cursor.execute('''
+                SELECT id, manufacturer, model_name, material, arrow_type
+                FROM arrows WHERE id = ?
+            ''', (setup_arrow['arrow_id'],))
+            arrow_data = arrow_cursor.fetchone()
             
-            # Get spine specifications from unified database
-            cursor.execute('''
+            if not arrow_data:
+                return jsonify({'error': 'Arrow not found in database'}), 404
+            
+            # Get spine specifications
+            arrow_cursor.execute('''
                 SELECT spine, outer_diameter, inner_diameter, gpi_weight
                 FROM spine_specifications WHERE arrow_id = ?
                 ORDER BY spine ASC LIMIT 1
             ''', (setup_arrow['arrow_id'],))
-            spine_data = cursor.fetchone()
+            spine_data = arrow_cursor.fetchone()
             
             # Create mock objects for performance calculation
             class MockArrowRec:
@@ -2710,7 +2660,7 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
             })
             
         finally:
-            pass  # No separate arrow connection to close in unified database
+            arrow_conn.close()
             
     except Exception as e:
         if conn:
@@ -2730,11 +2680,9 @@ def update_bow_setup_arrow(current_user, setup_id, arrow_id):
         data = request.get_json()
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Find the arrow setup record
@@ -2789,7 +2737,7 @@ def update_arrow_in_setup_internal(arrow_setup_id, data, conn, user_id=None):
         'notes': data.get('notes', arrow_setup_dict['notes']),
         'nock_weight': data.get('nock_weight', arrow_setup_dict.get('nock_weight', 10)),
         'insert_weight': data.get('insert_weight', arrow_setup_dict.get('insert_weight', 0)),
-        'wrap_weight': data.get('wrap_weight', arrow_setup_dict.get('wrap_weight', 0)),
+        'bushing_weight': data.get('bushing_weight', arrow_setup_dict.get('bushing_weight', 0)),
         'compatibility_score': data.get('compatibility_score', arrow_setup_dict.get('compatibility_score'))
     }
     
@@ -2797,7 +2745,7 @@ def update_arrow_in_setup_internal(arrow_setup_id, data, conn, user_id=None):
     cursor.execute('''
         UPDATE setup_arrows 
         SET arrow_length = ?, point_weight = ?, calculated_spine = ?, notes = ?,
-            nock_weight = ?, insert_weight = ?, wrap_weight = ?, compatibility_score = ?
+            nock_weight = ?, insert_weight = ?, bushing_weight = ?, compatibility_score = ?
         WHERE id = ?
     ''', (
         new_data['arrow_length'],
@@ -2806,7 +2754,7 @@ def update_arrow_in_setup_internal(arrow_setup_id, data, conn, user_id=None):
         new_data['notes'],
         new_data['nock_weight'],
         new_data['insert_weight'],
-        new_data['wrap_weight'],
+        new_data['bushing_weight'],
         new_data['compatibility_score'],
         arrow_setup_id
     ))
@@ -2869,11 +2817,9 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
         data = request.get_json()
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get the arrow setup to verify ownership
@@ -2907,13 +2853,12 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
 def get_setup_arrow_details(current_user, setup_arrow_id):
     """Get comprehensive details for a specific arrow setup including arrow data, setup configuration, and performance"""
     conn = None
+    arrow_conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get the arrow setup with bow setup context
@@ -2936,28 +2881,31 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
         # Convert to dict for easier access
         setup_dict = dict(setup_arrow)
         
-        # Get arrow details and spine specifications from unified database
+        # Get arrow details from arrow database
+        arrow_conn = get_arrow_db()
         arrow_data = None
         spine_specifications = []
         
-        print(f"[setup_arrow_details] Arrow ID: {setup_dict['arrow_id']}")  # Debug
+        print(f"[setup_arrow_details] Arrow ID: {setup_dict['arrow_id']}, Connection: {'OK' if arrow_conn else 'FAILED'}")  # Debug
         
-        if setup_dict['arrow_id']:
+        if arrow_conn and setup_dict['arrow_id']:
             try:
-                # Get comprehensive arrow information from unified database
-                cursor.execute('''
+                arrow_cursor = arrow_conn.cursor()
+                
+                # Get comprehensive arrow information
+                arrow_cursor.execute('''
                     SELECT id, manufacturer, model_name, material, description, 
                            arrow_type, carbon_content, image_url, source_url
                     FROM arrows WHERE id = ?
                 ''', (setup_dict['arrow_id'],))
-                arrow_result = cursor.fetchone()
+                arrow_data = arrow_cursor.fetchone()
                 
-                if arrow_result:
-                    arrow_data = dict(arrow_result)
+                if arrow_data:
+                    arrow_data = dict(arrow_data)
                     print(f"[setup_arrow_details] Arrow data found: {arrow_data.get('manufacturer')} {arrow_data.get('model_name')}")  # Debug
                     
-                    # Get spine specifications from unified database
-                    cursor.execute('''
+                    # Get spine specifications
+                    arrow_cursor.execute('''
                         SELECT id, spine, outer_diameter, inner_diameter, gpi_weight, 
                                length_options, wall_thickness, insert_weight_range, 
                                nock_size, notes, straightness_tolerance, weight_tolerance
@@ -2965,13 +2913,16 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
                         WHERE arrow_id = ?
                         ORDER BY spine ASC
                     ''', (setup_dict['arrow_id'],))
-                    spine_specs = cursor.fetchall()
+                    spine_specs = arrow_cursor.fetchall()
                     spine_specifications = [dict(spec) for spec in spine_specs] if spine_specs else []
                 else:
-                    print(f"[setup_arrow_details] Arrow ID {setup_dict['arrow_id']} NOT FOUND in unified database")  # Debug
+                    print(f"[setup_arrow_details] Arrow ID {setup_dict['arrow_id']} NOT FOUND in arrow database")  # Debug
                     
+                arrow_conn.close()
             except Exception as e:
-                print(f"Error fetching arrow details from unified database: {e}")
+                print(f"Error fetching arrow details: {e}")
+                if arrow_conn:
+                    arrow_conn.close()
         
         # Get performance data if available
         performance_data = None
@@ -2997,7 +2948,7 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
                 # Component weights
                 'nock_weight': setup_dict.get('nock_weight', 10),
                 'insert_weight': setup_dict.get('insert_weight', 0),
-                'wrap_weight': setup_dict.get('wrap_weight', 0),
+                'bushing_weight': setup_dict.get('bushing_weight', 0),
                 'fletching_weight': setup_dict.get('fletching_weight', 15),
                 # Performance data
                 'performance': performance_data
@@ -3020,6 +2971,8 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
     except Exception as e:
         if conn:
             conn.close()
+        if arrow_conn:
+            arrow_conn.close()
         print(f"Error in get_setup_arrow_details: {e}")
         import traceback
         traceback.print_exc()
@@ -3414,9 +3367,10 @@ def admin_required(f):
     
     @wraps(f)
     def decorated_function(current_user, *args, **kwargs):
-        # Using unified database - ArrowDatabase
-        # Check admin status from current_user data
-        if not current_user.get('is_admin', False):
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        
+        if not user_db.is_user_admin(current_user['id']):
             return jsonify({'error': 'Admin access required'}), 403
         
         return f(current_user, *args, **kwargs)
@@ -3429,11 +3383,10 @@ def admin_required(f):
 def get_all_users_admin(current_user):
     """Get all users (admin only)"""
     try:
-        # Using unified database - ArrowDatabase
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         
-        users = db.get_all_users()
+        users = user_db.get_all_users()
         
         return jsonify({
             'users': users,
@@ -3449,17 +3402,13 @@ def get_all_users_admin(current_user):
 def set_user_admin_status(current_user, user_id):
     """Set admin status for a user (admin only)"""
     try:
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         
         data = request.get_json()
         is_admin = data.get('is_admin', False)
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
         
-        success = db.set_admin_status(user_id, is_admin)
+        success = user_db.set_admin_status(user_id, is_admin)
         
         if success:
             return jsonify({
@@ -3478,12 +3427,10 @@ def set_user_admin_status(current_user, user_id):
 def check_admin_status(current_user):
     """Check if current user has admin access"""
     try:
-        # Using unified database for user operations
-        from arrow_database import ArrowDatabase
-        db = ArrowDatabase()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
         
-        # Check admin status directly from user data
-        is_admin = current_user.get('is_admin', False)
+        is_admin = user_db.is_user_admin(current_user['id'])
         
         return jsonify({
             'is_admin': is_admin,
@@ -3521,8 +3468,6 @@ def get_all_arrows_admin(current_user):
         manufacturer = request.args.get('manufacturer', '')
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         
         # Build query conditions
         conditions = []
@@ -3596,8 +3541,6 @@ def get_arrow_admin(current_user, arrow_id):
     """Get detailed arrow information for admin editing"""
     try:
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         
         # Get arrow details with spine specifications
         query = """
@@ -3649,8 +3592,6 @@ def update_arrow_admin(current_user, arrow_id):
             return jsonify({'error': 'No data provided'}), 400
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if arrow exists
@@ -3745,8 +3686,6 @@ def delete_arrow_admin(current_user, arrow_id):
     """Delete arrow (admin only)"""
     try:
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if arrow exists
@@ -3796,8 +3735,6 @@ def create_arrow_admin(current_user):
             return jsonify({'error': 'At least one spine specification is required'}), 400
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Insert arrow - only include fields that exist in arrows table
@@ -3871,8 +3808,6 @@ def get_manufacturers_admin(current_user):
     """Get all manufacturers with statistics (admin only)"""
     try:
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Get manufacturers with arrow and equipment counts
@@ -3973,8 +3908,6 @@ def update_manufacturer_admin(current_user, manufacturer_id):
             return jsonify({'error': 'Request data is required'}), 400
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer exists
@@ -4059,8 +3992,6 @@ def delete_manufacturer_admin(current_user, manufacturer_id):
     """Delete manufacturer and all associated data (admin only)"""
     try:
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer exists and get statistics
@@ -4136,8 +4067,6 @@ def create_manufacturer_admin(current_user):
             return jsonify({'error': 'Manufacturer name cannot be empty'}), 400
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer already exists (case insensitive)
@@ -4212,8 +4141,6 @@ def get_manufacturer_equipment_categories(current_user, manufacturer_id):
     """Get equipment categories for a manufacturer (admin only)"""
     try:
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer exists
@@ -4260,8 +4187,6 @@ def update_manufacturer_equipment_categories(current_user, manufacturer_id):
             return jsonify({'error': 'Categories data is required'}), 400
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         # Check if manufacturer exists
@@ -4429,8 +4354,6 @@ def search_equipment():
         keywords = request.args.get('keywords', '')
         
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         cursor = db.get_connection().cursor()
         
         query = '''
@@ -4484,8 +4407,6 @@ def get_equipment_form_schema(category):
     try:
         # Use get_database() to get the correct arrow database connection
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         conn = db.get_connection()
         cursor = conn.cursor()
         
@@ -4560,8 +4481,6 @@ def suggest_equipment_manufacturers():
         
         # Use get_database() to get the correct arrow database connection
         db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
         conn = db.get_connection()
         cursor = conn.cursor()
         
@@ -4582,11 +4501,9 @@ def suggest_equipment_manufacturers():
         pending_manufacturers = []
         if current_user:
             try:
-                # Using consolidated database - ArrowDatabase
-                db = get_database()
-                if not db:
-                    return jsonify({"error": "Database not available"}), 500
-                user_conn = db.get_connection()
+                from user_database import UserDatabase
+                user_db = UserDatabase()
+                user_conn = user_db.get_connection()
                 user_cursor = user_conn.cursor()
                 
                 # Get user's pending manufacturers (including those they didn't create)
@@ -4658,8 +4575,6 @@ def suggest_equipment_manufacturers():
         # Fallback to basic suggestions if smart matching fails
         try:
             db = get_database()
-            if not db:
-                return jsonify({"error": "Database not available"}), 500
             conn = db.get_connection()
             cursor = conn.cursor()
             
@@ -4846,11 +4761,9 @@ def get_equipment_usage_analytics(current_user):
 def get_bow_equipment(current_user, setup_id):
     """Get all equipment for a bow setup (supports both custom and pre-chosen equipment)"""
     try:
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify the setup belongs to the current user
@@ -4904,10 +4817,6 @@ def get_bow_equipment(current_user, setup_id):
                 if equipment_item.get('equipment_id'):
                     try:
                         arrow_db = get_database()
-                        if not db:
-                            return jsonify({"error": "Database not available"}), 500
-                        if not arrow_db:
-                            return jsonify({"error": "Database not available"}), 500
                         arrow_cursor = arrow_db.get_connection().cursor()
                         
                         arrow_cursor.execute('''
@@ -4965,11 +4874,9 @@ def add_bow_equipment(current_user, setup_id):
             if not data.get(field):
                 return jsonify({'error': f'{field} is required'}), 400
         
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify the setup belongs to the current user
@@ -5000,10 +4907,14 @@ def add_bow_equipment(current_user, setup_id):
         linked_manufacturer_name = data['manufacturer_name']  # Always preserve user input
         
         try:
-            # Check for exact manufacturer match in unified database
-            cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
-                         (data['manufacturer_name'],))
-            exact_match = cursor.fetchone()
+            arrow_db = ArrowDatabase()
+            arrow_conn = arrow_db.get_connection()
+            arrow_cursor = arrow_conn.cursor()
+            
+            # Check for exact manufacturer match first
+            arrow_cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
+                               (data['manufacturer_name'],))
+            exact_match = arrow_cursor.fetchone()
             
             if exact_match:
                 # Exact match found - use existing manufacturer
@@ -5013,6 +4924,8 @@ def add_bow_equipment(current_user, setup_id):
                 # No exact match - this will become a pending manufacturer
                 # Preserve the user's exact input without any smart matching alterations
                 print(f"📝 New manufacturer: '{data['manufacturer_name']}' - will be saved as pending")
+            
+            arrow_conn.close()
         except Exception as e:
             print(f"Warning: Manufacturer lookup failed: {e}")
             manufacturer_id = None
@@ -5092,14 +5005,12 @@ def update_bow_equipment(current_user, setup_id, equipment_id):
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         from change_log_service import ChangeLogService
         
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
+        user_db = UserDatabase()
         change_service = ChangeLogService()
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get current equipment data for change logging
@@ -5218,14 +5129,12 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
     """Soft delete equipment from a bow setup with enhanced tracking"""
     conn = None
     try:
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         from change_log_service import ChangeLogService
         
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
+        user_db = UserDatabase()
         change_service = ChangeLogService()
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         
         if not conn:
             return jsonify({'error': 'Database connection failed'}), 500
@@ -5346,14 +5255,12 @@ def remove_bow_equipment(current_user, setup_id, equipment_id):
 def restore_bow_equipment(current_user, setup_id, equipment_id):
     """Restore previously deleted equipment to a bow setup"""
     try:
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         from change_log_service import ChangeLogService
         
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
+        user_db = UserDatabase()
         change_service = ChangeLogService()
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get deleted equipment details
@@ -5413,12 +5320,10 @@ def restore_bow_equipment(current_user, setup_id, equipment_id):
 def get_deleted_equipment(current_user, setup_id):
     """Get list of deleted equipment for a bow setup that can be restored"""
     try:
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify setup belongs to user
@@ -5627,11 +5532,9 @@ def start_guide_session(current_user):
             return jsonify({'error': 'Guide name and type are required'}), 400
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify bow setup belongs to user if provided
@@ -5680,11 +5583,9 @@ def record_guide_step(current_user, session_id):
             return jsonify({'error': 'Step number and name are required'}), 400
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify session belongs to user
@@ -5725,11 +5626,9 @@ def complete_guide_session(current_user, session_id):
         notes = data.get('notes', '')
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify session belongs to user
@@ -5765,11 +5664,9 @@ def pause_guide_session(current_user, session_id):
         notes = data.get('notes', '')
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify session belongs to user and is in progress
@@ -5806,11 +5703,9 @@ def resume_guide_session(current_user, session_id):
     conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify session belongs to user and is paused
@@ -5847,11 +5742,9 @@ def get_guide_sessions(current_user):
     conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get sessions with bow setup info
@@ -6001,11 +5894,9 @@ def get_guide_session_details(current_user, session_id):
     conn = None
     try:
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Get session info
@@ -6062,11 +5953,9 @@ def record_tuning_adjustment(current_user):
             return jsonify({'error': 'Adjustment type is required'}), 400
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Verify bow setup belongs to user if provided
@@ -6106,11 +5995,9 @@ def get_tuning_history(current_user):
         limit = request.args.get('limit', 50)
         
         # Get user database connection
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         # Build query
@@ -6433,15 +6320,12 @@ def upload_image(current_user):
             
             # Update user profile picture if this is a profile upload
             if upload_path == 'profile':
-                # Using consolidated database
-                from arrow_database import ArrowDatabase
-                db = ArrowDatabase()
-                success = db.update_user(
+                from user_database import UserDatabase
+                user_db = UserDatabase()
+                updated_user = user_db.update_user_profile(
                     current_user['id'], 
                     profile_picture_url=result['cdn_url']
                 )
-                if success:
-                    updated_user = db.get_user_by_id(current_user['id'])
                 
                 if not updated_user:
                     print(f"Warning: Failed to update user profile picture URL in database")
@@ -6587,11 +6471,9 @@ def create_backup(current_user):
         backup_size = os.path.getsize(local_backup_path) / (1024 * 1024)  # MB
         
         # Store backup metadata in user database
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -6768,11 +6650,9 @@ def get_legacy_bunny_cdn_backups():
 
 def get_database_cdn_backups():
     """Fallback: Get CDN backups from database metadata"""
-    # Using unified database - ArrowDatabase
-    db = get_database()
-    if not db:
-        return jsonify({"error": "Database not available"}), 500
-    conn = db.get_connection()
+    from user_database import UserDatabase
+    user_db = UserDatabase()
+    conn = user_db.get_connection()
     cursor = conn.cursor()
     
     try:
@@ -6909,11 +6789,9 @@ def restore_backup_from_cdn(current_user, backup_id):
         restore_user_db = False  # Not applicable with unified architecture
         
         # Get backup metadata from database
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
@@ -6963,11 +6841,9 @@ def restore_backup_from_cdn(current_user, backup_id):
             os.remove(backup_file_path)
         
         # Record restore activity
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -7001,11 +6877,9 @@ def restore_backup_from_cdn(current_user, backup_id):
 def download_backup(current_user, backup_id):
     """Get download URL for backup"""
     try:
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
@@ -7243,11 +7117,9 @@ def delete_cdn_backup(backup_id):
 def delete_database_backup(backup_id):
     """Delete database backup record (legacy)"""
     try:
-        # Using unified database - ArrowDatabase
-        db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        from user_database import UserDatabase
+        user_db = UserDatabase()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT * FROM backup_metadata WHERE id = ?', (backup_id,))
@@ -7292,7 +7164,7 @@ def upload_backup_file(current_user):
     """Upload and restore from unified backup file"""
     try:
         from backup_manager import BackupManager
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         from werkzeug.utils import secure_filename
         import tempfile
         import uuid
@@ -7363,11 +7235,9 @@ def upload_backup_file(current_user):
         
         # Record the restore operation in the database
         try:
-            # Using unified database - ArrowDatabase
-            db = get_database()
-            if not db:
-                return jsonify({"error": "Database not available"}), 500
-            conn = db.get_connection()
+            from user_database import UserDatabase
+            user_db = UserDatabase()
+            conn = user_db.get_connection()
             cursor = conn.cursor()
             
             # Insert restore record
@@ -7417,46 +7287,53 @@ def get_system_info(current_user):
         import platform
         import psutil
         from arrow_database import ArrowDatabase
-        # Using unified database - ArrowDatabase
+        from user_database import UserDatabase
         
         # Get database information
         arrow_db = ArrowDatabase()
         arrow_db_path = str(arrow_db.db_path)
         
-        # Since we're using unified database, user data is in the same database
-        user_db_path = arrow_db_path
+        user_db = UserDatabase()
+        user_db_path = str(user_db.db_path)
         
-        # Get unified database statistics (all data in one database now)
-        conn = arrow_db.get_connection()
-        cursor = conn.cursor()
+        # Get arrow database statistics
+        arrow_conn = arrow_db.get_connection()
+        arrow_cursor = arrow_conn.cursor()
         
         # Count arrows and manufacturers
-        cursor.execute("SELECT COUNT(*) FROM arrows")
-        arrow_count = cursor.fetchone()[0]
+        arrow_cursor.execute("SELECT COUNT(*) FROM arrows")
+        arrow_count = arrow_cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(DISTINCT manufacturer) FROM arrows")
-        manufacturer_count = cursor.fetchone()[0]
+        arrow_cursor.execute("SELECT COUNT(DISTINCT manufacturer) FROM arrows")
+        manufacturer_count = arrow_cursor.fetchone()[0]
         
         # Count spine specifications
-        cursor.execute("SELECT COUNT(*) FROM spine_specifications")
-        spine_spec_count = cursor.fetchone()[0]
+        arrow_cursor.execute("SELECT COUNT(*) FROM spine_specifications")
+        spine_spec_count = arrow_cursor.fetchone()[0]
         
-        # Count user data (now in unified database)
-        cursor.execute("SELECT COUNT(*) FROM users")
-        user_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM bow_setups")
-        bow_setup_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM setup_arrows")
-        setup_arrow_count = cursor.fetchone()[0]
-        
-        # Get unified database file size
+        # Get database file size
         import os
         arrow_db_size = os.path.getsize(arrow_db_path) if os.path.exists(arrow_db_path) else 0
-        user_db_size = arrow_db_size  # Same database now
         
-        conn.close()
+        arrow_conn.close()
+        
+        # Get user database statistics
+        user_conn = user_db.get_connection()
+        user_cursor = user_conn.cursor()
+        
+        user_cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = user_cursor.fetchone()[0]
+        
+        user_cursor.execute("SELECT COUNT(*) FROM bow_setups")
+        bow_setup_count = user_cursor.fetchone()[0]
+        
+        user_cursor.execute("SELECT COUNT(*) FROM setup_arrows")
+        setup_arrow_count = user_cursor.fetchone()[0]
+        
+        # Get user database file size
+        user_db_size = os.path.getsize(user_db_path) if os.path.exists(user_db_path) else 0
+        
+        user_conn.close()
         
         # Get system information
         memory = psutil.virtual_memory()
@@ -8923,8 +8800,6 @@ def get_migration_status(current_user):
         
         # Get database paths with unified architecture support
         arrow_db = get_database()
-        if not arrow_db:
-            return jsonify({"error": "Database not available"}), 500
         # With unified architecture, user data is in the same database
         user_db = arrow_db
         
@@ -9701,9 +9576,7 @@ def get_global_change_log(current_user):
         
         # Get all user's bow setups
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT id, name FROM bow_setups WHERE user_id = ?', (current_user['id'],))
@@ -9786,9 +9659,7 @@ def get_global_statistics(current_user):
         
         # Get all user's bow setups
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT id FROM bow_setups WHERE user_id = ?', (current_user['id'],))
@@ -10063,9 +9934,7 @@ def estimate_arrow_speed():
         if setup_id and arrow_id:
             try:
                 user_db = get_database()
-                if not db:
-                    return jsonify({"error": "Database not available"}), 500
-                cursor = db.get_connection().cursor()
+                cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
                     SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
@@ -10308,9 +10177,7 @@ def create_chronograph_data(current_user):
         
         # Get user database
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Insert chronograph data
         cursor.execute('''
@@ -10329,7 +10196,7 @@ def create_chronograph_data(current_user):
         ))
         
         chronograph_id = cursor.lastrowid
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         # Return the created data
         cursor.execute('SELECT * FROM chronograph_data WHERE id = ?', (chronograph_id,))
@@ -10364,9 +10231,7 @@ def get_chronograph_data_for_setup(current_user, setup_id):
     """Get all chronograph data for a specific bow setup"""
     try:
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Get chronograph data with arrow information
         cursor.execute('''
@@ -10422,9 +10287,7 @@ def update_chronograph_data(current_user, data_id):
         data = request.get_json()
         
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Update chronograph data
         cursor.execute('''
@@ -10442,7 +10305,7 @@ def update_chronograph_data(current_user, data_id):
             data.get('notes', ''), data_id
         ))
         
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         if cursor.rowcount == 0:
             return jsonify({'error': 'Chronograph data not found'}), 404
@@ -10459,12 +10322,10 @@ def delete_chronograph_data(current_user, data_id):
     """Delete chronograph data entry"""
     try:
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         cursor.execute('DELETE FROM chronograph_data WHERE id = ?', (data_id,))
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         if cursor.rowcount == 0:
             return jsonify({'error': 'Chronograph data not found'}), 404
@@ -10487,9 +10348,7 @@ def estimate_speed_from_chronograph(current_user, arrow_id):
             return jsonify({'error': 'target_weight is required'}), 400
         
         user_db = get_database()
-        if not db:
-            return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Find chronograph data for this arrow or similar setup
         cursor.execute('''

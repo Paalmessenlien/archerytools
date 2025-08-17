@@ -930,6 +930,6 @@ useHead({
 
 // Protect this page with authentication
 definePageMeta({
-  middleware: ['auth-check']
+  // No authentication required - public guide
 })
 </script>

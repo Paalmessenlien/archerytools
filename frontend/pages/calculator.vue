@@ -117,14 +117,12 @@
                 min="20"
                 max="80"
                 step="0.5"
-                :value="bowConfig.draw_weight"
-                @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
+                v-model="localDrawWeight"
                 class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
               />
               <input
                 type="number"
-                :value="bowConfig.draw_weight"
-                @input="updateBowConfig({ draw_weight: parseFloat($event.target.value) })"
+                v-model="localDrawWeight"
                 min="20"
                 max="80"
                 step="0.5"
@@ -178,14 +176,12 @@
                 min="24"
                 max="34"
                 step="0.5"
-                :value="bowConfig.arrow_length || 29"
-                @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
+                v-model="localArrowLength"
                 class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
               />
               <input
                 type="number"
-                :value="bowConfig.arrow_length || 29"
-                @input="updateBowConfig({ arrow_length: parseFloat($event.target.value) })"
+                v-model="localArrowLength"
                 min="24"
                 max="34"
                 step="0.5"
@@ -209,14 +205,12 @@
                 min="40"
                 max="300"
                 step="5"
-                :value="bowConfig.point_weight || 125"
-                @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
+                v-model="localPointWeight"
                 class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
               />
               <input
                 type="number"
-                :value="bowConfig.point_weight || 125"
-                @input="updateBowConfig({ point_weight: parseFloat($event.target.value) })"
+                v-model="localPointWeight"
                 min="40"
                 max="300"
                 step="5"
@@ -945,8 +939,25 @@ const hasMatchDistribution = computed(() => {
   return matchDistribution.value.total > 0
 })
 
-// Store actions
+// Store actions  
 const { updateBowConfig } = bowConfigStore
+
+// Create local reactive values that sync with readonly store values
+// This prevents Material Web components from trying to modify readonly refs
+const localDrawWeight = computed({
+  get: () => bowConfig.draw_weight,
+  set: (value) => updateBowConfig({ draw_weight: value })
+})
+
+const localArrowLength = computed({
+  get: () => bowConfig.arrow_length || 29,
+  set: (value) => updateBowConfig({ arrow_length: value })
+})
+
+const localPointWeight = computed({
+  get: () => bowConfig.point_weight || 125,
+  set: (value) => updateBowConfig({ point_weight: value })
+})
 
 // UI state
 const showComponents = ref(false)
@@ -1421,9 +1432,9 @@ useHead({
   ]
 })
 
-// Protect this page with authentication
+// No authentication required for calculator - publicly accessible
 definePageMeta({
-  middleware: ['auth-check']
+  // No middleware needed - public page
 })
 </script>
 

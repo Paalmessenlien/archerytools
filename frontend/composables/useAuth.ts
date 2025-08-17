@@ -2,12 +2,23 @@
 import { ref } from 'vue';
 
 // Global state - shared across all useAuth() calls
-const token = ref(process.client ? localStorage.getItem('token') : null);
+// Initialize as null to avoid hydration mismatches, load from localStorage on client only
+const token = ref(null);
 const user = ref(null);
 let googleAuthClient = null; // Singleton for the Google Auth client
 
 export const useAuth = () => {
   const config = useRuntimeConfig();
+
+  // Initialize token from localStorage only on client, avoid SSR hydration issues
+  const initializeClientAuth = () => {
+    if (process.client && !token.value) {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        token.value = storedToken;
+      }
+    }
+  };
 
   const initializeGoogleAuth = () => {
     if (googleAuthClient || !process.client) {
@@ -421,6 +432,7 @@ export const useAuth = () => {
   return {
     token,
     user,
+    initializeClientAuth,
     initializeGoogleAuth,
     loginWithGoogle,
     logout,

@@ -24,6 +24,7 @@ services:
       - STARTUP_TIMEOUT=60
       - FORCE_DATABASE_IMPORT=true  # Enable database import in dev
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db  # Use unified database path
+      - USER_DATABASE_PATH=/app/databases/user_data.db       # Use unified user database path
       # CDN Configuration for backup system
       - CDN_TYPE=${CDN_TYPE:-bunnycdn}
       - BUNNY_STORAGE_ZONE=${BUNNY_STORAGE_ZONE:-not-set}

@@ -138,6 +138,7 @@ start_api() {
     
     # NEW UNIFIED DATABASE ARCHITECTURE (August 2025)
     export ARROW_DATABASE_PATH="$(pwd)/databases/arrow_database.db"
+    export USER_DATABASE_PATH="$(pwd)/databases/user_data.db"
     
     # Ensure spine calculation data migration
     ensure_spine_data_migration

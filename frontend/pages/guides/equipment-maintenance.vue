@@ -697,7 +697,7 @@ useHead({
 
 // Middleware for authentication
 definePageMeta({
-  middleware: 'auth-check'
+  // No authentication required - public guide
 })
 
 // Smooth scroll for anchor links

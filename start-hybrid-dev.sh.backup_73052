@@ -133,6 +133,7 @@ initialize_databases() {
             
             echo '📋 Copying databases with proper permissions...'
             cp /app/databases_source/arrow_database.db /app/databases/arrow_database.db 2>/dev/null && echo '✅ arrow_database.db copied' || echo '⚠️ Failed to copy arrow_database.db'
+            cp /app/databases_source/user_data.db /app/databases/user_data.db 2>/dev/null && echo '✅ user_data.db copied' || echo '⚠️ Failed to copy user_data.db'
             
             echo '🔧 Setting permissions...'
             chmod 644 /app/databases/*.db 2>/dev/null || true

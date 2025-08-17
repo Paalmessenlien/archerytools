@@ -1008,7 +1008,7 @@ useHead({
 
 // Protect this page with authentication
 definePageMeta({
-  middleware: ['auth-check']
+  // No authentication required - public guide
 })
 
 // Smooth scrolling for table of contents links
