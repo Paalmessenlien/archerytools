@@ -19,7 +19,6 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     vane_length: 4,
     number_of_vanes: 3,
     // Arrow component weights with defaults set to 0 unless picked
-    insert_weight: 0,       // Grains - no insert by default
     vane_weight_per: 5,     // Grains per vane - typical plastic vane
     vane_weight_override: false, // Boolean - whether to use manual vane weight
     bushing_weight: 0,      // Grains - no bushing by default
@@ -76,7 +75,6 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       vane_length: 4,
       number_of_vanes: 3,
       // Arrow component weights with defaults set to 0 unless picked
-      insert_weight: 0,       // Grains - no insert by default
       vane_weight_per: 5,     // Grains per vane - typical plastic vane
       vane_weight_override: false, // Boolean - whether to use manual vane weight
       bushing_weight: 0,      // Grains - no bushing by default

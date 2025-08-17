@@ -398,7 +398,6 @@ const setupData = ref({
   compound_brand: '',
   compound_model: '',
   bow_usage: [],
-  insert_weight: null, // Optional insert weight
   // Additional fields for proper API compatibility
   brand: '', // For compound bow brand selection
   custom_brand: '',
@@ -453,7 +452,6 @@ watch(() => props.modelValue, (newValue) => {
       // Ensure proper data types and defaults
       bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : [],
       draw_weight: newValue.draw_weight || 45, // Ensure draw weight is set
-      insert_weight: newValue.insert_weight || null
     };
   }
 }, { immediate: true });
@@ -502,7 +500,6 @@ const saveBowSetup = () => {
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
-    insert_weight: Number(setupData.value.insert_weight) || null,
     description: setupData.value.description || '',
     bow_usage: JSON.stringify(setupData.value.bow_usage || []),
     

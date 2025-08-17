@@ -46,6 +46,13 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
   - **Accessibility Features**: Focus-visible outlines, screen reader support, and enhanced semantic markup for inclusive design
   - **Performance Optimizations**: Hardware-accelerated transitions, efficient CSS animations, and optimized component rendering
   - **CSS Architecture**: Comprehensive styling system with glassmorphism effects, custom scrollbars, and Material Design color integration
+- ✅ **Insert Weight Field Cleanup & OAuth Authentication Fix (August 2025)**: Resolution of form field cleanup and authentication system repair
+  - **Insert Weight Removal**: Eliminated insert_weight from bow setup forms (belongs to arrow components, not bow configuration)
+  - **Form Cleanup**: Updated AddBowSetupModal.vue, BowSetupSettings.vue, and bowConfig.ts store to remove unnecessary field
+  - **OAuth Authentication Repair**: Fixed Google OAuth 401 UNAUTHORIZED error caused by incomplete database consolidation
+  - **Database Schema Fix**: Added missing columns (is_admin, draw_length, skill_level, etc.) to users table after migration 023
+  - **Admin Privileges**: Ensured automatic admin access for messenlien@gmail.com on authentication
+  - **Migration Compatibility**: Verified unified database architecture works with production deployment via start-unified.sh
 - ✅ **Equipment Addition Database Schema Fix (August 2025)**: Complete resolution of 500 Internal Server Error preventing custom equipment addition
   - **Database Schema Fix**: Made equipment_id nullable in bow_equipment table to support custom equipment entries
   - **Migration 018**: Automatic database migration handling unified_change_history view dependency and data preservation
