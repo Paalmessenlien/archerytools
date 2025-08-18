@@ -818,6 +818,8 @@ const recommendedSpine = computed(() => bowConfigStore.recommendedSpine)
 const arrowSetupDescription = computed(() => bowConfigStore.arrowSetupDescription)
 
 // Enhanced performance analysis state
+const enhancedSpineResult = ref(null)
+const isCalculatingEnhancedSpine = ref(false)
 const enhancedFocResult = ref(null)
 const isCalculatingFoc = ref(false)
 const ballisticsResult = ref(null)
