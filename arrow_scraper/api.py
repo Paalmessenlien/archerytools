@@ -10371,8 +10371,14 @@ def get_chronograph_data_for_setup(current_user, setup_id):
         
         # Get chronograph data with arrow information
         cursor.execute('''
-            SELECT cd.*, sa.arrow_length, sa.point_weight, sa.calculated_spine,
-                   a.manufacturer, a.model_name
+            SELECT cd.id, cd.setup_id, cd.arrow_id, cd.setup_arrow_id, 
+                   cd.measured_speed_fps, cd.arrow_weight_grains, cd.temperature_f, 
+                   cd.humidity_percent, cd.measurement_date, cd.chronograph_model, 
+                   cd.shot_count, cd.std_deviation, cd.min_speed_fps, cd.max_speed_fps, 
+                   cd.verified, cd.notes, cd.created_at, cd.updated_at,
+                   sa.arrow_length, sa.point_weight, sa.calculated_spine,
+                   COALESCE(a.manufacturer, 'Unknown') as manufacturer, 
+                   COALESCE(a.model_name, 'Arrow') as model_name
             FROM chronograph_data cd
             LEFT JOIN setup_arrows sa ON cd.setup_arrow_id = sa.id
             LEFT JOIN arrows a ON cd.arrow_id = a.id
@@ -10384,29 +10390,31 @@ def get_chronograph_data_for_setup(current_user, setup_id):
         chronograph_data = []
         
         for row in rows:
-            arrow_name = f"{row[21]} {row[22]}" if row[21] and row[22] else "Unknown Arrow"
+            # Use dict access for better safety and readability
+            row_dict = dict(row)
+            arrow_name = f"{row_dict.get('manufacturer', 'Unknown')} {row_dict.get('model_name', 'Arrow')}"
             
             chronograph_data.append({
-                'id': row[0],
-                'setup_id': row[1],
-                'arrow_id': row[2],
-                'setup_arrow_id': row[3],
-                'measured_speed_fps': row[4],
-                'arrow_weight_grains': row[5],
-                'temperature_f': row[6],
-                'humidity_percent': row[7],
-                'measurement_date': row[8],
-                'chronograph_model': row[9],
-                'shot_count': row[10],
-                'std_deviation': row[11],
-                'min_speed_fps': row[12],
-                'max_speed_fps': row[13],
-                'verified': row[14],
-                'notes': row[15],
+                'id': row_dict.get('id'),
+                'setup_id': row_dict.get('setup_id'),
+                'arrow_id': row_dict.get('arrow_id'),
+                'setup_arrow_id': row_dict.get('setup_arrow_id'),
+                'measured_speed_fps': row_dict.get('measured_speed_fps'),
+                'arrow_weight_grains': row_dict.get('arrow_weight_grains'),
+                'temperature_f': row_dict.get('temperature_f'),
+                'humidity_percent': row_dict.get('humidity_percent'),
+                'measurement_date': row_dict.get('measurement_date'),
+                'chronograph_model': row_dict.get('chronograph_model'),
+                'shot_count': row_dict.get('shot_count'),
+                'std_deviation': row_dict.get('std_deviation'),
+                'min_speed_fps': row_dict.get('min_speed_fps'),
+                'max_speed_fps': row_dict.get('max_speed_fps'),
+                'verified': row_dict.get('verified'),
+                'notes': row_dict.get('notes'),
                 'arrow_name': arrow_name,
-                'arrow_length': row[18],
-                'point_weight': row[19],
-                'calculated_spine': row[20]
+                'arrow_length': row_dict.get('arrow_length'),
+                'point_weight': row_dict.get('point_weight'),
+                'calculated_spine': row_dict.get('calculated_spine')
             })
         
         return jsonify(chronograph_data), 200
