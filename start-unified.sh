@@ -499,6 +499,7 @@ ensure_unified_databases() {
         print_message "$YELLOW" "⚠️  Arrow database will be created on first run"
     fi
     
+    if [[ -f "./databases/user_data.db" ]]; then
         print_message "$GREEN" "✅ User database found in unified location" 
     else
         print_message "$YELLOW" "⚠️  User database will be created on first run"

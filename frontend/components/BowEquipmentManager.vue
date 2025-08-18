@@ -336,6 +336,7 @@ const getCategoryIcon = (categoryName) => {
     'Arrow Rest': 'fas fa-hand-paper',
     'Plunger': 'fas fa-bullseye',
     'Weight': 'fas fa-weight-hanging',
+    'Peep Sight': 'fas fa-circle-notch',
     'Other': 'fas fa-cog'
   }
   return iconMap[categoryName] || 'fas fa-cog'
@@ -350,6 +351,7 @@ const getCategoryDisplayName = (categoryName) => {
     'Arrow Rest': 'Arrow Rests',
     'Plunger': 'Plungers',
     'Weight': 'Weights',
+    'Peep Sight': 'Peep Sights',
     'Other': 'Other Equipment'
   }
   return displayNames[categoryName] || categoryName
@@ -369,7 +371,8 @@ const getKeySpecs = (specs, category) => {
     'Sight': ['sight_type', 'pin_count', 'adjustment_type'],
     'Stabilizer': ['length_inches', 'weight_ounces', 'material'],
     'Arrow Rest': ['rest_type', 'activation_type'],
-    'Weight': ['weight_ounces', 'weight_type']
+    'Weight': ['weight_ounces', 'weight_type'],
+    'Peep Sight': ['aperture_diameter', 'mounting_style', 'material']
   }
   
   const keySpecs = keySpecsMap[category] || Object.keys(specs).slice(0, 3)

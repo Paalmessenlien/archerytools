@@ -13,14 +13,14 @@ import json
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from user_database import UserDatabase
+from unified_database import UnifiedDatabase
 
 
 class ChangeLogService:
     """Service for logging and retrieving equipment and setup changes"""
     
     def __init__(self):
-        self.user_db = UserDatabase()
+        self.user_db = UnifiedDatabase()
     
     def log_equipment_change(self, 
                            bow_setup_id: int,

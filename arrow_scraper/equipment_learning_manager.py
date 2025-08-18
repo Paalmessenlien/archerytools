@@ -16,13 +16,13 @@ import json
 import os
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
-from user_database import UserDatabase
+from unified_database import UnifiedDatabase
 
 class EquipmentLearningManager:
     """Manages auto-learning of manufacturers and equipment models"""
     
     def __init__(self):
-        self.user_db = UserDatabase()
+        self.user_db = UnifiedDatabase()
     
     def learn_equipment_entry(self, manufacturer_name: str, model_name: str, 
                             category_name: str, user_id: int) -> Dict:
@@ -42,10 +42,8 @@ class EquipmentLearningManager:
         
         try:
             # Check if this is a new manufacturer
-            from arrow_database import ArrowDatabase
-            arrow_db = ArrowDatabase()
-            arrow_conn = arrow_db.get_connection()
-            arrow_cursor = arrow_conn.cursor()
+            # Use the same unified database connection
+            arrow_cursor = cursor
             arrow_cursor.row_factory = sqlite3.Row
             
             # Verify manufacturers table exists
@@ -56,8 +54,7 @@ class EquipmentLearningManager:
             manufacturers_table = arrow_cursor.fetchone()
             
             if not manufacturers_table:
-                print(f"⚠️ manufacturers table not found in arrow database: {arrow_db.db_path}")
-                arrow_conn.close()
+                print(f"⚠️ manufacturers table not found in unified database")
                 learning_info['manufacturer_status'] = 'pending_new'  # Default to new
                 existing_manufacturer = None
             else:
@@ -65,8 +62,7 @@ class EquipmentLearningManager:
                 arrow_cursor.execute('SELECT id FROM manufacturers WHERE LOWER(name) = LOWER(?)', 
                                    (manufacturer_name,))
                 existing_manufacturer = arrow_cursor.fetchone()
-                arrow_conn.close()
-                print(f"✅ Checked manufacturers table in: {arrow_db.db_path}")
+                print(f"✅ Checked manufacturers table in unified database")
             
             if not existing_manufacturer:
                 # Check if it's already in pending manufacturers
@@ -266,31 +262,23 @@ class EquipmentLearningManager:
             if not pending:
                 return False
             
-            # Add to main manufacturers database
-            from arrow_database import ArrowDatabase
-            arrow_db = ArrowDatabase()
-            arrow_conn = arrow_db.get_connection()
-            arrow_cursor = arrow_conn.cursor()
-            arrow_cursor.row_factory = sqlite3.Row
-            
+            # Add to main manufacturers database in unified database
             try:
                 # Verify manufacturers table exists before inserting
-                arrow_cursor.execute("""
+                cursor.execute("""
                     SELECT name FROM sqlite_master 
                     WHERE type='table' AND name='manufacturers'
                 """)
-                manufacturers_table = arrow_cursor.fetchone()
+                manufacturers_table = cursor.fetchone()
                 
                 if not manufacturers_table:
-                    print(f"⚠️ manufacturers table not found in arrow database: {arrow_db.db_path}")
-                    arrow_conn.close()
+                    print(f"⚠️ manufacturers table not found in unified database")
                     return False
                 
-                arrow_cursor.execute('''
+                cursor.execute('''
                     INSERT OR IGNORE INTO manufacturers (name, is_active, created_at)
                     VALUES (?, TRUE, CURRENT_TIMESTAMP)
                 ''', (pending['name'],))
-                arrow_conn.commit()
                 print(f"✅ Added manufacturer '{pending['name']}' to main database")
                 
                 # Update pending status
@@ -301,13 +289,11 @@ class EquipmentLearningManager:
                 ''', (admin_notes, pending_id))
                 
                 conn.commit()
-                arrow_conn.close()
                 return True
                 
             except Exception as e:
                 print(f"Error adding manufacturer to main database: {e}")
-                arrow_conn.rollback()
-                arrow_conn.close()
+                conn.rollback()
                 return False
                 
         except Exception as e:

@@ -33,7 +33,8 @@ from arrow_tuning_system import ArrowTuningSystem, ArcherProfile, TuningSession
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
 from ballistics_calculator import BallisticsCalculator, EnvironmentalConditions, ShootingConditions, ArrowType as BallisticsArrowType
 from tuning_calculator import TuningGoal, ArrowType
-from arrow_database import ArrowDatabase
+from unified_database import UnifiedDatabase
+from arrow_database import ArrowDatabase  # Keep for compatibility during transition
 from component_database import ComponentDatabase
 from spine_service import UnifiedSpineService
 from compatibility_engine import CompatibilityEngine
@@ -92,9 +93,9 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         if setup_id and arrow_id:
             try:
                 user_db = get_database()
-                if not db:
+                if not user_db:
                     return jsonify({"error": "Database not available"}), 500
-                cursor = db.get_connection().cursor()
+                cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
                     SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
@@ -1128,11 +1129,11 @@ def calculate_spine():
         
         spine_result = calculate_unified_spine(
             draw_weight=float(data.get('draw_weight', 45)),
-            arrow_length=data.get('arrow_length', 29.0),
-            point_weight=data.get('point_weight', 125.0),
+            arrow_length=float(data.get('arrow_length', 29.0)),
+            point_weight=float(data.get('point_weight', 125.0)),
             bow_type=data.get('bow_type', 'compound'),
-            nock_weight=data.get('nock_weight', 10.0),
-            fletching_weight=data.get('fletching_weight', 15.0),
+            nock_weight=float(data.get('nock_weight', 10.0)),
+            fletching_weight=float(data.get('fletching_weight', 15.0)),
             material_preference=data.get('arrow_material')
         )
         
@@ -10063,9 +10064,9 @@ def estimate_arrow_speed():
         if setup_id and arrow_id:
             try:
                 user_db = get_database()
-                if not db:
+                if not user_db:
                     return jsonify({"error": "Database not available"}), 500
-                cursor = db.get_connection().cursor()
+                cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
                     SELECT measured_speed_fps, arrow_weight_grains, std_deviation, shot_count
@@ -10308,9 +10309,9 @@ def create_chronograph_data(current_user):
         
         # Get user database
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Insert chronograph data
         cursor.execute('''
@@ -10329,7 +10330,7 @@ def create_chronograph_data(current_user):
         ))
         
         chronograph_id = cursor.lastrowid
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         # Return the created data
         cursor.execute('SELECT * FROM chronograph_data WHERE id = ?', (chronograph_id,))
@@ -10364,9 +10365,9 @@ def get_chronograph_data_for_setup(current_user, setup_id):
     """Get all chronograph data for a specific bow setup"""
     try:
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Get chronograph data with arrow information
         cursor.execute('''
@@ -10383,7 +10384,7 @@ def get_chronograph_data_for_setup(current_user, setup_id):
         chronograph_data = []
         
         for row in rows:
-            arrow_name = f"{row[18]} {row[19]}" if row[18] and row[19] else "Unknown Arrow"
+            arrow_name = f"{row[21]} {row[22]}" if row[21] and row[22] else "Unknown Arrow"
             
             chronograph_data.append({
                 'id': row[0],
@@ -10403,9 +10404,9 @@ def get_chronograph_data_for_setup(current_user, setup_id):
                 'verified': row[14],
                 'notes': row[15],
                 'arrow_name': arrow_name,
-                'arrow_length': row[16],
-                'point_weight': row[17],
-                'calculated_spine': row[18]
+                'arrow_length': row[18],
+                'point_weight': row[19],
+                'calculated_spine': row[20]
             })
         
         return jsonify(chronograph_data), 200
@@ -10422,9 +10423,9 @@ def update_chronograph_data(current_user, data_id):
         data = request.get_json()
         
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Update chronograph data
         cursor.execute('''
@@ -10442,7 +10443,7 @@ def update_chronograph_data(current_user, data_id):
             data.get('notes', ''), data_id
         ))
         
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         if cursor.rowcount == 0:
             return jsonify({'error': 'Chronograph data not found'}), 404
@@ -10459,12 +10460,12 @@ def delete_chronograph_data(current_user, data_id):
     """Delete chronograph data entry"""
     try:
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         cursor.execute('DELETE FROM chronograph_data WHERE id = ?', (data_id,))
-        db.get_connection().commit()
+        user_db.get_connection().commit()
         
         if cursor.rowcount == 0:
             return jsonify({'error': 'Chronograph data not found'}), 404
@@ -10487,9 +10488,9 @@ def estimate_speed_from_chronograph(current_user, arrow_id):
             return jsonify({'error': 'target_weight is required'}), 400
         
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        cursor = db.get_connection().cursor()
+        cursor = user_db.get_connection().cursor()
         
         # Find chronograph data for this arrow or similar setup
         cursor.execute('''

@@ -291,6 +291,7 @@ const categories = ref([
   { name: 'Arrow Rest', icon: 'fas fa-hand-paper' },
   { name: 'Plunger', icon: 'fas fa-bullseye' },
   { name: 'Weight', icon: 'fas fa-weight-hanging' },
+  { name: 'Peep Sight', icon: 'fas fa-circle-notch' },
   { name: 'Other', icon: 'fas fa-cog' }
 ])
 
@@ -303,6 +304,7 @@ const categoryMapping = {
   'Arrow Rest': 'arrow_rests',
   'Plunger': 'plungers',
   'Weight': 'weights',
+  'Peep Sight': 'peep_sights',
   'Other': 'other'
 }
 
