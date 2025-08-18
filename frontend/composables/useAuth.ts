@@ -40,7 +40,7 @@ export const useAuth = () => {
                 const res = await fetch(`${config.public.apiBase}/auth/google`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: response.code }),
+                  body: JSON.stringify({ code: response.code }),
                 });
 
                 if (!res.ok) {

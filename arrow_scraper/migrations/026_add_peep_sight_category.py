@@ -144,8 +144,8 @@ class Migration026AddPeepSightCategory(BaseMigration):
             for field in peep_sight_fields:
                 cursor.execute('''
                     INSERT INTO equipment_field_standards 
-                    (category_name, field_name, field_type, label, required, 
-                     help_text, unit, validation_rules, field_options, display_order)
+                    (category_name, field_name, field_type, field_label, is_required, 
+                     help_text, field_unit, validation_rules, dropdown_options, field_order)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     'Peep Sight',

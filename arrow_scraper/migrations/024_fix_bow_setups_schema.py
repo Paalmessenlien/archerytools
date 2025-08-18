@@ -37,10 +37,16 @@ class Migration024FixBowSetupsSchema(BaseMigration):
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            # Check if old bow_setups exists
+            # Check if old bow_setups exists and handle existing bow_setups_old
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='bow_setups'")
             if cursor.fetchone():
-                print("📋 Found existing bow_setups table - renaming to bow_setups_old")
+                # Check if bow_setups_old already exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='bow_setups_old'")
+                if cursor.fetchone():
+                    print("📋 Found existing bow_setups_old table - dropping it first")
+                    cursor.execute("DROP TABLE bow_setups_old")
+                
+                print("📋 Renaming existing bow_setups table to bow_setups_old")
                 cursor.execute("ALTER TABLE bow_setups RENAME TO bow_setups_old")
             
             # Create new bow_setups with proper schema
@@ -73,15 +79,31 @@ class Migration024FixBowSetupsSchema(BaseMigration):
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='bow_setups_old'")
             if cursor.fetchone():
                 print("📦 Migrating data from bow_setups_old...")
-                cursor.execute("""
-                    INSERT INTO bow_setups (id, user_id, name, bow_type, draw_weight, created_at)
-                    SELECT id, user_id, 
-                           COALESCE(setup_name, name, 'Unnamed Setup') as name,
-                           bow_type, draw_weight, created_at
-                    FROM bow_setups_old
-                """)
-                rows_migrated = cursor.rowcount
-                print(f"   ✅ Migrated {rows_migrated} rows from old table")
+                # First, check what columns exist in the old table
+                cursor.execute("PRAGMA table_info(bow_setups_old)")
+                columns = [row[1] for row in cursor.fetchall()]
+                
+                # Build dynamic INSERT statement based on available columns
+                old_cols = []
+                new_cols = []
+                for col in ['id', 'user_id', 'name', 'bow_type', 'draw_weight', 'insert_weight', 
+                           'description', 'bow_usage', 'riser_brand', 'riser_model', 'riser_length',
+                           'limb_brand', 'limb_model', 'limb_length', 'compound_brand', 'compound_model',
+                           'ibo_speed', 'created_at']:
+                    if col in columns:
+                        old_cols.append(col)
+                        new_cols.append(col)
+                
+                if old_cols:
+                    cursor.execute(f"""
+                        INSERT INTO bow_setups ({', '.join(new_cols)})
+                        SELECT {', '.join(old_cols)}
+                        FROM bow_setups_old
+                    """)
+                    rows_migrated = cursor.rowcount
+                    print(f"   ✅ Migrated {rows_migrated} rows from old table")
+                else:
+                    print("   ⚠️  No compatible columns found for migration")
             
             conn.commit()
             conn.close()

@@ -4,7 +4,8 @@
 # Handles all deployment scenarios: development, production, SSL
 #
 # Usage:
-#   ./start-unified.sh                    # Development mode
+#   ./start-unified.sh                    # Docker development mode
+#   ./start-unified.sh dev               # Local development mode (no Docker)
 #   ./start-unified.sh production         # Production HTTP mode
 #   ./start-unified.sh ssl yourdomain.com # Production SSL mode
 
@@ -27,12 +28,46 @@ DOMAIN_NAME="${2:-localhost}"
 SSL_ENABLED="false"
 COMPOSE_PROFILES=""
 
+
 # Function to print colored output
 print_message() {
     local color=$1
     local message=$2
     echo -e "${color}${message}${NC}"
 }
+
+# Handle special case for dev mode with stop command
+if [[ "$1" == "dev" && "$2" == "stop" ]]; then
+    print_message "$BLUE" "🛑 Stopping local development services..."
+    
+    # Stop API server
+    if [[ -f "logs/api.pid" ]]; then
+        api_pid=$(cat logs/api.pid)
+        if kill -0 $api_pid 2>/dev/null; then
+            kill $api_pid
+            print_message "$GREEN" "✅ Stopped API server (PID: $api_pid)"
+        fi
+        rm -f logs/api.pid
+    fi
+    
+    # Stop frontend server
+    if [[ -f "logs/frontend.pid" ]]; then
+        frontend_pid=$(cat logs/frontend.pid)
+        if kill -0 $frontend_pid 2>/dev/null; then
+            kill $frontend_pid
+            print_message "$GREEN" "✅ Stopped frontend server (PID: $frontend_pid)"
+        fi
+        rm -f logs/frontend.pid
+    fi
+    
+    # Kill any remaining processes
+    pkill -f "python.*api.py" 2>/dev/null || true
+    pkill -f "npm run dev" 2>/dev/null || true
+    pkill -f "nuxt" 2>/dev/null || true
+    
+    print_message "$GREEN" "✅ All local development services stopped"
+    exit 0
+fi
 
 # Function to check prerequisites
 check_prerequisites() {
@@ -95,8 +130,17 @@ setup_environment() {
             export API_DOCKERFILE="Dockerfile"
             export FRONTEND_DOCKERFILE="Dockerfile"
             COMPOSE_PROFILES="--profile with-nginx"
-            print_message "$GREEN" "✅ Development environment configured"
-            print_message "$YELLOW" "⚠️  Note: For local development without Docker, use ./start-local-dev.sh instead"
+            print_message "$GREEN" "✅ Docker development environment configured"
+            ;;
+            
+        "dev")
+            export FLASK_ENV="development"
+            export NODE_ENV="development"
+            export NUXT_PUBLIC_API_BASE="http://localhost:5000/api"
+            print_message "$GREEN" "✅ Local development environment configured"
+            print_message "$BLUE" "🚀 Starting local development servers (no Docker)..."
+            start_local_development
+            exit 0
             ;;
             
         "production")
@@ -127,7 +171,7 @@ setup_environment() {
             
         *)
             print_message "$RED" "❌ Invalid deployment mode: $DEPLOYMENT_MODE"
-            echo "Usage: $0 [development|production|ssl] [domain_name]"
+            echo "Usage: $0 [dev|development|production|ssl] [domain_name]"
             exit 1
             ;;
     esac
@@ -1203,6 +1247,226 @@ http {
     }
 }
 EOF
+}
+
+# Function to check if port is available
+check_port() {
+    local port=$1
+    local service_name=$2
+    
+    if lsof -i :$port &> /dev/null; then
+        print_message "$YELLOW" "⚠️  Port $port is already in use by another process"
+        print_message "$BLUE" "   Checking if it's our $service_name service..."
+        
+        # Check if it's our service by looking for specific processes
+        if pgrep -f "$service_name" &> /dev/null; then
+            print_message "$GREEN" "   Found existing $service_name process"
+            return 1 # Port is used by our service
+        else
+            print_message "$RED" "   Port $port is used by a different service"
+            return 2 # Port is used by different service
+        fi
+    fi
+    return 0 # Port is available
+}
+
+# Function to stop local development services
+stop_local_services() {
+    print_message "$BLUE" "🛑 Stopping local development services..."
+    
+    # Stop API server
+    if [[ -f "logs/api.pid" ]]; then
+        local api_pid=$(cat logs/api.pid)
+        if kill -0 $api_pid 2>/dev/null; then
+            kill $api_pid
+            print_message "$GREEN" "✅ Stopped API server (PID: $api_pid)"
+        fi
+        rm -f logs/api.pid
+    fi
+    
+    # Stop frontend server
+    if [[ -f "logs/frontend.pid" ]]; then
+        local frontend_pid=$(cat logs/frontend.pid)
+        if kill -0 $frontend_pid 2>/dev/null; then
+            kill $frontend_pid
+            print_message "$GREEN" "✅ Stopped frontend server (PID: $frontend_pid)"
+        fi
+        rm -f logs/frontend.pid
+    fi
+    
+    # Kill any remaining processes
+    pkill -f "python.*api.py" 2>/dev/null || true
+    pkill -f "npm run dev" 2>/dev/null || true
+    pkill -f "nuxt" 2>/dev/null || true
+    
+    print_message "$GREEN" "✅ All local development services stopped"
+}
+
+# Function to ensure databases exist and run migrations
+ensure_local_databases() {
+    print_message "$BLUE" "🗄️  Ensuring Docker-compatible database setup..."
+    
+    # Create directories to match Docker volume structure
+    mkdir -p "./arrow_scraper/databases"
+    mkdir -p "./logs"
+    
+    # Use Docker-compatible database paths (matching production)
+    export ARROW_DATABASE_PATH="$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db"
+    
+    # Always use unified database architecture for dev mode
+    print_message "$GREEN" "✅ Using unified database architecture (Docker-compatible)"
+    export USER_DATABASE_PATH="$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db"
+    
+    # Check if the unified database exists
+    if [[ ! -f "$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db" ]]; then
+        print_message "$YELLOW" "⚠️  Unified database not found, checking for migration source..."
+        
+        # Check if old databases exist in ./databases/ and migrate them
+        if [[ -f "$SCRIPT_DIR/databases/arrow_database.db" ]]; then
+            print_message "$BLUE" "🔄 Copying arrow database from ./databases/ to Docker-compatible location..."
+            cp "$SCRIPT_DIR/databases/arrow_database.db" "$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db"
+        fi
+    fi
+    
+    # Verify unified database has user tables (post-consolidation check)
+    if [[ -f "$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db" ]]; then
+        if sqlite3 "$SCRIPT_DIR/arrow_scraper/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+            print_message "$GREEN" "✅ Unified database architecture confirmed (user tables present)"
+        else
+            print_message "$YELLOW" "⚠️  Database consolidation may be needed (user tables missing)"
+        fi
+    fi
+    
+    # Run database migrations for local development
+    if [[ -f "arrow_scraper/run_migrations.py" ]]; then
+        cd arrow_scraper
+        print_message "$BLUE" "🔄 Running database migrations with Docker-compatible paths..."
+        
+        # Try to run migrations
+        if command -v python3 &> /dev/null; then
+            python3 run_migrations.py --status-only &>/dev/null || true
+            if python3 run_migrations.py; then
+                print_message "$GREEN" "✅ Database migrations completed"
+            else
+                print_message "$YELLOW" "⚠️  Warning: Some migrations may have failed"
+            fi
+        else
+            print_message "$YELLOW" "⚠️  Python 3 not available for migrations"
+        fi
+        
+        cd "$SCRIPT_DIR"
+    fi
+}
+
+# Function to start local development servers
+start_local_development() {
+    # Stop any existing services
+    stop_local_services
+    
+    # Ensure databases exist
+    ensure_local_databases
+    
+    # Configuration
+    local API_PORT=${API_PORT:-5000}
+    local FRONTEND_PORT=${FRONTEND_PORT:-3000}
+    
+    # Check ports
+    check_port $API_PORT "api"
+    local api_port_status=$?
+    
+    check_port $FRONTEND_PORT "frontend"
+    local frontend_port_status=$?
+    
+    # Start API server if needed
+    if [[ $api_port_status -eq 0 ]] || [[ $api_port_status -eq 2 ]]; then
+        print_message "$BLUE" "🚀 Starting Flask API server..."
+        
+        cd arrow_scraper
+        
+        # Check if virtual environment exists and activate it
+        if [[ -d "venv" ]]; then
+            print_message "$BLUE" "   Activating Python virtual environment..."
+            source venv/bin/activate
+        else
+            print_message "$YELLOW" "   No virtual environment found, using system Python"
+        fi
+        
+        # Start API in background
+        python3 api.py > ../logs/api.log 2>&1 &
+        local api_pid=$!
+        echo $api_pid > ../logs/api.pid
+        
+        # Wait a moment and check if it started successfully
+        sleep 2
+        if kill -0 $api_pid 2>/dev/null; then
+            print_message "$GREEN" "✅ Flask API server started (PID: $api_pid, Port: $API_PORT)"
+        else
+            print_message "$RED" "❌ Failed to start Flask API server"
+            print_message "$BLUE" "   Check logs/api.log for details"
+            cd "$SCRIPT_DIR"
+            return 1
+        fi
+        
+        cd "$SCRIPT_DIR"
+    else
+        print_message "$GREEN" "✅ API server already running on port $API_PORT"
+    fi
+    
+    # Start frontend server if needed
+    if [[ $frontend_port_status -eq 0 ]] || [[ $frontend_port_status -eq 2 ]]; then
+        print_message "$BLUE" "🚀 Starting Nuxt 3 frontend server..."
+        
+        cd frontend
+        
+        # Check if node_modules exists
+        if [[ ! -d "node_modules" ]]; then
+            print_message "$BLUE" "   Installing frontend dependencies..."
+            npm install
+        fi
+        
+        # Start frontend in background
+        npm run dev > ../logs/frontend.log 2>&1 &
+        local frontend_pid=$!
+        echo $frontend_pid > ../logs/frontend.pid
+        
+        # Wait a moment and check if it started successfully
+        sleep 3
+        if kill -0 $frontend_pid 2>/dev/null; then
+            print_message "$GREEN" "✅ Nuxt 3 frontend server started (PID: $frontend_pid, Port: $FRONTEND_PORT)"
+        else
+            print_message "$RED" "❌ Failed to start Nuxt 3 frontend server"
+            print_message "$BLUE" "   Check logs/frontend.log for details"
+            cd "$SCRIPT_DIR"
+            return 1
+        fi
+        
+        cd "$SCRIPT_DIR"
+    else
+        print_message "$GREEN" "✅ Frontend server already running on port $FRONTEND_PORT"
+    fi
+    
+    # Show status and URLs
+    print_message "$GREEN" "\n✅ Local development servers are running!"
+    print_message "$BLUE" "\n🌐 Access URLs:"
+    echo "  Frontend: http://localhost:$FRONTEND_PORT"
+    echo "  API: http://localhost:$API_PORT/api"
+    echo "  Health: http://localhost:$API_PORT/api/health"
+    
+    print_message "$BLUE" "\n📝 Log Files:"
+    echo "  API logs: tail -f logs/api.log"
+    echo "  Frontend logs: tail -f logs/frontend.log"
+    
+    print_message "$BLUE" "\n🛑 Stop Services:"
+    echo "  ./start-unified.sh dev stop"
+    
+    # Handle stop command if provided as second argument
+    if [[ "${2:-}" == "stop" ]]; then
+        stop_local_services
+        return 0
+    fi
+    
+    print_message "$GREEN" "\n✅ Development servers started successfully!"
+    print_message "$BLUE" "   Servers are running in the background"
 }
 
 # Main execution
