@@ -1362,12 +1362,12 @@ from auth import token_required, get_user_from_google_token
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
     data = request.get_json()
-    token = data.get('token')
+    code = data.get('code')
 
-    if not token:
-        return jsonify({'error': 'No token provided'}), 400
+    if not code:
+        return jsonify({'error': 'No authorization code provided'}), 400
 
-    user, needs_profile_completion = get_user_from_google_token(token)
+    user, needs_profile_completion = get_user_from_google_token(code)
 
     if not user:
         return jsonify({'error': 'Invalid token or user not found'}), 401
