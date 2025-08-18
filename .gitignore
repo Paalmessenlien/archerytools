@@ -47,6 +47,9 @@ Thumbs.db
 *.bak
 *.backup
 *.old
+*.backup_*
+*_backup_*
+*.consolidation_backup_*
 
 # Compressed files
 *.zip
@@ -71,4 +74,11 @@ Thumbs.db
 /production/
 
 # Documentation builds
-/docs/_build/.frontend.pid
+/docs/_build/
+
+# Process ID files
+*.pid
+.frontend.pid
+
+# Playwright MCP files
+.playwright-mcp/
