@@ -2921,11 +2921,11 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
         cursor.execute('''
             SELECT sa.*, 
                    bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
-                   bs.draw_weight, bs.ibo_speed,
-                   u.draw_length
+                   bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
+                   COALESCE(u.user_draw_length, 28.0) as draw_length
             FROM setup_arrows sa
             JOIN bow_setups bs ON sa.setup_id = bs.id
-            JOIN users u ON bs.user_id = u.id
+            LEFT JOIN users u ON bs.user_id = u.id
             WHERE sa.id = ? AND bs.user_id = ?
         ''', (setup_arrow_id, current_user['id']))
         
