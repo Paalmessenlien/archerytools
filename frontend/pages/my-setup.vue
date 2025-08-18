@@ -419,6 +419,7 @@ const newSetup = ref({
   bow_type: '',
   draw_weight: 45,
   draw_length: null,
+  draw_length_module: null,  // For compound bow cam specification
   arrow_length: null,
   point_weight: 100,
   description: '',
@@ -490,6 +491,7 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
+    draw_length_module: null,
     description: '',
     bow_usage: [],
   };
@@ -519,6 +521,7 @@ const openEditBowSetupModal = (setup) => {
     compound_brand: setup.compound_brand || '',
     compound_model: setup.compound_model || '',
     ibo_speed: setup.ibo_speed || '',
+    draw_length_module: setup.draw_length_module || null,
     riser_brand: setup.riser_brand || '',
     riser_model: setup.riser_model || '',
     riser_length: setup.riser_length || '',

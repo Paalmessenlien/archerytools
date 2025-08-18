@@ -82,3 +82,8 @@ Thumbs.db
 
 # Playwright MCP files
 .playwright-mcp/
+# Debug and test files
+debug_*.py
+test_migration_*.py
+.frontend.pid_
+.claude/settings.local.json

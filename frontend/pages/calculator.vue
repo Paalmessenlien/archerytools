@@ -170,24 +170,14 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Arrow Length: <span class="font-semibold text-primary">{{ bowConfig.arrow_length || 29 }}"</span>
             </label>
-            <div class="flex items-center gap-3">
-              <input
-                type="range"
-                min="24"
-                max="34"
-                step="0.5"
-                v-model="localArrowLength"
-                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
-              />
-              <input
-                type="number"
-                v-model="localArrowLength"
-                min="24"
-                max="34"
-                step="0.5"
-                class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 form-input touch-target"
-              />
-            </div>
+            <input
+              type="range"
+              min="24"
+              max="34"
+              step="0.5"
+              v-model.number="localArrowLength"
+              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+            />
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>24"</span>
               <span>34"</span>
@@ -199,24 +189,14 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Point Weight: <span class="font-semibold text-primary">{{ bowConfig.point_weight || 125 }} gn</span>
             </label>
-            <div class="flex items-center gap-3">
-              <input
-                type="range"
-                min="40"
-                max="300"
-                step="5"
-                v-model="localPointWeight"
-                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
-              />
-              <input
-                type="number"
-                v-model="localPointWeight"
-                min="40"
-                max="300"
-                step="5"
-                class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 form-input touch-target"
-              />
-            </div>
+            <input
+              type="range"
+              min="40"
+              max="300"
+              step="5"
+              v-model.number="localPointWeight"
+              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+            />
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>40 gn</span>
               <span>300 gn</span>
@@ -949,14 +929,34 @@ const localDrawWeight = computed({
   set: (value) => updateBowConfig({ draw_weight: value })
 })
 
-const localArrowLength = computed({
-  get: () => bowConfig.arrow_length || 29,
-  set: (value) => updateBowConfig({ arrow_length: value })
+// Create direct reactive refs for sliders to avoid readonly issues
+const localArrowLength = ref(bowConfig.arrow_length || 29)
+const localPointWeight = ref(bowConfig.point_weight || 125)
+
+// Watch for changes in the store and update local refs
+watch(() => bowConfig.arrow_length, (newValue) => {
+  if (newValue !== localArrowLength.value) {
+    localArrowLength.value = newValue || 29
+  }
 })
 
-const localPointWeight = computed({
-  get: () => bowConfig.point_weight || 125,
-  set: (value) => updateBowConfig({ point_weight: value })
+watch(() => bowConfig.point_weight, (newValue) => {
+  if (newValue !== localPointWeight.value) {
+    localPointWeight.value = newValue || 125
+  }
+})
+
+// Watch for changes in local refs and update store
+watch(localArrowLength, (newValue) => {
+  if (newValue !== bowConfig.arrow_length) {
+    updateBowConfig({ arrow_length: parseFloat(newValue) })
+  }
+})
+
+watch(localPointWeight, (newValue) => {
+  if (newValue !== bowConfig.point_weight) {
+    updateBowConfig({ point_weight: parseFloat(newValue) })
+  }
 })
 
 // UI state

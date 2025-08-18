@@ -18,34 +18,42 @@
             />
           </div>
 
-          <!-- Arrow Length -->
+          <!-- Arrow Length Slider -->
           <div>
-            <label for="arrowLength" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Arrow Length (inches)</label>
+            <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Arrow Length: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ configData.arrow_length || 29 }}"</span>
+            </label>
             <input 
-              type="number" 
-              id="arrowLength" 
-              v-model.number="configData.arrow_length" 
-              class="form-input w-full" 
-              required 
-              step="0.25" 
+              type="range" 
               min="24" 
-              max="34"
+              max="34" 
+              step="0.25" 
+              v-model.number="configData.arrow_length"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
             />
+            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>24"</span>
+              <span>34"</span>
+            </div>
           </div>
 
-          <!-- Point Weight -->
+          <!-- Point Weight Slider -->
           <div>
-            <label for="pointWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Point Weight (grains)</label>
+            <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Point Weight: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ configData.point_weight || 100 }} grains</span>
+            </label>
             <input 
-              type="number" 
-              id="pointWeight" 
-              v-model.number="configData.point_weight" 
-              class="form-input w-full" 
-              required 
-              step="1" 
+              type="range" 
               min="50" 
-              max="300"
+              max="300" 
+              step="5" 
+              v-model.number="configData.point_weight"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
             />
+            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>50 gr</span>
+              <span>300 gr</span>
+            </div>
           </div>
 
           <!-- Nock Weight (Optional) -->

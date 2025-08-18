@@ -98,6 +98,31 @@
                 />
               </div>
             </div>
+
+            <!-- Draw Length Module for Compound Bows -->
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Draw Length Module: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length_module || 28 }}"</span>
+                <span class="text-gray-500 text-xs ml-1">(Compound bow cam specification)</span>
+              </label>
+              <md-slider
+                min="24"
+                max="34"
+                step="0.5"
+                :value="setupData.draw_length_module || 28"
+                @input="setupData.draw_length_module = parseFloat($event.target.value)"
+                labeled
+                ticks
+                class="w-full"
+              ></md-slider>
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <span>24"</span>
+                <span>34"</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                This is the physical cam module specification of your compound bow, not your personal draw length.
+              </p>
+            </div>
           </div>
 
           <!-- Recurve Bow Configuration -->
