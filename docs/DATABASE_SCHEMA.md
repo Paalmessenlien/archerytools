@@ -288,6 +288,43 @@ CREATE TABLE guide_sessions (
 );
 ```
 
+#### `chronograph_data`
+Measured arrow speed data from chronograph testing.
+
+```sql
+CREATE TABLE chronograph_data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setup_id INTEGER NOT NULL,          -- Links to bow_setups table
+    arrow_id INTEGER,                   -- Links to arrows table (optional)
+    setup_arrow_id INTEGER,             -- Links to setup_arrows table (optional)
+    measured_speed_fps REAL NOT NULL,   -- Measured speed in FPS
+    arrow_weight_grains REAL NOT NULL,  -- Arrow weight during measurement
+    temperature_f INTEGER,              -- Environmental temperature
+    humidity_percent INTEGER,           -- Environmental humidity
+    measurement_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    chronograph_model TEXT,             -- Chronograph device model
+    shot_count INTEGER DEFAULT 1,       -- Number of shots in measurement
+    std_deviation REAL,                 -- Standard deviation of shots
+    min_speed_fps REAL,                 -- Minimum speed in series
+    max_speed_fps REAL,                 -- Maximum speed in series
+    verified BOOLEAN DEFAULT 0,         -- Data verification flag
+    notes TEXT,                         -- Additional notes
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Constraints
+    FOREIGN KEY (setup_id) REFERENCES bow_setups (id) ON DELETE CASCADE,
+    FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE SET NULL,
+    FOREIGN KEY (setup_arrow_id) REFERENCES setup_arrows (id) ON DELETE CASCADE
+);
+```
+
+**Key Fields:**
+- `setup_id`: Links to specific bow setup for tracking equipment configuration
+- `measured_speed_fps`: Actual measured arrow speed for performance calculations
+- `arrow_weight_grains`: Weight at time of measurement for accurate calculations
+- `shot_count` & `std_deviation`: Statistical data for measurement reliability
+- `verified`: Flag for marking verified/confirmed measurements
+
 #### `backup_metadata`
 Admin backup system tracking.
 
@@ -330,6 +367,11 @@ CREATE TABLE backup_metadata (
 - Users can have multiple tuning and guide sessions
 - Sessions can optionally link to specific bow setups
 
+### Bow Setup → Chronograph Data (1:Many)
+- Each bow setup can have multiple chronograph measurements
+- Chronograph data can link to specific arrows and setup arrows
+- Provides real measured data for performance calculations
+
 ---
 
 ## Indexes and Performance
@@ -349,6 +391,11 @@ CREATE INDEX idx_bow_setups_user_id ON bow_setups(user_id);
 CREATE INDEX idx_setup_arrows_setup_id ON setup_arrows(setup_id);
 CREATE INDEX idx_setup_arrows_arrow_id ON setup_arrows(arrow_id);
 CREATE INDEX idx_sessions_user_id ON tuning_sessions(user_id);
+CREATE INDEX idx_chronograph_setup_id ON chronograph_data(setup_id);
+CREATE INDEX idx_chronograph_arrow_id ON chronograph_data(arrow_id);
+CREATE INDEX idx_chronograph_setup_arrow_id ON chronograph_data(setup_arrow_id);
+CREATE INDEX idx_chronograph_verified ON chronograph_data(verified);
+CREATE INDEX idx_chronograph_date ON chronograph_data(measurement_date);
 ```
 
 ---

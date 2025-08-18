@@ -265,6 +265,45 @@ archerytools/
    npm run build && npm run preview
    ```
 
+### Chronograph Data Integration Workflow
+
+The chronograph system provides measured arrow speed data for enhanced performance calculations:
+
+1. **Database Setup**
+   ```bash
+   # Verify chronograph table exists
+   sqlite3 databases/arrow_database.db ".schema chronograph_data"
+   
+   # Create test chronograph data
+   python arrow_scraper/create_test_chronograph_data.py
+   
+   # Verify chronograph setup
+   python arrow_scraper/verify_chronograph_setup.py
+   ```
+
+2. **API Development**
+   ```bash
+   # Test chronograph endpoints
+   python arrow_scraper/test_api_chronograph.py
+   
+   # Test integration with performance calculations
+   python arrow_scraper/test_chronograph_integration.py
+   
+   # Debug speed calculations
+   python debug_performance_calculation.py
+   ```
+
+3. **Frontend Integration**
+   - ChronographDataEntry component in `frontend/components/`
+   - Auto-updates performance calculations when data changes
+   - Displays confidence levels (measured vs estimated)
+
+4. **Key Features**
+   - Prioritizes measured data over estimations
+   - Weight-adjusted speed calculations
+   - Environmental condition tracking
+   - Statistical analysis (std deviation, min/max)
+
 ### Git Workflow
 
 ```bash

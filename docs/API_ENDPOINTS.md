@@ -310,6 +310,57 @@ Get arrow recommendations based on bow configuration.
 }
 ```
 
+#### `POST /api/calculator/arrow-speed-estimate`
+Calculate estimated arrow speed with chronograph data integration.
+
+**Request:**
+```json
+{
+    "bow_ibo_speed": 320,
+    "bow_draw_weight": 70,
+    "bow_draw_length": 29,
+    "bow_type": "compound",
+    "arrow_weight_grains": 420,
+    "string_material": "dyneema",
+    "setup_id": 1,          // Optional: for chronograph data lookup
+    "arrow_id": 42          // Optional: for chronograph data lookup
+}
+```
+
+**Response with Chronograph Data:**
+```json
+{
+    "estimated_speed_fps": 285.3,
+    "calculation_method": "chronograph_data",
+    "confidence_percent": 95,
+    "chronograph_data": {
+        "measured_speed_fps": 287.1,
+        "measured_weight_grains": 425,
+        "shot_count": 10,
+        "std_deviation": 3.2
+    },
+    "string_material": "dyneema"
+}
+```
+
+**Response with Estimation:**
+```json
+{
+    "estimated_speed_fps": 282.4,
+    "calculation_method": "compound_estimation_with_string_material",
+    "confidence_percent": 75,
+    "bow_ibo_speed": 320,
+    "arrow_weight_grains": 420,
+    "string_material": "dyneema",
+    "factors": {
+        "base_speed_estimate": 276.9,
+        "string_modifier": 1.02,
+        "string_speed_effect": "+2.0%",
+        "bow_type": "compound"
+    }
+}
+```
+
 ---
 
 ## Bow Setup Management
@@ -693,6 +744,123 @@ Get user's guide sessions.
         "created_at": "2025-01-15T14:00:00Z"
     }
 ]
+```
+
+---
+
+## Chronograph Data Management
+
+#### `POST /api/chronograph-data`
+Create new chronograph measurement data.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+    "setup_id": 1,
+    "setup_arrow_id": 5,
+    "measured_speed_fps": 285.3,
+    "arrow_weight_grains": 420,
+    "temperature_f": 72,
+    "humidity_percent": 45,
+    "chronograph_model": "Competition Electronics ProChrono",
+    "shot_count": 10,
+    "std_deviation": 3.2,
+    "min_speed_fps": 281.1,
+    "max_speed_fps": 289.7,
+    "notes": "Indoor range, consistent form"
+}
+```
+
+**Response:**
+```json
+{
+    "id": 1,
+    "setup_id": 1,
+    "setup_arrow_id": 5,
+    "measured_speed_fps": 285.3,
+    "arrow_weight_grains": 420,
+    "temperature_f": 72,
+    "humidity_percent": 45,
+    "measurement_date": "2025-08-18T14:30:00Z",
+    "chronograph_model": "Competition Electronics ProChrono",
+    "shot_count": 10,
+    "std_deviation": 3.2,
+    "min_speed_fps": 281.1,
+    "max_speed_fps": 289.7,
+    "verified": false,
+    "notes": "Indoor range, consistent form",
+    "created_at": "2025-08-18T14:30:00Z"
+}
+```
+
+#### `GET /api/chronograph-data/setup/{setup_id}`
+Get all chronograph data for a specific bow setup.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+    {
+        "id": 1,
+        "setup_id": 1,
+        "arrow_id": 42,
+        "setup_arrow_id": 5,
+        "measured_speed_fps": 285.3,
+        "arrow_weight_grains": 420,
+        "temperature_f": 72,
+        "humidity_percent": 45,
+        "measurement_date": "2025-08-18T14:30:00Z",
+        "chronograph_model": "Competition Electronics ProChrono",
+        "shot_count": 10,
+        "std_deviation": 3.2,
+        "min_speed_fps": 281.1,
+        "max_speed_fps": 289.7,
+        "verified": true,
+        "notes": "Indoor range, consistent form",
+        "arrow_name": "Easton X10",
+        "arrow_length": 29.5,
+        "point_weight": 120,
+        "calculated_spine": 410
+    }
+]
+```
+
+#### `PUT /api/chronograph-data/{data_id}`
+Update existing chronograph data.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+    "measured_speed_fps": 287.2,
+    "std_deviation": 2.8,
+    "verified": true,
+    "notes": "Re-measured with improved form"
+}
+```
+
+**Response:**
+```json
+{
+    "message": "Chronograph data updated successfully",
+    "chronograph_data": { /* updated data object */ }
+}
+```
+
+#### `DELETE /api/chronograph-data/{data_id}`
+Delete chronograph data entry.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+    "message": "Chronograph data deleted successfully"
+}
 ```
 
 ---
