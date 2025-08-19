@@ -46,9 +46,8 @@ class Migration033(BaseMigration):
                 
         raise FileNotFoundError("Could not find arrow database")
 
-    def up(self):
+    def up(self, db_path, environment='development'):
         """Apply the migration"""
-        db_path = self.get_database_path()
         
         with sqlite3.connect(db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -169,12 +168,15 @@ class Migration033(BaseMigration):
             
             conn.commit()
             print("✅ Production schema fixes completed successfully")
+            return True
 
-    def down(self):
+    def down(self, db_path, environment='development'):
         """Reverse the migration (optional - for testing)"""
         print("⚠️  Migration 033 down() not implemented - schema fixes should remain")
         print("   To reverse, manually drop tables: setup_arrows, chronograph_data, bow_equipment")
+        return True
 
 if __name__ == "__main__":
     migration = Migration033()
-    migration.up()
+    db_path = migration.get_database_path()
+    migration.up(db_path, 'development')
