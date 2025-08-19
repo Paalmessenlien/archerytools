@@ -71,15 +71,20 @@ class BallisticsCalculator:
         
         # Convert units
         arrow_weight_lbs = arrow_weight_grains / 7000.0
-        shot_angle_rad = math.radians(shooting.shot_angle_degrees)
+        
+        # Calculate proper launch angle for archery setup
+        # For bows with elevated sights, we need an upward launch angle to zero at the specified distance
+        launch_angle_rad = self._calculate_launch_angle(
+            arrow_speed_fps, shooting.sight_height_inches, shooting.zero_distance_yards
+        )
         
         # Calculate environmental adjustments
         air_density = self._calculate_air_density(environmental)
         drag_coefficient = self.drag_coefficients[arrow_type]
         
-        # Initial velocity components
-        v0_x = arrow_speed_fps * math.cos(shot_angle_rad)
-        v0_y = arrow_speed_fps * math.sin(shot_angle_rad)
+        # Initial velocity components with calculated launch angle
+        v0_x = arrow_speed_fps * math.cos(launch_angle_rad)
+        v0_y = arrow_speed_fps * math.sin(launch_angle_rad)
         
         # Calculate trajectory points
         trajectory_points = []
@@ -112,11 +117,14 @@ class BallisticsCalculator:
             ax = drag_accel_x + wind_effect["ax"]
             ay = -self.gravity + drag_accel_y + wind_effect["ay"]
             
-            # Store trajectory point (convert back to yards and inches)
-            if t % (time_step * 10) < time_step:  # Store every 10th point
+            # Store trajectory points at regular distance intervals
+            current_distance_yards = x * 3  # feet to yards
+            
+            # Store a point approximately every yard (when distance crosses integer boundaries)
+            if len(trajectory_points) == 0 or current_distance_yards >= len(trajectory_points):
                 trajectory_points.append({
                     "time": round(t, 3),
-                    "distance_yards": round(x * 3, 1),  # feet to yards
+                    "distance_yards": round(current_distance_yards, 1),
                     "height_inches": round(y * 12, 2),  # feet to inches
                     "velocity_fps": round(velocity_magnitude, 1),
                     "drop_inches": round((shooting.sight_height_inches / 12.0 - y) * 12, 2),
@@ -534,6 +542,51 @@ class BallisticsCalculator:
             ])
         
         return recommendations
+    
+    def _calculate_launch_angle(self, arrow_speed_fps: float, sight_height_inches: float, 
+                               zero_distance_yards: float) -> float:
+        """
+        Calculate proper launch angle for archery setup with elevated sight
+        
+        For bows with elevated sights, the arrow must be launched at an upward angle
+        to intersect the line of sight at the zero distance (typically 20 yards).
+        This accounts for the fundamental physics of archery trajectory.
+        
+        Args:
+            arrow_speed_fps: Initial arrow velocity
+            sight_height_inches: Height of sight above arrow center line
+            zero_distance_yards: Distance at which sight is zeroed
+            
+        Returns:
+            Launch angle in radians (positive = upward)
+        """
+        # Convert units
+        sight_height_feet = sight_height_inches / 12.0
+        zero_distance_feet = zero_distance_yards * 3.0
+        
+        # Time to reach zero distance (ignoring drag for initial calculation)
+        time_to_zero = zero_distance_feet / arrow_speed_fps
+        
+        # Vertical drop due to gravity at zero distance
+        gravity_drop_feet = 0.5 * self.gravity * time_to_zero * time_to_zero
+        
+        # Required vertical displacement to compensate for sight height and gravity
+        # The arrow must rise to sight level (sight_height_feet) and overcome gravity drop
+        required_vertical_displacement = sight_height_feet + gravity_drop_feet
+        
+        # Calculate required initial vertical velocity
+        required_vy = required_vertical_displacement / time_to_zero
+        
+        # Calculate launch angle from velocity components
+        launch_angle_rad = math.atan(required_vy / arrow_speed_fps)
+        
+        # Clamp to reasonable archery angles (typically 0.5° to 3°)
+        max_angle_rad = math.radians(3.0)  # 3 degrees maximum
+        min_angle_rad = math.radians(0.5)  # 0.5 degrees minimum
+        
+        launch_angle_rad = max(min_angle_rad, min(max_angle_rad, launch_angle_rad))
+        
+        return launch_angle_rad
     
     def _get_environmental_recommendations(self, env: EnvironmentalConditions) -> List[str]:
         """Get recommendations based on environmental conditions"""

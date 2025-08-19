@@ -272,6 +272,55 @@ archerytools/
    npm run build && npm run preview
    ```
 
+### Equipment Management System Workflow
+
+The equipment management system provides comprehensive equipment tracking with 9 equipment categories:
+
+1. **Equipment Categories (All Tested August 2025)**
+   ```bash
+   # All 9 categories successfully tested:
+   # 1. String         - String materials, strand counts, serving
+   # 2. Sight          - Multi/single pin, adjustment types, lighting
+   # 3. Scope          - Magnification, reticle types, turret types
+   # 4. Stabilizer     - Length, weight, dampening, mounting
+   # 5. Arrow Rest     - Drop-away, blade, containment features
+   # 6. Plunger        - Spring-loaded, magnetic, tension ranges
+   # 7. Weight         - Ounce specifications, mounting locations
+   # 8. Peep Sight     - Aperture diameter, mounting styles
+   # 9. Other          - Open-ended equipment with custom specs
+   ```
+
+2. **Database Schema Fix (Migration 025)**
+   ```bash
+   # Critical fix for equipment creation
+   # Issue: NOT NULL constraint failed: bow_equipment.equipment_id
+   # Solution: Made equipment_id nullable for custom equipment
+   
+   # Apply migration in development
+   cd arrow_scraper
+   python migrations/025_fix_equipment_id_nullable_unified.py databases/arrow_database.db
+   
+   # Production deployment will apply automatically
+   ```
+
+3. **Testing Equipment Management**
+   ```bash
+   # Test all equipment categories
+   python test_equipment_management.py
+   
+   # Test custom equipment creation
+   python test_custom_equipment_creation.py
+   
+   # Verify database schema
+   sqlite3 databases/arrow_database.db ".schema bow_equipment"
+   ```
+
+4. **Key Features**
+   - Category-specific form fields with validation
+   - Manufacturer suggestion system with approval workflow
+   - Custom equipment creation without database constraints
+   - Installation tracking with notes and specifications
+
 ### Chronograph Data Integration Workflow
 
 The chronograph system provides measured arrow speed data for enhanced performance calculations:
@@ -380,6 +429,10 @@ python test_admin_with_auth.py
 
 # Database operations
 python test_diameter_categories.py
+
+# Equipment management system
+python test_equipment_management.py
+python test_custom_equipment_creation.py
 
 # DeepSeek API integration
 python test_deepseek.py

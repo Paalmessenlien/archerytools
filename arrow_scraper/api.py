@@ -208,12 +208,19 @@ def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None)
         # Estimate arrow speed based on bow configuration if not provided
         if not estimated_speed:
             draw_weight = archer_profile.bow_config.draw_weight
-            # Simple speed estimation: compound bows ~10 fps per pound, recurve ~8 fps per pound
+            # More realistic speed estimation based on industry standards
             if archer_profile.bow_config.bow_type.value == 'compound':
-                estimated_speed = (draw_weight * 10) - (total_arrow_weight - 350) * 0.1  # Speed loss for heavier arrows
+                # Base speed: ~4-5 fps per pound of draw weight for compound bows
+                base_speed = draw_weight * 4.5 + 80  # Base formula
+                # Speed loss for arrow weight: ~2 fps per 10gr over 350gr
+                weight_penalty = max(0, (total_arrow_weight - 350) / 10) * 2
+                estimated_speed = base_speed - weight_penalty
             else:
-                estimated_speed = (draw_weight * 8) - (total_arrow_weight - 350) * 0.08
-            estimated_speed = max(180, min(350, estimated_speed))  # Reasonable bounds
+                # Recurve/traditional bows are slower
+                base_speed = draw_weight * 3.5 + 60
+                weight_penalty = max(0, (total_arrow_weight - 400) / 10) * 1.5  # Traditional bows less sensitive to weight
+                estimated_speed = base_speed - weight_penalty
+            estimated_speed = max(180, min(320, estimated_speed))  # More realistic bounds
         
         # Determine arrow type for ballistics
         arrow_type_str = getattr(arrow_rec, 'arrow_type', 'hunting') or 'hunting'
@@ -244,6 +251,7 @@ def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None)
         )
         
         # Calculate kinetic energy and penetration at key distances
+        ke_initial = ballistics_calc.calculate_kinetic_energy(estimated_speed, total_arrow_weight, 0)
         ke_20yd = ballistics_calc.calculate_kinetic_energy(estimated_speed, total_arrow_weight, 20)
         ke_40yd = ballistics_calc.calculate_kinetic_energy(estimated_speed, total_arrow_weight, 40)
         
@@ -267,7 +275,9 @@ def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None)
             'performance_summary': {
                 'estimated_speed_fps': round(estimated_speed, 1),
                 'total_arrow_weight_grains': round(total_arrow_weight, 1),
+                'kinetic_energy_initial': ke_initial['kinetic_energy_ft_lbs'],
                 'kinetic_energy_40yd': ke_40yd['kinetic_energy_ft_lbs'],
+                'momentum': ke_initial['momentum_slug_fps'],
                 'momentum_40yd': ke_40yd['momentum_slug_fps'],
                 'penetration_score': penetration_analysis['penetration_score'],
                 'penetration_category': penetration_analysis['category'],
@@ -293,7 +303,9 @@ def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None)
             'performance_summary': {
                 'estimated_speed_fps': estimated_speed or 250,
                 'total_arrow_weight_grains': 400,
+                'kinetic_energy_initial': 0,
                 'kinetic_energy_40yd': 0,
+                'momentum': 0,
                 'momentum_40yd': 0,
                 'penetration_score': 0,
                 'penetration_category': 'unknown',
@@ -5897,10 +5909,46 @@ def calculate_trajectory(current_user):
         env_conditions = data.get('environmental_conditions', {})
         shooting_conditions = data.get('shooting_conditions', {})
 
-        # Extract arrow parameters
-        arrow_speed = arrow_data.get('estimated_speed_fps', 280)
-        arrow_weight = arrow_data.get('total_weight', 400)
-        arrow_diameter = arrow_data.get('outer_diameter', 0.246)
+        # Extract arrow parameters with flexible field name matching
+        # Try multiple possible field names for arrow speed
+        arrow_speed = (
+            arrow_data.get('estimated_speed_fps') or 
+            arrow_data.get('arrow_speed_fps') or 
+            arrow_data.get('speed_fps') or 
+            (arrow_data.get('performance', {}).get('performance_summary', {}).get('estimated_speed_fps')) or
+            280  # Default fallback
+        )
+        
+        # Try multiple possible field names for arrow weight  
+        arrow_weight = (
+            arrow_data.get('total_weight') or
+            arrow_data.get('total_arrow_weight_grains') or
+            arrow_data.get('weight_grains') or
+            (arrow_data.get('performance', {}).get('performance_summary', {}).get('total_arrow_weight_grains')) or
+            400  # Default fallback
+        )
+        
+        # Try multiple possible field names for arrow diameter
+        arrow_diameter = (
+            arrow_data.get('outer_diameter') or
+            arrow_data.get('diameter_inches') or
+            arrow_data.get('diameter') or
+            0.246  # Default fallback
+        )
+        
+        # Debug: Log the extracted parameters with comprehensive data structure
+        print(f"🎯 Trajectory Calculation Debug:")
+        print(f"   Arrow Speed: {arrow_speed} fps")
+        print(f"   Arrow Weight: {arrow_weight} grains") 
+        print(f"   Arrow Diameter: {arrow_diameter} inches")
+        print(f"   Raw arrow_data keys: {list(arrow_data.keys())}")
+        print(f"   Raw arrow_data: {arrow_data}")
+        if arrow_data.get('performance'):
+            print(f"   Performance data keys: {list(arrow_data.get('performance', {}).keys())}")
+            print(f"   Full performance data: {arrow_data.get('performance')}")
+            if arrow_data.get('performance', {}).get('performance_summary'):
+                print(f"   Performance summary keys: {list(arrow_data.get('performance', {}).get('performance_summary', {}).keys())}")
+                print(f"   Full performance summary: {arrow_data.get('performance', {}).get('performance_summary')}")
         
         # Determine arrow type based on arrow data
         arrow_type_str = arrow_data.get('arrow_type', 'hunting').lower()

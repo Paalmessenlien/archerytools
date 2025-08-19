@@ -92,7 +92,95 @@
 
     <!-- Environmental Controls -->
     <div v-if="showEnvironmentalControls" class="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-      <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Environmental Conditions</h4>
+      <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Trajectory Settings</h4>
+      
+      <!-- Distance Range Control -->
+      <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex-1">
+            <label class="block text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">
+              <i class="fas fa-crosshairs mr-1"></i>
+              Maximum Range
+            </label>
+            <input 
+              v-model.number="trajectorySettings.maxRange"
+              @change="updateTrajectory"
+              type="range" 
+              :min="units === 'metric' ? 25 : 30" 
+              :max="units === 'metric' ? 110 : 120" 
+              step="5"
+              class="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+            >
+            <div class="flex justify-between text-xs text-blue-600 dark:text-blue-400 mt-1">
+              <span>{{ units === 'metric' ? 25 : 30 }} {{ getDistanceUnit() }}</span>
+              <span class="font-medium">{{ trajectorySettings.maxRange }} {{ getDistanceUnit() }}</span>
+              <span>{{ units === 'metric' ? 110 : 120 }} {{ getDistanceUnit() }}</span>
+            </div>
+          </div>
+          
+          <!-- Quick Range Buttons -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="preset in rangePresets"
+              :key="preset.value"
+              @click="setRangePreset(preset.value)"
+              :class="[
+                'px-3 py-1 text-xs rounded-full transition-colors',
+                trajectorySettings.maxRange === preset.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 hover:bg-blue-300 dark:hover:bg-blue-700'
+              ]"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distance Interval Control -->
+      <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex-1">
+            <label class="block text-xs text-green-700 dark:text-green-300 mb-2 font-medium">
+              <i class="fas fa-ruler mr-1"></i>
+              Distance Intervals
+            </label>
+            <input 
+              v-model.number="trajectorySettings.distanceInterval"
+              @change="updateTrajectory"
+              type="range" 
+              :min="units === 'metric' ? 2 : 2" 
+              :max="units === 'metric' ? 15 : 20" 
+              step="1"
+              class="w-full h-3 bg-green-200 rounded-lg appearance-none cursor-pointer"
+            >
+            <div class="flex justify-between text-xs text-green-600 dark:text-green-400 mt-1">
+              <span>{{ units === 'metric' ? 2 : 2 }} {{ getDistanceUnit() }}</span>
+              <span class="font-medium">{{ trajectorySettings.distanceInterval }} {{ getDistanceUnit() }}</span>
+              <span>{{ units === 'metric' ? 15 : 20 }} {{ getDistanceUnit() }}</span>
+            </div>
+          </div>
+          
+          <!-- Quick Interval Buttons -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="preset in intervalPresets"
+              :key="preset.value"
+              @click="setIntervalPreset(preset.value)"
+              :class="[
+                'px-3 py-1 text-xs rounded-full transition-colors',
+                trajectorySettings.distanceInterval === preset.value
+                  ? 'bg-green-600 text-white'
+                  : 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-700'
+              ]"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Environmental Conditions</h5>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wind Speed (mph)</label>
@@ -169,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 import { useApi } from '~/composables/useApi'
 // Chart.js loaded from CDN to avoid build issues
@@ -219,6 +307,64 @@ const showChart = ref(false)
 const showEnvironmentalControls = ref(false)
 const trajectorySummary = ref(null)
 const units = ref('imperial') // 'imperial' or 'metric'
+
+// Trajectory settings
+const trajectorySettings = ref({
+  maxRange: 80,        // Default to 80 yards
+  distanceInterval: 5  // Default to 5 yard/meter intervals
+})
+
+// Range presets for quick selection
+const rangePresets = computed(() => {
+  if (units.value === 'metric') {
+    return [
+      { label: '35m', value: 35 },
+      { label: '45m', value: 45 },
+      { label: '55m', value: 55 },
+      { label: '65m', value: 65 },
+      { label: '75m', value: 75 },
+      { label: '90m', value: 90 }
+    ]
+  } else {
+    return [
+      { label: '40yd', value: 40 },
+      { label: '50yd', value: 50 },
+      { label: '60yd', value: 60 },
+      { label: '70yd', value: 70 },
+      { label: '80yd', value: 80 },
+      { label: '100yd', value: 100 }
+    ]
+  }
+})
+
+// Set range preset function
+const setRangePreset = (value) => {
+  trajectorySettings.value.maxRange = value
+  updateTrajectory()
+}
+
+// Distance interval presets for quick selection
+const intervalPresets = computed(() => {
+  if (units.value === 'metric') {
+    return [
+      { label: '2m', value: 2 },
+      { label: '5m', value: 5 },
+      { label: '10m', value: 10 }
+    ]
+  } else {
+    return [
+      { label: '2yd', value: 2 },
+      { label: '5yd', value: 5 },
+      { label: '10yd', value: 10 }
+    ]
+  }
+})
+
+// Set interval preset function
+const setIntervalPreset = (value) => {
+  trajectorySettings.value.distanceInterval = value
+  updateTrajectory()
+}
 
 // Environmental conditions
 const environmentalConditions = ref({
@@ -279,7 +425,20 @@ const hideChart = () => {
 }
 
 const setUnits = (newUnits) => {
+  const oldUnits = units.value
   units.value = newUnits
+  
+  // Convert trajectory settings when switching units
+  if (oldUnits !== newUnits) {
+    if (newUnits === 'metric') {
+      // Convert yards to meters
+      trajectorySettings.value.maxRange = Math.round(yardsToMeters(trajectorySettings.value.maxRange))
+    } else {
+      // Convert meters to yards  
+      trajectorySettings.value.maxRange = Math.round(metersToYards(trajectorySettings.value.maxRange))
+    }
+  }
+  
   if (chartInstance.value) {
     updateChartUnits()
   }
@@ -357,9 +516,27 @@ const initializeChartComponent = async () => {
           borderWidth: 3,
           fill: true,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#3B82F6',
+          pointRadius: (context) => {
+            // Show different sized dots based on configurable distance intervals
+            const distance = parseFloat(context.chart.data.labels[context.dataIndex])
+            const interval = trajectorySettings.value.distanceInterval
+            const largerInterval = interval * 2
+            
+            if (distance % largerInterval === 0) return 7    // Largest dots every 2x interval
+            if (distance % interval === 0) return 5         // Medium dots every interval
+            return 2                                         // Small dots for all other points
+          },
+          pointHoverRadius: 9,
+          pointBackgroundColor: (context) => {
+            // Color-code dots based on configurable distance intervals
+            const distance = parseFloat(context.chart.data.labels[context.dataIndex])
+            const interval = trajectorySettings.value.distanceInterval
+            const largerInterval = interval * 2
+            
+            if (distance % largerInterval === 0) return '#1E40AF'  // Dark blue for 2x interval
+            if (distance % interval === 0) return '#3B82F6'       // Medium blue for interval
+            return '#60A5FA'                                       // Light blue for other points
+          },
           pointBorderColor: '#FFFFFF',
           pointBorderWidth: 2
         }]
@@ -382,7 +559,14 @@ const initializeChartComponent = async () => {
               color: 'rgba(107, 114, 128, 0.1)'
             },
             ticks: {
-              color: '#6B7280'
+              color: '#6B7280',
+              stepSize: trajectorySettings.value.distanceInterval,
+              callback: function(value, index, values) {
+                // Show labels at configured interval, ensure they're whole numbers
+                const numValue = parseFloat(value)
+                const interval = trajectorySettings.value.distanceInterval
+                return (numValue % interval === 0) ? numValue.toFixed(0) : ''
+              }
             }
           },
           y: {
@@ -419,18 +603,52 @@ const initializeChartComponent = async () => {
             borderColor: '#374151',
             borderWidth: 1,
             cornerRadius: 8,
+            padding: 12,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 12
+            },
             callbacks: {
               title: function(context) {
-                return `Distance: ${context[0].label} ${getDistanceUnit()}`
+                const distance = parseFloat(context[0].label)
+                const distanceUnit = getDistanceUnit()
+                return `📍 Distance: ${distance} ${distanceUnit}`
               },
               label: function(context) {
                 const height = context.parsed.y
-                const unit = getHeightUnit()
+                const heightUnit = getHeightUnit()
+                const distance = parseFloat(context.label)
+                
+                // Get trajectory data point for this distance if available
+                const trajectoryPoint = context.chart.trajectoryData?.find(p => 
+                  Math.abs(p.distance_yards - (units.value === 'metric' ? metersToYards(distance) : distance)) < 1
+                )
+                
+                const labels = []
+                
+                // Height/Drop information
                 if (height >= 0) {
-                  return `Height: ${height.toFixed(1)}${unit} above sight line`
+                  labels.push(`📈 Height: +${height.toFixed(1)}${heightUnit} above sight`)
                 } else {
-                  return `Drop: ${Math.abs(height).toFixed(1)}${unit} below sight line`
+                  labels.push(`📉 Drop: ${Math.abs(height).toFixed(1)}${heightUnit} below sight`)
                 }
+                
+                // Additional trajectory data if available
+                if (trajectoryPoint) {
+                  labels.push(`⚡ Velocity: ${trajectoryPoint.velocity_fps} fps`)
+                  labels.push(`⏱️ Flight time: ${trajectoryPoint.time.toFixed(2)}s`)
+                  
+                  if (trajectoryPoint.wind_drift_inches && Math.abs(trajectoryPoint.wind_drift_inches) > 0.1) {
+                    const driftUnit = heightUnit
+                    const drift = units.value === 'metric' ? inchesToCm(trajectoryPoint.wind_drift_inches) : trajectoryPoint.wind_drift_inches
+                    labels.push(`💨 Wind drift: ${drift.toFixed(1)}${driftUnit}`)
+                  }
+                }
+                
+                return labels
               },
               afterLabel: function(context) {
                 const distance = parseFloat(context.label)
@@ -441,10 +659,27 @@ const initializeChartComponent = async () => {
                 const huntingDistance = units.value === 'metric' ? convertDistance(40).toFixed(0) : '40'
                 const extendedDistance = units.value === 'metric' ? convertDistance(60).toFixed(0) : '60'
                 
-                if (Math.abs(distance - parseFloat(zeroDistance)) <= 1) return 'Zero Distance'
-                if (Math.abs(distance - parseFloat(huntingDistance)) <= 2) return 'Common Hunting Distance'
-                if (Math.abs(distance - parseFloat(extendedDistance)) <= 3) return 'Extended Range'
-                return ''
+                const annotations = []
+                
+                if (Math.abs(distance - parseFloat(zeroDistance)) <= 1) {
+                  annotations.push('🎯 Zero Distance')
+                }
+                if (Math.abs(distance - parseFloat(huntingDistance)) <= 2) {
+                  annotations.push('🦌 Common Hunting Distance') 
+                }
+                if (Math.abs(distance - parseFloat(extendedDistance)) <= 3) {
+                  annotations.push('🏹 Extended Range')
+                }
+                const interval = trajectorySettings.value.distanceInterval
+                const largerInterval = interval * 2
+                
+                if (distance % largerInterval === 0) {
+                  annotations.push('📊 Major Distance Marker')
+                } else if (distance % interval === 0) {
+                  annotations.push('📍 Distance Marker')
+                }
+                
+                return annotations
               }
             }
           }
@@ -483,7 +718,7 @@ const updateTrajectory = async () => {
         shot_angle_degrees: 0.0,
         sight_height_inches: 7.0,
         zero_distance_yards: 20.0,
-        max_range_yards: 100.0
+        max_range_yards: units.value === 'metric' ? metersToYards(trajectorySettings.value.maxRange) : trajectorySettings.value.maxRange
       }
     })
 
@@ -510,6 +745,9 @@ const updateChartData = (trajectoryData) => {
   // Store original data for unit conversion
   chartInstance.value.data.originalLabels = originalLabels
   chartInstance.value.data.datasets[0].originalData = originalHeights
+  
+  // Store trajectory data for tooltips
+  chartInstance.value.trajectoryData = points
 
   // Apply current unit conversion
   const convertedLabels = originalLabels.map(label => 
