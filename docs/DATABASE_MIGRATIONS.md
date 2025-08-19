@@ -6,6 +6,35 @@ This document provides comprehensive guidance on the database migration system u
 
 The Archery Tools project uses a robust, versioned database migration system that ensures consistent database schema evolution across development, staging, and production environments. The system supports both arrow database (`arrow_database.db`) and user database (`user_data.db`) migrations with dependency management, rollback capabilities, and enhanced admin panel management.
 
+## ⚠️ CRITICAL: Migration Interface Requirements
+
+**ALL migrations MUST follow the exact method signatures below or they will fail in production:**
+
+```python
+def up(self, db_path, environment='development'):
+    """Apply the migration - REQUIRED SIGNATURE"""
+    # Your migration code here
+    return True  # MUST return True for success
+
+def down(self, db_path, environment='development'):
+    """Rollback the migration - REQUIRED SIGNATURE"""  
+    # Your rollback code here
+    return True  # MUST return True for success
+```
+
+**❌ WRONG - These will cause 500 errors:**
+```python
+def up(self):  # Missing required parameters
+def up(self, db_path):  # Missing environment parameter  
+def up(self, db_path: str, environment: str):  # Type hints cause issues
+```
+
+**✅ CORRECT - Production-compatible signatures:**
+```python
+def up(self, db_path, environment='development'):
+def down(self, db_path, environment='development'):
+```
+
 ### Recent Enhancements (August 2025)
 
 - **Dual Database Architecture**: Complete separation of arrow specifications and user data with targeted migration routing
@@ -176,6 +205,89 @@ class MigrationXXX[DescriptiveName](BaseMigration):
 
 # Create the migration instance for discovery
 migration = MigrationXXX[DescriptiveName]()
+```
+
+## 📋 Complete Migration Template
+
+**Copy this template for new migrations to ensure correct interface:**
+
+```python
+#!/usr/bin/env python3
+"""
+Migration XXX: [Brief Description]
+Author: [Your Name]  
+Date: [Date]
+"""
+
+import sqlite3
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import BaseMigration
+sys.path.append(str(Path(__file__).parent.parent))
+from database_migration_manager import BaseMigration
+
+class MigrationXXX[DescriptiveName](BaseMigration):
+    def __init__(self):
+        super().__init__()
+        self.version = "XXX"
+        self.description = "Brief description of migration"
+        self.dependencies = []  # ["XXX"] if depends on other migrations
+        self.environments = ['all']  # ['all', 'development', 'production', 'docker']
+        self.target_database = 'arrow'  # 'arrow' or 'user'
+    
+    def up(self, db_path, environment='development'):
+        """Apply the migration - REQUIRED SIGNATURE"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            print(f"🔧 Applying Migration XXX: [Description]...")
+            
+            # Your migration SQL here
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS new_table (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            conn.commit()
+            conn.close()
+            
+            print("✅ Migration XXX completed successfully")
+            return True  # CRITICAL: Must return True
+            
+        except Exception as e:
+            print(f"❌ Migration XXX failed: {e}")
+            return False
+    
+    def down(self, db_path, environment='development'):
+        """Rollback the migration - REQUIRED SIGNATURE"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("DROP TABLE IF EXISTS new_table")
+            
+            conn.commit()
+            conn.close()
+            
+            return True  # CRITICAL: Must return True
+            
+        except Exception as e:
+            print(f"❌ Migration XXX rollback failed: {e}")
+            return False
+
+# Create the migration instance for discovery
+migration = MigrationXXX[DescriptiveName]()
+
+if __name__ == "__main__":
+    # For standalone testing
+    from pathlib import Path
+    db_path = Path(__file__).parent.parent / "databases" / "arrow_database.db"
+    migration.up(str(db_path), 'development')
 ```
 
 ## Creating New Migrations
@@ -1318,6 +1430,106 @@ def migrate_up(cursor):
 ```
 
 **Integration**: String material speed modifiers applied in enhanced arrow speed calculations.
+
+## 🔧 Common Migration Errors & Solutions
+
+### 1. **500 Error: "Some migrations failed"**
+
+**Error**: API Error 500: {"error":"Some migrations failed"}
+
+**Cause**: Incorrect method signatures in migration class
+
+**Solution**: Ensure your migration uses the exact signature:
+```python
+def up(self, db_path, environment='development'):  # ✅ CORRECT
+def down(self, db_path, environment='development'):  # ✅ CORRECT
+```
+
+**NOT:**
+```python
+def up(self):  # ❌ Missing parameters
+def up(self, db_path: str, environment: str):  # ❌ Type hints
+```
+
+### 2. **Migration Not Found/Discovered**
+
+**Error**: Migration doesn't appear in admin panel
+
+**Cause**: Incorrect file naming or missing migration instance
+
+**Solution**: 
+- File name must match pattern: `XXX_description.py`
+- Must have migration instance at end: `migration = MigrationXXX()`
+
+### 3. **Database Path Issues**
+
+**Error**: "Could not find arrow database"
+
+**Solution**: Use the path resolution in template or get path from parameters:
+```python
+def up(self, db_path, environment='development'):
+    # Use the provided db_path parameter - don't resolve yourself
+    conn = sqlite3.connect(db_path)
+```
+
+### 4. **Environment Targeting Issues**
+
+**Error**: Migration runs in wrong environment
+
+**Solution**: Set target database explicitly:
+```python
+def __init__(self):
+    super().__init__()
+    self.target_database = 'arrow'  # or 'user'
+    self.environments = ['all']  # or ['production'] etc
+```
+
+### 5. **Return Value Issues**
+
+**Error**: Migration marked as failed despite success
+
+**Solution**: Always return True/False:
+```python
+def up(self, db_path, environment='development'):
+    try:
+        # ... migration code ...
+        return True  # ✅ REQUIRED
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False  # ✅ REQUIRED
+```
+
+### 6. **Testing Migration Locally**
+
+**Test standalone execution:**
+```bash
+cd arrow_scraper
+python3 migrations/XXX_your_migration.py
+```
+
+**Test via migration manager:**
+```bash
+cd arrow_scraper
+python3 -c "
+from database_migration_manager import DatabaseMigrationManager
+manager = DatabaseMigrationManager('databases/arrow_database.db')
+manager.run_migrations(dry_run=True)
+"
+```
+
+### 7. **Production Deployment Checklist**
+
+Before deploying migration to production:
+
+1. ✅ **Test locally**: Run migration on local development database
+2. ✅ **Check signatures**: Verify `up(self, db_path, environment='development')` 
+3. ✅ **Test rollback**: Ensure `down()` method works if needed
+4. ✅ **Check return values**: Both methods return True/False
+5. ✅ **Validate in admin**: Use admin panel migration dry-run
+6. ✅ **Backup production**: Always backup before running in production
+7. ✅ **Deploy with unified script**: Use `./start-unified.sh ssl archerytool.online`
+
+This ensures migrations run automatically on production startup and prevents interface errors.
 
 **Implementation**:
 ```python
