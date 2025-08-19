@@ -171,174 +171,97 @@ pip install -r requirements.txt
 python test_setup.py
 ```
 
-### Running the Dual Architecture Application
+### 🚀 Unified Startup System (Recommended - August 2025)
 
-**🚀 Option 1: Hybrid Development Environment (Recommended for Development)**
+**All deployment scenarios are now handled by the unified `start-unified.sh` script with comprehensive help system.**
 
-**Single-Command Development Startup:**
+**📋 Quick Reference:**
 ```bash
-# Start hybrid development environment (API in Docker + Frontend on Host)
-./start-hybrid-dev.sh start
-
-# Access your development environment:
-# - Frontend: http://localhost:3000
-# - API: http://localhost:5000/api/health
-# - Admin: http://localhost:3000/admin
-
-# Development workflow commands:
-./start-hybrid-dev.sh logs      # View service logs
-./start-hybrid-dev.sh status    # Check service health and URLs
-./start-hybrid-dev.sh restart   # Restart all services
-./start-hybrid-dev.sh api-shell # Open shell in API container
-./start-hybrid-dev.sh stop      # Stop all services
-
-# Key benefits:
-# - ✅ Eliminates oxc-parser native binding issues completely
-# - ✅ Production-identical API database schema in Docker container  
-# - ✅ Native frontend performance with full hot reload
-# - ✅ Single command startup with automatic dependency management
-# - ✅ Comprehensive health monitoring and process management
-# - ✅ Automatic database initialization with proper permissions (August 2025)
-# - ✅ Fixed migration system compatibility with draw_length schema changes
+./start-unified.sh --help              # Show comprehensive help and documentation
 ```
 
-**Enhanced Database Management (August 2025):**
-The hybrid development environment now includes automatic database initialization that:
-- Copies existing databases from `arrow_scraper/databases/` to Docker volume
-- Sets proper file permissions for container user (`devuser`)
-- Ensures production-identical database schema and data
-- Resolves all database permission and migration issues
-
-**📚 Complete Documentation:** See [docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md](docs/HYBRID_DEVELOPMENT_ENVIRONMENT.md) for comprehensive setup guide, troubleshooting, and technical details.
-
-**Option 2: Enhanced Docker Deployment (Recommended for Production)**
-
-**Enhanced Production Deployment (With Comprehensive Verification):**
+**🔧 Development Modes:**
 ```bash
-# Deploy enhanced production system with full verification
-./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
+# Local development (no Docker) - Recommended for frontend development
+./start-unified.sh dev start           # Start API and frontend locally
+./start-unified.sh dev stop            # Stop local development services
 
-# Quick verification test
-python3 test-bow-saving.py
-
-# Enhanced deployment includes:
-# - Database integrity verification
-# - Build verification for frontend and API
-# - Multi-stage health checks with extended timeouts
-# - Comprehensive error handling and logging
-# - User database persistence with Docker volumes
+# Docker development - Recommended for backend development  
+./start-unified.sh                     # Start full Docker development environment
 ```
 
-**Standard Deployment (Legacy):**
+**🚀 Production Modes:**
 ```bash
-# Deploy with default configuration
-./docker-deploy.sh
+# Production HTTP mode (for local testing)
+./start-unified.sh production start    # Start production environment locally
+./start-unified.sh production stop     # Stop production services
 
-# Deploy with SSL for production
-./docker-deploy.sh docker-compose.ssl.yml --build
-
-# Deploy development version
-./docker-deploy.sh docker-compose.dev.yml
+# Production SSL mode (for live deployment)
+./start-unified.sh ssl yourdomain.com  # Deploy with SSL certificates
 ```
 
-**🐳 Unified Docker Development Environment (Recommended for Development):**
+**🛑 Stopping Services:**
 ```bash
-# Start unified development environment with production schema
-./start-docker-dev.sh start
-
-# Available commands:
-./start-docker-dev.sh start     # Start all services in development mode
-./start-docker-dev.sh stop      # Stop all services  
-./start-docker-dev.sh restart   # Restart all services
-./start-docker-dev.sh logs      # Follow logs from all services
-./start-docker-dev.sh shell     # Open shell in API container for debugging
-./start-docker-dev.sh status    # Show service status and health
-./start-docker-dev.sh build     # Rebuild all containers
-./start-docker-dev.sh clean     # Clean environment (removes containers, networks, volumes)
-
-# Access URLs for development:
-# - Frontend: http://localhost:3000
-# - API: http://localhost:5000/api/health  
-# - Nginx: http://localhost:8080
-# - Admin: http://localhost:3000/admin
-
-# Key benefits:
-# - Uses same database schema as production (eliminates schema mismatches)
-# - Preserves development features (hot reload, debug mode, development tools)
-# - Consistent migration system with production
-# - Easy debugging with shell access
-# - Comprehensive health monitoring
+./start-unified.sh dev stop            # Stop local development
+./start-unified.sh production stop     # Stop production services
+./stop-unified.sh                      # Stop any unified mode services
+./stop-unified.sh --remove             # Stop and remove containers
+./stop-unified.sh --clean              # Stop and remove all data (⚠️ DATA LOSS!)
 ```
 
-**Manual Docker Commands (Legacy):**
+**🌐 Access URLs:**
+- **Local Development**: http://localhost:3000 (frontend), http://localhost:5000/api (API)
+- **Docker Development**: http://localhost:3000 (frontend), http://localhost:5000/api (API)
+- **Production HTTP**: http://localhost (frontend), http://localhost/api (API)
+- **Production SSL**: https://yourdomain.com (frontend), https://yourdomain.com/api (API)
+
+**✨ Key Features:**
+- ✅ **Automatic Database Migrations**: Runs migration 033 and all required schema updates
+- ✅ **Environment-Specific Configuration**: Automatically configures development vs production settings
+- ✅ **SSL Certificate Management**: Automatic Let's Encrypt certificate generation and renewal
+- ✅ **Health Monitoring**: Built-in health checks and service monitoring
+- ✅ **Unified Database Architecture**: Single database file with all data consolidated
+- ✅ **Comprehensive Help System**: Complete documentation with examples
+
+**📊 Monitoring Commands:**
 ```bash
-# Clean up orphan containers first (if needed)
-./docker-cleanup.sh
-
-# API-only testing
-docker-compose -f docker-compose.simple.yml up -d --build
-
-# Legacy development with hot reload (may have schema issues)
-docker-compose up -d --build
-
-# Production testing without domain
-docker-compose -f docker-compose.prod.yml up -d --build
-```
-
-**For Production with Domain & HTTPS:**
-```bash
-# HTTP deployment (initial setup)
-./deploy-production.sh
-
-# HTTPS deployment (with SSL certificates)
-sudo docker-compose -f docker-compose.ssl.yml up -d --build
-
-# Fix mixed content if upgrading from HTTP to HTTPS
-./fix-mixed-content.sh
-```
-
-**Access URLs:**
-- **Development**: http://localhost:3000
-- **Production HTTP**: http://yourdomain.com  
-- **Production HTTPS**: https://yourdomain.com
-- **API**: /api/health endpoint for health checks
-
-**Option 2: Local Development Startup**
-```bash
-# Start both Nuxt 3 frontend and Flask API backend for development
-./start-local-dev.sh start
-
-# Stop services
-./start-local-dev.sh stop
+# View logs
+docker-compose -f docker-compose.unified.yml logs -f
+docker-compose -f docker-compose.unified.yml logs -f api
+docker-compose -f docker-compose.unified.yml logs -f frontend
 
 # Check service status
-./start-local-dev.sh status
+docker-compose -f docker-compose.unified.yml ps
 
-# Restart services
-./start-local-dev.sh restart
-
-# Frontend: http://localhost:3000
-# API Backend: http://localhost:5000
+# Health checks
+curl http://localhost/health              # Production mode
+curl http://localhost:5000/api/health     # Development mode
 ```
 
-**Option 3: Manual Development**
+**🔧 Environment Variables:**
+The unified script automatically handles environment configuration. Key variables:
+- `DEEPSEEK_API_KEY` - API key for arrow data processing
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret  
+- `NUXT_PUBLIC_GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `SECRET_KEY` - Flask secret key (change in production)
+- `DOMAIN_NAME` - Domain name for SSL mode
+- `SSL_EMAIL` - Email for SSL certificate generation
+
+**📚 Legacy Scripts (Archived):**
+All legacy startup scripts have been moved to `scripts/archive/legacy-startup-scripts/` and should not be used. Use the unified script instead.
+
+**Manual Development (Advanced Users):**
 ```bash
-# Start Flask API Backend
+# Start Flask API Backend manually
 cd arrow_scraper
 python api.py
 
-# Start Nuxt 3 Frontend (separate terminal)
+# Start Nuxt 3 Frontend manually (separate terminal)
 cd frontend
 npm run dev
 ```
 
-**Legacy Flask Web Application (deprecated)**
-```bash
-# Start the original Flask web server (server-side rendered)
-cd arrow_scraper
-python webapp.py
-# Server runs on http://localhost:5000
-```
+**⚠️ Note:** Manual development requires proper environment setup and database configuration. Use the unified script for automatic configuration.
 
 ### Running the Scraper
 
@@ -2138,12 +2061,22 @@ This section details the newly implemented user authentication and profile manag
 
 **Common Development Commands:**
 ```bash
-# Quick local development startup
-./start-local-dev.sh start
+# Quick unified development startup (RECOMMENDED)
+./start-unified.sh dev start          # Local development with hot reload
+./start-unified.sh --help             # Show comprehensive help
 
-# Frontend development with hot reload
-cd frontend && npm run dev
+# Alternative Docker development
+./start-unified.sh                    # Full Docker development environment
 
-# Backend API development
-cd arrow_scraper && source venv/bin/activate && python api.py
+# Stop development services
+./start-unified.sh dev stop           # Stop local development
+./stop-unified.sh                     # Stop any unified services
+
+# Production testing
+./start-unified.sh production start   # Test production build locally
+./start-unified.sh production stop    # Stop production testing
+
+# Manual development (advanced users)
+cd frontend && npm run dev             # Frontend only
+cd arrow_scraper && python api.py     # Backend only
 ```
