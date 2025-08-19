@@ -69,6 +69,32 @@
           Flight Trajectory
         </h4>
         <div class="flex items-center space-x-4 text-sm">
+          <!-- Unit Toggle -->
+          <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              @click="distanceUnit = 'yards'"
+              :class="[
+                'px-3 py-1 rounded text-xs font-medium transition-colors',
+                distanceUnit === 'yards' 
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              ]"
+            >
+              Yards
+            </button>
+            <button
+              @click="distanceUnit = 'meters'"
+              :class="[
+                'px-3 py-1 rounded text-xs font-medium transition-colors',
+                distanceUnit === 'meters' 
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              ]"
+            >
+              Meters
+            </button>
+          </div>
+          
           <div class="flex items-center">
             <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
             <span class="text-gray-600 dark:text-gray-400">Current Setup</span>
@@ -131,13 +157,13 @@
               text-anchor="middle" 
               class="text-xs fill-gray-600 dark:fill-gray-400"
             >
-              {{ marker.distance }}yd
+              {{ formatDistance(marker.distance) }}{{ distanceUnitLabel }}
             </text>
           </g>
           
           <!-- Axis Labels -->
           <text x="400" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">
-            Distance (yards)
+            Distance ({{ distanceUnit }})
           </text>
           <text x="15" y="20" class="text-xs fill-gray-600 dark:fill-gray-400">
             Height
@@ -152,7 +178,7 @@
               <span class="font-medium text-gray-900 dark:text-gray-100">{{ liveCalculations.maxHeight }}"</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">40yd Drop:</span>
+              <span class="text-gray-600 dark:text-gray-400">{{ formatDistance(40) }}{{ distanceUnitLabel }} Drop:</span>
               <span class="font-medium text-gray-900 dark:text-gray-100">{{ liveCalculations.drop40yd }}"</span>
             </div>
           </div>
@@ -184,7 +210,7 @@
               :key="point.distance"
               class="border-b border-gray-100 dark:border-gray-800"
             >
-              <td class="py-2 font-medium">{{ point.distance }} yd</td>
+              <td class="py-2 font-medium">{{ formatDistance(point.distance) }} {{ distanceUnitLabel }}</td>
               <td class="text-right py-2">{{ point.speed }} FPS</td>
               <td class="text-right py-2" :class="point.drop < 0 ? 'text-red-600 dark:text-red-400' : ''">
                 {{ point.drop }}"
@@ -241,6 +267,23 @@ const props = defineProps({
 
 // Reactive references
 const trajectoryChart = ref(null)
+const distanceUnit = ref('yards') // 'yards' or 'meters'
+
+// Unit conversion functions
+const yardsToMeters = (yards) => yards * 0.9144
+const metersToYards = (meters) => meters / 0.9144
+
+// Distance formatting and conversion
+const formatDistance = (distanceInYards) => {
+  if (distanceUnit.value === 'meters') {
+    return Math.round(yardsToMeters(distanceInYards) * 10) / 10
+  }
+  return distanceInYards
+}
+
+const distanceUnitLabel = computed(() => {
+  return distanceUnit.value === 'meters' ? 'm' : 'yd'
+})
 
 // Live Performance Calculations
 const liveCalculations = computed(() => {
@@ -265,14 +308,16 @@ const liveCalculations = computed(() => {
 const ballisticsTable = computed(() => {
   const speed = liveCalculations.value.estimatedSpeed
   const weight = liveCalculations.value.totalWeight
-  const distances = [10, 20, 30, 40, 50, 60, 80, 100]
   
-  return distances.map(distance => ({
-    distance,
-    speed: Math.round(calculateSpeedAtDistance(speed, distance)),
-    drop: calculateDropAtDistance(speed, distance),
-    energy: Math.round(calculateEnergyAtDistance(speed, weight, distance) * 10) / 10,
-    time: calculateTimeToDistance(speed, distance)
+  // Base distances in yards, convert to meters if needed
+  const baseDistances = [10, 20, 30, 40, 50, 60, 80, 100]
+  
+  return baseDistances.map(distanceYards => ({
+    distance: distanceYards, // Store original yards for calculations
+    speed: Math.round(calculateSpeedAtDistance(speed, distanceYards)),
+    drop: calculateDropAtDistance(speed, distanceYards),
+    energy: Math.round(calculateEnergyAtDistance(speed, weight, distanceYards) * 10) / 10,
+    time: calculateTimeToDistance(speed, distanceYards)
   }))
 })
 
@@ -315,7 +360,7 @@ const originalTrajectoryPath = computed(() => {
 // Trajectory Markers
 const trajectoryMarkers = computed(() => {
   const trajectory = liveCalculations.value.trajectory
-  const markerDistances = [20, 40, 60, 80]
+  const markerDistances = [20, 40, 60, 80] // Always in yards for calculations
   const maxDistance = 100
   
   return markerDistances.map(distance => {
@@ -323,7 +368,7 @@ const trajectoryMarkers = computed(() => {
     const maxDrop = 20 // Estimated max drop range
     
     return {
-      distance,
+      distance, // Store original distance in yards for calculations
       x: (distance / maxDistance) * 750 + 25,
       y: 100 - ((point.drop + maxDrop) / (maxDrop * 2)) * 150 + 25
     }
