@@ -330,6 +330,58 @@ def get_database():
             database = None
     return database
 
+def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=28.0):
+    """
+    Get effective draw length based on bow type:
+    - Compound bows: Use bow's mechanical draw length (from bow setup)
+    - Recurve/Traditional: Use user's physical draw length
+    - Default to 28" if no draw length is configured
+    
+    Returns tuple: (draw_length, source_description)
+    """
+    try:
+        db = get_database()
+        if not db:
+            return default, "System default (28\")"
+        
+        # Determine bow type
+        bow_type = None
+        bow_draw_length = None
+        
+        if bow_config:
+            bow_type = bow_config.get('bow_type', '').lower()
+            bow_draw_length = bow_config.get('draw_length')
+        elif bow_data:
+            bow_type = bow_data.get('bow_type', '').lower()
+            bow_draw_length = bow_data.get('draw_length')
+        
+        # For compound bows, use bow's mechanical draw length
+        if bow_type == 'compound':
+            if bow_draw_length:
+                return float(bow_draw_length), f"Bow mechanical setting ({bow_draw_length}\")"
+            else:
+                return default, f"Bow default (compound, {default}\")"
+        
+        # For recurve and traditional, use user's physical draw length
+        user = db.get_user_by_id(user_id)
+        if user and user.get('user_draw_length'):
+            user_draw = float(user['user_draw_length'])
+            bow_type_display = bow_type.title() if bow_type else "Non-compound"
+            return user_draw, f"Archer draw length ({bow_type_display}, {user_draw}\")"
+        
+        # Fallback to default
+        bow_type_display = bow_type.title() if bow_type else "Unknown bow type"
+        return default, f"Default ({bow_type_display}, {default}\")"
+        
+    except Exception as e:
+        print(f"Error getting effective draw length for user {user_id}: {e}")
+        return default, f"Error fallback ({default}\")"
+
+def get_user_draw_length(user_id, default=28.0):
+    """Legacy function - get just the draw length value for backward compatibility"""
+    draw_length, _ = get_effective_draw_length(user_id, default=default)
+    return draw_length
+
 def get_arrow_db():
     """
     DEPRECATED: This function is no longer used due to unified database architecture.
@@ -1422,6 +1474,11 @@ def get_user(current_user):
     else:
         user_dict['shooting_style'] = ['target']
     
+    # Map database column names to frontend expected names
+    if 'user_draw_length' in user_dict:
+        user_dict['draw_length'] = user_dict['user_draw_length']
+        # Keep user_draw_length for backward compatibility but prioritize draw_length for frontend
+    
     return jsonify(user_dict)
 
 @app.route('/api/user/profile', methods=['PUT'])
@@ -1446,9 +1503,9 @@ def update_user_profile(current_user):
     if skill_level and skill_level not in ['beginner', 'intermediate', 'advanced']:
         return jsonify({'error': 'Invalid skill level. Must be beginner, intermediate, or advanced'}), 400
     
-    # Validate shooting styles (can be array or single value)
+    # Validate and convert shooting styles (can be array or single value)
     valid_styles = ['target', 'hunting', 'traditional', '3d']
-    if shooting_style:
+    if shooting_style is not None:
         if isinstance(shooting_style, list):
             # Multiple shooting styles
             for style in shooting_style:
@@ -1473,14 +1530,27 @@ def update_user_profile(current_user):
                     return jsonify({'error': f'Invalid shooting style: {shooting_style}. Must be one of: {", ".join(valid_styles)}'}), 400
                 shooting_style = json.dumps([shooting_style])
         else:
-            return jsonify({'error': 'Shooting style must be a string or array'}), 400
+            # Convert any other type to string representation
+            shooting_style = json.dumps([str(shooting_style)])
     
     if draw_length and (draw_length < 20 or draw_length > 36):
         return jsonify({'error': 'Draw length must be between 20 and 36 inches'}), 400
     
     # Convert preferred_manufacturers list to JSON string if provided
-    if preferred_manufacturers and isinstance(preferred_manufacturers, list):
-        preferred_manufacturers = json.dumps(preferred_manufacturers)
+    if preferred_manufacturers is not None:
+        if isinstance(preferred_manufacturers, list):
+            preferred_manufacturers = json.dumps(preferred_manufacturers)
+        elif not isinstance(preferred_manufacturers, str):
+            # Convert any other type to string
+            preferred_manufacturers = str(preferred_manufacturers)
+    
+    # Convert shooting_style list to JSON string if provided
+    if shooting_style is not None:
+        if isinstance(shooting_style, list):
+            shooting_style = json.dumps(shooting_style)
+        elif not isinstance(shooting_style, str):
+            # Convert any other type to string
+            shooting_style = str(shooting_style)
     
     try:
         from arrow_database import ArrowDatabase
@@ -1491,7 +1561,7 @@ def update_user_profile(current_user):
         if name is not None:
             update_data['name'] = name
         if draw_length is not None:
-            update_data['draw_length'] = draw_length
+            update_data['user_draw_length'] = draw_length  # Map draw_length to user_draw_length column
         if skill_level is not None:
             update_data['skill_level'] = skill_level
         if shooting_style is not None:
@@ -1500,6 +1570,20 @@ def update_user_profile(current_user):
             update_data['preferred_manufacturers'] = preferred_manufacturers
         if notes is not None:
             update_data['notes'] = notes
+        
+        # Debug logging to identify the issue
+        print(f"Debug - Update data types:")
+        for key, value in update_data.items():
+            print(f"  {key}: {type(value)} = {value}")
+        
+        # Ensure all values are serializable for SQLite
+        for key, value in update_data.items():
+            if isinstance(value, list):
+                print(f"WARNING: Found list value for {key}: {value}")
+                update_data[key] = json.dumps(value)
+            elif value is not None and not isinstance(value, (str, int, float, bool)):
+                print(f"WARNING: Converting {key} from {type(value)} to string: {value}")
+                update_data[key] = str(value)
             
         # Update user profile
         success = db.update_user(current_user['id'], **update_data)
@@ -2086,11 +2170,16 @@ def add_arrow_to_setup(current_user, setup_id):
                 arrow_weight_grains = (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25
                 string_material = 'dacron'  # Default for new arrows (no string equipment likely configured yet)
                 
+                # Get effective draw length based on bow type
+                effective_draw_length, draw_length_source = get_effective_draw_length(
+                    current_user['id'], bow_data=dict(bow_setup)
+                )
+                
                 # Call enhanced speed calculation (no chronograph data for new arrows)
                 enhanced_speed = calculate_enhanced_arrow_speed_internal(
                     bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
                     bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
-                    bow_draw_length=29,  # Default for new arrow addition
+                    bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
                     bow_type=dict(bow_setup).get('bow_type', 'compound'),
                     arrow_weight_grains=arrow_weight_grains,
                     string_material=string_material,
@@ -2104,6 +2193,10 @@ def add_arrow_to_setup(current_user, setup_id):
                 enhanced_speed = None
             
             performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
+            # Add draw length source information
+            if 'draw_length_source' in locals():
+                performance_data['draw_length_source'] = draw_length_source
+                performance_data['effective_draw_length'] = effective_draw_length
             response_data['performance'] = performance_data
             
         except Exception as perf_error:
@@ -2510,11 +2603,16 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                     except Exception:
                         pass  # Use default string material
                     
+                    # Get effective draw length based on bow type
+                    effective_draw_length, draw_length_source = get_effective_draw_length(
+                        current_user['id'], bow_data=dict(bow_setup)
+                    )
+                    
                     # Call enhanced speed calculation
                     enhanced_speed = calculate_enhanced_arrow_speed_internal(
                         bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
                         bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
-                        bow_draw_length=29,  # Default for bulk calculation
+                        bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
                         bow_type=dict(bow_setup).get('bow_type', 'compound'),
                         arrow_weight_grains=arrow_weight_grains,
                         string_material=string_material,
@@ -2529,6 +2627,11 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                 
                 # Calculate performance with enhanced speed
                 performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
+                
+                # Add draw length source information
+                if 'draw_length_source' in locals():
+                    performance_data['draw_length_source'] = draw_length_source
+                    performance_data['effective_draw_length'] = effective_draw_length
                 
                 # Store performance data as JSON in dedicated performance_data column
                 import json
@@ -2642,12 +2745,21 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                             if config_override:
                                 self.draw_weight = config_override.get('draw_weight', bow_data.get('draw_weight', 50))
                                 self.bow_type = type('BowType', (), {'value': config_override.get('bow_type', bow_data.get('bow_type', 'compound'))})()
-                                # Add draw_length from request bow_config
-                                self.draw_length = config_override.get('draw_length', 29.0)
+                                # Use bow-type specific draw length logic
+                                if 'draw_length' in config_override:
+                                    self.draw_length = config_override['draw_length']
+                                    self.draw_length_source = f"Request override ({config_override['draw_length']}\")"
+                                else:
+                                    bow_config_dict = {**bow_data, **config_override}
+                                    self.draw_length, self.draw_length_source = get_effective_draw_length(
+                                        bow_data.get('user_id'), bow_config=bow_config_dict
+                                    )
                             else:
                                 self.draw_weight = bow_data.get('draw_weight', 50)
                                 self.bow_type = type('BowType', (), {'value': bow_data.get('bow_type', 'compound')})()
-                                self.draw_length = 29.0  # Default fallback
+                                self.draw_length, self.draw_length_source = get_effective_draw_length(
+                                    bow_data.get('user_id'), bow_data=bow_data
+                                )
                     
                     self.bow_config = MockBowConfig(setup_data, bow_config_override)
             

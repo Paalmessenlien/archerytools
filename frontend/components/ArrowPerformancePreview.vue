@@ -61,6 +61,32 @@
       </div>
     </div>
 
+    <!-- Draw Length Information -->
+    <div v-if="drawLengthInfo.source" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="fas fa-ruler text-blue-600 dark:text-blue-400 mr-3"></i>
+        <div class="flex-1">
+          <h5 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+            Draw Length Used in Calculations
+          </h5>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <span class="text-lg font-bold text-blue-700 dark:text-blue-300 mr-2">
+                {{ drawLengthInfo.length }}"
+              </span>
+              <span class="text-sm text-blue-600 dark:text-blue-400">
+                {{ drawLengthInfo.source }}
+              </span>
+            </div>
+            <div class="text-xs text-blue-500 dark:text-blue-400">
+              <i class="fas fa-info-circle mr-1"></i>
+              {{ getBowTypeMessage() }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Flight Trajectory Visualization -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <div class="flex items-center justify-between mb-4">
@@ -284,6 +310,48 @@ const formatDistance = (distanceInYards) => {
 const distanceUnitLabel = computed(() => {
   return distanceUnit.value === 'meters' ? 'm' : 'yd'
 })
+
+// Draw Length Information
+const drawLengthInfo = computed(() => {
+  // Check if performance data includes draw length source info
+  const performance = props.setupArrow?.performance
+  if (performance && performance.draw_length_source && performance.effective_draw_length) {
+    return {
+      length: performance.effective_draw_length,
+      source: performance.draw_length_source
+    }
+  }
+  
+  // Fallback to bow config info
+  const bowType = props.bowConfig?.bow_type || 'compound'
+  const drawLength = props.bowConfig?.draw_length || 28
+  
+  if (bowType.toLowerCase() === 'compound') {
+    return {
+      length: drawLength,
+      source: `Bow mechanical setting (${drawLength}")`
+    }
+  } else {
+    return {
+      length: drawLength,
+      source: `Archer draw length (${bowType}, ${drawLength}")`
+    }
+  }
+})
+
+const getBowTypeMessage = () => {
+  const bowType = props.bowConfig?.bow_type?.toLowerCase() || 'compound'
+  
+  if (bowType === 'compound') {
+    return 'Compound bows use mechanical draw length set on the bow'
+  } else if (bowType === 'recurve') {
+    return 'Recurve bows use the archer\'s physical draw length'
+  } else if (bowType === 'traditional') {
+    return 'Traditional bows use the archer\'s physical draw length'
+  } else {
+    return 'Draw length source depends on bow type'
+  }
+}
 
 // Live Performance Calculations
 const liveCalculations = computed(() => {

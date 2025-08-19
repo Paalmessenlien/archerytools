@@ -520,6 +520,16 @@ class UserDatabase:
                         user_dict['preferred_manufacturers'] = []
                 else:
                     user_dict['preferred_manufacturers'] = []
+                
+                # Parse shooting_style JSON string back to list
+                if user_dict.get('shooting_style'):
+                    try:
+                        import json
+                        user_dict['shooting_style'] = json.loads(user_dict['shooting_style'])
+                    except (json.JSONDecodeError, TypeError):
+                        user_dict['shooting_style'] = []
+                else:
+                    user_dict['shooting_style'] = []
                 return user_dict
             return None
             
@@ -551,6 +561,16 @@ class UserDatabase:
                         user_dict['preferred_manufacturers'] = []
                 else:
                     user_dict['preferred_manufacturers'] = []
+                
+                # Parse shooting_style JSON string back to list
+                if user_dict.get('shooting_style'):
+                    try:
+                        import json
+                        user_dict['shooting_style'] = json.loads(user_dict['shooting_style'])
+                    except (json.JSONDecodeError, TypeError):
+                        user_dict['shooting_style'] = []
+                else:
+                    user_dict['shooting_style'] = []
                 return user_dict
             return None
             
@@ -583,7 +603,7 @@ class UserDatabase:
                 params.append(profile_picture_url)
                 
             if draw_length is not None:
-                update_fields.append("draw_length = ?")
+                update_fields.append("user_draw_length = ?")
                 params.append(draw_length)
                 
             if skill_level is not None:
@@ -592,7 +612,12 @@ class UserDatabase:
                 
             if shooting_style is not None:
                 update_fields.append("shooting_style = ?")
-                params.append(shooting_style)
+                # Convert list to JSON string for SQLite storage
+                if isinstance(shooting_style, list):
+                    import json
+                    params.append(json.dumps(shooting_style))
+                else:
+                    params.append(shooting_style)
                 
             if preferred_manufacturers is not None:
                 update_fields.append("preferred_manufacturers = ?")
@@ -633,6 +658,16 @@ class UserDatabase:
                         user_dict['preferred_manufacturers'] = []
                 else:
                     user_dict['preferred_manufacturers'] = []
+                
+                # Parse shooting_style JSON string back to list
+                if user_dict.get('shooting_style'):
+                    try:
+                        import json
+                        user_dict['shooting_style'] = json.loads(user_dict['shooting_style'])
+                    except (json.JSONDecodeError, TypeError):
+                        user_dict['shooting_style'] = []
+                else:
+                    user_dict['shooting_style'] = []
                 return user_dict
             return None
             
