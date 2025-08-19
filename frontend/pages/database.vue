@@ -14,53 +14,53 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Arrow Database</h1>
-      <p class="text-gray-600 dark:text-gray-300">Browse and search arrow specifications from leading manufacturers</p>
+    <div class="mobile-section-spacing md:mb-6">
+      <h1 class="mobile-heading-1 md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mobile-tight-spacing md:mb-2">Arrow Database</h1>
+      <p class="mobile-body-medium md:text-base text-gray-600 dark:text-gray-300 mobile-emphasis-medium">Browse and search arrow specifications from leading manufacturers</p>
     </div>
       <!-- Database Stats -->
-      <div v-if="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div v-if="stats" class="grid grid-cols-2 md-mobile:grid-cols-4 md:grid-cols-4 gap-3 mb-6">
         <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-4 sm:p-6">
-          <div class="text-xl sm:text-2xl font-bold text-indigo-600 mb-1 sm:mb-2">
-            <i class="fas fa-bullseye text-base sm:text-xl" style="margin-right: 4px; color: #6366f1;"></i>
+        <div class="p-3 sm-mobile:p-4 sm:p-6">
+          <div class="mobile-heading-3 sm:text-2xl font-bold text-indigo-600 mb-1 sm:mb-2">
+            <i class="fas fa-bullseye mobile-body-medium sm:text-xl" style="margin-right: 4px; color: #6366f1;"></i>
             {{ stats.total_arrows }}
           </div>
-          <div class="text-xs sm:text-sm text-gray-600">Total Arrows</div>
+          <div class="mobile-body-small sm:text-sm text-gray-600 mobile-emphasis-medium">Total Arrows</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-4 sm:p-6">
-          <div class="text-xl sm:text-2xl font-bold text-green-600 mb-1 sm:mb-2">
-            <i class="fas fa-industry text-base sm:text-xl" style="margin-right: 4px; color: #059669;"></i>
+        <div class="p-3 sm-mobile:p-4 sm:p-6">
+          <div class="mobile-heading-3 sm:text-2xl font-bold text-green-600 mb-1 sm:mb-2">
+            <i class="fas fa-industry mobile-body-medium sm:text-xl" style="margin-right: 4px; color: #059669;"></i>
             {{ stats.total_manufacturers }}
           </div>
-          <div class="text-xs sm:text-sm text-gray-600">Manufacturers</div>
+          <div class="mobile-body-small sm:text-sm text-gray-600 mobile-emphasis-medium">Manufacturers</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-4 sm:p-6">
-          <div class="text-xl sm:text-2xl font-bold text-purple-600 mb-1 sm:mb-2">
-            <i class="fas fa-ruler-horizontal text-base sm:text-xl" style="margin-right: 4px; color: #7c3aed;"></i>
+        <div class="p-3 sm-mobile:p-4 sm:p-6">
+          <div class="mobile-heading-3 sm:text-2xl font-bold text-purple-600 mb-1 sm:mb-2">
+            <i class="fas fa-ruler-horizontal mobile-body-medium sm:text-xl" style="margin-right: 4px; color: #7c3aed;"></i>
             {{ stats.spine_range.max - stats.spine_range.min }}
           </div>
-          <div class="text-xs sm:text-sm text-gray-600">Spine Range</div>
+          <div class="mobile-body-small sm:text-sm text-gray-600 mobile-emphasis-medium">Spine Range</div>
         </div>
       </md-elevated-card>
       <md-elevated-card class="text-center light-surface light-elevation">
-        <div class="p-4 sm:p-6">
-          <div class="text-xl sm:text-2xl font-bold text-orange-600 mb-1 sm:mb-2">
-            <i class="fas fa-dot-circle text-base sm:text-xl" style="margin-right: 4px; color: #ea580c;"></i>
+        <div class="p-3 sm-mobile:p-4 sm:p-6">
+          <div class="mobile-heading-3 sm:text-2xl font-bold text-orange-600 mb-1 sm:mb-2">
+            <i class="fas fa-dot-circle mobile-body-medium sm:text-xl" style="margin-right: 4px; color: #ea580c;"></i>
             {{ (stats.diameter_range.max - stats.diameter_range.min).toFixed(3) }}
           </div>
-          <div class="text-xs sm:text-sm text-gray-600">Diameter Range</div>
+          <div class="mobile-body-small sm:text-sm text-gray-600 mobile-emphasis-medium">Diameter Range</div>
         </div>
       </md-elevated-card>
     </div>
 
     <!-- Search and Filters -->
-    <md-elevated-card class="mb-6 light-surface light-elevation">
-      <div class="p-6">
+    <md-elevated-card class="mobile-section-spacing md:mb-6 light-surface light-elevation">
+      <div class="p-4 sm-mobile:p-5 md:p-6">
         <!-- Main Search Field -->
         <div class="mb-4">
           <md-outlined-text-field 
@@ -76,7 +76,7 @@
         </div>
         
         <!-- Basic Filter Dropdowns -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm-mobile:grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <md-filled-select :value="filters.manufacturer" @change="handleFilterChange('manufacturer', $event.target.value)" label="Manufacturer">
             <md-select-option value="">
               <div slot="headline">All Manufacturers</div>
@@ -127,7 +127,7 @@
           <md-divider class="mb-4"></md-divider>
           
           <!-- Row 1: Spine Range + Diameter Range ---->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          <div class="grid grid-cols-1 sm-mobile:grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
             <md-outlined-text-field 
               :value="filters.spine_min"
               @input="handleAdvancedFilterChange('spine_min', $event.target.value)"
@@ -165,7 +165,7 @@
           </div>
           
           <!-- Row 2: Weight Range ---->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm-mobile:grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <md-outlined-text-field 
               :value="filters.gpi_min"
               @input="handleAdvancedFilterChange('gpi_min', $event.target.value)"
@@ -197,12 +197,12 @@
     </md-elevated-card>
 
     <!-- Results Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-      <p class="text-sm text-gray-600 order-2 sm:order-1">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mobile-element-spacing md:mb-4">
+      <p class="mobile-body-small md:text-sm text-gray-600 order-2 sm:order-1 mobile-emphasis-medium">
         {{ searchPerformed ? `Showing ${arrows.length} of ${totalArrows} arrows` : `${totalArrows} arrows available` }}
       </p>
       <div class="flex items-center space-x-2 order-1 sm:order-2 w-full sm:w-auto">
-        <label for="per-page" class="text-sm text-gray-600 whitespace-nowrap">Show:</label>
+        <label for="per-page" class="mobile-body-small md:text-sm text-gray-600 whitespace-nowrap mobile-emphasis-medium">Show:</label>
         <select 
           id="per-page"
           v-model="perPage" 
@@ -241,12 +241,12 @@
 
     <!-- Error State -->
     <md-elevated-card v-else-if="error" class="text-center light-surface light-elevation">
-      <div class="p-12">
-        <div class="text-red-500 mb-4">
-          <i class="fas fa-exclamation-triangle text-6xl"></i>
+      <div class="p-8 sm-mobile:p-10 md:p-12">
+        <div class="text-red-500 mobile-element-spacing md:mb-4">
+          <i class="fas fa-exclamation-triangle text-4xl sm-mobile:text-5xl md:text-6xl"></i>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Error Loading Arrows</h3>
-        <p class="text-gray-600 mb-4">{{ error.message || 'Failed to load arrow database.' }}</p>
+        <h3 class="mobile-heading-2 md:text-lg font-medium text-gray-900 mobile-tight-spacing md:mb-2">Error Loading Arrows</h3>
+        <p class="mobile-body-medium md:text-base text-gray-600 mobile-element-spacing md:mb-4">{{ error.message || 'Failed to load arrow database.' }}</p>
         <md-filled-button @click="searchArrows">
           <i class="fas fa-redo-alt" style="margin-right: 6px;"></i>
           Try Again
@@ -256,12 +256,12 @@
 
     <!-- No Results -->
     <md-elevated-card v-else-if="arrows.length === 0 && searchPerformed" class="text-center light-surface light-elevation">
-      <div class="p-12">
-        <div class="text-gray-400 mb-4">
-          <i class="fas fa-search-minus text-6xl"></i>
+      <div class="p-8 sm-mobile:p-10 md:p-12">
+        <div class="text-gray-400 mobile-element-spacing md:mb-4">
+          <i class="fas fa-search-minus text-4xl sm-mobile:text-5xl md:text-6xl"></i>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No Arrows Found</h3>
-        <p class="text-gray-600 mb-4">No arrows match your search criteria.</p>
+        <h3 class="mobile-heading-2 md:text-lg font-medium text-gray-900 mobile-tight-spacing md:mb-2">No Arrows Found</h3>
+        <p class="mobile-body-medium md:text-base text-gray-600 mobile-element-spacing md:mb-4">No arrows match your search criteria.</p>
         <md-filled-button @click="clearFilters">
           <i class="fas fa-broom" style="margin-right: 6px;"></i>
           Clear Filters
@@ -277,23 +277,23 @@
         class="cursor-pointer card-interactive light-surface light-elevation"
         @click="viewArrowDetails(arrow)"
       >
-        <div class="p-6">
-        <div class="flex justify-between items-start mb-4">
+        <div class="p-4 sm-mobile:p-5 md:p-6">
+        <div class="flex justify-between items-start mobile-element-spacing md:mb-4">
           <div>
-            <h3 class="text-lg font-semibold text-gray-900">
+            <h3 class="mobile-heading-2 md:text-lg font-semibold text-gray-900">
               {{ arrow.manufacturer }} {{ arrow.model_name }}
             </h3>
           </div>
           
           <div class="text-right">
-            <div v-if="arrow.arrow_type" class="text-xs text-gray-500 mt-1">
+            <div v-if="arrow.arrow_type" class="mobile-body-small md:text-xs text-gray-500 mt-1">
               {{ arrow.arrow_type }} arrow
             </div>
           </div>
         </div>
         
           <!-- Arrow Specifications as Chips (align with calculator) -->
-          <md-chip-set class="mb-4">
+          <md-chip-set class="mobile-element-spacing md:mb-4">
             <md-assist-chip :label="'Spine: ' + getSpineDisplay(arrow)">
               <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
             </md-assist-chip>
@@ -312,7 +312,7 @@
           </md-chip-set>
 
         <!-- Description -->
-        <div v-if="arrow.description" class="text-sm text-gray-600 mb-4">
+        <div v-if="arrow.description" class="mobile-body-medium md:text-sm text-gray-600 mobile-element-spacing md:mb-4">
           {{ arrow.description }}
         </div>
 
@@ -437,7 +437,7 @@
         </div>
         
         <!-- Page Info -->
-        <div class="text-center mt-3 text-sm text-gray-600 dark:text-gray-400">
+        <div class="text-center mt-3 mobile-body-small md:text-sm text-gray-600 dark:text-gray-400 mobile-emphasis-medium">
           Page {{ currentPage }} of {{ totalPages }} • {{ totalArrows }} arrows total
         </div>
       </div>

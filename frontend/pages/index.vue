@@ -9,19 +9,19 @@
     </div>
 
     <!-- Public Landing Page for Non-Authenticated Users -->
-    <div v-else class="text-center py-12">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome to ArcheryTool</h1>
-      <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
+    <div v-else class="text-center py-6 md:py-12 mobile-container">
+      <h1 class="mobile-heading-1 md:text-4xl font-bold text-gray-900 dark:text-gray-100 mobile-element-spacing md:mb-4">Welcome to ArcheryTool</h1>
+      <p class="mobile-body-large md:text-xl text-gray-600 dark:text-gray-300 mobile-section-spacing md:mb-8">
         Professional archery tools for precision and performance
       </p>
       
       <!-- Beta Notice -->
-      <div class="mb-8 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 max-w-2xl mx-auto">
+      <div class="mobile-section-spacing md:mb-8 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm-mobile:p-4 max-w-2xl mx-auto">
         <div class="flex items-center justify-center">
-          <i class="fas fa-flask text-orange-600 dark:text-orange-400 mr-3"></i>
-          <div>
-            <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200">Beta Testing Phase</h4>
-            <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+          <i class="fas fa-flask text-orange-600 dark:text-orange-400 mr-2 sm-mobile:mr-3"></i>
+          <div class="text-left">
+            <h4 class="mobile-body-medium md:text-sm font-medium text-orange-800 dark:text-orange-200 mobile-emphasis-high">Beta Testing Phase</h4>
+            <p class="mobile-body-small md:text-xs text-orange-700 dark:text-orange-300 mt-0.5 sm-mobile:mt-1">
               Invitation-only access. Please log in to access the platform.
             </p>
           </div>
@@ -29,11 +29,11 @@
       </div>
 
       <!-- Login Button -->
-      <div class="mb-8">
+      <div class="mobile-section-spacing md:mb-8">
         <CustomButton
           @click="handleLogin"
           variant="filled"
-          class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 px-8 py-3 text-lg"
+          class="mobile-primary-action bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 px-6 sm-mobile:px-8 py-3 text-base sm-mobile:text-lg"
         >
           <i class="fab fa-google mr-2"></i>
           Login with Google
@@ -41,14 +41,14 @@
       </div>
 
       <!-- Quick Info -->
-      <div class="text-gray-600 dark:text-gray-400">
-        <p class="mb-2">Access 1,100+ arrow specifications, professional spine calculations,</p>
-        <p>and personalized bow setup management.</p>
+      <div class="mobile-emphasis-medium text-gray-600 dark:text-gray-400 mobile-section-spacing">
+        <p class="mobile-body-medium md:text-base mobile-tight-spacing md:mb-2">Access 1,100+ arrow specifications, professional spine calculations,</p>
+        <p class="mobile-body-medium md:text-base">and personalized bow setup management.</p>
       </div>
 
       <!-- Learn More Link -->
-      <div class="mt-8">
-        <NuxtLink to="/about" class="text-blue-600 hover:text-blue-700 dark:text-purple-400 dark:hover:text-purple-300">
+      <div class="mobile-element-spacing md:mt-8">
+        <NuxtLink to="/about" class="mobile-body-large md:text-base text-blue-600 hover:text-blue-700 dark:text-purple-400 dark:hover:text-purple-300 mobile-emphasis-medium">
           Learn more about ArcheryTool →
         </NuxtLink>
       </div>

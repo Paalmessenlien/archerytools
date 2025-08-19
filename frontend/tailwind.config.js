@@ -10,6 +10,18 @@ module.exports = {
     "./app.vue"
   ],
   theme: {
+    screens: {
+      // Mobile-first responsive breakpoints for enhanced mobile experience
+      'xs': '320px',         // Small phones (iPhone SE)
+      'sm-mobile': '375px',  // Standard phones (iPhone 6-8)  
+      'md-mobile': '414px',  // Large phones (iPhone 11 Pro Max)
+      'lg-mobile': '428px',  // Extra large phones (iPhone 12 Pro Max)
+      'sm': '640px',         // Tablet portrait
+      'md': '768px',         // Tablet landscape  
+      'lg': '1024px',        // Desktop
+      'xl': '1280px',        // Large desktop
+      '2xl': '1536px',       // Extra large desktop
+    },
     extend: {
       colors: {
         primary: {

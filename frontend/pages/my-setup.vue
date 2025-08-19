@@ -1,10 +1,10 @@
 <template>
-  <div class="container mx-auto px-4 py-8 pb-24 md:pb-8">
+  <div class="container mx-auto mobile-container md:px-4 py-6 md:py-8 pb-24 md:pb-8">
     <!-- Notification Toast -->
     <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
       <div 
         :class="[
-          'p-4 rounded-lg shadow-lg max-w-sm',
+          'p-3 sm-mobile:p-4 rounded-lg shadow-lg max-w-sm',
           notification.type === 'success' ? 'bg-green-500 text-white' : '',
           notification.type === 'error' ? 'bg-red-500 text-white' : '',
           notification.type === 'warning' ? 'bg-yellow-500 text-black' : ''
@@ -15,16 +15,16 @@
             <i v-if="notification.type === 'success'" class="fas fa-check-circle mr-2"></i>
             <i v-if="notification.type === 'error'" class="fas fa-exclamation-circle mr-2"></i>
             <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
-            <span>{{ notification.message }}</span>
+            <span class="mobile-body-medium md:text-base">{{ notification.message }}</span>
           </div>
-          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
+          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100 mobile-touch-target">
             <i class="fas fa-times"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">My Setup</h1>
+    <h1 class="mobile-heading-1 md:text-3xl font-bold text-gray-900 dark:text-gray-100 mobile-element-spacing md:mb-4">My Setup</h1>
     
     <div v-if="isLoadingUser" class="text-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
@@ -33,9 +33,9 @@
 
     <div v-else-if="user">
       <!-- Compact Profile Header -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm-mobile:p-4 mobile-section-spacing md:mb-6">
         <!-- Profile Content -->
-        <div class="flex items-center space-x-4 mb-4">
+        <div class="flex items-center space-x-3 sm-mobile:space-x-4 mb-3 sm-mobile:mb-4">
           <!-- Profile Picture -->
           <div class="flex-shrink-0">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
@@ -45,7 +45,7 @@
                 :alt="user.name || 'Profile picture'" 
                 class="w-12 h-12 rounded-full object-cover"
               />
-              <span v-else class="text-lg">
+              <span v-else class="mobile-body-large md:text-lg">
                 {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
               </span>
             </div>
@@ -53,10 +53,10 @@
           
           <!-- Basic Info -->
           <div class="flex-1">
-            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 class="mobile-heading-4 md:text-xl font-bold text-gray-900 dark:text-gray-100 mb-0">
               {{ user.name || 'Archer' }}
             </h2>
-            <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+            <div class="flex items-center space-x-3 sm-mobile:space-x-4 mobile-body-small md:text-sm text-gray-600 dark:text-gray-400">
               <span>Draw: {{ user.draw_length || 28.0 }}"</span>
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                     :class="getSkillLevelClass(user.skill_level)">
@@ -108,8 +108,8 @@
           </div>
         </div>
 
-        <!-- Quick Stats - Hidden on Mobile -->
-        <div v-if="bowSetups.length > 0" class="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <!-- Quick Stats - Enhanced Mobile Responsive -->
+        <div v-if="bowSetups.length > 0" class="hidden sm-mobile:grid grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-3 gap-3 md-mobile:gap-4 mb-6">
           <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
             <div class="flex items-center">
               <i class="fas fa-bow-arrow text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
@@ -158,11 +158,11 @@
                 Add New Setup
               </CustomButton>
             </div>
-            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6 w-full">
+            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md-mobile:grid-cols-2 lg-mobile:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 md-mobile:gap-4 mb-6 w-full">
               <div 
                 v-for="setup in bowSetups" 
                 :key="setup.id" 
-                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer touch-target overflow-hidden w-full max-w-md mx-auto"
+                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer touch-target overflow-hidden w-full max-w-md md-mobile:max-w-none mx-auto"
                 @click="navigateToBowDetail(setup.id)"
               >
                 <!-- Bow Card Content -->

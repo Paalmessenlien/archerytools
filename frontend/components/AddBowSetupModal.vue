@@ -16,17 +16,17 @@
       </div>
       <div class="modal-mobile-content md:px-6 pb-6 flex-1 overflow-y-auto">
       <form @submit.prevent="saveBowSetup">
-        <div class="space-y-6">
+        <div class="mobile-space-normal mobile-p-sm">
           <!-- Setup Name -->
           <div>
             <label for="setupName" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Setup Name</label>
-            <input type="text" id="setupName" v-model="setupData.name" class="w-full form-input" required />
+            <input type="text" id="setupName" v-model="setupData.name" class="w-full form-input mobile-form-field mobile-touch-enhanced" required />
           </div>
           
           <!-- Bow Type -->
           <div>
             <label for="bowType" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Type</label>
-            <select id="bowType" v-model="setupData.bow_type" class="w-full form-select" required>
+            <select id="bowType" v-model="setupData.bow_type" class="w-full form-select mobile-form-field mobile-touch-enhanced" required>
               <option value="">Select Bow Type</option>
               <option value="compound">Compound</option>
               <option value="recurve">Recurve</option>
@@ -64,8 +64,8 @@
           </h4>
 
           <!-- Compound Bow Configuration -->
-          <div v-if="setupData.bow_type === 'compound'" class="space-y-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div v-if="setupData.bow_type === 'compound'" class="mobile-space-normal">
+            <div class="grid grid-cols-1 gap-3 sm-mobile:grid-cols-1 md-mobile:grid-cols-2 md:grid-cols-2 mobile-gap-normal">
               <!-- Compound Brand Selection -->
               <div>
                 <ManufacturerInput
@@ -83,7 +83,7 @@
                   v-if="setupData.compound_brand"
                   type="text"
                   v-model="setupData.compound_model"
-                  class="w-full mt-2 form-input"
+                  class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                   placeholder="e.g., RX-7 Ultra, Halon X, V3X..."
                 />
               </div>
@@ -94,7 +94,7 @@
                   type="number"
                   id="iboSpeed"
                   v-model.number="setupData.ibo_speed"
-                  class="form-input"
+                  class="form-input mobile-form-field mobile-touch-enhanced"
                   placeholder="e.g., 320, 340..."
                 />
               </div>
@@ -127,8 +127,8 @@
           </div>
 
           <!-- Recurve Bow Configuration -->
-          <div v-else-if="setupData.bow_type === 'recurve'" class="space-y-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div v-else-if="setupData.bow_type === 'recurve'" class="mobile-space-normal">
+            <div class="grid grid-cols-1 gap-3 sm-mobile:grid-cols-1 md-mobile:grid-cols-2 md:grid-cols-2 mobile-gap-normal">
               <!-- Riser Brand Selection -->
               <div>
                 <ManufacturerInput
@@ -146,14 +146,14 @@
                   v-if="setupData.riser_brand"
                   type="text"
                   v-model="setupData.riser_model"
-                  class="w-full mt-2 form-input"
+                  class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                   placeholder="e.g., Formula X, Prodigy, Epic..."
                 />
                 
                 <!-- Riser Length -->
                 <div v-if="setupData.riser_brand" class="mt-2">
                   <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
-                  <select v-model="setupData.riser_length" class="w-full form-select">
+                  <select v-model="setupData.riser_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
                     <option value="">Select Riser Length</option>
                       <option value="17">17"</option>
                       <option value="19">19"</option>
@@ -170,7 +170,7 @@
                     type="text"
                     v-model="setupData.riser_length"
                     @focus="clearOtherValue('riser_length')"
-                    class="w-full mt-2 form-input"
+                    class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                     placeholder="Enter custom riser length (e.g., 24 inches)"
                     required
                   />
@@ -194,14 +194,14 @@
                   v-if="setupData.limb_brand"
                   type="text"
                   v-model="setupData.limb_model"
-                  class="w-full mt-2 form-input"
+                  class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                   placeholder="e.g., Quattro, Inno Max, Veloce..."
                 />
                 
                 <!-- Limb Length -->
                 <div v-if="setupData.limb_brand" class="mt-2">
                   <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
-                  <select v-model="setupData.limb_length" class="w-full form-select">
+                  <select v-model="setupData.limb_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
                     <option value="">Select Limb Length</option>
                     <option value="Short">Short</option>
                     <option value="Medium">Medium</option>
@@ -215,7 +215,7 @@
                     type="text"
                     v-model="setupData.limb_length"
                     @focus="clearOtherValue('limb_length')"
-                    class="w-full mt-2 form-input"
+                    class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                     placeholder="Enter custom limb length (e.g., Extra Long)"
                     required
                   />
@@ -225,7 +225,7 @@
             
             <div>
               <label for="limbFitting" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Fitting</label>
-              <select id="limbFitting" v-model="setupData.limb_fitting" class="form-select">
+              <select id="limbFitting" v-model="setupData.limb_fitting" class="form-select mobile-form-field mobile-touch-enhanced">
                 <option value="ILF">ILF (International Limb Fitting)</option>
                 <option value="Formula">Formula (WA Standard)</option>
               </select>
@@ -233,18 +233,18 @@
           </div>
 
           <!-- Traditional Bow Configuration -->
-          <div v-else-if="setupData.bow_type === 'traditional'" class="space-y-4">
+          <div v-else-if="setupData.bow_type === 'traditional'" class="mobile-space-normal">
             <div>
               <label for="construction" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Construction Type</label>
-              <select id="construction" v-model="setupData.construction" class="form-select">
+              <select id="construction" v-model="setupData.construction" class="form-select mobile-form-field mobile-touch-enhanced">
                 <option value="one_piece">One Piece</option>
                 <option value="two_piece">Two Piece (Takedown)</option>
               </select>
             </div>
 
             <!-- Two-piece specific fields -->
-            <div v-if="setupData.construction === 'two_piece'" class="space-y-4">
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div v-if="setupData.construction === 'two_piece'" class="mobile-space-normal">
+              <div class="grid grid-cols-1 gap-3 sm-mobile:grid-cols-1 md-mobile:grid-cols-2 md:grid-cols-2 mobile-gap-normal">
                 <!-- Traditional Riser Brand -->
                 <div>
                   <ManufacturerInput
@@ -260,7 +260,7 @@
                   <!-- Traditional Riser Length -->
                   <div v-if="setupData.riser_brand" class="mt-2">
                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
-                    <select v-model="setupData.riser_length" class="w-full form-select">
+                    <select v-model="setupData.riser_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
                       <option value="">Select Riser Length</option>
                       <option value="17">17"</option>
                       <option value="19">19"</option>
@@ -277,7 +277,7 @@
                       type="text"
                       v-model="setupData.riser_length"
                       @focus="clearOtherValue('riser_length')"
-                      class="w-full mt-2 form-input"
+                      class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                       placeholder="Enter custom riser length (e.g., 20 inches)"
                       required
                     />
@@ -299,7 +299,7 @@
                   <!-- Traditional Limb Length -->
                   <div v-if="setupData.limb_brand" class="mt-2">
                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
-                    <select v-model="setupData.limb_length" class="w-full form-select">
+                    <select v-model="setupData.limb_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
                       <option value="">Select Limb Length</option>
                       <option value="Short">Short</option>
                       <option value="Medium">Medium</option>
@@ -313,7 +313,7 @@
                       type="text"
                       v-model="setupData.limb_length"
                       @focus="clearOtherValue('limb_length')"
-                      class="w-full mt-2 form-input"
+                      class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
                       placeholder="Enter custom limb length (e.g., Extra Short)"
                       required
                     />
@@ -323,7 +323,7 @@
               
               <div>
                 <label for="tradLimbFitting" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Fitting</label>
-                <select id="tradLimbFitting" v-model="setupData.limb_fitting" class="form-select">
+                <select id="tradLimbFitting" v-model="setupData.limb_fitting" class="form-select mobile-form-field mobile-touch-enhanced">
                   <option value="ILF">ILF (International Limb Fitting)</option>
                   <option value="Bolt_Down">Bolt Down</option>
                 </select>
@@ -332,7 +332,7 @@
           </div>
 
           <!-- Longbow Configuration -->
-          <div v-else-if="setupData.bow_type === 'longbow'" class="space-y-4">
+          <div v-else-if="setupData.bow_type === 'longbow'" class="mobile-space-normal">
             <div>
               <ManufacturerInput
                 v-model="setupData.bow_brand"
@@ -348,14 +348,14 @@
         </div>
         <div class="mb-4">
           <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Usage</label>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-2 sm-mobile:gap-3">
             <button
               v-for="usage in usageOptions"
               :key="usage"
               type="button"
               @click="toggleUsage(usage)"
               :class="[
-                'px-3 py-1 text-sm rounded-full border transition-colors',
+                'px-3 py-2 sm-mobile:px-4 sm-mobile:py-2 text-sm rounded-full border transition-colors mobile-touch-target',
                 isUsageSelected(usage)
                   ? 'bg-blue-500 text-white border-blue-500 dark:bg-purple-600 dark:border-purple-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
@@ -367,7 +367,7 @@
         </div>
         <div class="mb-4">
           <label for="description" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Description (optional)</label>
-          <textarea id="description" v-model="setupData.description" class="form-textarea"></textarea>
+          <textarea id="description" v-model="setupData.description" class="form-textarea mobile-form-field mobile-touch-enhanced"></textarea>
         </div>
 
       </form>

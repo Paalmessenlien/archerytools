@@ -1210,3 +1210,470 @@ md-filled-button[aria-label]::after {
 .card-interactive {
   @apply transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-100/30 hover:-translate-y-1;
 }
+
+/* ========================================
+   PHASE 2: RESPONSIVE GRID SYSTEM & MOBILE ENHANCEMENTS
+   ======================================== */
+
+/* PHASE 2 - Enhanced Mobile Form Design */
+.mobile-form-field {
+  min-height: 44px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  touch-action: manipulation;
+}
+
+.mobile-primary-action {
+  position: fixed;
+  bottom: calc(var(--safe-area-bottom) + var(--nav-height) + 16px);
+  right: 16px;
+  z-index: var(--z-elevated);
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* PHASE 2 - Enhanced Touch Targets for Mobile */
+.mobile-touch-enhanced {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px 16px;
+}
+
+/* PHASE 2 - Mobile-Optimized Spacing System */
+@layer utilities {
+  .mobile-space-tight {
+    @apply space-y-2 sm-mobile:space-y-3;
+  }
+
+  .mobile-space-normal {
+    @apply space-y-3 sm-mobile:space-y-4;
+  }
+
+  .mobile-space-loose {
+    @apply space-y-4 sm-mobile:space-y-6;
+  }
+
+  /* Mobile-specific padding classes */
+  .mobile-p-sm {
+    @apply p-3 sm-mobile:p-4;
+  }
+
+  .mobile-p-md {
+    @apply p-4 sm-mobile:p-6;
+  }
+
+  .mobile-p-lg {
+    @apply p-6 sm-mobile:p-8;
+  }
+
+  /* Mobile-specific gap classes for grids */
+  .mobile-gap-tight {
+    @apply gap-2 sm-mobile:gap-3 md-mobile:gap-3;
+  }
+
+  .mobile-gap-normal {
+    @apply gap-3 sm-mobile:gap-4 md-mobile:gap-4;
+  }
+
+  .mobile-gap-loose {
+    @apply gap-4 sm-mobile:gap-6 md-mobile:gap-6;
+  }
+}
+
+/* PHASE 2 - Responsive Card Grid System */
+.mobile-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem; /* 12px */
+}
+
+/* Large mobile (414px+) - 2 columns */
+@media (min-width: 414px) {
+  .mobile-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem; /* 16px */
+  }
+}
+
+/* Extra large mobile (428px+) - maintain 2 columns but increase gap */
+@media (min-width: 428px) {
+  .mobile-card-grid {
+    gap: 1.25rem; /* 20px */
+  }
+}
+
+/* Tablet breakpoint - switch to existing responsive behavior */
+@media (min-width: 640px) {
+  .mobile-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem; /* 24px */
+  }
+}
+
+/* Desktop breakpoint */
+@media (min-width: 1024px) {
+  .mobile-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* PHASE 2 - Enhanced Mobile Typography */
+.mobile-text-hierarchy {
+  /* Base mobile typography */
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 375px) {
+  .mobile-text-hierarchy {
+    font-size: 0.9375rem; /* 15px */
+  }
+}
+
+@media (min-width: 414px) {
+  .mobile-text-hierarchy {
+    font-size: 1rem; /* 16px */
+    line-height: 1.6;
+  }
+}
+
+/* PHASE 2 - Mobile-Optimized Button Spacing */
+.mobile-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 375px) {
+  .mobile-button-group {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 414px) {
+  .mobile-button-group {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* PHASE 2 - Enhanced Mobile Bottom Navigation */
+.mobile-bottom-nav-enhanced {
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-nav-item {
+  min-width: 60px;
+  min-height: 48px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.95);
+}
+
+/* PHASE 2 - Progressive Enhancement for Large Screens */
+@media (min-width: 414px) {
+  /* Enhanced information density for large mobiles */
+  .mobile-enhanced-density {
+    padding: 1rem 1.25rem;
+  }
+
+  .mobile-enhanced-density .text-sm {
+    font-size: 0.9375rem;
+  }
+
+  .mobile-enhanced-density .text-xs {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (min-width: 428px) {
+  /* Extra large mobile enhancements */
+  .mobile-enhanced-density {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+/* PHASE 2 - Mobile-Specific Interactions */
+.mobile-ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-ripple-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.mobile-ripple-effect:active::before {
+  width: 200px;
+  height: 200px;
+}
+
+/* PHASE 2 - Mobile Card Optimizations */
+.mobile-card-optimized {
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.mobile-card-optimized:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  transform: translateY(-1px);
+}
+
+@media (min-width: 414px) {
+  .mobile-card-optimized {
+    border-radius: 16px;
+  }
+}
+
+/* PHASE 2 - Enhanced Mobile Bottom Navigation */
+.mobile-nav-button {
+  position: relative;
+  min-height: 44px;
+  min-width: 44px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mobile-nav-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.mobile-nav-button:active::before {
+  opacity: 0.1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+@media (min-width: 414px) {
+  .mobile-nav-button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Enhanced mobile bottom navigation container */
+.mobile-bottom-nav {
+  z-index: 200;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+@supports (backdrop-filter: blur(20px)) {
+  .mobile-bottom-nav {
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* PHASE 2 - Mobile Typography Hierarchy */
+.mobile-heading-1 {
+  font-size: 1.75rem;
+  line-height: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.mobile-heading-2 {
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.875rem;
+}
+
+.mobile-heading-3 {
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-heading-4 {
+  font-size: 1.125rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+  margin-bottom: 0.625rem;
+}
+
+.mobile-body-large {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.mobile-body-medium {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.mobile-body-small {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 375px) {
+  .mobile-heading-1 { font-size: 2rem; line-height: 2.25rem; }
+  .mobile-heading-2 { font-size: 1.625rem; line-height: 2rem; }
+  .mobile-heading-3 { font-size: 1.375rem; line-height: 1.75rem; }
+  .mobile-heading-4 { font-size: 1.25rem; line-height: 1.5rem; }
+}
+
+@media (min-width: 414px) {
+  .mobile-heading-1 { font-size: 2.25rem; line-height: 2.5rem; }
+  .mobile-heading-2 { font-size: 1.75rem; line-height: 2.25rem; }
+  .mobile-heading-3 { font-size: 1.5rem; line-height: 2rem; }
+  .mobile-heading-4 { font-size: 1.375rem; line-height: 1.75rem; }
+  .mobile-body-large { font-size: 1.125rem; line-height: 1.75rem; }
+}
+
+/* PHASE 2 - Mobile Spacing System */
+.mobile-container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.mobile-section-spacing {
+  margin-bottom: 2rem;
+}
+
+.mobile-element-spacing {
+  margin-bottom: 1rem;
+}
+
+.mobile-tight-spacing {
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 375px) {
+  .mobile-container {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  
+  .mobile-section-spacing {
+    margin-bottom: 2.5rem;
+  }
+}
+
+@media (min-width: 414px) {
+  .mobile-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .mobile-section-spacing {
+    margin-bottom: 3rem;
+  }
+  
+  .mobile-element-spacing {
+    margin-bottom: 1.25rem;
+  }
+}
+
+/* PHASE 2 - Mobile Content Hierarchy */
+.mobile-primary-action {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.875rem 1.5rem;
+  min-height: 48px;
+}
+
+.mobile-secondary-action {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  min-height: 44px;
+}
+
+.mobile-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-card-subtitle {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.dark .mobile-card-subtitle {
+  color: #9ca3af;
+}
+
+/* PHASE 2 - Mobile List Spacing */
+.mobile-list-item {
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .mobile-list-item {
+  border-bottom-color: #374151;
+}
+
+.mobile-list-item:last-child {
+  border-bottom: none;
+}
+
+@media (min-width: 414px) {
+  .mobile-list-item {
+    padding: 1rem 0;
+  }
+}
+
+/* PHASE 2 - Mobile Visual Hierarchy */
+.mobile-emphasis-high {
+  font-weight: 600;
+  color: #111827;
+}
+
+.dark .mobile-emphasis-high {
+  color: #f3f4f6;
+}
+
+.mobile-emphasis-medium {
+  font-weight: 500;
+  color: #374151;
+}
+
+.dark .mobile-emphasis-medium {
+  color: #d1d5db;
+}
+
+.mobile-emphasis-low {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.dark .mobile-emphasis-low {
+  color: #9ca3af;
+}
