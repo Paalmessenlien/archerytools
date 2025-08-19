@@ -55,10 +55,10 @@ class ChangeLogService:
         try:
             cursor.execute('''
                 INSERT INTO equipment_change_log 
-                (bow_setup_id, equipment_id, user_id, change_type, field_name, 
+                (bow_equipment_id, user_id, change_type, field_name, 
                  old_value, new_value, change_description, change_reason)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (bow_setup_id, equipment_id, user_id, change_type, field_name,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (equipment_id, user_id, change_type, field_name,
                   old_value, new_value, change_description, change_reason))
             
             change_log_id = cursor.lastrowid
@@ -254,7 +254,7 @@ class ChangeLogService:
                 SELECT 
                     'equipment' as change_source,
                     ecl.id,
-                    ecl.equipment_id,
+                    ecl.bow_equipment_id as equipment_id,
                     ecl.change_type,
                     ecl.field_name,
                     ecl.old_value,
@@ -266,8 +266,9 @@ class ChangeLogService:
                     be.model_name,
                     be.category_name
                 FROM equipment_change_log ecl
-                LEFT JOIN bow_equipment be ON ecl.equipment_id = be.id
-                WHERE ecl.bow_setup_id = ? {date_filter}
+                LEFT JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                JOIN bow_setups bs ON be.bow_setup_id = bs.id
+                WHERE bs.id = ? {date_filter}
                 
                 UNION ALL
                 
@@ -345,8 +346,8 @@ class ChangeLogService:
                     be.model_name,
                     be.category_name
                 FROM equipment_change_log ecl
-                LEFT JOIN bow_equipment be ON ecl.equipment_id = be.id
-                WHERE ecl.equipment_id = ?
+                LEFT JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                WHERE ecl.bow_equipment_id = ?
                 ORDER BY ecl.created_at DESC
                 LIMIT ?
             ''', (equipment_id, limit))
@@ -571,30 +572,38 @@ class ChangeLogService:
             # Total changes (including arrows)
             cursor.execute('''
                 SELECT COUNT(*) as total FROM (
-                    SELECT id FROM equipment_change_log WHERE bow_setup_id = ?
+                    SELECT ecl.id 
+                    FROM equipment_change_log ecl
+                    JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                    WHERE be.bow_setup_id = ?
                     UNION ALL 
                     SELECT id FROM setup_change_log WHERE bow_setup_id = ?
                     UNION ALL
-                    SELECT id FROM arrow_change_log WHERE bow_setup_id = ?
+                    SELECT acl.id 
+                    FROM arrow_change_log acl
+                    JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                    WHERE sa.setup_id = ?
                 )
             ''', (bow_setup_id, bow_setup_id, bow_setup_id))
             stats['total_changes'] = cursor.fetchone()['total']
             
             # Changes by type (equipment)
             cursor.execute('''
-                SELECT change_type, COUNT(*) as count
-                FROM equipment_change_log 
-                WHERE bow_setup_id = ?
-                GROUP BY change_type
+                SELECT ecl.change_type, COUNT(*) as count
+                FROM equipment_change_log ecl
+                JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                WHERE be.bow_setup_id = ?
+                GROUP BY ecl.change_type
             ''', (bow_setup_id,))
             stats['equipment_changes_by_type'] = {row['change_type']: row['count'] for row in cursor.fetchall()}
             
             # Arrow changes by type
             cursor.execute('''
-                SELECT change_type, COUNT(*) as count
-                FROM arrow_change_log 
-                WHERE bow_setup_id = ?
-                GROUP BY change_type
+                SELECT acl.change_type, COUNT(*) as count
+                FROM arrow_change_log acl
+                JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                WHERE sa.setup_id = ?
+                GROUP BY acl.change_type
             ''', (bow_setup_id,))
             stats['arrow_changes_by_type'] = {row['change_type']: row['count'] for row in cursor.fetchall()}
             
@@ -602,14 +611,18 @@ class ChangeLogService:
             cutoff_date = datetime.now() - timedelta(days=30)
             cursor.execute('''
                 SELECT COUNT(*) as recent FROM (
-                    SELECT id FROM equipment_change_log 
-                    WHERE bow_setup_id = ? AND created_at >= ?
+                    SELECT ecl.id 
+                    FROM equipment_change_log ecl
+                    JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                    WHERE be.bow_setup_id = ? AND ecl.created_at >= ?
                     UNION ALL
                     SELECT id FROM setup_change_log 
                     WHERE bow_setup_id = ? AND created_at >= ?
                     UNION ALL
-                    SELECT id FROM arrow_change_log 
-                    WHERE bow_setup_id = ? AND created_at >= ?
+                    SELECT acl.id 
+                    FROM arrow_change_log acl
+                    JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                    WHERE sa.setup_id = ? AND acl.created_at >= ?
                 )
             ''', (bow_setup_id, cutoff_date.isoformat(), bow_setup_id, cutoff_date.isoformat(), bow_setup_id, cutoff_date.isoformat()))
             stats['changes_last_30_days'] = cursor.fetchone()['recent']
@@ -617,15 +630,15 @@ class ChangeLogService:
             # Most modified equipment
             cursor.execute('''
                 SELECT 
-                    ecl.equipment_id,
+                    ecl.bow_equipment_id as equipment_id,
                     COUNT(*) as change_count,
                     be.manufacturer_name,
                     be.model_name,
                     be.category_name
                 FROM equipment_change_log ecl
-                LEFT JOIN bow_equipment be ON ecl.equipment_id = be.id
-                WHERE ecl.bow_setup_id = ?
-                GROUP BY ecl.equipment_id
+                LEFT JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                WHERE be.bow_setup_id = ?
+                GROUP BY ecl.bow_equipment_id
                 ORDER BY change_count DESC
                 LIMIT 5
             ''', (bow_setup_id,))
@@ -634,11 +647,12 @@ class ChangeLogService:
             # Most modified arrows
             cursor.execute('''
                 SELECT 
-                    acl.arrow_id,
+                    sa.arrow_id,
                     COUNT(*) as change_count
                 FROM arrow_change_log acl
-                WHERE acl.bow_setup_id = ?
-                GROUP BY acl.arrow_id
+                JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                WHERE sa.setup_id = ?
+                GROUP BY sa.arrow_id
                 ORDER BY change_count DESC
                 LIMIT 5
             ''', (bow_setup_id,))
