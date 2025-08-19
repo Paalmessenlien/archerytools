@@ -175,6 +175,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
+import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import BowSetupOverview from '~/components/BowSetupOverview.vue'
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue'
 import BowEquipmentManager from '~/components/BowEquipmentManager.vue'
@@ -193,6 +194,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const bowSetupPickerStore = useBowSetupPickerStore()
 
 // State
 const setup = ref(null)
@@ -312,6 +314,11 @@ const handleSaveSetup = async (setupData) => {
     showEditModal.value = false
     showNotification('Bow setup updated successfully', 'success')
     await loadSetup()
+    
+    // Refresh bow selector navigation cache after successful save
+    if (bowSetupPickerStore.refreshSelectedBowSetup) {
+      await bowSetupPickerStore.refreshSelectedBowSetup(parseInt(route.params.id))
+    }
     
   } catch (err) {
     console.error('Error saving setup:', err)

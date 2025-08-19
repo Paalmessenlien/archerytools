@@ -87,6 +87,30 @@ export const useBowSetupPickerStore = defineStore('bowSetupPicker', () => {
     selectBowSetup(null)
   }
 
+  const refreshSelectedBowSetup = async (updatedSetupId?: number) => {
+    // If specific ID provided, refresh that setup
+    if (updatedSetupId) {
+      const { fetchBowSetups } = useAuth()
+      try {
+        const response = await fetchBowSetups()
+        availableBowSetups.value = response || []
+        
+        // Find and update the selected bow setup if it matches the updated ID
+        if (selectedBowSetup.value?.id === updatedSetupId) {
+          const updatedSetup = availableBowSetups.value.find(setup => setup.id === updatedSetupId)
+          if (updatedSetup) {
+            selectedBowSetup.value = updatedSetup
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing bow setup:', error)
+      }
+    } else if (selectedBowSetup.value) {
+      // Refresh current selected bow setup
+      await refreshSelectedBowSetup(selectedBowSetup.value.id)
+    }
+  }
+
 
   // Initialize selected bow from localStorage
   const initializeSelectedBow = async () => {
@@ -137,6 +161,7 @@ export const useBowSetupPickerStore = defineStore('bowSetupPicker', () => {
     loadBowSetups,
     selectBowSetup,
     clearSelection,
+    refreshSelectedBowSetup,
     initializeSelectedBow
   }
 })

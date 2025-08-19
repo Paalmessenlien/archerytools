@@ -370,6 +370,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useBowSetupPickerStore } from '~/stores/bowSetupPicker';
 import { useAuth } from '~/composables/useAuth';
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
@@ -378,6 +379,7 @@ import EditArrowModal from '~/components/EditArrowModal.vue';
 import ImageUpload from '~/components/ImageUpload.vue';
 
 const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup, updateArrowInSetup } = useAuth();
+const bowSetupPickerStore = useBowSetupPickerStore();
 
 const isLoadingUser = ref(true);
 const isEditing = ref(false);
@@ -544,14 +546,21 @@ const handleSaveBowSetup = async (setupData) => {
       setupData.draw_length = user.value?.draw_length || 28.0;
     }
 
+    let savedSetupId;
     if (isEditMode.value && editingSetupId.value) {
       await updateBowSetup(editingSetupId.value, setupData);
+      savedSetupId = editingSetupId.value;
     } else {
-      await addBowSetup(setupData);
+      savedSetupId = await addBowSetup(setupData);
     }
     
     closeAddSetupModal();
     await loadBowSetups();
+    
+    // Refresh bow selector navigation cache after successful save
+    if (savedSetupId && bowSetupPickerStore.refreshSelectedBowSetup) {
+      await bowSetupPickerStore.refreshSelectedBowSetup(savedSetupId);
+    }
   } catch (err) {
     console.error('Error saving bow setup:', err);
     addSetupError.value = err.message || `Failed to ${isEditMode.value ? 'update' : 'add'} bow setup.`;
