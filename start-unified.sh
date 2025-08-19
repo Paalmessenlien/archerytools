@@ -4,10 +4,12 @@
 # Handles all deployment scenarios: development, production, SSL
 #
 # Usage:
-#   ./start-unified.sh                    # Docker development mode
-#   ./start-unified.sh dev               # Local development mode (no Docker)
-#   ./start-unified.sh production         # Production HTTP mode
-#   ./start-unified.sh ssl yourdomain.com # Production SSL mode
+#   ./start-unified.sh                         # Docker development mode
+#   ./start-unified.sh dev start              # Local development mode (no Docker)
+#   ./start-unified.sh dev stop               # Stop local development mode
+#   ./start-unified.sh production start       # Production HTTP mode (with migrations)
+#   ./start-unified.sh production stop        # Stop production mode
+#   ./start-unified.sh ssl yourdomain.com     # Production SSL mode
 
 set -e
 
@@ -67,6 +69,115 @@ if [[ "$1" == "dev" && "$2" == "stop" ]]; then
     
     print_message "$GREEN" "✅ All local development services stopped"
     exit 0
+fi
+
+# Handle help command
+if [[ "$1" == "--help" || "$1" == "-h" || "$1" == "help" ]]; then
+    print_message "$GREEN" "🏹 ArrowTuner Unified Startup Script"
+    print_message "$GREEN" "===================================="
+    echo
+    print_message "$BLUE" "📖 DESCRIPTION:"
+    echo "  Unified startup script for all ArrowTuner deployment scenarios."
+    echo "  Handles development, production, and SSL modes with automatic"
+    echo "  database migrations and environment configuration."
+    echo
+    print_message "$BLUE" "🚀 USAGE:"
+    echo "  $0 [MODE] [COMMAND] [OPTIONS]"
+    echo
+    print_message "$BLUE" "📋 AVAILABLE MODES:"
+    echo
+    print_message "$YELLOW" "  Development Modes:"
+    echo "    $0                           # Docker development mode"
+    echo "    $0 dev start                # Local development (no Docker)"
+    echo "    $0 dev stop                 # Stop local development"
+    echo
+    print_message "$YELLOW" "  Production Modes:"
+    echo "    $0 production start         # Production HTTP mode (with migrations)"
+    echo "    $0 production stop          # Stop production mode"
+    echo "    $0 ssl <domain>             # Production SSL mode"
+    echo
+    print_message "$BLUE" "🛠️  FEATURES:"
+    echo "  ✅ Automatic database migrations"
+    echo "  ✅ Environment-specific configuration"
+    echo "  ✅ Docker containerization"
+    echo "  ✅ SSL certificate management"
+    echo "  ✅ Health monitoring"
+    echo "  ✅ Unified database architecture"
+    echo
+    print_message "$BLUE" "🌐 ACCESS URLS:"
+    echo "  Development:  http://localhost:3000 (frontend), http://localhost:5000/api (API)"
+    echo "  Production:   http://localhost (frontend), http://localhost/api (API)"
+    echo "  SSL:          https://<domain> (frontend), https://<domain>/api (API)"
+    echo
+    print_message "$BLUE" "🗄️  DATABASE:"
+    echo "  • Unified database architecture (arrow_database.db)"
+    echo "  • Automatic migrations on startup"
+    echo "  • Production-ready schema with flight path and chronograph support"
+    echo "  • Database verification and health checks"
+    echo
+    print_message "$BLUE" "📝 EXAMPLES:"
+    echo "  # Start local development"
+    echo "  $0 dev start"
+    echo
+    echo "  # Start production mode for local testing"
+    echo "  $0 production start"
+    echo
+    echo "  # Deploy with SSL on production server"
+    echo "  $0 ssl archerytool.online"
+    echo
+    echo "  # Stop any running services"
+    echo "  $0 dev stop                 # Stop local development"
+    echo "  $0 production stop          # Stop production mode"
+    echo "  ./stop-unified.sh           # Stop any unified mode"
+    echo
+    print_message "$BLUE" "🔧 ENVIRONMENT VARIABLES:"
+    echo "  DEEPSEEK_API_KEY            # API key for arrow data processing"
+    echo "  GOOGLE_CLIENT_SECRET        # Google OAuth client secret"
+    echo "  NUXT_PUBLIC_GOOGLE_CLIENT_ID # Google OAuth client ID"
+    echo "  SECRET_KEY                  # Flask secret key (change in production)"
+    echo "  DOMAIN_NAME                 # Domain name for SSL mode"
+    echo "  SSL_EMAIL                   # Email for SSL certificate generation"
+    echo
+    print_message "$BLUE" "📊 MONITORING:"
+    echo "  # View logs"
+    echo "  docker-compose -f docker-compose.unified.yml logs -f"
+    echo "  docker-compose -f docker-compose.unified.yml logs -f api"
+    echo "  docker-compose -f docker-compose.unified.yml logs -f frontend"
+    echo
+    echo "  # Check service status"
+    echo "  docker-compose -f docker-compose.unified.yml ps"
+    echo
+    echo "  # Health checks"
+    echo "  curl http://localhost/health         # Production mode"
+    echo "  curl http://localhost:5000/api/health # Development mode"
+    echo
+    print_message "$BLUE" "🛑 STOPPING SERVICES:"
+    echo "  ./stop-unified.sh                   # Stop services"
+    echo "  ./stop-unified.sh --remove          # Stop and remove containers"
+    echo "  ./stop-unified.sh --clean           # Stop and remove all data (⚠️  DATA LOSS!)"
+    echo
+    print_message "$BLUE" "📚 MORE INFORMATION:"
+    echo "  • Documentation: docs/DEVELOPMENT_GUIDE.md"
+    echo "  • Database Schema: docs/DATABASE_SCHEMA.md"
+    echo "  • API Endpoints: docs/API_ENDPOINTS.md"
+    echo "  • Troubleshooting: Check logs and verify prerequisites"
+    echo
+    print_message "$GREEN" "🎯 For quick start, use: $0 dev start"
+    exit 0
+fi
+
+# Handle production mode with start/stop commands
+if [[ "$1" == "production" && ("$2" == "start" || "$2" == "stop") ]]; then
+    if [[ "$2" == "stop" ]]; then
+        print_message "$BLUE" "🛑 Stopping production services..."
+        ./stop-unified.sh
+        exit 0
+    elif [[ "$2" == "start" ]]; then
+        print_message "$BLUE" "🚀 Starting production services..."
+        # Continue with normal production startup
+        DEPLOYMENT_MODE="production"
+        DOMAIN_NAME="${3:-localhost}"
+    fi
 fi
 
 # Function to check prerequisites
@@ -149,8 +260,11 @@ setup_environment() {
             export NUXT_PUBLIC_API_BASE="http://${DOMAIN_NAME}/api"
             export API_DOCKERFILE="Dockerfile.enhanced"
             export FRONTEND_DOCKERFILE="Dockerfile.enhanced"
+            export DATABASE_VERIFICATION="enabled"
+            export STARTUP_TIMEOUT="120"
             COMPOSE_PROFILES="--profile with-nginx"
             print_message "$GREEN" "✅ Production HTTP environment configured"
+            print_message "$BLUE" "   🔧 Database verification enabled for migrations"
             ;;
             
         "ssl")
@@ -171,7 +285,16 @@ setup_environment() {
             
         *)
             print_message "$RED" "❌ Invalid deployment mode: $DEPLOYMENT_MODE"
-            echo "Usage: $0 [dev|development|production|ssl] [domain_name]"
+            echo
+            echo "Usage examples:"
+            echo "  $0                         # Docker development mode"
+            echo "  $0 dev start              # Local development mode"
+            echo "  $0 dev stop               # Stop local development"
+            echo "  $0 production start       # Production HTTP mode"
+            echo "  $0 production stop        # Stop production mode"
+            echo "  $0 ssl yourdomain.com     # Production SSL mode"
+            echo
+            print_message "$BLUE" "💡 For detailed help, use: $0 --help"
             exit 1
             ;;
     esac
