@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white dark:bg-gray-900 md:hidden shadow-lg border-t border-gray-200 dark:border-gray-700" style="z-index: 1000; padding-bottom: env(safe-area-inset-bottom);">
+  <div class="fixed bottom-0 left-0 right-0 mobile-bottom-nav bg-white dark:bg-gray-900 md:hidden shadow-lg border-t border-gray-200 dark:border-gray-700" style="padding-bottom: env(safe-area-inset-bottom);">
     <div class="flex h-20 items-center justify-around px-4">
       <!-- Home/Menu -->
       <button
@@ -36,10 +36,10 @@
     </div>
     
     <!-- Mobile Menu Overlay -->
-    <div v-if="menuOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40" @click="closeMenu"></div>
+    <div v-if="menuOpen" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay" @click="closeMenu"></div>
     
     <!-- Mobile Menu -->
-    <div v-if="menuOpen" class="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 shadow-lg">
+    <div v-if="menuOpen" class="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 modal-container shadow-lg">
       <div class="px-4 py-6 space-y-4">
         <NuxtLink 
           :to="user ? '/my-setup' : '/'" 

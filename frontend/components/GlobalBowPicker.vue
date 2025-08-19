@@ -1,6 +1,6 @@
 <template>
   <!-- Mobile Full-Width Bow Manager Button - Sticky Position -->
-  <div v-if="user" class="md:hidden sticky top-0 z-50 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg">
+  <div v-if="user" class="md:hidden sticky top-0 global-bow-picker bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg">
     <div class="px-4 py-2">
       <button
         @click="toggleBowManager"

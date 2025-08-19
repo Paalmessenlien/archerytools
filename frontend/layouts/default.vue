@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sticky top-0 z-40">
+    <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sticky top-0 sticky-header">
       <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-3">
@@ -44,7 +44,7 @@
                     </button>
                     
                     <!-- Mega Menu Dropdown -->
-                    <div v-if="desktopMenuOpen" class="absolute top-full right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                    <div v-if="desktopMenuOpen" class="absolute top-full right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 desktop-menu-dropdown">
                       <div class="p-6">
                         <div class="grid grid-cols-2 gap-4">
                           <!-- Navigation Section -->
@@ -224,18 +224,18 @@
     </header>
 
     <!-- Bow Setup Picker - Desktop Only -->
-    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block sticky top-16 z-30" />
+    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block sticky top-16 bow-setup-picker sticky-element-fix" />
     
     <!-- Global Mobile Bow Picker -->
-    <GlobalBowPicker />
+    <GlobalBowPicker class="sticky-element-fix" />
 
     <!-- Main Content -->
-    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
+    <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6 mobile-safe-area">
       <slot />
     </main>
 
     <!-- Loading Indicator -->
-    <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div v-if="isLoading" class="fixed inset-0 loading-overlay flex items-center justify-center bg-black bg-opacity-50">
       <div class="flex items-center p-6 space-x-3 bg-white dark:bg-gray-800 rounded-xl">
         <div class="w-6 h-6 border-b-2 border-blue-600 rounded-full animate-spin dark:border-purple-400"></div>
         <span class="text-gray-700 dark:text-gray-200">Loading...</span>
