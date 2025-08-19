@@ -397,18 +397,34 @@ class ChangeLogService:
         cursor = conn.cursor()
         
         try:
+            # Find the setup_arrow_id for this bow_setup and arrow combination
+            cursor.execute('''
+                SELECT id FROM setup_arrows 
+                WHERE setup_id = ? AND arrow_id = ?
+                ORDER BY created_at DESC LIMIT 1
+            ''', (bow_setup_id, arrow_id))
+            
+            setup_arrow = cursor.fetchone()
+            if not setup_arrow:
+                print(f"⚠️ Warning: No setup_arrow found for bow_setup_id={bow_setup_id}, arrow_id={arrow_id}")
+                # For removed arrows, we might not find the setup_arrow anymore
+                # In this case, we'll create a log entry without setup_arrow_id (set to NULL)
+                setup_arrow_id = None
+            else:
+                setup_arrow_id = setup_arrow['id']
+            
             cursor.execute('''
                 INSERT INTO arrow_change_log
-                (bow_setup_id, arrow_id, user_id, change_type, field_name,
-                 old_value, new_value, change_description, user_note)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (bow_setup_id, arrow_id, user_id, change_type, field_name,
+                (setup_arrow_id, user_id, change_type, field_name,
+                 old_value, new_value, change_description, change_reason)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (setup_arrow_id, user_id, change_type, field_name,
                   old_value, new_value, change_description, user_note))
             
             change_log_id = cursor.lastrowid
             conn.commit()
             
-            print(f"📝 Logged arrow change: {change_type} for arrow {arrow_id}")
+            print(f"📝 Logged arrow change: {change_type} for arrow {arrow_id} (setup_arrow_id: {setup_arrow_id})")
             return change_log_id
             
         except sqlite3.Error as e:
