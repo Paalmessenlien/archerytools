@@ -731,33 +731,49 @@ run_database_migrations() {
         return 1
     fi
     
-    # Step 2: Use the comprehensive migration runner
-    if [[ -f "$SCRIPT_DIR/comprehensive-migration-runner.sh" ]]; then
-        print_message "$BLUE" "🎯 Using comprehensive migration runner..."
+    # Step 2: Use simplified direct migration approach for production
+    print_message "$BLUE" "🎯 Running essential migrations directly..."
+    
+    # Set environment variables for migration
+    export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
+    
+    # For unified database (post-consolidation), both paths point to same database
+    if sqlite3 "$SCRIPT_DIR/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
+        print_message "$BLUE" "   🎯 Using unified database (post-consolidation)"
+        export USER_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
         
-        # Set environment variables for migration
-        export ARROW_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
-        
-        # After consolidation, both database paths point to unified arrow database
-        if sqlite3 "$SCRIPT_DIR/databases/arrow_database.db" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users';" 2>/dev/null | grep -q "1"; then
-            print_message "$BLUE" "   🎯 Using unified database (post-consolidation)"
-            export USER_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
-        else
-            print_message "$BLUE" "   🔄 Using separate user database (pre-consolidation)"
+        # Run essential migration 033 directly for production readiness
+        cd arrow_scraper
+        if [[ -f "migrations/033_production_schema_fixes.py" ]]; then
+            print_message "$BLUE" "🔧 Running production schema fixes (migration 033)..."
+            if python3 migrations/033_production_schema_fixes.py; then
+                print_message "$GREEN" "✅ Production schema migration completed successfully"
+            else
+                print_message "$YELLOW" "⚠️  Production schema migration had issues, but continuing..."
+            fi
         fi
+        cd "$SCRIPT_DIR"
+        return 0
+    else
+        print_message "$BLUE" "   🔄 Using separate user database (pre-consolidation)"
         
-        # Determine environment for migration
-        local migration_environment="development"
-        if [[ "$DEPLOYMENT_MODE" == "production" ]] || [[ "$DEPLOYMENT_MODE" == "ssl" ]]; then
-            migration_environment="production"
-        fi
-        
-        # Run comprehensive migration system
-        if "$SCRIPT_DIR/comprehensive-migration-runner.sh" "$migration_environment"; then
-            print_message "$GREEN" "✅ Comprehensive database migrations completed successfully"
-            return 0
-        else
-            print_message "$YELLOW" "⚠️  Comprehensive migrations had issues, trying fallback..."
+        # Try comprehensive migration runner for complex dual-database scenarios
+        if [[ -f "$SCRIPT_DIR/comprehensive-migration-runner.sh" ]]; then
+            print_message "$BLUE" "🎯 Using comprehensive migration runner for dual-database setup..."
+            
+            # Determine environment for migration
+            local migration_environment="development"
+            if [[ "$DEPLOYMENT_MODE" == "production" ]] || [[ "$DEPLOYMENT_MODE" == "ssl" ]]; then
+                migration_environment="production"
+            fi
+            
+            # Run comprehensive migration system
+            if "$SCRIPT_DIR/comprehensive-migration-runner.sh" "$migration_environment"; then
+                print_message "$GREEN" "✅ Comprehensive database migrations completed successfully"
+                return 0
+            else
+                print_message "$YELLOW" "⚠️  Comprehensive migrations had issues, trying fallback..."
+            fi
         fi
     fi
     
