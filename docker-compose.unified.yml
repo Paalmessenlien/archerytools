@@ -32,9 +32,9 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-not-set}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000}
       
-      # Unified Database Paths - NEW UNIFIED ARCHITECTURE
+      # Unified Database Paths - CONSOLIDATED UNIFIED ARCHITECTURE
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - USER_DATABASE_PATH=/app/databases/arrow_database.db
       
       # Startup Configuration
       - DATABASE_VERIFICATION=${DATABASE_VERIFICATION:-enabled}
@@ -143,7 +143,7 @@ services:
     container_name: arrowtuner-db-init
     environment:
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - USER_DATABASE_PATH=/app/databases/arrow_database.db
       - INIT_MODE=true
     volumes:
       - ./databases:/app/databases
@@ -162,7 +162,7 @@ services:
     container_name: arrowtuner-db-backup
     environment:
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
-      - USER_DATABASE_PATH=/app/databases/user_data.db
+      - USER_DATABASE_PATH=/app/databases/arrow_database.db
       - BACKUP_DIR=/app/backups
       - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
     volumes:
