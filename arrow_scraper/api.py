@@ -1930,7 +1930,7 @@ def add_arrow_to_setup(current_user, setup_id):
             cursor.execute('''
                 UPDATE setup_arrows 
                 SET calculated_spine = ?, compatibility_score = ?, notes = ?,
-                    nock_weight = ?, insert_weight = ?, wrap_weight = ?
+                    nock_weight = ?, insert_weight = ?, wrap_weight = ?, fletching_weight = ?, bushing_weight = ?
                 WHERE id = ?
             ''', (
                 calculated_spine,
@@ -1939,6 +1939,8 @@ def add_arrow_to_setup(current_user, setup_id):
                 data.get('nock_weight', 10),
                 data.get('insert_weight', 0),
                 data.get('wrap_weight', 0),
+                data.get('fletching_weight', 15),
+                data.get('bushing_weight', 0),
                 existing_record[0]
             ))
             arrow_association_id = existing_record[0]
@@ -1947,8 +1949,8 @@ def add_arrow_to_setup(current_user, setup_id):
             cursor.execute('''
                 INSERT INTO setup_arrows 
                 (setup_id, arrow_id, arrow_length, point_weight, calculated_spine, compatibility_score, notes,
-                 nock_weight, insert_weight, wrap_weight)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 nock_weight, insert_weight, wrap_weight, fletching_weight, bushing_weight)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 setup_id,
                 data['arrow_id'],
@@ -1959,7 +1961,9 @@ def add_arrow_to_setup(current_user, setup_id):
                 data.get('notes'),
                 data.get('nock_weight', 10),
                 data.get('insert_weight', 0),
-                data.get('wrap_weight', 0)
+                data.get('wrap_weight', 0),
+                data.get('fletching_weight', 15),
+                data.get('bushing_weight', 0)
             ))
             arrow_association_id = cursor.lastrowid
         
