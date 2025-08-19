@@ -1,8 +1,12 @@
 # Hybrid Development Environment
 
+**⚠️ DEPRECATED (August 2025)**: This hybrid development approach has been superseded by the unified startup system. Please use `./start-unified.sh dev start` for new development.
+
+**📚 Legacy Documentation**: This document is maintained for historical reference and understanding of the hybrid development architecture that was used before the unified system.
+
 **🚀 Single-Command Development Environment Solution**
 
-This document describes the unified hybrid development environment that eliminates native binding issues while maintaining production compatibility.
+This document describes the hybrid development environment that eliminates native binding issues while maintaining production compatibility.
 
 ## Overview
 

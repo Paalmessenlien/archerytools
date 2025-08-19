@@ -60,52 +60,78 @@ ArcheryTool is a comprehensive web application that provides professional archer
 - **Categories:** Professional diameter classification system
 - **Search:** Advanced filtering with category-based statistics
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Unified System - August 2025)
 
 ### Prerequisites
 - **Node.js** 18+ and npm
 - **Python** 3.8+ with pip
 - **Git** for version control
+- **Docker & Docker Compose** (for production testing)
 
 ### Development Setup
 
 1. **Clone the repository:**
 ```bash
 git clone <your-repo-url>
-cd arrowtuner2
+cd archerytools
 ```
 
 2. **Backend Setup:**
 ```bash
 cd arrow_scraper
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python arrow_database.py  # Initialize database
-python api.py  # Start API server (port 5000)
 ```
 
 3. **Frontend Setup:**
 ```bash
 cd frontend
 npm install
-npm run dev  # Start frontend (port 3000)
 ```
 
-4. **Access the application:**
+4. **Environment Configuration:**
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+5. **Start Unified Development Environment (RECOMMENDED):**
+```bash
+./start-unified.sh dev start
+
+# Show all available commands
+./start-unified.sh --help
+
+# Stop development environment
+./start-unified.sh dev stop
+```
+
+6. **Access the application:**
    - Frontend: http://localhost:3000
    - API: http://localhost:5000
    - Health Check: http://localhost:5000/api/health
 
 ### Environment Variables
 
-**Backend (.env in arrow_scraper/):**
+**Root .env file (consolidated configuration):**
 ```env
+# API Configuration
 DEEPSEEK_API_KEY=your_deepseek_api_key_here
 SECRET_KEY=your-secret-key-change-in-production
-```
+API_PORT=5000
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+GOOGLE_REDIRECT_URI=http://localhost:3000
 
-**Frontend (.env in frontend/):**
-```env
-API_BASE_URL=http://localhost:5000/api
+# Frontend Configuration
+FRONTEND_PORT=3000
+NUXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id-here
+NODE_ENV=development
+NUXT_PUBLIC_API_BASE=http://localhost:5000/api
+
+# Production Domain
+DOMAIN_NAME=yourdomain.com
+SSL_EMAIL=admin@yourdomain.com
 ```
 
 ## 📋 API Endpoints
@@ -213,24 +239,39 @@ The system automatically imports JSON data during server startup:
 3. **Deploy**: Server automatically imports on startup
 4. **No Server Scraping**: Production never scrapes websites
 
-## 🔧 Development
+## 🔧 Development (Unified System)
 
-### Frontend Development
+### Unified Development Commands
 ```bash
+# Start development environment (RECOMMENDED)
+./start-unified.sh dev start
+
+# Stop development environment
+./start-unified.sh dev stop
+
+# Production testing locally
+./start-unified.sh production start
+./start-unified.sh production stop
+
+# Show all available commands
+./start-unified.sh --help
+```
+
+### Manual Development (Alternative)
+```bash
+# Frontend Development
 cd frontend
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
 npm run lint         # ESLint checking
 npm run type-check   # TypeScript checking
-```
 
-### Backend Development  
-```bash
+# Backend Development  
 cd arrow_scraper
+source venv/bin/activate
 python api.py                    # Start API server
 python test_setup.py             # Test system setup
-python arrow_database.py         # Rebuild database
 python migrate_diameter_categories.py  # Database migrations
 ```
 
@@ -243,21 +284,35 @@ cd frontend && npm run test
 cd arrow_scraper && python test_diameter_categories.py
 ```
 
-## 🏭 Production Deployment
+## 🏭 Production Deployment (Unified System)
 
-### Enhanced Docker Deployment (Recommended)
+### Unified Production Deployment (Recommended)
 ```bash
-# Standard deployment
-docker-compose up -d
+# Deploy with SSL for production domain
+./start-unified.sh ssl yourdomain.com
 
-# Enhanced deployment with verification
+# Deploy for local production testing
+./start-unified.sh production start
+
+# Stop production services
+./start-unified.sh production stop
+./stop-unified.sh  # Stop any unified services
+
+# The unified deployment includes:
+# - Automatic SSL certificate verification
+# - Database import and verification
+# - Service health checks
+# - Environment variable setup
+# - Access URL display
+```
+
+### Legacy Docker Deployment
+```bash
+# Enhanced deployment with verification (legacy)
 ./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
 
-# The enhanced deployment includes:
-# - Automatic database import from JSON files
-# - Health checks and verification
-# - User database persistence
-# - Build integrity checking
+# Note: Legacy scripts are archived in scripts/archive/
+# Use unified system for new deployments
 ```
 
 ### Database Import on Startup

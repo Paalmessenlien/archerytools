@@ -207,7 +207,7 @@ ensure_spine_data_migration() {
 }
 ```
 
-**Local Development** (`./start-local-dev.sh`):
+**Local Development** (`./start-unified.sh dev start`):
 ```bash
 # Spine migration before API start
 ensure_spine_data_migration() {

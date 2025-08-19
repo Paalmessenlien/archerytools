@@ -155,32 +155,45 @@ Intelligent manufacturer detection and linking system:
 - **Spine Calculation**: `POST /api/tuning/calculate-spine`
 - **Admin Spine Data**: `GET /api/admin/spine-data/parameters`
 
-### Development Commands
+### Development Commands (Unified System - August 2025)
 ```bash
-# Start development environment
-./start-local-dev.sh start
+# Start development environment (RECOMMENDED)
+./start-unified.sh dev start         # Local development with hot reload
+./start-unified.sh --help            # Show comprehensive help
+
+# Alternative Docker development
+./start-unified.sh                   # Full Docker development environment
 
 # Stop development environment
-./start-local-dev.sh stop
+./start-unified.sh dev stop          # Stop local development
 
-# Check service status
-./start-local-dev.sh status
+# Production testing
+./start-unified.sh production start  # Test production build locally
+./start-unified.sh production stop   # Stop production testing
 
 # Test backend
 cd arrow_scraper && python test_api.py
 
-# Test frontend
+# Test frontend (manual)
 cd frontend && npm run dev
 ```
 
-### Production Deployment
+### Production Deployment (Unified System)
 ```bash
-# Deploy with SSL
+# Deploy with SSL (RECOMMENDED)
 ./start-unified.sh ssl yourdomain.com
+
+# Deploy for local production testing
+./start-unified.sh production start
+
+# Stop services
+./start-unified.sh production stop
+./stop-unified.sh                    # Stop any unified services
 
 # Verify deployment
 python3 test-bow-saving.py
 curl https://yourdomain.com/api/health
+curl http://localhost/health         # Production mode health check
 ```
 
 ---

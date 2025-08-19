@@ -95,7 +95,7 @@ This guide provides a comprehensive overview of the Archery Tools platform archi
 - CDN credentials (optional)
 ```
 
-### Quick Setup
+### Quick Setup (Unified System - August 2025)
 ```bash
 # 1. Clone repository
 git clone https://github.com/Paalmessenlien/archerytools.git
@@ -115,7 +115,10 @@ cp .env.example .env
 cd ../frontend
 npm install
 
-# 5. Start development servers
+# 5. Start unified development environment (RECOMMENDED)
+./start-unified.sh dev start
+
+# Alternative: Manual startup
 # Terminal 1: Backend
 cd arrow_scraper && source venv/bin/activate && python api.py
 
@@ -194,10 +197,11 @@ archerytools/
 │   ├── assets/css/                # Tailwind CSS + Material theming
 │   ├── plugins/                   # Nuxt plugins
 │   └── nuxt.config.ts             # Nuxt configuration
-├── scripts/                       # Deployment scripts
-│   ├── start-dual-architecture.sh # Development startup
-│   ├── deploy-enhanced.sh         # Enhanced production deployment
-│   └── docker-cleanup.sh          # Docker maintenance
+├── scripts/                       # Legacy deployment scripts (archived)
+│   └── archive/                   # Archived legacy startup scripts
+├── start-unified.sh               # Unified startup script (ALL deployment modes)
+├── stop-unified.sh                # Unified stop script
+├── docker-cleanup.sh              # Docker maintenance
 ├── docker-compose*.yml            # Docker configurations
 ├── CLAUDE.md                      # Project context for AI assistance
 └── README.md                      # Project overview
@@ -211,10 +215,13 @@ archerytools/
 
 1. **Setup Development Environment**
    ```bash
-   # Start both servers
-   ./scripts/start-dual-architecture.sh start
+   # Start unified development environment (RECOMMENDED)
+   ./start-unified.sh dev start
    
-   # Or manually:
+   # Stop development environment
+   ./start-unified.sh dev stop
+   
+   # Alternative manual startup:
    # Terminal 1: Backend
    cd arrow_scraper && source venv/bin/activate && python api.py
    
@@ -431,20 +438,26 @@ curl http://localhost:5000/api/admin/backup-test
 
 ## Deployment Process
 
-### Local Development
+### Local Development (Unified System)
 ```bash
-# Dual architecture startup
-./scripts/start-dual-architecture.sh start
+# Unified development startup (RECOMMENDED)
+./start-unified.sh dev start
+
+# Show all available commands
+./start-unified.sh --help
 
 # Access:
 # Frontend: http://localhost:3000
 # API: http://localhost:5000
 # API Health: http://localhost:5000/api/health
+
+# Stop development environment
+./start-unified.sh dev stop
 ```
 
 ### Production Deployment
 
-**Standard Deployment:**
+**Production Deployment (Unified System):**
 ```bash
 # Clone to production server
 git clone https://github.com/Paalmessenlien/archerytools.git
@@ -454,27 +467,25 @@ cd archerytools
 cp .env.example .env
 # Edit .env with production values
 
-# Deploy with enhanced verification
-./deploy-enhanced.sh docker-compose.enhanced-ssl.yml
-
-# Verify deployment
-python3 test-bow-saving.py
-curl https://yourdomain.com/api/health
-```
-
-**SSL Production:**
-```bash
-# Configure DNS first (A record: yourdomain.com -> server-ip)
-
-# Deploy with unified startup script
+# Deploy with SSL (RECOMMENDED)
 ./start-unified.sh ssl yourdomain.com
 
-# The script handles:
+# Deploy for local production testing
+./start-unified.sh production start
+
+# Stop production services
+./start-unified.sh production stop
+
+# The unified script handles:
 # - SSL certificate verification
 # - Environment variable setup
 # - Database import and verification  
 # - Service health checks
 # - Access URL display
+
+# Verify deployment
+python3 test-bow-saving.py
+curl https://yourdomain.com/api/health
 ```
 
 ### Deployment Checklist

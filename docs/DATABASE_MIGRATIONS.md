@@ -548,7 +548,7 @@ python run_migrations.py
 # Run user database migrations  
 python run_user_migrations.py
 
-# Both are automatically executed during startup via start-api-robust.sh
+# Both are automatically executed during startup via unified startup system
 ```
 
 #### Database Path Resolution Enhancement (August 2025)
