@@ -209,7 +209,7 @@ const props = defineProps({
 })
 
 // Composables
-const { api } = useApi()
+const api = useApi()
 
 // Component state
 const chartCanvas = ref(null)
