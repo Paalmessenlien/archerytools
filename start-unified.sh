@@ -797,6 +797,13 @@ setup_docker_database_environment() {
 start_services() {
     print_message "$BLUE" "🚀 Starting ArrowTuner services..."
     
+    # Stop any existing containers first to prevent conflicts
+    print_message "$BLUE" "🛑 Stopping any existing containers..."
+    docker-compose -f docker-compose.unified.yml down --remove-orphans 2>/dev/null || true
+    
+    # Give Docker a moment to clean up
+    sleep 2
+    
     # Setup database environment variables for Docker
     setup_docker_database_environment
     
