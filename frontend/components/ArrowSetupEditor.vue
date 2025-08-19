@@ -318,25 +318,77 @@ const availableSpines = computed(() => {
 })
 
 const hasChanges = computed(() => {
-  return JSON.stringify(editableConfig.value) !== JSON.stringify(originalConfig.value)
+  // More robust comparison that handles numeric values properly
+  const current = editableConfig.value
+  const original = originalConfig.value
+  
+  if (!current || !original) return false
+  
+  // Check each property individually with proper type conversion
+  const keys = ['arrow_length', 'point_weight', 'calculated_spine', 'compatibility_score', 'notes', 'nock_weight', 'insert_weight', 'bushing_weight', 'fletching_weight']
+  
+  const hasChanged = keys.some(key => {
+    const currentVal = current[key]
+    const originalVal = original[key]
+    
+    // Handle numeric comparisons with precision
+    if ((typeof currentVal === 'number' || !isNaN(parseFloat(currentVal))) || 
+        (typeof originalVal === 'number' || !isNaN(parseFloat(originalVal)))) {
+      const currentNum = parseFloat(currentVal) || 0
+      const originalNum = parseFloat(originalVal) || 0
+      return Math.abs(currentNum - originalNum) > 0.01 // Allow for small floating point differences
+    }
+    
+    // Handle string comparisons
+    const currentStr = String(currentVal || '').trim()
+    const originalStr = String(originalVal || '').trim()
+    return currentStr !== originalStr
+  })
+  
+  // Debug logging in development
+  if (process.dev) {
+    console.log('hasChanges check:', {
+      current: JSON.stringify(current),
+      original: JSON.stringify(original),
+      hasChanged,
+      keys: keys.map(key => ({
+        key,
+        current: current[key],
+        original: original[key],
+        changed: current[key] !== original[key]
+      }))
+    })
+  }
+  
+  return hasChanged
 })
 
 // Methods
 const initializeConfig = () => {
   const config = {
-    arrow_length: props.setupArrow.arrow_length || 32,
-    point_weight: props.setupArrow.point_weight || 100,
-    calculated_spine: props.setupArrow.calculated_spine || '',
-    compatibility_score: props.setupArrow.compatibility_score || 0,
-    notes: props.setupArrow.notes || '',
-    nock_weight: props.setupArrow.nock_weight || 10,
-    insert_weight: props.setupArrow.insert_weight || 0,
-    bushing_weight: props.setupArrow.bushing_weight || 0,
-    fletching_weight: props.setupArrow.fletching_weight || 15
+    arrow_length: parseFloat(props.setupArrow.arrow_length) || 32,
+    point_weight: parseFloat(props.setupArrow.point_weight) || 100,
+    calculated_spine: String(props.setupArrow.calculated_spine || ''),
+    compatibility_score: parseFloat(props.setupArrow.compatibility_score) || 0,
+    notes: String(props.setupArrow.notes || ''),
+    nock_weight: parseFloat(props.setupArrow.nock_weight) || 10,
+    insert_weight: parseFloat(props.setupArrow.insert_weight) || 0,
+    bushing_weight: parseFloat(props.setupArrow.bushing_weight) || 0,
+    fletching_weight: parseFloat(props.setupArrow.fletching_weight) || 15
   }
   
-  editableConfig.value = { ...config }
-  originalConfig.value = { ...config }
+  // Create completely separate copies to avoid reference sharing
+  editableConfig.value = JSON.parse(JSON.stringify(config))
+  originalConfig.value = JSON.parse(JSON.stringify(config))
+  
+  // Debug: Log initial state
+  if (process.dev) {
+    console.log('Initialized config:', {
+      original: JSON.stringify(originalConfig.value),
+      editable: JSON.stringify(editableConfig.value),
+      areEqual: JSON.stringify(originalConfig.value) === JSON.stringify(editableConfig.value)
+    })
+  }
 }
 
 const handleChange = () => {
@@ -444,10 +496,16 @@ onMounted(() => {
   initializeConfig()
 })
 
-// Watch for prop changes
-watch(() => props.setupArrow, () => {
-  initializeConfig()
-}, { deep: true })
+// Watch for prop changes - only reinitialize if we're not in edit mode
+watch(() => props.setupArrow, (newValue, oldValue) => {
+  // Only reinitialize if this is truly a new arrow (different ID) 
+  // or if we don't have unsaved changes
+  if (!editableConfig.value || 
+      newValue.id !== oldValue?.id ||
+      !hasChanges.value) {
+    initializeConfig()
+  }
+}, { deep: true, immediate: false })
 </script>
 
 <style scoped>

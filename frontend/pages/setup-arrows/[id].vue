@@ -272,6 +272,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, useHead, onBeforeRouteLeave } from '#imports'
 import { useApi } from '~/composables/useApi'
+import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import SetupContextBreadcrumb from '~/components/SetupContextBreadcrumb.vue'
 import ArrowSetupEditor from '~/components/ArrowSetupEditor.vue'
 import ArrowSetupDisplay from '~/components/ArrowSetupDisplay.vue'
@@ -291,6 +292,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const bowSetupPickerStore = useBowSetupPickerStore()
 
 // State
 const setupArrowData = ref(null)
@@ -414,6 +416,12 @@ const handleConfigSave = async (updatedConfig) => {
     editMode.value = false
     showNotification('Arrow configuration updated successfully', 'success')
     await loadSetupArrowDetails() // Reload to get fresh data
+    
+    // Refresh bow selector navigation cache after successful save
+    if (setupArrowData.value?.setup_arrow?.setup_id && bowSetupPickerStore.refreshSelectedBowSetup) {
+      await bowSetupPickerStore.refreshSelectedBowSetup(setupArrowData.value.setup_arrow.setup_id)
+    }
+    
   } catch (err) {
     console.error('Error saving configuration:', err)
     showNotification('Failed to save configuration', 'error')
