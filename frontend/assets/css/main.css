@@ -1444,6 +1444,54 @@ md-filled-button[aria-label]::after {
   }
 }
 
+/* PHASE 3 - Expandable Card Animations */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* PHASE 3 - Pull-to-Refresh Animations */
+.pull-refresh-indicator {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.2s ease-out,
+              background-color 0.3s ease;
+}
+
+.pull-refresh-trigger {
+  animation: pullTrigger 0.3s ease-out;
+}
+
+@keyframes pullTrigger {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Enhanced swipe animations */
+.swipe-card {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.swipe-actions {
+  transition: transform 0.2s ease-out;
+}
+
 /* PHASE 2 - Enhanced Mobile Bottom Navigation */
 .mobile-nav-button {
   position: relative;

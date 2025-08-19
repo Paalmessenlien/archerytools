@@ -1,5 +1,10 @@
 <template>
-  <div class="container mx-auto mobile-container md:px-4 py-6 md:py-8 pb-24 md:pb-8">
+  <div 
+    class="container mx-auto mobile-container md:px-4 py-6 md:py-8 pb-24 md:pb-8"
+    @touchstart="handlePullStart"
+    @touchmove="handlePullMove"
+    @touchend="handlePullEnd"
+  >
     <!-- Notification Toast -->
     <div v-if="notification.show" class="fixed top-4 right-4 z-50 transition-all duration-300">
       <div 
@@ -108,6 +113,44 @@
           </div>
         </div>
 
+        <!-- Phase 3: Pull-to-Refresh Indicators -->
+        <!-- Active Refresh Indicator -->
+        <div 
+          v-if="pullToRefresh.isRefreshing" 
+          class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2 animate-pulse"
+        >
+          <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          <span class="text-sm font-medium">Refreshing...</span>
+        </div>
+        
+        <!-- Pull Down Indicator (while pulling) -->
+        <div 
+          v-if="pullToRefresh.isPulling && !pullToRefresh.isRefreshing" 
+          class="fixed top-16 left-1/2 transform -translate-x-1/2 z-40 transition-all duration-200"
+          :style="{ 
+            transform: `translateX(-50%) translateY(${Math.min(pullToRefresh.currentY / 3, 30)}px)`,
+            opacity: Math.min(pullToRefresh.currentY / pullToRefresh.threshold, 1)
+          }"
+        >
+          <div 
+            class="flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-colors duration-200"
+            :class="pullToRefresh.isTriggered 
+              ? 'bg-green-600 text-white' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
+          >
+            <i 
+              class="fas transition-transform duration-200"
+              :class="[
+                pullToRefresh.isTriggered ? 'fa-check' : 'fa-arrow-down',
+                pullToRefresh.isTriggered ? 'text-white' : 'text-gray-500'
+              ]"
+            ></i>
+            <span class="text-xs font-medium">
+              {{ pullToRefresh.isTriggered ? 'Release to refresh' : 'Pull down to refresh' }}
+            </span>
+          </div>
+        </div>
+
         <!-- Quick Stats - Enhanced Mobile Responsive -->
         <div v-if="bowSetups.length > 0" class="hidden sm-mobile:grid grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-3 gap-3 md-mobile:gap-4 mb-6">
           <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -162,21 +205,98 @@
               <div 
                 v-for="setup in bowSetups" 
                 :key="setup.id" 
-                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer touch-target overflow-hidden w-full max-w-md md-mobile:max-w-none mx-auto"
-                @click="navigateToBowDetail(setup.id)"
+                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer touch-target overflow-hidden w-full max-w-md md-mobile:max-w-none mx-auto"
+                :class="{ 'md-mobile:col-span-2 lg-mobile:col-span-2 xl:col-span-2': expandedCard === setup.id }"
+                @touchstart="handleTouchStart($event, setup.id)"
+                @touchmove="handleTouchMove($event, setup.id)"
+                @touchend="handleTouchEnd($event, setup.id)"
+                :style="{ transform: swipeState[setup.id]?.transform || 'translateX(0)' }"
               >
+                <!-- Phase 3: Swipe Action Buttons (Right Side) -->
+                <div class="absolute inset-y-0 right-0 flex items-center justify-end bg-gradient-to-l from-red-500 to-red-600 w-32 transform transition-transform duration-200"
+                     :class="swipeState[setup.id]?.showActions ? 'translate-x-0' : 'translate-x-full'">
+                  <div class="flex items-center gap-2 pr-4">
+                    <button
+                      @click.stop="navigateToCalculatorWithSetup(setup.id)"
+                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                      title="Find Arrows"
+                    >
+                      <i class="fas fa-search text-sm"></i>
+                    </button>
+                    <button
+                      @click.stop="confirmDeleteSetup(setup.id)"
+                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                      title="Delete Setup"
+                    >
+                      <i class="fas fa-trash text-sm"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Phase 3: Swipe Action Buttons (Left Side) -->
+                <div class="absolute inset-y-0 left-0 flex items-center justify-start bg-gradient-to-r from-green-500 to-green-600 w-32 transform transition-transform duration-200"
+                     :class="swipeState[setup.id]?.showActionsLeft ? 'translate-x-0' : '-translate-x-full'">
+                  <div class="flex items-center gap-2 pl-4">
+                    <button
+                      @click.stop="navigateToBowDetail(setup.id)"
+                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                      title="Edit Setup"
+                    >
+                      <i class="fas fa-edit text-sm"></i>
+                    </button>
+                    <button
+                      @click.stop="toggleCardExpansion(setup.id)"
+                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                      :title="expandedCard === setup.id ? 'Collapse' : 'Expand'"
+                    >
+                      <i class="fas transition-transform duration-200" 
+                         :class="expandedCard === setup.id ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Bow Card Content -->
                 <div class="p-4">
                   <div class="w-full max-w-none mx-0">
                     <!-- Card Header -->
                     <div class="flex items-start justify-between mb-4 w-full">
                     <div class="flex-1 min-w-0">
-                      <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight truncate">
-                        {{ setup.name }}
-                      </h4>
-                      <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ formatBowType(setup.bow_type) }}</span>
+                      <!-- Phase 3: Inline Editing for Setup Name -->
+                      <div v-if="editingSetupName === setup.id" class="space-y-2">
+                        <input 
+                          ref="setupNameInput"
+                          v-model="editedSetupName"
+                          @keyup.enter="saveSetupName(setup.id)"
+                          @keyup.escape="cancelEditSetupName"
+                          @blur="saveSetupName(setup.id)"
+                          class="w-full text-lg font-semibold bg-white dark:bg-gray-700 border border-blue-500 dark:border-blue-400 rounded px-2 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter setup name..."
+                        />
+                        <div class="flex gap-1 text-xs text-gray-500">
+                          <span><i class="fas fa-check text-green-600"></i> Enter to save</span>
+                          <span><i class="fas fa-times text-red-600"></i> Esc to cancel</span>
+                        </div>
+                      </div>
+                      <div v-else @click.stop="startEditSetupName(setup.id, setup.name)" class="cursor-pointer group">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {{ setup.name }}
+                          <i class="fas fa-edit text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2"></i>
+                        </h4>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ formatBowType(setup.bow_type) }}</span>
+                      </div>
                     </div>
                     <div class="flex items-center gap-2 ml-3 flex-shrink-0" @click.stop>
+                      <!-- Phase 3: Expand/Collapse Toggle -->
+                      <CustomButton
+                        @click="toggleCardExpansion(setup.id)"
+                        variant="text"
+                        size="small"
+                        class="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900 touch-target p-2"
+                        :title="expandedCard === setup.id ? 'Collapse View' : 'Expand View'"
+                      >
+                        <i class="fas transition-transform duration-200" 
+                           :class="expandedCard === setup.id ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
+                      </CustomButton>
                       <CustomButton
                         @click="navigateToCalculatorWithSetup(setup.id)"
                         variant="text"
@@ -243,6 +363,96 @@
                         <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center">
                           <i class="fas fa-cogs mr-1 text-purple-600 dark:text-purple-400"></i>
                           {{ setup.equipment.length }}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Phase 3: Expanded Information Panel -->
+                    <div 
+                      v-if="expandedCard === setup.id" 
+                      class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fadeIn"
+                    >
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Equipment Summary -->
+                        <div class="space-y-3">
+                          <h5 class="mobile-body-medium font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                            <i class="fas fa-cog text-purple-600 dark:text-purple-400 mr-2"></i>
+                            Equipment
+                          </h5>
+                          <div class="space-y-2 text-sm">
+                            <div v-if="setup.equipment && setup.equipment.length > 0">
+                              <div v-for="equip in setup.equipment.slice(0, 3)" :key="equip.id" 
+                                   class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                <span class="font-medium">{{ equip.category }}</span>
+                                <span class="text-gray-600 dark:text-gray-400 text-xs">{{ equip.brand || 'Custom' }}</span>
+                              </div>
+                              <div v-if="setup.equipment.length > 3" class="text-xs text-gray-500 text-center py-1">
+                                +{{ setup.equipment.length - 3 }} more items
+                              </div>
+                            </div>
+                            <div v-else class="text-gray-500 dark:text-gray-400 text-xs italic">
+                              No equipment configured
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Arrow Information -->
+                        <div class="space-y-3">
+                          <h5 class="mobile-body-medium font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                            <i class="fas fa-bullseye text-green-600 dark:text-green-400 mr-2"></i>
+                            Arrows
+                          </h5>
+                          <div class="space-y-2 text-sm">
+                            <div v-if="setup.arrows && setup.arrows.length > 0">
+                              <div v-for="arrow in setup.arrows.slice(0, 2)" :key="arrow.id" 
+                                   class="p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                <div class="font-medium">{{ arrow.manufacturer }} {{ arrow.model_name }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                  Length: {{ arrow.arrow_length }}" • Weight: {{ arrow.point_weight }}gr
+                                </div>
+                              </div>
+                              <div v-if="setup.arrows.length > 2" class="text-xs text-gray-500 text-center py-1">
+                                +{{ setup.arrows.length - 2 }} more arrows
+                              </div>
+                            </div>
+                            <div v-else class="text-gray-500 dark:text-gray-400 text-xs italic">
+                              No arrows configured
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Quick Action Bar -->
+                      <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex flex-wrap gap-2">
+                          <CustomButton
+                            @click="navigateToCalculatorWithSetup(setup.id)"
+                            variant="filled"
+                            size="small"
+                            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-xs"
+                          >
+                            <i class="fas fa-calculator mr-1"></i>
+                            Calculate Spine
+                          </CustomButton>
+                          <CustomButton
+                            @click="navigateToBowDetail(setup.id)"
+                            variant="outlined"
+                            size="small"
+                            class="text-green-600 border-green-600 hover:bg-green-50 dark:text-green-400 dark:border-green-400 text-xs"
+                          >
+                            <i class="fas fa-edit mr-1"></i>
+                            Edit Setup
+                          </CustomButton>
+                          <CustomButton
+                            v-if="setup.arrows && setup.arrows.length > 0"
+                            @click="navigateToBowDetail(setup.id)"
+                            variant="outlined"
+                            size="small"
+                            class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 text-xs"
+                          >
+                            <i class="fas fa-chart-line mr-1"></i>
+                            Performance
+                          </CustomButton>
                         </div>
                       </div>
                     </div>
@@ -369,7 +579,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { useBowSetupPickerStore } from '~/stores/bowSetupPicker';
 import { useAuth } from '~/composables/useAuth';
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue';
@@ -389,6 +599,30 @@ const editError = ref(null);
 const bowSetups = ref([]);
 const isLoadingSetups = ref(true);
 const isAddingSetup = ref(false);
+
+// Phase 3: Expandable card state
+const expandedCard = ref(null);
+
+// Phase 3: Inline editing state
+const editingSetupName = ref(null);
+const editedSetupName = ref('');
+const setupNameInput = ref(null);
+
+// Phase 3: Swipe gesture state
+const swipeState = ref({});
+const touchStartX = ref(0);
+const touchStartY = ref(0);
+const touchStartTime = ref(0);
+
+// Phase 3: Pull-to-refresh state
+const pullToRefresh = ref({
+  isRefreshing: false,
+  startY: 0,
+  currentY: 0,
+  threshold: 80,
+  isTriggered: false,
+  isPulling: false
+});
 const isSavingSetup = ref(false);
 const addSetupError = ref(null);
 const isConfirmingDelete = ref(false);
@@ -809,6 +1043,217 @@ const getCategoryIcon = (categoryName) => {
     'Weight': 'fas fa-weight-hanging'
   };
   return iconMap[categoryName] || 'fas fa-cog';
+};
+
+// Phase 3: Card expansion toggle method
+const toggleCardExpansion = (setupId) => {
+  if (expandedCard.value === setupId) {
+    expandedCard.value = null; // Collapse if already expanded
+  } else {
+    expandedCard.value = setupId; // Expand the clicked card
+  }
+};
+
+// Phase 3: Inline editing methods
+const startEditSetupName = (setupId, currentName) => {
+  editingSetupName.value = setupId;
+  editedSetupName.value = currentName;
+  nextTick(() => {
+    if (setupNameInput.value) {
+      setupNameInput.value.focus();
+      setupNameInput.value.select();
+    }
+  });
+};
+
+const cancelEditSetupName = () => {
+  editingSetupName.value = null;
+  editedSetupName.value = '';
+};
+
+const saveSetupName = async (setupId) => {
+  if (!editedSetupName.value.trim()) {
+    cancelEditSetupName();
+    return;
+  }
+  
+  const setup = bowSetups.value.find(s => s.id === setupId);
+  if (!setup || setup.name === editedSetupName.value.trim()) {
+    cancelEditSetupName();
+    return;
+  }
+  
+  try {
+    // Update setup name via API
+    await updateBowSetup(setupId, { name: editedSetupName.value.trim() });
+    
+    // Update local state
+    setup.name = editedSetupName.value.trim();
+    
+    cancelEditSetupName();
+  } catch (error) {
+    console.error('Error updating setup name:', error);
+    // Could add error notification here
+    cancelEditSetupName();
+  }
+};
+
+// Phase 3: Swipe gesture methods
+const initSwipeState = (setupId) => {
+  if (!swipeState.value[setupId]) {
+    swipeState.value[setupId] = {
+      transform: 'translateX(0)',
+      showActions: false,
+      showActionsLeft: false,
+      isDragging: false
+    };
+  }
+};
+
+const handleTouchStart = (event, setupId) => {
+  initSwipeState(setupId);
+  const touch = event.touches[0];
+  touchStartX.value = touch.clientX;
+  touchStartY.value = touch.clientY;
+  touchStartTime.value = Date.now();
+  swipeState.value[setupId].isDragging = true;
+};
+
+const handleTouchMove = (event, setupId) => {
+  if (!swipeState.value[setupId]?.isDragging) return;
+  
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - touchStartX.value;
+  const deltaY = touch.clientY - touchStartY.value;
+  
+  // Only handle horizontal swipes (ignore vertical scrolling)
+  if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+  
+  event.preventDefault(); // Prevent scrolling when swiping horizontally
+  
+  // Limit swipe distance
+  const maxSwipe = 120;
+  const clampedDelta = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX));
+  
+  swipeState.value[setupId].transform = `translateX(${clampedDelta}px)`;
+  swipeState.value[setupId].showActions = clampedDelta < -40;
+  swipeState.value[setupId].showActionsLeft = clampedDelta > 40;
+};
+
+const handleTouchEnd = (event, setupId) => {
+  if (!swipeState.value[setupId]?.isDragging) return;
+  
+  const touch = event.changedTouches[0];
+  const deltaX = touch.clientX - touchStartX.value;
+  const deltaTime = Date.now() - touchStartTime.value;
+  
+  swipeState.value[setupId].isDragging = false;
+  
+  // Determine final state based on swipe distance and velocity
+  const swipeThreshold = 60;
+  const isQuickSwipe = deltaTime < 200 && Math.abs(deltaX) > 30;
+  
+  if (deltaX < -swipeThreshold || (isQuickSwipe && deltaX < 0)) {
+    // Show right actions (swipe left)
+    swipeState.value[setupId].transform = 'translateX(-120px)';
+    swipeState.value[setupId].showActions = true;
+    swipeState.value[setupId].showActionsLeft = false;
+  } else if (deltaX > swipeThreshold || (isQuickSwipe && deltaX > 0)) {
+    // Show left actions (swipe right)
+    swipeState.value[setupId].transform = 'translateX(120px)';
+    swipeState.value[setupId].showActions = false;
+    swipeState.value[setupId].showActionsLeft = true;
+  } else {
+    // Reset to center
+    resetSwipeState(setupId);
+  }
+};
+
+const resetSwipeState = (setupId) => {
+  if (swipeState.value[setupId]) {
+    swipeState.value[setupId].transform = 'translateX(0)';
+    swipeState.value[setupId].showActions = false;
+    swipeState.value[setupId].showActionsLeft = false;
+  }
+};
+
+const resetAllSwipeStates = () => {
+  Object.keys(swipeState.value).forEach(setupId => {
+    resetSwipeState(setupId);
+  });
+};
+
+// Phase 3: Pull-to-refresh methods
+const handlePullStart = (event) => {
+  // Only trigger pull-to-refresh at the top of the page
+  if (window.scrollY > 10) return;
+  
+  const touch = event.touches[0];
+  pullToRefresh.value.startY = touch.clientY;
+  pullToRefresh.value.isPulling = true;
+  pullToRefresh.value.isTriggered = false;
+};
+
+const handlePullMove = (event) => {
+  if (!pullToRefresh.value.isPulling || window.scrollY > 10) return;
+  
+  const touch = event.touches[0];
+  const deltaY = touch.clientY - pullToRefresh.value.startY;
+  
+  // Only allow pulling down
+  if (deltaY < 0) return;
+  
+  pullToRefresh.value.currentY = deltaY;
+  
+  // Trigger threshold reached
+  if (deltaY > pullToRefresh.value.threshold && !pullToRefresh.value.isTriggered) {
+    pullToRefresh.value.isTriggered = true;
+    // Haptic feedback if available
+    if (window.navigator.vibrate) {
+      window.navigator.vibrate(50);
+    }
+  } else if (deltaY <= pullToRefresh.value.threshold && pullToRefresh.value.isTriggered) {
+    pullToRefresh.value.isTriggered = false;
+  }
+};
+
+const handlePullEnd = () => {
+  if (!pullToRefresh.value.isPulling) return;
+  
+  pullToRefresh.value.isPulling = false;
+  
+  if (pullToRefresh.value.isTriggered && !pullToRefresh.value.isRefreshing) {
+    // Trigger refresh
+    performPullToRefresh();
+  }
+  
+  // Reset state
+  pullToRefresh.value.currentY = 0;
+  pullToRefresh.value.isTriggered = false;
+};
+
+const performPullToRefresh = async () => {
+  if (pullToRefresh.value.isRefreshing) return;
+  
+  pullToRefresh.value.isRefreshing = true;
+  
+  try {
+    // Refresh user data and bow setups
+    await Promise.all([
+      fetchUser(),
+      loadBowSetups()
+    ]);
+    
+    // Add a minimum refresh time for better UX
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    showNotification('Setup data refreshed!', 'success');
+  } catch (error) {
+    console.error('Error refreshing data:', error);
+    showNotification('Failed to refresh data', 'error');
+  } finally {
+    pullToRefresh.value.isRefreshing = false;
+  }
 };
 
 // Profile picture upload handlers
