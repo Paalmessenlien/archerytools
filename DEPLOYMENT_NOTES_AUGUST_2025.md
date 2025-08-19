@@ -6,18 +6,34 @@
 This deployment includes comprehensive equipment management system testing and critical database schema fixes. All 9 equipment categories have been validated and are ready for production use.
 
 ### Database Changes (CRITICAL)
-**Migration Required**: Migration 025 - Fix Equipment ID Nullable for Unified Database
+**Migrations Required**: 
+- Migration 025 - Fix Equipment ID Nullable for Unified Database
+- Migration 026 - Add Peep Sight Equipment Category  
+- Migration 027 - Add Essential Missing Columns
 
 #### What Changed:
-- Made `equipment_id` column nullable in `bow_equipment` table
+- Made `equipment_id` column nullable in `bow_equipment` table (025)
+- Added Peep Sight equipment category with specialized fields (026)
+- Added essential missing columns for equipment functionality (027)
 - Allows custom equipment creation without database constraint violations
+- Enables all 9 equipment categories including Peep Sight
 - Preserves existing data and relationships
 
 #### Migration Details:
 ```bash
-# Migration file: arrow_scraper/migrations/025_fix_equipment_id_nullable_unified.py
+# Migration 025: arrow_scraper/migrations/025_fix_equipment_id_nullable_unified.py
 # Description: Fix Equipment ID Nullable for Unified Database Architecture
 # Dependencies: 024
+# Target: Unified arrow_database.db
+
+# Migration 026: arrow_scraper/migrations/026_add_peep_sight_category.py  
+# Description: Add Peep Sight equipment category with specialized fields
+# Dependencies: 025
+# Target: Unified arrow_database.db
+
+# Migration 027: arrow_scraper/migrations/027_add_essential_missing_columns.py
+# Description: Add Essential Missing Columns for Equipment System
+# Dependencies: 026  
 # Target: Unified arrow_database.db
 ```
 
