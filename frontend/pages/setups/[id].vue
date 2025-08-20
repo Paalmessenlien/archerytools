@@ -52,63 +52,79 @@
         
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-        <div class="border-b border-gray-200 dark:border-gray-700">
-          <nav class="tab-navigation flex overflow-x-auto sm:space-x-8 sm:px-6" aria-label="Tabs">
-            <!-- Mobile: Equal width tabs, Desktop: Auto width -->
-            <div class="flex w-full sm:contents">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                @click="handleTabClick(tab.id)"
-                @touchstart="handleTouchStart"
-                @touchend="handleTouchEnd"
-                :class="[
-                  'py-4 px-4 sm:px-1 min-h-[48px] border-b-2 font-medium text-sm transition-all duration-200 touch-manipulation',
-                  'flex items-center justify-center flex-1 sm:flex-initial',
-                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                ]"
-              >
-                <!-- Mobile: Show icon + badge, Desktop: Show all -->
-                <span class="flex items-center">
-                  <i :class="tab.icon" class="mr-1 sm:mr-2"></i>
-                  <!-- Short names on mobile, full names on desktop -->
-                  <span class="hidden sm:inline">{{ tab.name }}</span>
-                  <span class="sm:hidden">{{ tab.shortName || tab.name }}</span>
-                  <span v-if="tab.badge" class="ml-1 sm:ml-2 px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full">
-                    {{ tab.badge }}
-                  </span>
-                </span>
-              </button>
+      <!-- Mobile-First Accordion Content Interface -->
+      <div class="space-y-4">
+        <!-- Overview Section - Always Expanded by Default -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="overview">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('overview')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 
+              'bg-blue-50 dark:bg-blue-900/20': expandedSections.overview,
+              'expanded': expandedSections.overview 
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                <i class="fas fa-tachometer-alt text-blue-600 dark:text-blue-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Overview</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Bow specifications and quick statistics</p>
+              </div>
             </div>
-          </nav>
-        </div>
+            <i 
+              :class="expandedSections.overview ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
 
-        <!-- Tab Content -->
-        <div class="p-4 sm:p-6">
-          <!-- Overview Tab -->
-          <div v-if="activeTab === 'overview'" class="space-y-4 sm:space-y-6">
+          <!-- Section Content -->
+          <div v-if="expandedSections.overview" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
             <BowSetupOverview 
               :setup="setup" 
               :statistics="statistics" 
-              @switch-tab="(tab) => activeTab = tab"
+              @switch-tab="handleAccordionSwitch"
             />
           </div>
+        </div>
 
-          <!-- Arrows Tab -->
-          <div v-if="activeTab === 'arrows'" class="space-y-4 sm:space-y-6">
-            <div class="mobile-arrows-header">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                My Arrows ({{ statistics.arrow_count || 0 }})
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Manage your arrow configurations and performance data
-              </p>
+        <!-- Arrows Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="arrows">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('arrows')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 
+              'bg-green-50 dark:bg-green-900/20': expandedSections.arrows,
+              'expanded': expandedSections.arrows 
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30 flex-shrink-0">
+                <i class="fas fa-crosshairs text-green-600 dark:text-green-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">My Arrows</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Manage your arrow configurations and performance data</p>
+              </div>
             </div>
+            <div class="flex items-center space-x-3">
+              <!-- Arrow Count Badge -->
+              <div v-if="statistics.arrow_count" class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
+                {{ statistics.arrow_count }} arrows
+              </div>
+              <!-- Expand/Collapse Icon -->
+              <i 
+                :class="expandedSections.arrows ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+                class="text-gray-400 transition-transform duration-200"
+              ></i>
+            </div>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.arrows" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
             <BowSetupArrowsList 
               ref="arrowsList"
               :bowSetup="setup" 
@@ -120,34 +136,79 @@
               @duplicate-arrow="handleDuplicateArrow"
             />
           </div>
+        </div>
 
-          <!-- Equipment Tab -->
-          <div v-if="activeTab === 'equipment'" class="space-y-4 sm:space-y-6">
-            <div class="mobile-equipment-header">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Equipment Setup
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Track your bow accessories and components
-              </p>
+        <!-- Equipment Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="equipment">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('equipment')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 
+              'bg-purple-50 dark:bg-purple-900/20': expandedSections.equipment,
+              'expanded': expandedSections.equipment 
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                <i class="fas fa-cogs text-purple-600 dark:text-purple-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Equipment Setup</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Track your bow accessories and components</p>
+              </div>
             </div>
+            <i 
+              :class="expandedSections.equipment ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.equipment" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
             <BowEquipmentManager 
               :bow-setup="setup"
               @equipment-updated="loadSetup"
               @show-notification="showNotification"
             />
           </div>
+        </div>
 
-          <!-- Change History Tab -->
-          <div v-if="activeTab === 'history'" class="space-y-4 sm:space-y-6">
-            <div class="mobile-history-header">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Setup History ({{ statistics.total_changes || 0 }})
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Track all changes made to your bow setup
-              </p>
+        <!-- Change History Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="history">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('history')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 
+              'bg-orange-50 dark:bg-orange-900/20': expandedSections.history,
+              'expanded': expandedSections.history 
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                <i class="fas fa-history text-orange-600 dark:text-orange-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Setup History</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Track all changes made to your bow setup</p>
+              </div>
             </div>
+            <div class="flex items-center space-x-3">
+              <!-- Change Count Badge -->
+              <div v-if="statistics.total_changes" class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
+                {{ statistics.total_changes }} changes
+              </div>
+              <!-- Expand/Collapse Icon -->
+              <i 
+                :class="expandedSections.history ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+                class="text-gray-400 transition-transform duration-200"
+              ></i>
+            </div>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.history" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
             <EnhancedChangeLogViewer
               ref="changeLogComponent"
               :bow-setup-id="setup.id"
@@ -155,17 +216,36 @@
               @error="(message) => showNotification(message, 'error')"
             />
           </div>
+        </div>
 
-          <!-- Settings Tab -->
-          <div v-if="activeTab === 'settings'" class="space-y-4 sm:space-y-6">
-            <div class="mobile-settings-header">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Setup Configuration
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Modify your bow specifications and settings
-              </p>
+        <!-- Settings Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="settings">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('settings')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 
+              'bg-indigo-50 dark:bg-indigo-900/20': expandedSections.settings,
+              'expanded': expandedSections.settings 
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex-shrink-0">
+                <i class="fas fa-sliders-h text-indigo-600 dark:text-indigo-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Setup Configuration</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Modify your bow specifications and settings</p>
+              </div>
             </div>
+            <i 
+              :class="expandedSections.settings ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.settings" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
             <BowSetupSettings 
               :setup="setup"
               @setup-updated="loadSetup"
@@ -244,8 +324,16 @@ const bowSetupPickerStore = useBowSetupPickerStore()
 const setup = ref(null)
 const loading = ref(true)
 const error = ref('')
-const activeTab = ref('overview')
 const statistics = ref({})
+
+// Accordion state - overview expanded by default for primary workflow
+const expandedSections = ref({
+  overview: true,       // Overview always starts expanded
+  arrows: false,       // Arrows collapsed by default
+  equipment: false,    // Equipment collapsed by default
+  history: false,      // History collapsed by default
+  settings: false      // Settings collapsed by default
+})
 const showEditModal = ref(false)
 const isSaving = ref(false)
 const editError = ref('')
@@ -264,44 +352,6 @@ const notification = ref({
 // Performance calculation state
 const calculatingPerformance = ref(false)
 
-// Tab configuration with mobile-friendly names
-const tabs = computed(() => [
-  {
-    id: 'overview',
-    name: 'Overview',
-    shortName: 'Overview',
-    icon: 'fas fa-tachometer-alt',
-    badge: null
-  },
-  {
-    id: 'arrows',
-    name: 'Arrows',
-    shortName: 'Arrows',
-    icon: 'fas fa-bullseye',
-    badge: statistics.value.arrow_count || null
-  },
-  {
-    id: 'equipment',
-    name: 'Equipment',
-    shortName: 'Equipment',
-    icon: 'fas fa-cogs',
-    badge: statistics.value.equipment_count || null
-  },
-  {
-    id: 'history',
-    name: 'Change History',
-    shortName: 'History',
-    icon: 'fas fa-history',
-    badge: statistics.value.total_changes || null
-  },
-  {
-    id: 'settings',
-    name: 'Edit Setup',
-    shortName: 'Edit',
-    icon: 'fas fa-edit',
-    badge: null
-  }
-])
 
 // Methods
 const loadSetup = async () => {
@@ -377,27 +427,25 @@ const handleSaveSetup = async (setupData) => {
   }
 }
 
-// Enhanced tab interaction methods
-const handleTabClick = (tabId) => {
-  console.log('Tab clicked:', tabId)
-  activeTab.value = tabId
+// Accordion section toggle method
+const toggleSection = (sectionId) => {
+  console.log('Accordion section toggled:', sectionId)
+  expandedSections.value[sectionId] = !expandedSections.value[sectionId]
 }
 
-const handleTouchStart = (event) => {
-  // Add visual feedback on touch start
-  event.target.style.opacity = '0.8'
-}
-
-const handleTouchEnd = (event) => {
-  // Remove visual feedback on touch end
-  event.target.style.opacity = '1'
+// Handle accordion switch from overview section
+const handleAccordionSwitch = (sectionId) => {
+  console.log('Switching to accordion section:', sectionId)
+  // Expand the target section
+  expandedSections.value[sectionId] = true
   
-  // Ensure click event fires
+  // Scroll to the section after a brief delay
   setTimeout(() => {
-    if (event.target.closest('button')) {
-      event.target.closest('button').click()
+    const element = document.querySelector(`[data-section="${sectionId}"]`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-  }, 10)
+  }, 100)
 }
 
 const showNotification = (message, type = 'success') => {
@@ -516,71 +564,142 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Enhanced tab navigation styling */
-.tab-navigation {
-  /* Hide scrollbar on mobile while maintaining scroll functionality */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Mobile-First Accordion Interface Styling */
+
+/* Accordion section headers - Touch-friendly targets */
+.accordion-section button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
 }
 
-.tab-navigation::-webkit-scrollbar {
-  display: none;
+/* Enhanced accordion section focus states for accessibility */
+.accordion-section button:focus-visible {
+  outline: 2px solid rgb(59 130 246);
+  outline-offset: -2px;
+  border-radius: 8px;
 }
 
-/* Enhanced touch interaction for mobile */
+/* Accordion section hover effects */
+.accordion-section button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .accordion-section button:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth accordion content transitions */
+.accordion-content {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* Mobile-optimized spacing and layout */
 @media (max-width: 640px) {
-  .tab-navigation button {
-    /* Ensure minimum touch target size */
-    min-width: 60px;
+  /* Ensure minimum touch target size for accordion headers */
+  .accordion-section button {
+    min-height: 64px;
+    padding: 16px 20px;
   }
   
   /* Add ripple effect simulation on touch */
-  .tab-navigation button:active {
+  .accordion-section button:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
   }
-}
-
-/* Smooth transitions for tab switching */
-.tab-navigation button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Enhanced focus states for accessibility */
-.tab-navigation button:focus-visible {
-  outline: 2px solid rgb(59 130 246);
-  outline-offset: 2px;
-}
-
-/* Mobile content optimization */
-@media (max-width: 640px) {
-  /* Mobile header sections */
-  .mobile-arrows-header,
-  .mobile-equipment-header,
-  .mobile-history-header,
-  .mobile-settings-header {
-    background: rgb(249 250 251);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-  }
   
-  .dark .mobile-arrows-header,
-  .dark .mobile-equipment-header,
-  .dark .mobile-history-header,
-  .dark .mobile-settings-header {
-    background: rgb(31 41 55);
-    border: 1px solid rgb(55 65 81);
-  }
-  
-  /* Reduce excessive spacing on mobile */
+  /* Mobile-optimized section spacing */
   .space-y-4 > * + * {
     margin-top: 1rem;
   }
   
-  /* Mobile-optimized card spacing */
-  .space-y-4 {
-    gap: 1rem;
+  /* Enhanced mobile content padding */
+  .accordion-content {
+    padding: 16px 20px 24px;
   }
+}
+
+/* Desktop enhancements */
+@media (min-width: 768px) {
+  .accordion-content {
+    padding: 24px 32px;
+  }
+  
+  /* Enhanced desktop hover effects */
+  .accordion-section button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  }
+  
+  .dark .accordion-section button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Badge styling for counts */
+.accordion-badge {
+  transition: all 0.2s ease;
+}
+
+/* Section-specific color themes */
+.accordion-section[data-section="overview"] button.expanded {
+  background-color: rgb(239 246 255);
+  border-color: rgb(191 219 254);
+}
+
+.dark .accordion-section[data-section="overview"] button.expanded {
+  background-color: rgb(30 58 138 / 0.2);
+  border-color: rgb(59 130 246 / 0.3);
+}
+
+.accordion-section[data-section="arrows"] button.expanded {
+  background-color: rgb(240 253 244);
+  border-color: rgb(187 247 208);
+}
+
+.dark .accordion-section[data-section="arrows"] button.expanded {
+  background-color: rgb(20 83 45 / 0.2);
+  border-color: rgb(34 197 94 / 0.3);
+}
+
+.accordion-section[data-section="equipment"] button.expanded {
+  background-color: rgb(250 245 255);
+  border-color: rgb(221 214 254);
+}
+
+.dark .accordion-section[data-section="equipment"] button.expanded {
+  background-color: rgb(88 28 135 / 0.2);
+  border-color: rgb(168 85 247 / 0.3);
+}
+
+.accordion-section[data-section="history"] button.expanded {
+  background-color: rgb(255 247 237);
+  border-color: rgb(254 215 170);
+}
+
+.dark .accordion-section[data-section="history"] button.expanded {
+  background-color: rgb(154 52 18 / 0.2);
+  border-color: rgb(249 115 22 / 0.3);
+}
+
+.accordion-section[data-section="settings"] button.expanded {
+  background-color: rgb(238 242 255);
+  border-color: rgb(199 210 254);
+}
+
+.dark .accordion-section[data-section="settings"] button.expanded {
+  background-color: rgb(67 56 202 / 0.2);
+  border-color: rgb(129 140 248 / 0.3);
 }
 </style>
