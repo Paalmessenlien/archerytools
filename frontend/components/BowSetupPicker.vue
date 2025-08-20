@@ -105,15 +105,26 @@
                 </div>
               </div>
               
-              <!-- Clear Selection Button -->
-              <button
-                v-if="hasSelectedBow"
-                @click="clearSelection"
-                class="p-1.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-800 dark:hover:bg-red-900 dark:text-red-400 dark:hover:text-red-200 transition-colors"
-                title="Clear bow selection"
-              >
-                <i class="fas fa-times text-sm"></i>
-              </button>
+              <!-- Quick Actions for Selected Bow -->
+              <div v-if="hasSelectedBow" class="flex items-center space-x-2">
+                <!-- Quick Link to Bow Setup -->
+                <NuxtLink
+                  :to="`/setups/${selectedBowSetup.id}`"
+                  class="p-1.5 rounded-full hover:bg-blue-100 text-blue-600 hover:text-blue-800 dark:hover:bg-blue-900 dark:text-blue-400 dark:hover:text-blue-200 transition-colors"
+                  title="Go to bow setup details"
+                >
+                  <i class="fas fa-external-link-alt text-sm"></i>
+                </NuxtLink>
+                
+                <!-- Clear Selection Button -->
+                <button
+                  @click="clearSelection"
+                  class="p-1.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-800 dark:hover:bg-red-900 dark:text-red-400 dark:hover:text-red-200 transition-colors"
+                  title="Clear bow selection"
+                >
+                  <i class="fas fa-times text-sm"></i>
+                </button>
+              </div>
             </div>
             
             <!-- Quick Actions -->
