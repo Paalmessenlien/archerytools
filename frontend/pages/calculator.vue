@@ -806,6 +806,7 @@ import CustomButton from '~/components/CustomButton.vue'
 
 // API
 const api = useApi()
+const router = useRouter()
 const { user, fetchBowSetups } = useAuth()
 
 const bowConfigStore = useBowConfigStore()
@@ -1072,8 +1073,27 @@ const handleArrowAddedToSetup = (arrowData) => {
   // Show success message
   showNotification(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
   
-  // Stay on calculator page - all data is preserved via Pinia store
-  // User can continue browsing and adding more arrows
+  // Check if we have arrowData from the API response and route to arrow setup details page
+  if (arrowData.arrowData && arrowData.arrowData.id) {
+    // Route directly to the arrow setup details page
+    const arrowSetupId = arrowData.arrowData.id
+    console.log('Routing to arrow setup details page:', `/setup-arrows/${arrowSetupId}`)
+    
+    // Use replace instead of push to replace the calculator in history
+    // This provides a smoother back navigation experience
+    router.replace(`/setup-arrows/${arrowSetupId}`)
+  } else {
+    // Fallback: Check for returnUrl query parameter for backward compatibility
+    const route = useRoute()
+    if (route.query.returnUrl) {
+      console.log('Routing to return URL:', route.query.returnUrl)
+      router.push(route.query.returnUrl)
+    } else {
+      // Stay on calculator page - all data is preserved via Pinia store
+      // User can continue browsing and adding more arrows
+      console.log('Staying on calculator page - no routing specified')
+    }
+  }
 }
 
 // Handle errors from arrow recommendations
