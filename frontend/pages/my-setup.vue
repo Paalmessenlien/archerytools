@@ -222,26 +222,25 @@
                 <div class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                     <!-- Card Header -->
                     <div class="mb-4">
-                      <!-- Setup Name and Type with Navigation Button -->
-                      <div class="mb-3 flex items-start justify-between">
-                        <div class="flex-1 min-w-0">
-                          <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                            {{ setup.name }}
-                          </h4>
+                      <!-- Setup Name and Type -->
+                      <div class="mb-3">
+                        <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                          {{ setup.name }}
+                        </h4>
+                        <div class="flex items-center justify-between">
                           <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
                             <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
                             {{ formatBowType(setup.bow_type) }}
                           </span>
+                          <CustomButton
+                            @click="navigateToBowDetail(setup.id)"
+                            variant="filled"
+                            size="small"
+                            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                          >
+                            Setup
+                          </CustomButton>
                         </div>
-                        <CustomButton
-                          @click="navigateToBowDetail(setup.id)"
-                          variant="filled"
-                          size="small"
-                          class="ml-3 bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 flex-shrink-0"
-                        >
-                          <i class="fas fa-arrow-right text-xs mr-1"></i>
-                          Open
-                        </CustomButton>
                       </div>
                       
                     </div>
