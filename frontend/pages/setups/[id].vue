@@ -71,7 +71,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Overview</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Bow specifications and quick statistics</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Bow specifications and quick statistics</p>
               </div>
             </div>
             <i 
@@ -107,7 +107,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">My Arrows</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage your arrow configurations and performance data</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Manage your arrow configurations and performance data</p>
               </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -155,7 +155,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Equipment Setup</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Track your bow accessories and components</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Track your bow accessories and components</p>
               </div>
             </div>
             <i 
@@ -191,7 +191,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Setup History</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Track all changes made to your bow setup</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Track all changes made to your bow setup</p>
               </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -235,7 +235,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Setup Configuration</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Modify your bow specifications and settings</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Modify your bow specifications and settings</p>
               </div>
             </div>
             <i 

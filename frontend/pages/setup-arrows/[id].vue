@@ -129,7 +129,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Arrow Configuration</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">View and edit your arrow specifications</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">View and edit your arrow specifications</p>
               </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -187,7 +187,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Performance Analysis</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Detailed arrow performance metrics and chronograph data</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Detailed arrow performance metrics and chronograph data</p>
               </div>
             </div>
             <i 
@@ -232,7 +232,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Arrow Information</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manufacturer specifications and database information</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Manufacturer specifications and database information</p>
               </div>
             </div>
             <i 
@@ -277,7 +277,7 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Actions</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage your arrow setup with convenient actions</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Manage your arrow setup with convenient actions</p>
               </div>
             </div>
             <i 
