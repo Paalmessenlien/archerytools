@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="container mx-auto mobile-container md:px-4 py-4 md:py-8 pb-24 md:pb-8"
+    class="container mx-auto mobile-container-minimal md:px-4 py-4 md:py-8 pb-24 md:pb-8"
     @touchstart="handlePullStart"
     @touchmove="handlePullMove"
     @touchend="handlePullEnd"

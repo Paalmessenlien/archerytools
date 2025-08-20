@@ -1619,8 +1619,14 @@ md-filled-button[aria-label]::after {
 /* PHASE 2 - Mobile Spacing System - Optimized for Density */
 @layer components {
   .mobile-container {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Ultra minimal mobile container for maximum width usage */
+  .mobile-container-minimal {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
   }
 
   .mobile-section-spacing {
@@ -1643,8 +1649,13 @@ md-filled-button[aria-label]::after {
 @layer components {
   @media (min-width: 375px) {
     .mobile-container {
-      padding-left: 0.875rem;
-      padding-right: 0.875rem;
+      padding-left: 0.625rem;
+      padding-right: 0.625rem;
+    }
+
+    .mobile-container-minimal {
+      padding-left: 0.375rem;
+      padding-right: 0.375rem;
     }
     
     .mobile-section-spacing {
@@ -1654,8 +1665,13 @@ md-filled-button[aria-label]::after {
 
   @media (min-width: 414px) {
     .mobile-container {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .mobile-container-minimal {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
     }
     
     .mobile-section-spacing {

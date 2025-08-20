@@ -227,7 +227,7 @@
     <BowSetupPicker v-if="user" class="sticky top-16 bow-setup-picker sticky-element-fix" />
 
     <!-- Main Content -->
-    <main class="px-2 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
+    <main class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
       <slot />
     </main>
 
