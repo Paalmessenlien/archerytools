@@ -219,29 +219,31 @@
             >
               <!-- Custom Card Content for Bow Setups -->
               <template #card="{ item: setup, index, isExpanded, toggleExpansion }">
-                <div 
-                  @click="navigateToBowDetail(setup.id)"
-                  class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-blue-300 dark:hover:border-blue-600">
+                <div class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                     <!-- Card Header -->
                     <div class="mb-4">
-                      <!-- Setup Name and Type - Navigation Only -->
-                      <div class="mb-3">
-                        <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                          {{ setup.name }}
-                        </h4>
-                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
-                          <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
-                          {{ formatBowType(setup.bow_type) }}
-                        </span>
+                      <!-- Setup Name and Type with Navigation Button -->
+                      <div class="mb-3 flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                          <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                            {{ setup.name }}
+                          </h4>
+                          <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
+                            <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
+                            {{ formatBowType(setup.bow_type) }}
+                          </span>
+                        </div>
+                        <CustomButton
+                          @click="navigateToBowDetail(setup.id)"
+                          variant="filled"
+                          size="small"
+                          class="ml-3 bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 flex-shrink-0"
+                        >
+                          <i class="fas fa-arrow-right text-xs mr-1"></i>
+                          Open
+                        </CustomButton>
                       </div>
                       
-                      <!-- Quick Access Indicator -->
-                      <div class="pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                        <span class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                          <i class="fas fa-mouse-pointer text-xs"></i>
-                          Click to open setup
-                        </span>
-                      </div>
                     </div>
                   
                   <!-- Main Bow Information - Improved Layout -->
