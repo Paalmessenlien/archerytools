@@ -55,24 +55,36 @@
       <!-- Tab Navigation -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
         <div class="border-b border-gray-200 dark:border-gray-700">
-          <nav class="flex space-x-8 px-6" aria-label="Tabs">
-            <button
-              v-for="tab in tabs"
-              :key="tab.id"
-              @click="activeTab = tab.id"
-              :class="[
-                'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              ]"
-            >
-              <i :class="tab.icon" class="mr-2"></i>
-              {{ tab.name }}
-              <span v-if="tab.badge" class="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full">
-                {{ tab.badge }}
-              </span>
-            </button>
+          <nav class="tab-navigation flex overflow-x-auto sm:space-x-8 sm:px-6" aria-label="Tabs">
+            <!-- Mobile: Equal width tabs, Desktop: Auto width -->
+            <div class="flex w-full sm:contents">
+              <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                @click="handleTabClick(tab.id)"
+                @touchstart="handleTouchStart"
+                @touchend="handleTouchEnd"
+                :class="[
+                  'py-4 px-4 sm:px-1 min-h-[48px] border-b-2 font-medium text-sm transition-all duration-200 touch-manipulation',
+                  'flex items-center justify-center flex-1 sm:flex-initial',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                ]"
+              >
+                <!-- Mobile: Show icon + badge, Desktop: Show all -->
+                <span class="flex items-center">
+                  <i :class="tab.icon" class="mr-1 sm:mr-2"></i>
+                  <!-- Short names on mobile, full names on desktop -->
+                  <span class="hidden sm:inline">{{ tab.name }}</span>
+                  <span class="sm:hidden">{{ tab.shortName || tab.name }}</span>
+                  <span v-if="tab.badge" class="ml-1 sm:ml-2 px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full">
+                    {{ tab.badge }}
+                  </span>
+                </span>
+              </button>
+            </div>
           </nav>
         </div>
 
@@ -220,35 +232,40 @@ const notification = ref({
 // Performance calculation state
 const calculatingPerformance = ref(false)
 
-// Tab configuration
+// Tab configuration with mobile-friendly names
 const tabs = computed(() => [
   {
     id: 'overview',
     name: 'Overview',
+    shortName: 'Overview',
     icon: 'fas fa-tachometer-alt',
     badge: null
   },
   {
     id: 'arrows',
     name: 'Arrows',
+    shortName: 'Arrows',
     icon: 'fas fa-bullseye',
     badge: statistics.value.arrow_count || null
   },
   {
     id: 'equipment',
     name: 'Equipment',
+    shortName: 'Equipment',
     icon: 'fas fa-cogs',
     badge: statistics.value.equipment_count || null
   },
   {
     id: 'history',
     name: 'Change History',
+    shortName: 'History',
     icon: 'fas fa-history',
     badge: statistics.value.total_changes || null
   },
   {
     id: 'settings',
     name: 'Edit Setup',
+    shortName: 'Edit',
     icon: 'fas fa-edit',
     badge: null
   }
@@ -326,6 +343,29 @@ const handleSaveSetup = async (setupData) => {
   } finally {
     isSaving.value = false
   }
+}
+
+// Enhanced tab interaction methods
+const handleTabClick = (tabId) => {
+  console.log('Tab clicked:', tabId)
+  activeTab.value = tabId
+}
+
+const handleTouchStart = (event) => {
+  // Add visual feedback on touch start
+  event.target.style.opacity = '0.8'
+}
+
+const handleTouchEnd = (event) => {
+  // Remove visual feedback on touch end
+  event.target.style.opacity = '1'
+  
+  // Ensure click event fires
+  setTimeout(() => {
+    if (event.target.closest('button')) {
+      event.target.closest('button').click()
+    }
+  }, 10)
 }
 
 const showNotification = (message, type = 'success') => {
@@ -442,3 +482,41 @@ onMounted(() => {
   loadSetup()
 })
 </script>
+
+<style scoped>
+/* Enhanced tab navigation styling */
+.tab-navigation {
+  /* Hide scrollbar on mobile while maintaining scroll functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+/* Enhanced touch interaction for mobile */
+@media (max-width: 640px) {
+  .tab-navigation button {
+    /* Ensure minimum touch target size */
+    min-width: 60px;
+  }
+  
+  /* Add ripple effect simulation on touch */
+  .tab-navigation button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Smooth transitions for tab switching */
+.tab-navigation button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced focus states for accessibility */
+.tab-navigation button:focus-visible {
+  outline: 2px solid rgb(59 130 246);
+  outline-offset: 2px;
+}
+</style>
