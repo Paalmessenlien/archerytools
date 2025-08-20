@@ -16,7 +16,8 @@
       <!-- Arrows -->
       <li>
         <div class="flex items-center">
-          <i class="fas fa-chevron-right text-gray-400 mx-1 flex-shrink-0"></i>
+          <i class="fas fa-chevron-right text-gray-400 mx-1 flex-shrink-0 hidden md:inline-block"></i>
+          <span class="text-gray-400 mx-1 md:hidden">/</span>
           <NuxtLink
             :to="`/setups/${bowSetup.id}?tab=arrows`"
             class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
@@ -30,7 +31,8 @@
       <!-- Current Arrow -->
       <li aria-current="page">
         <div class="flex items-center">
-          <i class="fas fa-chevron-right text-gray-400 mx-1 flex-shrink-0"></i>
+          <i class="fas fa-chevron-right text-gray-400 mx-1 flex-shrink-0 hidden md:inline-block"></i>
+          <span class="text-gray-400 mx-1 md:hidden">/</span>
           <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400 truncate max-w-32 sm:max-w-48 md:max-w-none" :title="arrowName">
             {{ arrowName }}
           </span>
