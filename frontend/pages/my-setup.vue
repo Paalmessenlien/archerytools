@@ -201,66 +201,28 @@
                 Add New Setup
               </CustomButton>
             </div>
-            <div v-if="bowSetups.length > 0" class="grid grid-cols-1 md-mobile:grid-cols-2 lg-mobile:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 md-mobile:gap-4 mb-6 w-full">
-              <div 
-                v-for="setup in bowSetups" 
-                :key="setup.id" 
-                class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer touch-target overflow-hidden w-full max-w-md md-mobile:max-w-none mx-auto"
-                :class="{ 'md-mobile:col-span-2 lg-mobile:col-span-2 xl:col-span-2': expandedCard === setup.id }"
-                @touchstart="handleTouchStart($event, setup.id)"
-                @touchmove="handleTouchMove($event, setup.id)"
-                @touchend="handleTouchEnd($event, setup.id)"
-                :style="{ transform: swipeState[setup.id]?.transform || 'translateX(0)' }"
-              >
-                <!-- Phase 3: Swipe Action Buttons (Right Side) -->
-                <div class="absolute inset-y-0 right-0 flex items-center justify-end bg-gradient-to-l from-red-500 to-red-600 w-32 transform transition-transform duration-200"
-                     :class="swipeState[setup.id]?.showActions ? 'translate-x-0' : 'translate-x-full'">
-                  <div class="flex items-center gap-2 pr-4">
-                    <button
-                      @click.stop="navigateToCalculatorWithSetup(setup.id)"
-                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                      title="Find Arrows"
-                    >
-                      <i class="fas fa-search text-sm"></i>
-                    </button>
-                    <button
-                      @click.stop="confirmDeleteSetup(setup.id)"
-                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                      title="Delete Setup"
-                    >
-                      <i class="fas fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Phase 3: Swipe Action Buttons (Left Side) -->
-                <div class="absolute inset-y-0 left-0 flex items-center justify-start bg-gradient-to-r from-green-500 to-green-600 w-32 transform transition-transform duration-200"
-                     :class="swipeState[setup.id]?.showActionsLeft ? 'translate-x-0' : '-translate-x-full'">
-                  <div class="flex items-center gap-2 pl-4">
-                    <button
-                      @click.stop="navigateToBowDetail(setup.id)"
-                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                      title="Edit Setup"
-                    >
-                      <i class="fas fa-edit text-sm"></i>
-                    </button>
-                    <button
-                      @click.stop="toggleCardExpansion(setup.id)"
-                      class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                      :title="expandedCard === setup.id ? 'Collapse' : 'Expand'"
-                    >
-                      <i class="fas transition-transform duration-200" 
-                         :class="expandedCard === setup.id ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Bow Card Content -->
+            <!-- Mobile Card Stack Implementation -->
+            <MobileCardStack
+              v-if="bowSetups.length > 0"
+              :items="bowSetups"
+              :loading="false"
+              layout="responsive"
+              :expandable="true"
+              :show-actions="true"
+              spacing="normal"
+              empty-title="No Bow Setups"
+              empty-message="Create your first bow setup to get started with arrow recommendations."
+              @click="handleBowSetupClick"
+              @edit="handleBowSetupEdit"
+              @delete="handleBowSetupDelete"
+              @expand="handleBowSetupExpand"
+            >
+              <!-- Custom Card Content for Bow Setups -->
+              <template #card="{ item: setup, index, isExpanded, toggleExpansion }">
                 <div class="p-4">
-                  <div class="w-full max-w-none mx-0">
                     <!-- Card Header -->
                     <div class="flex items-start justify-between mb-4 w-full">
-                    <div class="flex-1 min-w-0">
+                      <div class="flex-1 min-w-0">
                       <!-- Phase 3: Inline Editing for Setup Name -->
                       <div v-if="editingSetupName === setup.id" class="space-y-2">
                         <input 
@@ -284,18 +246,18 @@
                         </h4>
                         <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ formatBowType(setup.bow_type) }}</span>
                       </div>
-                    </div>
-                    <div class="flex items-center gap-2 ml-3 flex-shrink-0" @click.stop>
+                      </div>
+                      <div class="flex items-center gap-2 ml-3 flex-shrink-0" @click.stop>
                       <!-- Phase 3: Expand/Collapse Toggle -->
                       <CustomButton
-                        @click="toggleCardExpansion(setup.id)"
+                        @click="toggleExpansion()"
                         variant="text"
                         size="small"
                         class="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900 touch-target p-2"
-                        :title="expandedCard === setup.id ? 'Collapse View' : 'Expand View'"
+                        :title="isExpanded ? 'Collapse View' : 'Expand View'"
                       >
                         <i class="fas transition-transform duration-200" 
-                           :class="expandedCard === setup.id ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
+                           :class="isExpanded ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
                       </CustomButton>
                       <CustomButton
                         @click="navigateToCalculatorWithSetup(setup.id)"
@@ -315,8 +277,9 @@
                       >
                         <i class="fas fa-eye text-sm"></i>
                       </CustomButton>
+                      </div>
                     </div>
-                  </div>
+                  
                   <!-- Main Bow Info - Compact Design -->
                   <div class="space-y-3 w-full">
                     <!-- Key Specs Row -->
@@ -369,7 +332,7 @@
                     
                     <!-- Phase 3: Expanded Information Panel -->
                     <div 
-                      v-if="expandedCard === setup.id" 
+                      v-if="isExpanded" 
                       class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fadeIn"
                     >
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,9 +421,44 @@
                     </div>
                   </div>
                 </div>
-                </div>
-              </div>
-            </div>
+              </template>
+
+                <!-- Custom Left Actions for Bow Setups -->
+                <template #actions-left="{ item: setup, closeActions }">
+                  <button 
+                    @click.stop="navigateToBowDetail(setup.id); closeActions()"
+                    class="action-button action-edit"
+                    title="Edit Setup"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button 
+                    @click.stop="() => { selectedSetupForActions = setup; showBowActionSheet = true; closeActions(); }"
+                    class="action-button action-menu"
+                    title="More Actions"
+                  >
+                    <i class="fas fa-ellipsis-h"></i>
+                  </button>
+                </template>
+
+                <!-- Custom Right Actions for Bow Setups -->
+                <template #actions-right="{ item: setup, closeActions }">
+                  <button 
+                    @click.stop="navigateToCalculatorWithSetup(setup.id); closeActions()"
+                    class="action-button action-search"
+                    title="Find Arrows"
+                  >
+                    <i class="fas fa-search"></i>
+                  </button>
+                  <button 
+                    @click.stop="confirmDeleteSetup(setup.id); closeActions()"
+                    class="action-button action-delete"
+                    title="Delete Setup"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </template>
+              </MobileCardStack>
             
             <!-- Empty State -->
             <div v-else class="text-center py-12">
@@ -527,6 +525,18 @@
         />
         <!-- End of Edit Arrow Modal -->
 
+        <!-- Mobile Action Sheet for Bow Setup Actions -->
+        <MobileActionSheet
+          v-model="showBowActionSheet"
+          title="Bow Setup Actions"
+          :subtitle="selectedSetupForActions?.name"
+          :actions="bowActionSheetActions"
+          :show-cancel="true"
+          cancel-text="Cancel"
+          @action="handleBowActionSheetAction"
+          @cancel="showBowActionSheet = false"
+        />
+
         <!-- Arrow Removal Confirmation Modal -->
         <div v-if="arrowRemovalConfirm.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal-overlay p-4 z-50">
           <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-sm shadow-lg text-center">
@@ -587,6 +597,8 @@ import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
 import EditArcherProfileModal from '~/components/EditArcherProfileModal.vue';
 import EditArrowModal from '~/components/EditArrowModal.vue';
 import ImageUpload from '~/components/ImageUpload.vue';
+import MobileCardStack from '~/components/MobileCardStack.vue';
+import MobileActionSheet from '~/components/MobileActionSheet.vue';
 
 const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup, updateArrowInSetup } = useAuth();
 const bowSetupPickerStore = useBowSetupPickerStore();
@@ -623,6 +635,48 @@ const pullToRefresh = ref({
   isTriggered: false,
   isPulling: false
 });
+
+// Phase 3: Mobile components state
+const showBowActionSheet = ref(false);
+const selectedSetupForActions = ref(null);
+const bowActionSheetActions = ref([
+  {
+    id: 'calculator',
+    label: 'Find Arrows',
+    description: 'Calculate optimal arrows for this setup',
+    icon: 'fas fa-calculator',
+    iconColor: 'blue-500'
+  },
+  {
+    id: 'edit',
+    label: 'Edit Setup',
+    description: 'Modify bow configuration',
+    icon: 'fas fa-edit',
+    iconColor: 'green-500'
+  },
+  {
+    id: 'duplicate',
+    label: 'Duplicate Setup',
+    description: 'Create a copy of this setup',
+    icon: 'fas fa-copy',
+    iconColor: 'purple-500'
+  },
+  {
+    id: 'performance',
+    label: 'Performance Analysis',
+    description: 'View arrow performance metrics',
+    icon: 'fas fa-chart-line',
+    iconColor: 'orange-500'
+  },
+  {
+    id: 'delete',
+    label: 'Delete Setup',
+    description: 'Permanently remove this setup',
+    icon: 'fas fa-trash',
+    iconColor: 'red-500',
+    destructive: true
+  }
+]);
 const isSavingSetup = ref(false);
 const addSetupError = ref(null);
 const isConfirmingDelete = ref(false);
@@ -634,6 +688,10 @@ const editingSetupId = ref(null);
 // Edit arrow modal state
 const isEditArrowModalOpen = ref(false);
 const editingArrowSetup = ref(null);
+
+// Mobile Action Sheet state for MobileActionSheet component
+// const showBowActionSheet = ref(false); // Already declared above
+// const selectedSetupForActions = ref(null); // Already declared above
 
 // Notification state
 const notification = ref({
@@ -1256,6 +1314,52 @@ const performPullToRefresh = async () => {
   }
 };
 
+// Mobile Card Stack event handlers
+const handleBowSetupClick = (setup, index) => {
+  // Main click action - navigate to calculator
+  navigateToCalculatorWithSetup(setup.id);
+};
+
+const handleBowSetupEdit = (setup, index) => {
+  navigateToBowDetail(setup.id);
+};
+
+const handleBowSetupDelete = (setup, index) => {
+  confirmDeleteSetup(setup.id);
+};
+
+const handleBowSetupExpand = (key, isExpanded) => {
+  // The expansion is handled by the MobileCardStack component internally
+  console.log(`Bow setup ${key} ${isExpanded ? 'expanded' : 'collapsed'}`);
+};
+
+// Mobile Action Sheet event handlers
+const handleBowActionSheetAction = ({ action, index }) => {
+  const setup = selectedSetupForActions.value;
+  if (!setup) return;
+
+  switch (action.id) {
+    case 'edit':
+      navigateToBowDetail(setup.id);
+      break;
+    case 'duplicate':
+      // TODO: Implement setup duplication
+      showNotification('Setup duplication coming soon!', 'info');
+      break;
+    case 'performance':
+      // TODO: Navigate to performance analysis
+      showNotification('Performance analysis coming soon!', 'info');
+      break;
+    case 'delete':
+      confirmDeleteSetup(setup.id);
+      break;
+  }
+  
+  // Close the action sheet
+  showBowActionSheet.value = false;
+  selectedSetupForActions.value = null;
+};
+
 // Profile picture upload handlers
 const handleProfilePictureUpload = async (imageUrl) => {
   try {
@@ -1358,6 +1462,22 @@ definePageMeta({
 </script>
 
 <style scoped>
+/* Custom action button styles for MobileCardStack */
+.action-button.action-edit {
+  @apply bg-green-500/20;
+}
+
+.action-button.action-menu {
+  @apply bg-blue-500/20;
+}
+
+.action-button.action-search {
+  @apply bg-blue-500/20;
+}
+
+.action-button.action-delete {
+  @apply bg-red-500/20;
+}
 .form-input,
 .form-select,
 .form-textarea {
