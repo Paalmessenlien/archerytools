@@ -8,7 +8,7 @@
           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white truncate max-w-32 sm:max-w-48 md:max-w-none"
           :title="bowSetup.name"
         >
-          <i class="fas fa-crosshairs mr-1 flex-shrink-0"></i>
+          <i class="fas fa-crosshairs mr-1 flex-shrink-0 hidden md:inline-block"></i>
           <span class="truncate">{{ bowSetup.name }}</span>
         </NuxtLink>
       </li>
@@ -21,7 +21,7 @@
             :to="`/setups/${bowSetup.id}?tab=arrows`"
             class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
           >
-            <i class="fas fa-bullseye mr-1"></i>
+            <i class="fas fa-bullseye mr-1 hidden md:inline-block"></i>
             Arrows
           </NuxtLink>
         </div>
