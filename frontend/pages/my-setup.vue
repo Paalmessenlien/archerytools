@@ -233,12 +233,12 @@
                             {{ formatBowType(setup.bow_type) }}
                           </span>
                           <CustomButton
-                            @click="navigateToBowDetail(setup.id)"
+                            @click.stop="navigateToCalculatorWithSetup(setup.id)"
                             variant="filled"
                             size="small"
-                            class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                            class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
                           >
-                            Setup
+                            Calculate
                           </CustomButton>
                         </div>
                       </div>
@@ -1288,8 +1288,8 @@ const performPullToRefresh = async () => {
 
 // Mobile Card Stack event handlers
 const handleBowSetupClick = (setup, index) => {
-  // Main click action - navigate to calculator
-  navigateToCalculatorWithSetup(setup.id);
+  // Main click action - navigate to bow setup details
+  navigateToBowDetail(setup.id);
 };
 
 const handleBowSetupEdit = (setup, index) => {
