@@ -89,7 +89,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="showDropdown" class="fixed inset-0 z-40 modal-overlay" @click="closeDropdown"></div>
+      <div v-if="showDropdown" class="fixed inset-0 modal-overlay" @click="closeDropdown"></div>
     </Transition>
   </div>
 </template>
