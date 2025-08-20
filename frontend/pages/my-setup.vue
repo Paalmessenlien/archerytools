@@ -219,113 +219,84 @@
             >
               <!-- Custom Card Content for Bow Setups -->
               <template #card="{ item: setup, index, isExpanded, toggleExpansion }">
-                <div class="p-4">
+                <div 
+                  @click="navigateToBowDetail(setup.id)"
+                  class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-blue-300 dark:hover:border-blue-600">
                     <!-- Card Header -->
-                    <div class="flex items-start justify-between mb-4 w-full">
-                      <div class="flex-1 min-w-0">
-                      <!-- Phase 3: Inline Editing for Setup Name -->
-                      <div v-if="editingSetupName === setup.id" class="space-y-2">
-                        <input 
-                          ref="setupNameInput"
-                          v-model="editedSetupName"
-                          @keyup.enter="saveSetupName(setup.id)"
-                          @keyup.escape="cancelEditSetupName"
-                          @blur="saveSetupName(setup.id)"
-                          class="w-full text-lg font-semibold bg-white dark:bg-gray-700 border border-blue-500 dark:border-blue-400 rounded px-2 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter setup name..."
-                        />
-                        <div class="flex gap-1 text-xs text-gray-500">
-                          <span><i class="fas fa-check text-green-600"></i> Enter to save</span>
-                          <span><i class="fas fa-times text-red-600"></i> Esc to cancel</span>
-                        </div>
-                      </div>
-                      <div v-else @click.stop="startEditSetupName(setup.id, setup.name)" class="cursor-pointer group">
-                        <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <div class="mb-4">
+                      <!-- Setup Name and Type - Navigation Only -->
+                      <div class="mb-3">
+                        <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                           {{ setup.name }}
-                          <i class="fas fa-edit text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2"></i>
                         </h4>
-                        <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ formatBowType(setup.bow_type) }}</span>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
+                          <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
+                          {{ formatBowType(setup.bow_type) }}
+                        </span>
                       </div>
-                      </div>
-                      <div class="flex items-center gap-2 ml-3 flex-shrink-0" @click.stop>
-                      <!-- Phase 3: Expand/Collapse Toggle -->
-                      <CustomButton
-                        @click="toggleExpansion()"
-                        variant="text"
-                        size="small"
-                        class="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900 touch-target p-2"
-                        :title="isExpanded ? 'Collapse View' : 'Expand View'"
-                      >
-                        <i class="fas transition-transform duration-200" 
-                           :class="isExpanded ? 'fa-compress text-sm' : 'fa-expand text-sm'"></i>
-                      </CustomButton>
-                      <CustomButton
-                        @click="navigateToCalculatorWithSetup(setup.id)"
-                        variant="text"
-                        size="small"
-                        class="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900 touch-target p-2"
-                        title="Find Arrows"
-                      >
-                        <i class="fas fa-search text-sm"></i>
-                      </CustomButton>
-                      <CustomButton
-                        @click="navigateToBowDetail(setup.id)"
-                        variant="text"
-                        size="small"
-                        class="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900 touch-target p-2"
-                        title="View Details"
-                      >
-                        <i class="fas fa-eye text-sm"></i>
-                      </CustomButton>
+                      
+                      <!-- Quick Access Indicator -->
+                      <div class="pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                          <i class="fas fa-mouse-pointer text-xs"></i>
+                          Click to open setup
+                        </span>
                       </div>
                     </div>
                   
-                  <!-- Main Bow Info - Compact Design -->
-                  <div class="space-y-3 w-full">
-                    <!-- Key Specs Row -->
-                    <div class="grid grid-cols-2 gap-4 text-sm w-full">
-                      <div class="min-w-0">
-                        <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Draw Weight</span>
-                        <div class="font-semibold text-gray-900 dark:text-gray-100 text-base mt-1 truncate">{{ setup.draw_weight }} lbs</div>
-                      </div>
-                      <div v-if="setup.draw_length" class="min-w-0">
-                        <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Draw Length</span>
-                        <div class="font-semibold text-gray-900 dark:text-gray-100 text-base mt-1 truncate">{{ setup.draw_length }}"</div>
+                  <!-- Main Bow Information - Improved Layout -->
+                  <div class="space-y-4">
+                    <!-- Key Specifications Grid -->
+                    <div class="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg">
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ setup.draw_weight }}</div>
+                          <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Draw Weight (lbs)</div>
+                        </div>
+                        <div v-if="setup.draw_length" class="text-center">
+                          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ setup.draw_length }}"</div>
+                          <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Draw Length</div>
+                        </div>
                       </div>
                     </div>
                     
-                    <!-- Bow Model Info -->
-                    <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="text-sm w-full">
-                      <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Bow Model</span>
-                      <div class="font-medium text-gray-900 dark:text-gray-100 mt-1 truncate">
-                        {{ setup.compound_brand }} {{ setup.compound_model }}
-                        <span v-if="setup.ibo_speed" class="ml-2 text-xs text-blue-600 dark:text-blue-400">({{ setup.ibo_speed }} fps)</span>
+                    <!-- Bow Model Information -->
+                    <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="font-semibold text-gray-900 dark:text-gray-100">{{ setup.compound_brand }} {{ setup.compound_model }}</div>
+                          <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Compound Bow</div>
+                        </div>
+                        <div v-if="setup.ibo_speed" class="text-right">
+                          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ setup.ibo_speed }}</div>
+                          <div class="text-xs text-gray-600 dark:text-gray-400">fps</div>
+                        </div>
                       </div>
                     </div>
-                    <div v-else-if="setup.riser_brand" class="text-sm w-full">
-                      <span class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Riser</span>
-                      <div class="font-medium text-gray-900 dark:text-gray-100 mt-1 truncate">{{ setup.riser_brand }} {{ setup.riser_model }}</div>
+                    <div v-else-if="setup.riser_brand" class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <div class="font-semibold text-gray-900 dark:text-gray-100">{{ setup.riser_brand }} {{ setup.riser_model }}</div>
+                      <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Recurve Bow</div>
                     </div>
                     
-                    <!-- Status Row -->
-                    <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700 w-full">
-                      <!-- Left side - Usage tags and status -->
-                      <div class="flex flex-wrap gap-1 flex-1 min-w-0">
+                    <!-- Status Summary -->
+                    <div class="flex items-center justify-between py-2">
+                      <!-- Usage Tags -->
+                      <div class="flex flex-wrap gap-1.5">
                         <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
-                              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                              class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
                           {{ formatBowUsage(usage) }}
                         </span>
                       </div>
                       
-                      <!-- Right side - Counts -->
-                      <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                        <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center">
-                          <i class="fas fa-location-arrow mr-1 text-green-600 dark:text-green-400"></i>
-                          {{ setup.arrows.length }}
+                      <!-- Equipment Count Badges -->
+                      <div class="flex items-center gap-3">
+                        <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                          <i class="fas fa-location-arrow text-xs text-green-600 dark:text-green-400"></i>
+                          <span class="text-xs font-medium text-green-800 dark:text-green-300">{{ setup.arrows.length }} arrow{{ setup.arrows.length === 1 ? '' : 's' }}</span>
                         </div>
-                        <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center">
-                          <i class="fas fa-cogs mr-1 text-purple-600 dark:text-purple-400"></i>
-                          {{ setup.equipment.length }}
+                        <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
+                          <i class="fas fa-cogs text-xs text-purple-600 dark:text-purple-400"></i>
+                          <span class="text-xs font-medium text-purple-800 dark:text-purple-300">{{ setup.equipment.length }} item{{ setup.equipment.length === 1 ? '' : 's' }}</span>
                         </div>
                       </div>
                     </div>
