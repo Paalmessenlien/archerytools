@@ -33,7 +33,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="setup" class="container mx-auto px-4 py-8 pb-40 md:pb-8">
+    <div v-else-if="setup" class="container mx-auto px-4 py-8 pb-24 md:pb-8">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>

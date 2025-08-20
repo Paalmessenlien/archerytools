@@ -70,14 +70,14 @@
       <div 
         v-for="arrowSetup in displayedArrows" 
         :key="arrowSetup.id"
-        class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
       >
         <div class="flex justify-between items-start">
           <div class="flex-1 min-w-0">
             <!-- Arrow Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-2">
               <div class="flex items-center space-x-2">
-                <h5 class="font-medium text-gray-900 dark:text-gray-100">
+                <h5 class="mobile-heading-4 md:text-base font-medium text-gray-900 dark:text-gray-100">
                   {{ arrowSetup.arrow?.manufacturer || 'Unknown Manufacturer' }}
                 </h5>
                 <!-- Orphaned Arrow Warning -->
@@ -87,7 +87,7 @@
                 </span>
               </div>
               <span class="hidden sm:inline text-gray-400">•</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">
+              <span class="mobile-body-small md:text-sm text-gray-700 dark:text-gray-300">
                 {{ arrowSetup.arrow?.model_name || `Arrow ID: ${arrowSetup.arrow_id}` }}
               </span>
             </div>

@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="container mx-auto mobile-container md:px-4 py-6 md:py-8 pb-40 md:pb-8"
+    class="container mx-auto mobile-container md:px-4 py-4 md:py-8 pb-24 md:pb-8"
     @touchstart="handlePullStart"
     @touchmove="handlePullMove"
     @touchend="handlePullEnd"
@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <h1 class="mobile-heading-1 md:text-3xl font-bold text-gray-900 dark:text-gray-100 mobile-element-spacing md:mb-4">My Setup</h1>
+    <h1 class="mobile-heading-1 md:text-3xl font-bold text-gray-900 dark:text-gray-100 mobile-compact-spacing md:mb-4">My Setup</h1>
     
     <div v-if="isLoadingUser" class="text-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
@@ -38,19 +38,19 @@
 
     <div v-else-if="user">
       <!-- Compact Profile Header -->
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm-mobile:p-4 mobile-section-spacing md:mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm-mobile:p-4 mobile-element-spacing md:mb-6">
         <!-- Profile Content -->
-        <div class="flex items-center space-x-3 sm-mobile:space-x-4 mb-3 sm-mobile:mb-4">
+        <div class="flex items-center space-x-3 sm-mobile:space-x-4 mb-2 sm-mobile:mb-3">
           <!-- Profile Picture -->
           <div class="flex-shrink-0">
-            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
               <img 
                 v-if="user.profile_picture_url" 
                 :src="user.profile_picture_url" 
                 :alt="user.name || 'Profile picture'" 
-                class="w-12 h-12 rounded-full object-cover"
+                class="w-10 h-10 rounded-full object-cover"
               />
-              <span v-else class="mobile-body-large md:text-lg">
+              <span v-else class="mobile-body-medium md:text-lg">
                 {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
               </span>
             </div>
@@ -72,7 +72,7 @@
         </div>
         
         <!-- Action Buttons - Full Width -->
-        <div class="flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row gap-2 pt-2.5 border-t border-gray-200 dark:border-gray-700">
           <CustomButton
             @click="openEditModal"
             variant="outlined"
@@ -105,11 +105,11 @@
       />
 
       <!-- Bow Setups Dashboard Section -->
-      <div class="mt-6">
-        <div class="mb-6">
+      <div class="mobile-element-spacing">
+        <div class="mobile-element-spacing">
           <div>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">My Bow Setups</h3>
-            <p class="text-gray-600 dark:text-gray-400">Manage your bow configurations and arrow selections</p>
+            <h3 class="mobile-heading-2 md:text-2xl font-bold text-gray-900 dark:text-gray-100">My Bow Setups</h3>
+            <p class="mobile-body-small md:text-base text-gray-600 dark:text-gray-400">Manage your bow configurations and arrow selections</p>
           </div>
         </div>
 

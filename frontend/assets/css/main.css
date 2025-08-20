@@ -1556,41 +1556,41 @@ md-filled-button[aria-label]::after {
 /* PHASE 2 - Mobile Typography Hierarchy */
 @layer components {
   .mobile-heading-1 {
-    font-size: 1.75rem;
-    line-height: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-  }
-
-  .mobile-heading-2 {
     font-size: 1.5rem;
     line-height: 1.75rem;
-    font-weight: 600;
-    margin-bottom: 0.875rem;
-  }
-
-  .mobile-heading-3 {
-    font-size: 1.25rem;
-    line-height: 1.5rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 0.75rem;
   }
 
-  .mobile-heading-4 {
-    font-size: 1.125rem;
-    line-height: 1.375rem;
-    font-weight: 500;
+  .mobile-heading-2 {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+    font-weight: 600;
     margin-bottom: 0.625rem;
   }
 
-  .mobile-body-large {
+  .mobile-heading-3 {
+    font-size: 1.125rem;
+    line-height: 1.375rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-heading-4 {
     font-size: 1rem;
-    line-height: 1.5rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+  }
+
+  .mobile-body-large {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .mobile-body-medium {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
   }
 
   .mobile-body-small {
@@ -1601,37 +1601,41 @@ md-filled-button[aria-label]::after {
 
 @layer components {
   @media (min-width: 375px) {
-    .mobile-heading-1 { font-size: 2rem; line-height: 2.25rem; }
-    .mobile-heading-2 { font-size: 1.625rem; line-height: 2rem; }
-    .mobile-heading-3 { font-size: 1.375rem; line-height: 1.75rem; }
-    .mobile-heading-4 { font-size: 1.25rem; line-height: 1.5rem; }
+    .mobile-heading-1 { font-size: 1.625rem; line-height: 1.875rem; }
+    .mobile-heading-2 { font-size: 1.375rem; line-height: 1.625rem; }
+    .mobile-heading-3 { font-size: 1.25rem; line-height: 1.5rem; }
+    .mobile-heading-4 { font-size: 1.125rem; line-height: 1.375rem; }
   }
 
   @media (min-width: 414px) {
-    .mobile-heading-1 { font-size: 2.25rem; line-height: 2.5rem; }
-    .mobile-heading-2 { font-size: 1.75rem; line-height: 2.25rem; }
-    .mobile-heading-3 { font-size: 1.5rem; line-height: 2rem; }
-    .mobile-heading-4 { font-size: 1.375rem; line-height: 1.75rem; }
-    .mobile-body-large { font-size: 1.125rem; line-height: 1.75rem; }
+    .mobile-heading-1 { font-size: 1.75rem; line-height: 2rem; }
+    .mobile-heading-2 { font-size: 1.5rem; line-height: 1.75rem; }
+    .mobile-heading-3 { font-size: 1.375rem; line-height: 1.625rem; }
+    .mobile-heading-4 { font-size: 1.25rem; line-height: 1.5rem; }
+    .mobile-body-large { font-size: 1rem; line-height: 1.5rem; }
   }
 }
 
-/* PHASE 2 - Mobile Spacing System */
+/* PHASE 2 - Mobile Spacing System - Optimized for Density */
 @layer components {
   .mobile-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .mobile-section-spacing {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 
   .mobile-element-spacing {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
 
   .mobile-tight-spacing {
+    margin-bottom: 0.375rem;
+  }
+
+  .mobile-compact-spacing {
     margin-bottom: 0.5rem;
   }
 }
@@ -1639,27 +1643,27 @@ md-filled-button[aria-label]::after {
 @layer components {
   @media (min-width: 375px) {
     .mobile-container {
-      padding-left: 1.25rem;
-      padding-right: 1.25rem;
+      padding-left: 0.875rem;
+      padding-right: 0.875rem;
     }
     
     .mobile-section-spacing {
-      margin-bottom: 2.5rem;
+      margin-bottom: 1.75rem;
     }
   }
 
   @media (min-width: 414px) {
     .mobile-container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
     
     .mobile-section-spacing {
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
     
     .mobile-element-spacing {
-      margin-bottom: 1.25rem;
+      margin-bottom: 0.875rem;
     }
   }
 }
@@ -1667,10 +1671,32 @@ md-filled-button[aria-label]::after {
 /* PHASE 2 - Mobile Content Hierarchy */
 @layer components {
   .mobile-primary-action {
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    padding: 0.875rem 1.5rem;
-    min-height: 48px;
+    padding: 0.625rem 1rem;
+    min-height: 44px;
+  }
+
+  .mobile-button-compact {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    min-height: 40px;
+  }
+
+  .mobile-button-small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.375rem 0.625rem;
+    min-height: 36px;
+  }
+
+  .mobile-card-compact {
+    padding: 0.75rem;
+  }
+
+  .mobile-card-dense {
+    padding: 0.625rem;
   }
 
   .mobile-secondary-action {

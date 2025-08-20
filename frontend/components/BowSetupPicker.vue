@@ -3,16 +3,16 @@
     <!-- Responsive Picker for All Screen Sizes -->
     <div class="responsive-picker">
       <div class="picker-container bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div class="container mx-auto px-4 py-2">
+        <div class="container mx-auto px-2 py-1.5">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 md:space-x-3">
+            <div class="flex items-center space-x-1.5 md:space-x-3">
               <span class="text-sm font-medium text-gray-600 dark:text-gray-400 hidden md:inline">Active Bow:</span>
               
               <!-- Selected Bow Display with dropdown -->
               <div class="relative">
                 <button
                   @click="openPicker"
-                  class="flex items-center space-x-2 px-3 py-1.5 rounded-lg md:rounded-full border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+                  class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg md:rounded-full border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors text-sm"
                   :class="{ 'bg-primary-100 text-primary-800 border-primary-500 dark:bg-primary-900 dark:text-primary-200': hasSelectedBow }"
                 >
                   <i class="fas fa-bow-arrow text-sm"></i>

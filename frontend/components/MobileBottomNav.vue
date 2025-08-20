@@ -188,7 +188,7 @@
     style="padding-bottom: env(safe-area-inset-bottom);"
     :class="{ 'translate-y-full': isHidden }"
   >
-    <div class="flex items-center justify-around px-4" :class="menuOpen ? 'h-20' : 'h-16 md-mobile:h-18'">
+    <div class="flex items-center justify-around px-3" :class="menuOpen ? 'h-18' : 'h-14 md-mobile:h-16'">
       <!-- Home/Menu -->
       <button
         @click="toggleMenu"
@@ -197,7 +197,7 @@
           menuOpen 
             ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200' 
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
-          menuOpen ? 'w-16 h-16' : 'w-14 h-14 md-mobile:w-16 md-mobile:h-16'
+          menuOpen ? 'w-14 h-14' : 'w-12 h-12 md-mobile:w-14 md-mobile:h-14'
         ]"
       >
         <i class="fas mb-1 transition-transform duration-200" :class="[
@@ -218,7 +218,7 @@
           $route.path === '/my-setup'
             ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200'
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
-          menuOpen ? 'w-16 h-16' : 'w-14 h-14 md-mobile:w-16 md-mobile:h-16'
+          menuOpen ? 'w-14 h-14' : 'w-12 h-12 md-mobile:w-14 md-mobile:h-14'
         ]"
       >
         <i class="fas fa-user mb-1 transition-all duration-200" :class="menuOpen ? 'text-xl' : 'text-lg md-mobile:text-xl'"></i>
