@@ -26,8 +26,7 @@ Specialized components for specific application features.
 #### Props
 ```typescript
 interface Props {
-  modelValue: boolean          // Modal visibility
-  editingSetup?: BowSetup     // Setup to edit (optional)
+  modelValue: Object           // Setup data object
   isSaving?: boolean          // Loading state
   error?: string              // Error message
 }
@@ -36,11 +35,44 @@ interface Props {
 #### Events
 ```typescript
 interface Emits {
-  'update:modelValue': [value: boolean]
+  'update:modelValue': [value: Object]
   save: [setup: BowSetup]
   close: []
 }
 ```
+
+#### Technical Implementation
+**Modal Positioning**: Uses Vue 3 Teleport to render modal to document body for proper z-index behavior:
+```vue
+<template>
+  <Teleport to="body">
+    <div class="modal-overlay modal-open fixed inset-0 z-[800]">
+      <div class="modal-container relative z-[850]">
+        <!-- Modal content -->
+      </div>
+    </div>
+  </Teleport>
+</template>
+```
+
+**Animation System**: CSS-based fade and scale animation for professional modal transitions:
+```css
+.modal-container {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-open .modal-container {
+  opacity: 1;
+  transform: scale(1);
+}
+```
+
+**Z-Index Architecture**: 
+- Modal overlay: `z-[800]` (above page content)
+- Modal container: `z-[850]` (above overlay)
+- Ensures proper layering above all page elements
 
 #### Usage Example
 ```vue
