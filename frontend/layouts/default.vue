@@ -223,11 +223,8 @@
       <!-- Mobile menu removed - navigation now handled by bottom nav -->
     </header>
 
-    <!-- Bow Setup Picker - Desktop Only -->
-    <BowSetupPicker v-if="user" :is-mobile="false" class="hidden md:block sticky top-16 bow-setup-picker sticky-element-fix" />
-    
-    <!-- Global Mobile Bow Picker -->
-    <GlobalBowPicker class="sticky-element-fix" />
+    <!-- Bow Setup Picker - All Screen Sizes -->
+    <BowSetupPicker v-if="user" class="sticky top-16 bow-setup-picker sticky-element-fix" />
 
     <!-- Main Content -->
     <main class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6 mobile-safe-area">
@@ -253,7 +250,6 @@
 <script setup>
 import { useBowConfigStore } from '~/stores/bowConfig'
 import { useAuth } from '~/composables/useAuth'
-import GlobalBowPicker from '~/components/GlobalBowPicker.vue'
 
 const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)

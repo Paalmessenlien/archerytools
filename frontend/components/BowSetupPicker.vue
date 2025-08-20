@@ -1,29 +1,29 @@
 <template>
-  <div class="bow-setup-picker" :class="{ 'mobile': isMobile }">
-    <!-- Desktop Version -->
-    <div v-if="!isMobile" class="desktop-picker">
+  <div class="bow-setup-picker">
+    <!-- Responsive Picker for All Screen Sizes -->
+    <div class="responsive-picker">
       <div class="picker-container bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div class="container mx-auto px-4 py-2">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Bow:</span>
+            <div class="flex items-center space-x-2 md:space-x-3">
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-400 hidden md:inline">Active Bow:</span>
               
               <!-- Selected Bow Display with dropdown -->
               <div class="relative">
                 <button
                   @click="openPicker"
-                  class="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+                  class="flex items-center space-x-2 px-3 py-1.5 rounded-lg md:rounded-full border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
                   :class="{ 'bg-primary-100 text-primary-800 border-primary-500 dark:bg-primary-900 dark:text-primary-200': hasSelectedBow }"
                 >
                   <i class="fas fa-bow-arrow text-sm"></i>
-                  <span class="font-medium">{{ bowDisplayText }}</span>
+                  <span class="font-medium">{{ mobileDisplayText }}</span>
                   <i class="fas fa-chevron-down text-xs"></i>
                 </button>
 
-                <!-- Desktop Dropdown (positioned relative to button) -->
+                <!-- Responsive Dropdown -->
                 <div
                   v-if="isPickerOpen"
-                  class="picker-dropdown absolute top-full left-0 mt-1 w-80 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50"
+                  class="picker-dropdown absolute top-full left-0 mt-1 w-screen max-w-sm md:w-80 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50"
                 >
                   <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
@@ -120,132 +120,17 @@
             <div class="flex items-center space-x-2">
               <NuxtLink
                 to="/my-setup"
-                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+                class="hidden md:inline-flex items-center px-2 md:px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
               >
-                <i class="fas fa-cog mr-1.5"></i>
-                Manage Bows
+                <i class="fas fa-cog mr-1 md:mr-1.5"></i>
+                <span class="hidden sm:inline">Manage Bows</span>
+                <span class="sm:hidden">Manage</span>
               </NuxtLink>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Mobile Version -->
-    <div v-else class="mobile-picker">
-      <button
-        @click="togglePicker"
-        class="flex flex-col items-center justify-center p-2 w-16 h-16 rounded-2xl transition-all duration-200"
-        :class="hasSelectedBow 
-          ? 'bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-200' 
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-      >
-        <div class="relative mb-1">
-          <i class="fas fa-cogs text-xl"></i>
-          <div v-if="hasSelectedBow" class="absolute -top-1 -right-1 w-2 h-2 bg-primary-500 rounded-full"></div>
-        </div>
-        <span class="text-xs font-medium max-w-[60px] truncate leading-tight">
-          {{ hasSelectedBow ? selectedBowName.split(' ')[0] : 'Setup' }}
-        </span>
-      </button>
-    </div>
-
-    <!-- Mobile Picker Modal (only on mobile screens) -->
-    <teleport to="body">
-      <div
-        v-if="isMobile && isPickerOpen"
-        class="fixed inset-0 z-[60] block md:hidden"
-      >
-        <!-- Overlay -->
-        <div
-          class="fixed inset-0 bg-black bg-opacity-40 z-[60]"
-          @click="closePicker"
-        ></div>
-        
-        <!-- Modal Content -->
-        <div class="fixed bottom-20 left-4 right-4 max-h-[70vh] bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden z-[70]">
-          <!-- Header -->
-          <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Bow</h3>
-            <button
-              @click="closePicker"
-              class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <i class="fas fa-times text-lg"></i>
-            </button>
-          </div>
-
-          <!-- Content -->
-          <div class="p-4">
-            <!-- Loading State -->
-            <div v-if="isLoading" class="flex items-center justify-center py-8">
-              <div class="loading-spinner mr-3"></div>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Loading...</span>
-            </div>
-
-            <!-- Options -->
-            <div v-else class="space-y-2">
-              <!-- No Bow Option -->
-              <button
-                @click="handleSelectBowSetup(null)"
-                class="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
-                :class="!hasSelectedBow 
-                  ? 'bg-primary-50 border-primary-300 dark:bg-primary-950 dark:border-primary-700' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                <div class="flex items-center">
-                  <i class="fas fa-ban text-gray-400 dark:text-gray-500 mr-3"></i>
-                  <div class="flex-1">
-                    <div class="font-medium text-gray-900 dark:text-gray-100">No Bow</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Manual configuration</div>
-                  </div>
-                  <div v-if="!hasSelectedBow" class="w-2 h-2 bg-primary-500 rounded-full"></div>
-                </div>
-              </button>
-
-              <!-- Empty State -->
-              <div v-if="availableBowSetups.length === 0" class="text-center py-8">
-                <i class="fas fa-bow-arrow text-2xl text-gray-400 dark:text-gray-500 mb-3"></i>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">No bow setups found</p>
-                <NuxtLink
-                  to="/my-setup"
-                  class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
-                  @click="closePicker"
-                >
-                  <i class="fas fa-plus mr-2"></i>
-                  Create Setup
-                </NuxtLink>
-              </div>
-
-              <!-- Bow List -->
-              <div v-else class="max-h-60 overflow-y-auto space-y-2">
-                <button
-                  v-for="bowSetup in availableBowSetups"
-                  :key="bowSetup.id"
-                  @click="handleSelectBowSetup(bowSetup)"
-                  class="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
-                  :class="selectedBowSetup?.id === bowSetup.id
-                    ? 'bg-primary-50 border-primary-300 dark:bg-primary-950 dark:border-primary-700'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700'"
-                >
-                  <div class="flex items-center">
-                    <i class="fas fa-bow-arrow text-primary-600 dark:text-primary-400 mr-3"></i>
-                    <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ bowSetup.name }}</div>
-                      <div class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ bowSetup.draw_weight || bowSetup.bow_config?.draw_weight }}lbs • 
-                        {{ formatBowType(bowSetup.bow_type || bowSetup.bow_config?.bow_type) }}
-                      </div>
-                    </div>
-                    <div v-if="selectedBowSetup?.id === bowSetup.id" class="w-2 h-2 bg-primary-500 rounded-full"></div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </teleport>
   </div>
 </template>
 
@@ -255,13 +140,7 @@ import { useBowConfigStore } from '~/stores/bowConfig'
 import { useAuth } from '~/composables/useAuth'
 import type { BowSetup } from '~/types/arrow'
 
-interface Props {
-  isMobile?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  isMobile: false
-})
+// No props needed - component is now responsive for all screen sizes
 
 // Store access
 const bowSetupPickerStore = useBowSetupPickerStore()
@@ -315,9 +194,19 @@ const formatBowType = (bowType: string): string => {
   return typeMap[bowType] || bowType
 }
 
-// Close picker when clicking outside (desktop only)
+// Mobile display text with character limit
+const mobileDisplayText = computed(() => {
+  const text = bowDisplayText.value
+  // Limit to 20 characters on mobile screens
+  if (text.length > 20) {
+    return text.substring(0, 17) + '...'
+  }
+  return text
+})
+
+// Close picker when clicking outside
 const handleClickOutside = (event: Event) => {
-  if (!props.isMobile && isPickerOpen.value) {
+  if (isPickerOpen.value) {
     const target = event.target as HTMLElement
     if (!target.closest('.relative') && !target.closest('.picker-dropdown')) {
       closePicker()
@@ -326,15 +215,11 @@ const handleClickOutside = (event: Event) => {
 }
 
 onMounted(() => {
-  if (!props.isMobile) {
-    document.addEventListener('click', handleClickOutside)
-  }
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
-  if (!props.isMobile) {
-    document.removeEventListener('click', handleClickOutside)
-  }
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
