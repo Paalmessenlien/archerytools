@@ -1,6 +1,6 @@
 <template>
   <!-- Mobile Full-Width Bow Manager Button - Sticky Position -->
-  <div v-if="user" class="md:hidden sticky top-0 global-bow-picker bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg">
+  <div v-if="user" class="md:hidden sticky top-0 global-bow-picker bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-[900]">
     <div class="px-4 py-2">
       <button
         @click="toggleBowManager"
@@ -39,7 +39,7 @@
       leave-from-class="transform translate-y-0 opacity-100"
       leave-to-class="transform -translate-y-4 opacity-0"
     >
-      <div v-if="showDropdown" class="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-xl max-h-[70vh] overflow-hidden modal-container">
+      <div v-if="showDropdown" class="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-xl max-h-[70vh] overflow-hidden modal-container z-[950]">
       <div class="p-4">
         <!-- Add New Setup Button -->
         <button
@@ -89,7 +89,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="showDropdown" class="fixed inset-0 modal-overlay" @click="closeDropdown"></div>
+      <div v-if="showDropdown" class="fixed inset-0 modal-overlay z-[940]" @click="closeDropdown"></div>
     </Transition>
   </div>
 </template>
