@@ -113,58 +113,44 @@
         </div>
       </div>
 
-      <!-- Mobile-First Tabbed Content Interface -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-        <!-- Mobile-Optimized Tab Navigation -->
-        <div class="border-b border-gray-200 dark:border-gray-700">
-          <nav class="tab-navigation flex overflow-x-auto sm:space-x-8 sm:px-6" aria-label="Arrow Details Tabs">
-            <!-- Mobile: Equal width tabs, Desktop: Auto width -->
-            <div class="flex w-full sm:contents">
-              <button
-                v-for="tab in contentTabs"
-                :key="tab.id"
-                @click="handleTabClick(tab.id)"
-                @touchstart="handleTouchStart"
-                @touchend="handleTouchEnd"
-                :class="[
-                  'py-4 px-4 sm:px-1 min-h-[48px] border-b-2 font-medium text-sm transition-all duration-200 touch-manipulation',
-                  'flex items-center justify-center flex-1 sm:flex-initial',
-                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                  activeContentTab === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                ]"
-              >
-                <!-- Mobile: Show icon + short name, Desktop: Show full name -->
-                <span class="flex items-center">
-                  <i :class="tab.icon" class="mr-1 sm:mr-2"></i>
-                  <!-- Short names on mobile, full names on desktop -->
-                  <span class="hidden sm:inline">{{ tab.name }}</span>
-                  <span class="sm:hidden">{{ tab.shortName || tab.name }}</span>
-                </span>
-              </button>
-            </div>
-          </nav>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="p-4 sm:p-6">
-          <!-- Configuration Tab -->
-          <div v-if="activeContentTab === 'config'" class="space-y-4 sm:space-y-6">
-            <!-- Mobile Configuration Header -->
-            <div class="config-header mb-4 sm:mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Arrow Configuration
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                View and edit your arrow specifications
-              </p>
-              <div v-if="hasUnsavedChanges" class="flex items-center text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                You have unsaved changes
+      <!-- Mobile-First Accordion Content Interface -->
+      <div class="space-y-4">
+        <!-- Configuration Section - Always Expanded by Default -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('config')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 'bg-blue-50 dark:bg-blue-900/20': expandedSections.config }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                <i class="fas fa-cog text-blue-600 dark:text-blue-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Arrow Configuration</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">View and edit your arrow specifications</p>
               </div>
             </div>
-            
+            <div class="flex items-center space-x-3">
+              <!-- Edit Mode Toggle Badge -->
+              <div v-if="editMode" class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
+                Editing
+              </div>
+              <!-- Unsaved Changes Badge -->
+              <div v-if="hasUnsavedChanges" class="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full text-xs font-medium">
+                Unsaved
+              </div>
+              <!-- Expand/Collapse Icon -->
+              <i 
+                :class="expandedSections.config ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+                class="text-gray-400 transition-transform duration-200"
+              ></i>
+            </div>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.config" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowSetupEditor
               v-if="editMode"
               :setup-arrow="setupArrowData.setup_arrow"
@@ -185,19 +171,33 @@
               class="space-y-4"
             />
           </div>
+        </div>
 
-          <!-- Performance Tab -->
-          <div v-if="activeContentTab === 'performance'" class="space-y-4 sm:space-y-6">
-            <!-- Mobile Performance Header -->
-            <div class="performance-header mb-4 sm:mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Performance Analysis
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Detailed arrow performance metrics and analysis
-              </p>
+        <!-- Performance Analysis Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('performance')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 'bg-green-50 dark:bg-green-900/20': expandedSections.performance }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30 flex-shrink-0">
+                <i class="fas fa-tachometer-alt text-green-600 dark:text-green-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Performance Analysis</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Detailed arrow performance metrics and chronograph data</p>
+              </div>
             </div>
+            <i 
+              :class="expandedSections.performance ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
 
+          <!-- Section Content -->
+          <div v-if="expandedSections.performance" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowPerformanceAnalysis
               :setup-arrow="setupArrowData.setup_arrow"
               :bow-config="setupArrowData.bow_setup"
@@ -205,7 +205,7 @@
               @performance-updated="handlePerformanceUpdate"
             />
 
-            <!-- Chronograph Data in Performance Tab -->
+            <!-- Chronograph Data Section -->
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <ChronographDataEntry
                 :bow-setup-id="setupArrowData.bow_setup.id"
@@ -216,25 +216,39 @@
               />
             </div>
           </div>
+        </div>
 
-          <!-- Arrow Info Tab -->
-          <div v-if="activeContentTab === 'info'" class="space-y-4 sm:space-y-6">
-            <!-- Mobile Arrow Info Header -->
-            <div class="info-header mb-4 sm:mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Arrow Information
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Manufacturer specifications and database information
-              </p>
+        <!-- Arrow Information Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('info')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 'bg-purple-50 dark:bg-purple-900/20': expandedSections.info }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                <i class="fas fa-info-circle text-purple-600 dark:text-purple-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Arrow Information</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Manufacturer specifications and database information</p>
+              </div>
             </div>
+            <i 
+              :class="expandedSections.info ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
 
+          <!-- Section Content -->
+          <div v-if="expandedSections.info" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowDatabaseInfo
               :arrow="setupArrowData.arrow"
               :spine-specifications="setupArrowData.spine_specifications"
             />
 
-            <!-- Bow Setup Context in Info Tab -->
+            <!-- Bow Setup Context -->
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 <i class="fas fa-crosshairs mr-2 text-orange-600"></i>
@@ -247,19 +261,33 @@
               />
             </div>
           </div>
+        </div>
 
-          <!-- Actions Tab -->
-          <div v-if="activeContentTab === 'actions'" class="space-y-4 sm:space-y-6">
-            <!-- Mobile Actions Header -->
-            <div class="actions-header mb-4 sm:mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Quick Actions
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Manage your arrow setup with these convenient actions
-              </p>
+        <!-- Quick Actions Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('actions')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 'bg-orange-50 dark:bg-orange-900/20': expandedSections.actions }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                <i class="fas fa-bolt text-orange-600 dark:text-orange-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Actions</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Manage your arrow setup with convenient actions</p>
+              </div>
             </div>
-            
+            <i 
+              :class="expandedSections.actions ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.actions" class="p-4 sm:p-6 space-y-4">
             <!-- Mobile-Optimized Actions Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
@@ -370,7 +398,13 @@ const error = ref('')
 const editMode = ref(false)
 const hasUnsavedChanges = ref(false)
 const calculatingPerformance = ref(false)
-const activeContentTab = ref('config') // Default to configuration tab
+// Accordion state - config expanded by default for primary workflow
+const expandedSections = ref({
+  config: true,        // Configuration always starts expanded 
+  performance: false,  // Performance collapsed by default
+  info: false,        // Info collapsed by default  
+  actions: false      // Actions collapsed by default
+})
 
 // Modal state
 const showConfirmModal = ref(false)
@@ -392,33 +426,11 @@ const notification = ref({
 // Computed
 const setupArrowId = computed(() => route.params.id)
 
-// Tab configuration with mobile-friendly names
-const contentTabs = computed(() => [
-  {
-    id: 'config',
-    name: 'Configuration',
-    shortName: 'Config',
-    icon: 'fas fa-cog'
-  },
-  {
-    id: 'performance', 
-    name: 'Performance',
-    shortName: 'Performance',
-    icon: 'fas fa-tachometer-alt'
-  },
-  {
-    id: 'info',
-    name: 'Arrow Information',
-    shortName: 'Info', 
-    icon: 'fas fa-info-circle'
-  },
-  {
-    id: 'actions',
-    name: 'Quick Actions',
-    shortName: 'Actions',
-    icon: 'fas fa-bolt'
-  }
-])
+// Accordion section toggle method
+const toggleSection = (sectionId) => {
+  console.log('Accordion section toggled:', sectionId)
+  expandedSections.value[sectionId] = !expandedSections.value[sectionId]
+}
 
 // Methods
 const loadSetupArrowDetails = async () => {
@@ -678,28 +690,8 @@ const hideNotification = () => {
   notification.value.show = false
 }
 
-// Enhanced tab interaction methods
-const handleTabClick = (tabId) => {
-  console.log('Content tab clicked:', tabId)
-  activeContentTab.value = tabId
-}
-
-const handleTouchStart = (event) => {
-  // Add visual feedback on touch start
-  event.target.style.opacity = '0.8'
-}
-
-const handleTouchEnd = (event) => {
-  // Remove visual feedback on touch end
-  event.target.style.opacity = '1'
-  
-  // Ensure click event fires
-  setTimeout(() => {
-    if (event.target.closest('button')) {
-      event.target.closest('button').click()
-    }
-  }, 10)
-}
+// Enhanced accordion interaction with smooth animations
+// All interaction is now handled by the toggleSection method above
 
 // Lifecycle
 onMounted(() => {
@@ -731,64 +723,33 @@ onBeforeRouteLeave((to, from, next) => {
 </script>
 
 <style scoped>
-/* Enhanced tab navigation styling */
-.tab-navigation {
-  /* Hide scrollbar on mobile while maintaining scroll functionality */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Accordion Section Animation */
+.accordion-section {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tab-navigation::-webkit-scrollbar {
-  display: none;
-}
-
-/* Enhanced touch interaction for mobile */
-@media (max-width: 640px) {
-  .tab-navigation button {
-    /* Ensure minimum touch target size */
-    min-width: 60px;
-  }
-  
-  /* Add ripple effect simulation on touch */
-  .tab-navigation button:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
-  }
-}
-
-/* Smooth transitions for tab switching */
-.tab-navigation button {
+/* Section Header Button Styling */
+.accordion-header {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Enhanced focus states for accessibility */
-.tab-navigation button:focus-visible {
-  outline: 2px solid rgb(59 130 246);
-  outline-offset: 2px;
+.accordion-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Mobile content optimization */
+.dark .accordion-header:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced Mobile Touch Feedback */
 @media (max-width: 640px) {
-  /* Mobile header sections */
-  .config-header,
-  .performance-header,
-  .info-header,
-  .actions-header {
-    background: rgb(249 250 251);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
+  .accordion-header:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
   }
   
-  .dark .config-header,
-  .dark .performance-header,
-  .dark .info-header,
-  .dark .actions-header {
-    background: rgb(31 41 55);
-    border: 1px solid rgb(55 65 81);
-  }
-  
-  /* Enhanced mobile action buttons */
+  /* Mobile action buttons */
   .mobile-action-button {
     text-align: left;
   }
@@ -799,7 +760,44 @@ onBeforeRouteLeave((to, from, next) => {
   }
 }
 
-/* Desktop optimizations */
+/* Section Content Animation */
+.section-content {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Focus States for Accessibility */
+.accordion-header:focus-visible {
+  outline: 2px solid rgb(59 130 246);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Status Badges */
+.status-badge {
+  transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Chevron Icon Animation */
+.chevron-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop Optimizations */
 @media (min-width: 641px) {
   .mobile-action-button {
     text-align: center;
@@ -808,5 +806,24 @@ onBeforeRouteLeave((to, from, next) => {
   .mobile-action-button .flex {
     justify-content: center;
   }
+  
+  /* Desktop hover states */
+  .accordion-header:hover .chevron-icon {
+    transform: scale(1.1);
+  }
+}
+
+/* Smooth Section Spacing */
+.accordion-container > * + * {
+  margin-top: 1rem;
+}
+
+/* Enhanced Visual Hierarchy */
+.section-icon {
+  transition: all 0.2s ease;
+}
+
+.accordion-header:hover .section-icon {
+  transform: scale(1.05);
 }
 </style>
