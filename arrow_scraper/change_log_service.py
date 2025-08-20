@@ -560,6 +560,308 @@ class ChangeLogService:
         finally:
             conn.close()
 
+    def log_tuning_test(self,
+                       test_result_id: int,
+                       user_id: int,
+                       test_type: str,
+                       arrow_id: int,
+                       bow_setup_id: int,
+                       test_number: int,
+                       confidence_score: float,
+                       change_description: str = None,
+                       recommendations_count: int = 0,
+                       conn=None) -> int:
+        """
+        Log a tuning test completion event
+        
+        Args:
+            test_result_id: ID of the test result from tuning_test_results table
+            user_id: ID of the user performing the test
+            test_type: Type of tuning test ('paper_tuning', 'bareshaft_tuning', 'walkback_tuning')
+            arrow_id: ID of the arrow being tested
+            bow_setup_id: ID of the bow setup used
+            test_number: Sequential test number for this arrow/bow combination
+            confidence_score: Confidence score of the test result (0-100)
+            change_description: Optional description of what was tested/changed
+            recommendations_count: Number of recommendations generated
+            conn: Optional existing database connection to reuse
+        
+        Returns:
+            ID of the created change log entry
+        """
+        # Use provided connection or create new one
+        if conn is None:
+            conn = self.user_db.get_connection()
+            should_close_conn = True
+        else:
+            should_close_conn = False
+        
+        cursor = conn.cursor()
+        
+        try:
+            # Create a descriptive change description if none provided
+            if not change_description:
+                test_type_names = {
+                    'paper_tuning': 'Paper Tuning',
+                    'bareshaft_tuning': 'Bareshaft Tuning', 
+                    'walkback_tuning': 'Walkback Tuning'
+                }
+                test_name = test_type_names.get(test_type, test_type)
+                change_description = f"{test_name} test #{test_number} completed with {confidence_score:.1f}% confidence"
+                if recommendations_count > 0:
+                    change_description += f" and {recommendations_count} recommendations"
+            
+            # Create before_state with test details as JSON
+            before_state = json.dumps({
+                'test_type': test_type,
+                'test_number': test_number,
+                'confidence_score': confidence_score,
+                'recommendations_count': recommendations_count
+            })
+            
+            # Use the actual table schema from migration 035
+            cursor.execute('''
+                INSERT INTO tuning_change_log
+                (user_id, arrow_id, bow_setup_id, test_result_id, change_type, description, before_state)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, arrow_id, bow_setup_id, test_result_id, 'test_completed', change_description, before_state))
+            
+            change_log_id = cursor.lastrowid
+            
+            # Only commit if we own the connection
+            if should_close_conn:
+                conn.commit()
+            
+            print(f"📝 Logged tuning test: {test_type} #{test_number} for arrow {arrow_id} (confidence: {confidence_score:.1f}%)")
+            return change_log_id
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error logging tuning test: {e}")
+            if should_close_conn:
+                conn.rollback()
+            raise
+        finally:
+            if should_close_conn:
+                conn.close()
+    
+    def log_tuning_adjustment(self,
+                            user_id: int,
+                            bow_setup_id: int,
+                            component: str,
+                            adjustment_type: str,
+                            old_value: str = None,
+                            new_value: str = None,
+                            reason: str = None,
+                            test_result_id: int = None) -> int:
+        """
+        Log a tuning adjustment made based on test results
+        
+        Args:
+            user_id: ID of the user making the adjustment
+            bow_setup_id: ID of the bow setup being adjusted
+            component: Equipment component being adjusted (e.g., 'rest', 'nock', 'sight')
+            adjustment_type: Type of adjustment ('moved_left', 'moved_right', 'moved_up', 'moved_down', 'increased', 'decreased', 'replaced')
+            old_value: Previous setting/value
+            new_value: New setting/value 
+            reason: Reason for adjustment (e.g., 'Paper tear showed right impact')
+            test_result_id: ID of test result that prompted this adjustment
+        
+        Returns:
+            ID of the created adjustment log entry
+        """
+        conn = self.user_db.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+                INSERT INTO equipment_adjustment_log
+                (user_id, bow_setup_id, component, adjustment_type,
+                 old_value, new_value, reason, test_result_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, bow_setup_id, component, adjustment_type,
+                  old_value, new_value, reason, test_result_id))
+            
+            adjustment_log_id = cursor.lastrowid
+            conn.commit()
+            
+            print(f"📝 Logged tuning adjustment: {component} {adjustment_type} (bow setup {bow_setup_id})")
+            return adjustment_log_id
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error logging tuning adjustment: {e}")
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    
+    def get_tuning_history(self,
+                          arrow_id: int = None,
+                          bow_setup_id: int = None,
+                          user_id: int = None,
+                          test_type: str = None,
+                          limit: int = 50,
+                          days_back: int = None) -> List[Dict[str, Any]]:
+        """
+        Get tuning test history with optional filters
+        
+        Args:
+            arrow_id: Filter by specific arrow ID
+            bow_setup_id: Filter by specific bow setup ID
+            user_id: Filter by user ID (required for access control)
+            test_type: Filter by test type
+            limit: Maximum number of results
+            days_back: Only return tests from this many days back
+        
+        Returns:
+            List of tuning test history entries
+        """
+        conn = self.user_db.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Build WHERE clause
+            where_conditions = []
+            params = []
+            
+            if user_id:
+                where_conditions.append("tcl.user_id = ?")
+                params.append(user_id)
+            
+            if arrow_id:
+                where_conditions.append("tcl.arrow_id = ?")
+                params.append(arrow_id)
+            
+            if bow_setup_id:
+                where_conditions.append("tcl.bow_setup_id = ?")
+                params.append(bow_setup_id)
+                
+            if test_type:
+                where_conditions.append("tcl.test_type = ?")
+                params.append(test_type)
+            
+            if days_back:
+                cutoff_date = datetime.now() - timedelta(days=days_back)
+                where_conditions.append("tcl.created_at >= ?")
+                params.append(cutoff_date.isoformat())
+            
+            where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+            
+            cursor.execute(f'''
+                SELECT 
+                    tcl.*,
+                    bs.name as bow_setup_name,
+                    a.manufacturer,
+                    a.model_name,
+                    ttr.test_data,
+                    ttr.environmental_conditions,
+                    ttr.shooting_distance,
+                    ttr.notes
+                FROM tuning_change_log tcl
+                LEFT JOIN bow_setups bs ON tcl.bow_setup_id = bs.id
+                LEFT JOIN arrows a ON tcl.arrow_id = a.id  
+                LEFT JOIN tuning_test_results ttr ON tcl.test_result_id = ttr.id
+                {where_clause}
+                ORDER BY tcl.created_at DESC
+                LIMIT ?
+            ''', params + [limit])
+            
+            tests = []
+            for row in cursor.fetchall():
+                test = dict(row)
+                # Parse timestamp if it's a string
+                if isinstance(test['created_at'], str):
+                    test['created_at'] = datetime.fromisoformat(test['created_at'])
+                    
+                # Parse JSON fields
+                if test['test_data']:
+                    try:
+                        test['test_data'] = json.loads(test['test_data']) if isinstance(test['test_data'], str) else test['test_data']
+                    except (json.JSONDecodeError, TypeError):
+                        test['test_data'] = {}
+                        
+                if test['environmental_conditions']:
+                    try:
+                        test['environmental_conditions'] = json.loads(test['environmental_conditions']) if isinstance(test['environmental_conditions'], str) else test['environmental_conditions']
+                    except (json.JSONDecodeError, TypeError):
+                        test['environmental_conditions'] = {}
+                        
+                tests.append(test)
+            
+            return tests
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error getting tuning history: {e}")
+            return []
+        finally:
+            conn.close()
+    
+    def get_adjustment_history(self,
+                             bow_setup_id: int = None,
+                             user_id: int = None,
+                             component: str = None,
+                             limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Get equipment adjustment history
+        
+        Args:
+            bow_setup_id: Filter by bow setup ID
+            user_id: Filter by user ID (required for access control)
+            component: Filter by component type
+            limit: Maximum number of results
+        
+        Returns:
+            List of adjustment history entries
+        """
+        conn = self.user_db.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            where_conditions = []
+            params = []
+            
+            if user_id:
+                where_conditions.append("eal.user_id = ?")
+                params.append(user_id)
+                
+            if bow_setup_id:
+                where_conditions.append("eal.bow_setup_id = ?")
+                params.append(bow_setup_id)
+                
+            if component:
+                where_conditions.append("eal.component = ?")
+                params.append(component)
+            
+            where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+            
+            cursor.execute(f'''
+                SELECT 
+                    eal.*,
+                    bs.name as bow_setup_name,
+                    tcl.test_type as related_test_type,
+                    tcl.test_number as related_test_number
+                FROM equipment_adjustment_log eal
+                LEFT JOIN bow_setups bs ON eal.bow_setup_id = bs.id
+                LEFT JOIN tuning_change_log tcl ON eal.test_result_id = tcl.test_result_id
+                {where_clause}
+                ORDER BY eal.created_at DESC
+                LIMIT ?
+            ''', params + [limit])
+            
+            adjustments = []
+            for row in cursor.fetchall():
+                adjustment = dict(row)
+                if isinstance(adjustment['created_at'], str):
+                    adjustment['created_at'] = datetime.fromisoformat(adjustment['created_at'])
+                adjustments.append(adjustment)
+            
+            return adjustments
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error getting adjustment history: {e}")
+            return []
+        finally:
+            conn.close()
+
     def get_change_statistics(self, 
                             bow_setup_id: int, 
                             user_id: int) -> Dict[str, Any]:

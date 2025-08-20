@@ -165,6 +165,7 @@
         </div>
       </div>
 
+
       <!-- Spine Specifications -->
       <div v-if="arrow.spine_specifications && arrow.spine_specifications.length > 0" class="card">
         <div class="flex items-center justify-between mb-4">
@@ -266,7 +267,7 @@
 
       <!-- Actions -->
       <div class="card">
-        <h3 class="text-lg font-semibold mb-4">Actions</h3>
+        <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
         
         <div class="flex flex-wrap gap-3">
           <NuxtLink 
@@ -332,6 +333,7 @@ const isRecalculating = ref(false)
 
 // Bow context state
 const bowContext = ref(null)
+
 
 // Get arrow ID from route
 const arrowId = computed(() => route.params.id)
@@ -502,6 +504,7 @@ Available Spines: ${arrow.value.spine_specifications?.length || 0} options`
     console.error('Failed to copy to clipboard:', err)
   }
 }
+
 
 // Lifecycle
 onMounted(() => {

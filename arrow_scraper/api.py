@@ -30,6 +30,7 @@ import uuid
 
 # Import our arrow tuning system components
 from arrow_tuning_system import ArrowTuningSystem, ArcherProfile, TuningSession
+from tuning_rule_engine import TuningRuleEngine, PaperTuningRules, BareshaftTuningRules, WalkbackTuningRules, create_tuning_rule_engine, calculate_test_number, create_change_log_entry
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
 from ballistics_calculator import BallisticsCalculator, EnvironmentalConditions, ShootingConditions, ArrowType as BallisticsArrowType
 from tuning_calculator import TuningGoal, ArrowType
@@ -38,6 +39,11 @@ from arrow_database import ArrowDatabase  # Keep for compatibility during transi
 from component_database import ComponentDatabase
 from spine_service import UnifiedSpineService
 from compatibility_engine import CompatibilityEngine
+from change_log_service import ChangeLogService
+
+# Import authentication functions
+import jwt
+from auth import token_required, get_user_from_google_token
 
 # Create Flask app
 app = Flask(__name__)
@@ -1419,9 +1425,69 @@ def create_tuning_session():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/tuning-guides/sessions', methods=['POST'])
+@token_required
+def create_enhanced_tuning_session(current_user):
+    """Create a new enhanced tuning session with database storage"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        guide_type = data.get('guide_type')
+        arrow_id = data.get('arrow_id')
+        arrow_length = data.get('arrow_length')
+        point_weight = data.get('point_weight')
+        bow_setup_id = data.get('bow_setup_id')
+        
+        if not all([guide_type, arrow_id, arrow_length, point_weight, bow_setup_id]):
+            return jsonify({'error': 'Missing required fields: guide_type, arrow_id, arrow_length, point_weight, bow_setup_id'}), 400
+        
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Create session in database
+        cursor.execute('''
+            INSERT INTO guide_sessions (
+                user_id, bow_setup_id, guide_name, guide_type, status, 
+                current_step, total_steps, arrow_id, arrow_length, 
+                point_weight, started_at, notes
+            ) VALUES (?, ?, ?, ?, 'active', 1, 10, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+        ''', (
+            current_user['id'], bow_setup_id, f"{guide_type.replace('_', ' ').title()} Session", 
+            guide_type, arrow_id, arrow_length, point_weight, 
+            data.get('notes', '')
+        ))
+        
+        session_id = cursor.lastrowid
+        conn.commit()
+        
+        # Return session data
+        session_data = {
+            'session_id': session_id,
+            'guide_type': guide_type,
+            'arrow_id': arrow_id,
+            'arrow_length': arrow_length,
+            'point_weight': point_weight,
+            'bow_setup_id': bow_setup_id,
+            'status': 'active',
+            'created_at': datetime.now().isoformat()
+        }
+        
+        return jsonify(session_data), 201
+        
+    except Exception as e:
+        print(f"Error creating enhanced tuning session: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 # User Authentication API
-import jwt
-from auth import token_required, get_user_from_google_token
 
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
@@ -6206,6 +6272,382 @@ def get_guide_session_details(current_user, session_id):
             conn.close()
         return jsonify({'error': str(e)}), 500
 
+# ======================================
+# ENHANCED INTERACTIVE TUNING SYSTEM
+# ======================================
+
+@app.route('/api/tuning-guides/start', methods=['POST'])
+@token_required
+def start_enhanced_tuning_session(current_user):
+    """Start enhanced tuning session with bow/arrow selection"""
+    conn = None
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        bow_setup_id = data.get('bow_setup_id')
+        arrow_id = data.get('arrow_id')
+        arrow_length = data.get('arrow_length')
+        point_weight = data.get('point_weight')
+        guide_type = data.get('guide_type', 'paper_tuning')
+        
+        # Validate required fields
+        if not all([bow_setup_id, arrow_id, arrow_length, point_weight]):
+            return jsonify({'error': 'bow_setup_id, arrow_id, arrow_length, and point_weight are required'}), 400
+            
+        if guide_type not in ['paper_tuning', 'bareshaft_tuning', 'walkback_tuning']:
+            return jsonify({'error': 'Invalid guide_type. Must be paper_tuning, bareshaft_tuning, or walkback_tuning'}), 400
+        
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify bow setup belongs to user
+        cursor.execute('SELECT name, bow_type FROM bow_setups WHERE id = ? AND user_id = ?', 
+                     (bow_setup_id, current_user['id']))
+        bow_setup = cursor.fetchone()
+        if not bow_setup:
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        # Get arrow information
+        cursor.execute('SELECT manufacturer, model_name FROM arrows WHERE id = ?', (arrow_id,))
+        arrow = cursor.fetchone()
+        if not arrow:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        # Create enhanced guide session with arrow tracking
+        guide_name_map = {
+            'paper_tuning': 'Enhanced Paper Tuning',
+            'bareshaft_tuning': 'Enhanced Bareshaft Tuning', 
+            'walkback_tuning': 'Enhanced Walkback Tuning'
+        }
+        
+        cursor.execute('''
+            INSERT INTO guide_sessions (
+                user_id, bow_setup_id, guide_name, guide_type, 
+                arrow_id, arrow_length, point_weight, total_steps, test_results_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            current_user['id'], bow_setup_id, guide_name_map[guide_type], 
+            guide_type, arrow_id, arrow_length, point_weight, 5, 0
+        ))
+        
+        session_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'guide_type': guide_type,
+            'bow_setup': {'name': bow_setup[0], 'bow_type': bow_setup[1]},
+            'arrow': {'manufacturer': arrow[0], 'model_name': arrow[1]},
+            'arrow_length': arrow_length,
+            'point_weight': point_weight,
+            'message': f'Enhanced {guide_name_map[guide_type]} session started'
+        })
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/api/tuning-guides/<session_id>/record-test', methods=['POST'])
+@token_required
+def record_enhanced_tuning_test(current_user, session_id):
+    """Record test result with intelligent recommendations"""
+    conn = None
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        test_data = data.get('test_data', {})
+        environmental_conditions = data.get('environmental_conditions', {})
+        shooting_distance = data.get('shooting_distance')
+        notes = data.get('notes', '')
+        
+        if not test_data:
+            return jsonify({'error': 'test_data is required'}), 400
+        
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get session information
+        cursor.execute('''
+            SELECT gs.*, bs.bow_type 
+            FROM guide_sessions gs
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.id = ? AND gs.user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Guide session not found or access denied'}), 404
+        
+        # Extract session details using correct indices based on schema
+        # guide_sessions has 19 columns (0-18), bow_type from JOIN is at index 19
+        bow_type = session[19] if len(session) > 19 else 'compound'  # bow_type from JOIN
+        guide_type = session[4]   # guide_type column
+        arrow_id = session[15]    # arrow_id column (corrected)
+        bow_setup_id = session[2] # bow_setup_id column
+        arrow_length = session[16] # arrow_length column (corrected)
+        point_weight = session[17] # point_weight column (corrected)
+        
+        # Create rule engine for recommendations
+        rule_engine = create_tuning_rule_engine(bow_type, 'RH')  # Default to RH for now
+        
+        # Generate recommendations using rule engine
+        try:
+            analysis_result = rule_engine.analyze_test_result(guide_type, test_data)
+        except Exception as e:
+            return jsonify({'error': f'Analysis failed: {str(e)}'}), 400
+        
+        # Calculate test number for this arrow
+        test_number = calculate_test_number(
+            current_user['id'], arrow_id, bow_setup_id, 
+            arrow_length, point_weight, guide_type, conn
+        )
+        
+        # Store test result permanently
+        cursor.execute('''
+            INSERT INTO tuning_test_results (
+                guide_session_id, user_id, bow_setup_id, arrow_id, 
+                arrow_length, point_weight, test_type, test_data, 
+                recommendations, environmental_conditions, shooting_distance,
+                confidence_score, test_number, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            session_id, current_user['id'], bow_setup_id, arrow_id,
+            arrow_length, point_weight, guide_type, json.dumps(test_data),
+            json.dumps(analysis_result['recommendations']), 
+            json.dumps(environmental_conditions), shooting_distance,
+            analysis_result['confidence_score'], test_number, notes
+        ))
+        
+        test_result_id = cursor.lastrowid
+        
+        # Update session test count
+        cursor.execute('''
+            UPDATE guide_sessions 
+            SET test_results_count = test_results_count + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (session_id,))
+        
+        # Create enhanced change log entry for tuning test
+        change_log_service = ChangeLogService()
+        change_log_service.log_tuning_test(
+            test_result_id=test_result_id,
+            user_id=current_user['id'],
+            test_type=guide_type,
+            arrow_id=arrow_id,
+            bow_setup_id=bow_setup_id,
+            test_number=test_number,
+            confidence_score=analysis_result['confidence_score'],
+            recommendations_count=len(analysis_result['recommendations']),
+            conn=conn  # Reuse existing connection to prevent database lock
+        )
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'test_result_id': test_result_id,
+            'test_number': test_number,
+            'recommendations': analysis_result['recommendations'],
+            'confidence_score': analysis_result['confidence_score'],
+            'analysis': analysis_result['analysis'],
+            'message': f'Test #{test_number} recorded successfully'
+        })
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/api/arrows/<int:arrow_id>/tuning-history', methods=['GET'])
+@token_required 
+def get_arrow_tuning_history(current_user, arrow_id):
+    """Get complete tuning history for a specific arrow"""
+    conn = None
+    try:
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get query parameters
+        bow_setup_id = request.args.get('bow_setup_id', type=int)
+        test_type = request.args.get('test_type')
+        limit = request.args.get('limit', 50, type=int)
+        
+        # Build query for test results
+        query = '''
+            SELECT ttr.*, bs.name as bow_name, bs.bow_type, a.manufacturer, a.model_name,
+                   COUNT(*) OVER (PARTITION BY ttr.arrow_id, ttr.test_type) as total_tests_of_type
+            FROM tuning_test_results ttr
+            LEFT JOIN bow_setups bs ON ttr.bow_setup_id = bs.id
+            LEFT JOIN arrows a ON ttr.arrow_id = a.id
+            WHERE ttr.user_id = ? AND ttr.arrow_id = ?
+        '''
+        
+        params = [current_user['id'], arrow_id]
+        
+        if bow_setup_id:
+            query += ' AND ttr.bow_setup_id = ?'
+            params.append(bow_setup_id)
+        
+        if test_type:
+            query += ' AND ttr.test_type = ?'
+            params.append(test_type)
+        
+        query += ' ORDER BY ttr.created_at DESC LIMIT ?'
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        test_results = []
+        
+        for row in cursor.fetchall():
+            result = dict(row)
+            # Parse JSON fields
+            result['test_data'] = json.loads(result['test_data']) if result['test_data'] else {}
+            result['recommendations'] = json.loads(result['recommendations']) if result['recommendations'] else []
+            result['environmental_conditions'] = json.loads(result['environmental_conditions']) if result['environmental_conditions'] else {}
+            test_results.append(result)
+        
+        # Get aggregate history data
+        cursor.execute('''
+            SELECT * FROM arrow_tuning_history 
+            WHERE user_id = ? AND arrow_id = ?
+        ''' + (' AND bow_setup_id = ?' if bow_setup_id else ''), 
+        params[:2] + ([bow_setup_id] if bow_setup_id else []))
+        
+        history_summary = cursor.fetchone()
+        if history_summary:
+            history_summary = dict(history_summary)
+            history_summary['current_recommendations'] = json.loads(history_summary['current_recommendations']) if history_summary['current_recommendations'] else []
+            history_summary['success_indicators'] = json.loads(history_summary['success_indicators']) if history_summary['success_indicators'] else {}
+        
+        return jsonify({
+            'test_results': test_results,
+            'history_summary': history_summary,
+            'total_results': len(test_results),
+            'filters': {
+                'bow_setup_id': bow_setup_id,
+                'test_type': test_type,
+                'limit': limit
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/api/arrows/<int:arrow_id>/tuning-summary', methods=['GET'])
+@token_required
+def get_arrow_tuning_summary(current_user, arrow_id):
+    """Get tuning progress summary for an arrow"""
+    conn = None
+    try:
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        bow_setup_id = request.args.get('bow_setup_id', type=int)
+        
+        # Get arrow information
+        cursor.execute('SELECT manufacturer, model_name FROM arrows WHERE id = ?', (arrow_id,))
+        arrow = cursor.fetchone()
+        if not arrow:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        # Get summary statistics
+        base_query = '''
+            SELECT 
+                COUNT(*) as total_tests,
+                COUNT(DISTINCT test_type) as test_types_performed,
+                MAX(created_at) as last_test_date,
+                MIN(created_at) as first_test_date,
+                AVG(confidence_score) as avg_confidence,
+                test_type,
+                COUNT(*) as count_by_type
+            FROM tuning_test_results 
+            WHERE user_id = ? AND arrow_id = ?
+        '''
+        
+        params = [current_user['id'], arrow_id]
+        if bow_setup_id:
+            base_query += ' AND bow_setup_id = ?'
+            params.append(bow_setup_id)
+        
+        # Get overall stats
+        cursor.execute(base_query + ' GROUP BY test_type', params)
+        test_type_stats = [dict(row) for row in cursor.fetchall()]
+        
+        # Get recent improvements
+        cursor.execute('''
+            SELECT test_type, confidence_score, created_at, test_number
+            FROM tuning_test_results 
+            WHERE user_id = ? AND arrow_id = ?
+        ''' + (' AND bow_setup_id = ?' if bow_setup_id else '') + '''
+            ORDER BY created_at DESC 
+            LIMIT 10
+        ''', params)
+        
+        recent_tests = [dict(row) for row in cursor.fetchall()]
+        
+        # Calculate improvement trend (if enough data)
+        improvement_trend = 'stable'
+        if len(recent_tests) >= 3:
+            scores = [test['confidence_score'] for test in reversed(recent_tests)]
+            if len(scores) >= 3:
+                recent_avg = sum(scores[-3:]) / 3
+                earlier_avg = sum(scores[:3]) / 3
+                if recent_avg > earlier_avg + 5:
+                    improvement_trend = 'improving'
+                elif recent_avg < earlier_avg - 5:
+                    improvement_trend = 'declining'
+        
+        return jsonify({
+            'arrow': {'id': arrow_id, 'manufacturer': arrow[0], 'model_name': arrow[1]},
+            'test_type_statistics': test_type_stats,
+            'recent_tests': recent_tests,
+            'improvement_trend': improvement_trend,
+            'summary': {
+                'total_tests': sum(stat['count_by_type'] for stat in test_type_stats),
+                'test_types_performed': len(test_type_stats),
+                'average_confidence': sum(stat['avg_confidence'] * stat['count_by_type'] for stat in test_type_stats) / sum(stat['count_by_type'] for stat in test_type_stats) if test_type_stats else 0,
+                'days_active': (datetime.now() - datetime.fromisoformat(recent_tests[-1]['created_at'])).days if recent_tests else 0
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
 @app.route('/api/tuning-history', methods=['POST'])
 @token_required
 def record_tuning_adjustment(current_user):
@@ -6305,6 +6747,119 @@ def get_tuning_history(current_user):
     except Exception as e:
         if conn:
             conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tuning-change-log', methods=['GET'])
+@token_required
+def get_tuning_change_log(current_user):
+    """Get comprehensive tuning test history from change log system"""
+    try:
+        # Get query parameters
+        arrow_id = request.args.get('arrow_id')
+        bow_setup_id = request.args.get('bow_setup_id')
+        test_type = request.args.get('test_type')
+        limit = int(request.args.get('limit', 50))
+        days_back = request.args.get('days_back')
+        
+        if days_back:
+            days_back = int(days_back)
+        
+        # Use the enhanced change log service
+        change_log_service = ChangeLogService()
+        test_history = change_log_service.get_tuning_history(
+            arrow_id=arrow_id,
+            bow_setup_id=bow_setup_id,
+            user_id=current_user['id'],
+            test_type=test_type,
+            limit=limit,
+            days_back=days_back
+        )
+        
+        return jsonify({
+            'test_history': test_history,
+            'count': len(test_history)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting tuning change log: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/equipment-adjustments', methods=['GET'])
+@token_required
+def get_equipment_adjustments(current_user):
+    """Get equipment adjustment history from change log system"""
+    try:
+        # Get query parameters
+        bow_setup_id = request.args.get('bow_setup_id')
+        component = request.args.get('component')
+        limit = int(request.args.get('limit', 50))
+        
+        # Use the enhanced change log service
+        change_log_service = ChangeLogService()
+        adjustment_history = change_log_service.get_adjustment_history(
+            bow_setup_id=bow_setup_id,
+            user_id=current_user['id'],
+            component=component,
+            limit=limit
+        )
+        
+        return jsonify({
+            'adjustments': adjustment_history,
+            'count': len(adjustment_history)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting equipment adjustments: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tuning-adjustment', methods=['POST'])
+@token_required
+def record_tuning_adjustment_enhanced(current_user):
+    """Record a tuning adjustment using the enhanced change log system"""
+    try:
+        data = request.get_json()
+        
+        required_fields = ['bow_setup_id', 'component', 'adjustment_type']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'{field} is required'}), 400
+        
+        # Verify bow setup belongs to user
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?', 
+                      (data['bow_setup_id'], current_user['id']))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Bow setup not found or access denied'}), 404
+        
+        conn.close()
+        
+        # Use the enhanced change log service
+        change_log_service = ChangeLogService()
+        adjustment_id = change_log_service.log_tuning_adjustment(
+            user_id=current_user['id'],
+            bow_setup_id=data['bow_setup_id'],
+            component=data['component'],
+            adjustment_type=data['adjustment_type'],
+            old_value=data.get('old_value'),
+            new_value=data.get('new_value'),
+            reason=data.get('reason'),
+            test_result_id=data.get('test_result_id')
+        )
+        
+        return jsonify({
+            'message': 'Tuning adjustment recorded successfully',
+            'adjustment_id': adjustment_id
+        })
+        
+    except Exception as e:
+        print(f"❌ Error recording tuning adjustment: {e}")
         return jsonify({'error': str(e)}), 500
 
 # Configuration and setup

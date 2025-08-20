@@ -263,6 +263,121 @@
           </div>
         </div>
 
+        <!-- Interactive Tuning Guides Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('tuning')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{ 'bg-indigo-50 dark:bg-indigo-900/20': expandedSections.tuning }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex-shrink-0">
+                <i class="fas fa-crosshairs text-indigo-600 dark:text-indigo-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Interactive Tuning Guides</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Test this arrow setup with advanced tuning interfaces</p>
+              </div>
+            </div>
+            <i 
+              :class="expandedSections.tuning ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.tuning" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <!-- Guide Selection -->
+            <div v-if="!activeTuningSession" class="space-y-4">
+              <p class="text-gray-600 dark:text-gray-300 text-sm">
+                Start an interactive tuning session to test this specific arrow setup. 
+                All test results are permanently stored and can be reviewed in your tuning history.
+              </p>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Paper Tuning -->
+                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer"
+                     @click="startTuningGuide('paper_tuning')">
+                  <div class="flex items-center mb-2">
+                    <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <i class="fas fa-newspaper text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="font-medium text-gray-900 dark:text-gray-100">Paper Tuning</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Beginner • 10-15 min</p>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Use a paper test to check arrow flight and tune your bow setup.
+                  </p>
+                </div>
+                
+                <!-- Bareshaft Tuning -->
+                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer"
+                     @click="startTuningGuide('bareshaft_tuning')">
+                  <div class="flex items-center mb-2">
+                    <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <i class="fas fa-crosshairs text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="font-medium text-gray-900 dark:text-gray-100">Bareshaft Tuning</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Intermediate • 15-20 min</p>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Compare fletched and bare arrow impacts to fine-tune spine match.
+                  </p>
+                </div>
+                
+                <!-- Walkback Tuning -->
+                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer"
+                     @click="startTuningGuide('walkback_tuning')">
+                  <div class="flex items-center mb-2">
+                    <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                      <i class="fas fa-ruler text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="font-medium text-gray-900 dark:text-gray-100">Walkback Tuning</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Advanced • 20-30 min</p>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Test arrow flight consistency across multiple distances.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Active Session Interface -->
+            <div v-if="activeTuningSession" class="space-y-4">
+              <!-- Paper Tuning Interface -->
+              <PaperTuningInterface 
+                v-if="activeTuningSession.guide_type === 'paper_tuning'"
+                :session-data="activeTuningSession"
+                @test-recorded="onTuningTestRecorded"
+                @cancel="exitTuningSession"
+              />
+              
+              <!-- Bareshaft Tuning Interface -->
+              <BareshaftTuningInterface 
+                v-if="activeTuningSession.guide_type === 'bareshaft_tuning'"
+                :session-data="activeTuningSession"
+                @test-recorded="onTuningTestRecorded"
+                @cancel="exitTuningSession"
+              />
+              
+              <!-- Walkback Tuning Interface -->
+              <WalkbackTuningInterface 
+                v-if="activeTuningSession.guide_type === 'walkback_tuning'"
+                :session-data="activeTuningSession"
+                @test-recorded="onTuningTestRecorded"
+                @cancel="exitTuningSession"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Quick Actions Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <!-- Section Header -->
@@ -379,6 +494,9 @@ import BowSetupContext from '~/components/BowSetupContext.vue'
 import ChronographDataEntry from '~/components/ChronographDataEntry.vue'
 import ConfirmationModal from '~/components/ConfirmationModal.vue'
 import NotificationToast from '~/components/NotificationToast.vue'
+import PaperTuningInterface from '~/components/PaperTuningInterface.vue'
+import BareshaftTuningInterface from '~/components/BareshaftTuningInterface.vue'
+import WalkbackTuningInterface from '~/components/WalkbackTuningInterface.vue'
 
 // Meta information
 definePageMeta({
@@ -403,8 +521,12 @@ const expandedSections = ref({
   config: true,        // Configuration always starts expanded 
   performance: false,  // Performance collapsed by default
   info: false,        // Info collapsed by default  
+  tuning: false,      // Tuning guides collapsed by default
   actions: false      // Actions collapsed by default
 })
+
+// Tuning session state
+const activeTuningSession = ref(null)
 
 // Modal state
 const showConfirmModal = ref(false)
@@ -688,6 +810,68 @@ const showNotification = (message, type = 'success') => {
 
 const hideNotification = () => {
   notification.value.show = false
+}
+
+// Tuning session methods
+const startTuningGuide = async (guideType) => {
+  try {
+    if (!setupArrowData.value) {
+      console.error('No setup arrow data available')
+      return
+    }
+    
+    showNotification('Starting tuning session...', 'info')
+    
+    // Create session in database via API
+    const sessionData = {
+      guide_type: guideType,
+      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      arrow_length: setupArrowData.value.setup_arrow.arrow_length,
+      point_weight: setupArrowData.value.setup_arrow.point_weight,
+      bow_setup_id: setupArrowData.value.bow_setup.id,
+      settings: {
+        record_environment: true,
+        auto_calculate: true
+      }
+    }
+    
+    const session = await api.post('/tuning-guides/sessions', sessionData)
+    
+    // Create local session object with API response data
+    activeTuningSession.value = {
+      session_id: session.session_id,
+      guide_type: guideType,
+      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      arrow: setupArrowData.value.arrow,
+      arrow_length: setupArrowData.value.setup_arrow.arrow_length,
+      point_weight: setupArrowData.value.setup_arrow.point_weight,
+      bow_setup: setupArrowData.value.bow_setup,
+      settings: sessionData.settings,
+      // Include session metadata from API
+      ...session
+    }
+    
+    // Expand the tuning section if not already expanded
+    if (!expandedSections.value.tuning) {
+      expandedSections.value.tuning = true
+    }
+    
+    console.log('Started tuning session for setup arrow:', activeTuningSession.value)
+    showNotification(`${guideType.replace('_', ' ')} session started`, 'success')
+  } catch (error) {
+    console.error('Error starting tuning guide:', error)
+    showNotification('Failed to start tuning session', 'error')
+  }
+}
+
+const onTuningTestRecorded = (testResult) => {
+  console.log('Tuning test recorded for setup arrow:', testResult)
+  showNotification('Test result recorded successfully', 'success')
+  // Test results are automatically saved by the individual interface components
+}
+
+const exitTuningSession = () => {
+  activeTuningSession.value = null
 }
 
 // Enhanced accordion interaction with smooth animations
