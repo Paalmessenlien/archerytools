@@ -126,19 +126,70 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <i class="fas fa-cogs text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Equipment Added</h3>
-      <p class="text-gray-500 dark:text-gray-400 mb-6">Add equipment to track your bow's complete setup.</p>
-      <CustomButton
-        @click="openEquipmentSelector"
-        variant="outlined"
-        class="text-green-600 border-green-600 hover:bg-green-50 dark:text-green-400 dark:border-green-400"
-      >
-        <i class="fas fa-plus mr-2"></i>
-        Add Your First Equipment
-      </CustomButton>
+    <!-- Enhanced Mobile-Optimized Empty State -->
+    <div v-else class="empty-state-container bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-12">
+      <!-- Mobile-first layout with enhanced visual hierarchy -->
+      <div class="text-center max-w-sm mx-auto">
+        <!-- Enhanced Icon Design -->
+        <div class="mb-6 sm:mb-8">
+          <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 rounded-full flex items-center justify-center">
+            <i class="fas fa-cogs text-3xl sm:text-4xl text-green-600 dark:text-green-400"></i>
+          </div>
+          
+          <!-- Contextual Equipment Icons -->
+          <div class="flex justify-center space-x-3 opacity-50">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <i class="fas fa-bullseye text-blue-500 text-sm"></i>
+            </div>
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <i class="fas fa-balance-scale text-purple-500 text-sm"></i>
+            </div>
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-up text-orange-500 text-sm"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Enhanced Content with Mobile-first Typography -->
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Ready to Track Your Equipment?</h3>
+        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6 sm:mb-8 leading-relaxed">
+          Add your bow accessories like sights, stabilizers, and rests to get the complete picture of your setup.
+        </p>
+        
+        <!-- Enhanced Mobile-First CTA Section -->
+        <div class="space-y-3 sm:space-y-4">
+          <!-- Primary CTA - Enhanced Touch Target -->
+          <button
+            @click="openEquipmentSelector"
+            class="primary-cta-button w-full flex items-center justify-center p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-green-600 border-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-600 dark:hover:bg-green-700"
+          >
+            <div class="flex items-center">
+              <div class="w-6 h-6 sm:w-7 sm:h-7 mr-3 flex items-center justify-center rounded-full bg-green-500 flex-shrink-0">
+                <i class="fas fa-plus text-white text-sm"></i>
+              </div>
+              <span class="font-semibold text-lg">Add Your First Equipment</span>
+            </div>
+          </button>
+          
+          <!-- Secondary Information - Mobile Optimized -->
+          <div class="text-center pt-2">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              Popular equipment to track:
+            </p>
+            <div class="flex flex-wrap justify-center gap-2 text-xs">
+              <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+                <i class="fas fa-bullseye mr-1.5 text-blue-500"></i>Sight
+              </span>
+              <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+                <i class="fas fa-balance-scale mr-1.5 text-purple-500"></i>Stabilizer
+              </span>
+              <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+                <i class="fas fa-arrow-up mr-1.5 text-orange-500"></i>Rest
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
 

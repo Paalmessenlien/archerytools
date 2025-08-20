@@ -113,20 +113,55 @@
         </div>
       </div>
 
-      <!-- Main Content Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        <!-- Left Column: Arrow Configuration -->
-        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-          <!-- Arrow Setup Configuration -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                <i class="fas fa-cog mr-3 text-blue-600"></i>
+      <!-- Mobile-First Tabbed Content Interface -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+        <!-- Mobile-Optimized Tab Navigation -->
+        <div class="border-b border-gray-200 dark:border-gray-700">
+          <nav class="tab-navigation flex overflow-x-auto sm:space-x-8 sm:px-6" aria-label="Arrow Details Tabs">
+            <!-- Mobile: Equal width tabs, Desktop: Auto width -->
+            <div class="flex w-full sm:contents">
+              <button
+                v-for="tab in contentTabs"
+                :key="tab.id"
+                @click="handleTabClick(tab.id)"
+                @touchstart="handleTouchStart"
+                @touchend="handleTouchEnd"
+                :class="[
+                  'py-4 px-4 sm:px-1 min-h-[48px] border-b-2 font-medium text-sm transition-all duration-200 touch-manipulation',
+                  'flex items-center justify-center flex-1 sm:flex-initial',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                  activeContentTab === tab.id
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                ]"
+              >
+                <!-- Mobile: Show icon + short name, Desktop: Show full name -->
+                <span class="flex items-center">
+                  <i :class="tab.icon" class="mr-1 sm:mr-2"></i>
+                  <!-- Short names on mobile, full names on desktop -->
+                  <span class="hidden sm:inline">{{ tab.name }}</span>
+                  <span class="sm:hidden">{{ tab.shortName || tab.name }}</span>
+                </span>
+              </button>
+            </div>
+          </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-4 sm:p-6">
+          <!-- Configuration Tab -->
+          <div v-if="activeContentTab === 'config'" class="space-y-4 sm:space-y-6">
+            <!-- Mobile Configuration Header -->
+            <div class="config-header mb-4 sm:mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Arrow Configuration
-              </h2>
-              <div v-if="hasUnsavedChanges" class="flex items-center text-amber-600 dark:text-amber-400 text-sm">
-                <i class="fas fa-exclamation-circle mr-1"></i>
-                Unsaved changes
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                View and edit your arrow specifications
+              </p>
+              <div v-if="hasUnsavedChanges" class="flex items-center text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                You have unsaved changes
               </div>
             </div>
             
@@ -151,95 +186,129 @@
             />
           </div>
 
-          <!-- Performance Analysis -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <!-- Performance Tab -->
+          <div v-if="activeContentTab === 'performance'" class="space-y-4 sm:space-y-6">
+            <!-- Mobile Performance Header -->
+            <div class="performance-header mb-4 sm:mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Performance Analysis
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Detailed arrow performance metrics and analysis
+              </p>
+            </div>
+
             <ArrowPerformanceAnalysis
               :setup-arrow="setupArrowData.setup_arrow"
               :bow-config="setupArrowData.bow_setup"
               :arrow="setupArrowData.arrow"
               @performance-updated="handlePerformanceUpdate"
             />
+
+            <!-- Chronograph Data in Performance Tab -->
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <ChronographDataEntry
+                :bow-setup-id="setupArrowData.bow_setup.id"
+                :current-setup-arrow="setupArrowData.setup_arrow"
+                :current-arrow="setupArrowData.arrow"
+                @data-updated="handleChronographDataUpdate"
+                @speed-calculated="handleSpeedCalculated"
+              />
+            </div>
           </div>
 
-          <!-- Chronograph Data -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <ChronographDataEntry
-              :bow-setup-id="setupArrowData.bow_setup.id"
-              :current-setup-arrow="setupArrowData.setup_arrow"
-              :current-arrow="setupArrowData.arrow"
-              @data-updated="handleChronographDataUpdate"
-              @speed-calculated="handleSpeedCalculated"
-            />
-          </div>
-        </div>
+          <!-- Arrow Info Tab -->
+          <div v-if="activeContentTab === 'info'" class="space-y-4 sm:space-y-6">
+            <!-- Mobile Arrow Info Header -->
+            <div class="info-header mb-4 sm:mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Arrow Information
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Manufacturer specifications and database information
+              </p>
+            </div>
 
-        <!-- Right Column: Arrow Information -->
-        <div class="space-y-4 sm:space-y-6">
-          <!-- Arrow Database Information -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              <i class="fas fa-database mr-2 text-green-600"></i>
-              Arrow Information
-            </h3>
-            
             <ArrowDatabaseInfo
               :arrow="setupArrowData.arrow"
               :spine-specifications="setupArrowData.spine_specifications"
             />
+
+            <!-- Bow Setup Context in Info Tab -->
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                <i class="fas fa-crosshairs mr-2 text-orange-600"></i>
+                Bow Setup Context
+              </h4>
+              
+              <BowSetupContext
+                :bow-setup="setupArrowData.bow_setup"
+                @edit-bow="navigateToBowSetup"
+              />
+            </div>
           </div>
 
-          <!-- Setup Context -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              <i class="fas fa-crosshairs mr-2 text-orange-600"></i>
-              Bow Setup Context
-            </h3>
+          <!-- Actions Tab -->
+          <div v-if="activeContentTab === 'actions'" class="space-y-4 sm:space-y-6">
+            <!-- Mobile Actions Header -->
+            <div class="actions-header mb-4 sm:mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Quick Actions
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Manage your arrow setup with these convenient actions
+              </p>
+            </div>
             
-            <BowSetupContext
-              :bow-setup="setupArrowData.bow_setup"
-              @edit-bow="navigateToBowSetup"
-            />
-          </div>
-
-          <!-- Quick Actions -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              <i class="fas fa-bolt mr-2 text-yellow-600"></i>
-              Quick Actions
-            </h3>
-            
-            <div class="space-y-3">
+            <!-- Mobile-Optimized Actions Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 @click="calculatePerformance"
                 :disabled="calculatingPerformance"
-                class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-green-50 border-green-200 text-green-700 hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/30 disabled:opacity-50"
               >
-                <i :class="calculatingPerformance ? 'fas fa-spinner fa-spin' : 'fas fa-calculator'" class="mr-2"></i>
-                {{ calculatingPerformance ? 'Calculating...' : 'Recalculate Performance' }}
+                <div class="flex items-center">
+                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-green-200 dark:bg-green-800 flex-shrink-0">
+                    <i :class="calculatingPerformance ? 'fas fa-spinner fa-spin' : 'fas fa-calculator'" class="text-green-700 dark:text-green-300 text-sm"></i>
+                  </div>
+                  <span class="font-medium">{{ calculatingPerformance ? 'Calculating...' : 'Recalculate Performance' }}</span>
+                </div>
               </button>
               
               <button
                 @click="viewInDatabase"
-                class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
               >
-                <i class="fas fa-external-link-alt mr-2"></i>
-                View in Database
+                <div class="flex items-center">
+                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-blue-200 dark:bg-blue-800 flex-shrink-0">
+                    <i class="fas fa-external-link-alt text-blue-700 dark:text-blue-300 text-sm"></i>
+                  </div>
+                  <span class="font-medium">View in Database</span>
+                </div>
               </button>
               
               <button
                 @click="addToCalculator"
-                class="w-full inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-900/20 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
               >
-                <i class="fas fa-plus mr-2"></i>
-                Add to Calculator
+                <div class="flex items-center">
+                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-indigo-200 dark:bg-indigo-800 flex-shrink-0">
+                    <i class="fas fa-plus text-indigo-700 dark:text-indigo-300 text-sm"></i>
+                  </div>
+                  <span class="font-medium">Add to Calculator</span>
+                </div>
               </button>
               
               <button
                 @click="removeArrow"
-                class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-red-50 border-red-200 text-red-700 hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
               >
-                <i class="fas fa-trash mr-2"></i>
-                Remove from Setup
+                <div class="flex items-center">
+                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-red-200 dark:bg-red-800 flex-shrink-0">
+                    <i class="fas fa-trash text-red-700 dark:text-red-300 text-sm"></i>
+                  </div>
+                  <span class="font-medium">Remove from Setup</span>
+                </div>
               </button>
             </div>
           </div>
@@ -301,6 +370,7 @@ const error = ref('')
 const editMode = ref(false)
 const hasUnsavedChanges = ref(false)
 const calculatingPerformance = ref(false)
+const activeContentTab = ref('config') // Default to configuration tab
 
 // Modal state
 const showConfirmModal = ref(false)
@@ -321,6 +391,34 @@ const notification = ref({
 
 // Computed
 const setupArrowId = computed(() => route.params.id)
+
+// Tab configuration with mobile-friendly names
+const contentTabs = computed(() => [
+  {
+    id: 'config',
+    name: 'Configuration',
+    shortName: 'Config',
+    icon: 'fas fa-cog'
+  },
+  {
+    id: 'performance', 
+    name: 'Performance',
+    shortName: 'Performance',
+    icon: 'fas fa-tachometer-alt'
+  },
+  {
+    id: 'info',
+    name: 'Arrow Information',
+    shortName: 'Info', 
+    icon: 'fas fa-info-circle'
+  },
+  {
+    id: 'actions',
+    name: 'Quick Actions',
+    shortName: 'Actions',
+    icon: 'fas fa-bolt'
+  }
+])
 
 // Methods
 const loadSetupArrowDetails = async () => {
@@ -580,6 +678,29 @@ const hideNotification = () => {
   notification.value.show = false
 }
 
+// Enhanced tab interaction methods
+const handleTabClick = (tabId) => {
+  console.log('Content tab clicked:', tabId)
+  activeContentTab.value = tabId
+}
+
+const handleTouchStart = (event) => {
+  // Add visual feedback on touch start
+  event.target.style.opacity = '0.8'
+}
+
+const handleTouchEnd = (event) => {
+  // Remove visual feedback on touch end
+  event.target.style.opacity = '1'
+  
+  // Ensure click event fires
+  setTimeout(() => {
+    if (event.target.closest('button')) {
+      event.target.closest('button').click()
+    }
+  }, 10)
+}
+
 // Lifecycle
 onMounted(() => {
   if (setupArrowId.value) {
@@ -608,3 +729,84 @@ onBeforeRouteLeave((to, from, next) => {
   }
 })
 </script>
+
+<style scoped>
+/* Enhanced tab navigation styling */
+.tab-navigation {
+  /* Hide scrollbar on mobile while maintaining scroll functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+/* Enhanced touch interaction for mobile */
+@media (max-width: 640px) {
+  .tab-navigation button {
+    /* Ensure minimum touch target size */
+    min-width: 60px;
+  }
+  
+  /* Add ripple effect simulation on touch */
+  .tab-navigation button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Smooth transitions for tab switching */
+.tab-navigation button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced focus states for accessibility */
+.tab-navigation button:focus-visible {
+  outline: 2px solid rgb(59 130 246);
+  outline-offset: 2px;
+}
+
+/* Mobile content optimization */
+@media (max-width: 640px) {
+  /* Mobile header sections */
+  .config-header,
+  .performance-header,
+  .info-header,
+  .actions-header {
+    background: rgb(249 250 251);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .dark .config-header,
+  .dark .performance-header,
+  .dark .info-header,
+  .dark .actions-header {
+    background: rgb(31 41 55);
+    border: 1px solid rgb(55 65 81);
+  }
+  
+  /* Enhanced mobile action buttons */
+  .mobile-action-button {
+    text-align: left;
+  }
+  
+  .mobile-action-button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 641px) {
+  .mobile-action-button {
+    text-align: center;
+  }
+  
+  .mobile-action-button .flex {
+    justify-content: center;
+  }
+}
+</style>

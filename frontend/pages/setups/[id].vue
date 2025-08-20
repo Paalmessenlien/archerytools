@@ -89,9 +89,9 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <!-- Overview Tab -->
-          <div v-if="activeTab === 'overview'" class="space-y-6">
+          <div v-if="activeTab === 'overview'" class="space-y-4 sm:space-y-6">
             <BowSetupOverview 
               :setup="setup" 
               :statistics="statistics" 
@@ -100,7 +100,15 @@
           </div>
 
           <!-- Arrows Tab -->
-          <div v-if="activeTab === 'arrows'" class="space-y-6">
+          <div v-if="activeTab === 'arrows'" class="space-y-4 sm:space-y-6">
+            <div class="mobile-arrows-header">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                My Arrows ({{ statistics.arrow_count || 0 }})
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Manage your arrow configurations and performance data
+              </p>
+            </div>
             <BowSetupArrowsList 
               ref="arrowsList"
               :bowSetup="setup" 
@@ -114,7 +122,15 @@
           </div>
 
           <!-- Equipment Tab -->
-          <div v-if="activeTab === 'equipment'" class="space-y-6">
+          <div v-if="activeTab === 'equipment'" class="space-y-4 sm:space-y-6">
+            <div class="mobile-equipment-header">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Equipment Setup
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Track your bow accessories and components
+              </p>
+            </div>
             <BowEquipmentManager 
               :bow-setup="setup"
               @equipment-updated="loadSetup"
@@ -123,7 +139,15 @@
           </div>
 
           <!-- Change History Tab -->
-          <div v-if="activeTab === 'history'" class="space-y-6">
+          <div v-if="activeTab === 'history'" class="space-y-4 sm:space-y-6">
+            <div class="mobile-history-header">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Setup History ({{ statistics.total_changes || 0 }})
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Track all changes made to your bow setup
+              </p>
+            </div>
             <EnhancedChangeLogViewer
               ref="changeLogComponent"
               :bow-setup-id="setup.id"
@@ -133,7 +157,15 @@
           </div>
 
           <!-- Settings Tab -->
-          <div v-if="activeTab === 'settings'" class="space-y-6">
+          <div v-if="activeTab === 'settings'" class="space-y-4 sm:space-y-6">
+            <div class="mobile-settings-header">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Setup Configuration
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Modify your bow specifications and settings
+              </p>
+            </div>
             <BowSetupSettings 
               :setup="setup"
               @setup-updated="loadSetup"
@@ -518,5 +550,37 @@ onMounted(() => {
 .tab-navigation button:focus-visible {
   outline: 2px solid rgb(59 130 246);
   outline-offset: 2px;
+}
+
+/* Mobile content optimization */
+@media (max-width: 640px) {
+  /* Mobile header sections */
+  .mobile-arrows-header,
+  .mobile-equipment-header,
+  .mobile-history-header,
+  .mobile-settings-header {
+    background: rgb(249 250 251);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .dark .mobile-arrows-header,
+  .dark .mobile-equipment-header,
+  .dark .mobile-history-header,
+  .dark .mobile-settings-header {
+    background: rgb(31 41 55);
+    border: 1px solid rgb(55 65 81);
+  }
+  
+  /* Reduce excessive spacing on mobile */
+  .space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Mobile-optimized card spacing */
+  .space-y-4 {
+    gap: 1rem;
+  }
 }
 </style>
