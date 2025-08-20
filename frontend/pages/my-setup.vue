@@ -227,19 +227,11 @@
                         <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                           {{ setup.name }}
                         </h4>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center">
                           <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
                             <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
                             {{ formatBowType(setup.bow_type) }}
                           </span>
-                          <CustomButton
-                            @click.stop="navigateToCalculatorWithSetup(setup.id)"
-                            variant="filled"
-                            size="small"
-                            class="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-                          >
-                            Calculate
-                          </CustomButton>
                         </div>
                       </div>
                       
