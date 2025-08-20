@@ -92,28 +92,32 @@
               </span>
             </div>
             
-            <!-- Arrow Specifications as Vertical List -->
-            <div class="mb-3 space-y-2">
-              <!-- Primary Specifications -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                <div class="flex items-center space-x-2">
+            <!-- Arrow Specifications - Simplified for mobile -->
+            <div class="mb-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                <!-- Mobile: Single column with essential specs -->
+                <div class="sm:hidden space-y-1">
+                  <div class="text-gray-700 dark:text-gray-300">
+                    Spine: <span class="font-medium text-gray-900 dark:text-gray-100">{{ getDisplaySpine(arrowSetup) }}</span> • 
+                    Length: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow_length }}"</span> • 
+                    Point: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.point_weight }} gr</span>
+                  </div>
+                </div>
+                
+                <!-- Desktop: Multi-column with icons -->
+                <div class="hidden sm:flex items-center space-x-2">
                   <i class="fas fa-ruler-horizontal text-indigo-600 dark:text-indigo-400"></i>
                   <span class="text-gray-700 dark:text-gray-300">Spine: <span class="font-medium text-gray-900 dark:text-gray-100">{{ getDisplaySpine(arrowSetup) }}</span></span>
                 </div>
                 
-                <div class="flex items-center space-x-2">
+                <div class="hidden sm:flex items-center space-x-2">
                   <i class="fas fa-arrows-alt-h text-green-600 dark:text-green-400"></i>
                   <span class="text-gray-700 dark:text-gray-300">Length: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow_length }}"</span></span>
                 </div>
                 
-                <div class="flex items-center space-x-2">
+                <div class="hidden sm:flex items-center space-x-2">
                   <i class="fas fa-bullseye text-red-600 dark:text-red-400"></i>
                   <span class="text-gray-700 dark:text-gray-300">Point: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.point_weight }} gr</span></span>
-                </div>
-                
-                <div class="flex items-center space-x-2 col-span-2 sm:col-span-1">
-                  <i class="fas fa-layer-group text-amber-600 dark:text-amber-400"></i>
-                  <span class="text-gray-700 dark:text-gray-300">Material: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.arrow?.material || 'Unknown Material' }}</span></span>
                 </div>
                 
                 <!-- Orphaned Arrow Warning -->
@@ -128,166 +132,20 @@
                 </div>
               </div>
               
-              <!-- Component Weights (when available) -->
-              <div v-if="arrowSetup.nock_weight || (arrowSetup.insert_weight && arrowSetup.insert_weight > 0) || (arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0)" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div v-if="arrowSetup.nock_weight" class="flex items-center space-x-2">
-                  <i class="fas fa-circle text-purple-600 dark:text-purple-400"></i>
-                  <span class="text-gray-700 dark:text-gray-300">Nock: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.nock_weight }} gr</span></span>
-                </div>
-                
-                <div v-if="arrowSetup.insert_weight && arrowSetup.insert_weight > 0" class="flex items-center space-x-2">
-                  <i class="fas fa-circle-dot text-orange-600 dark:text-orange-400"></i>
-                  <span class="text-gray-700 dark:text-gray-300">Insert: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.insert_weight }} gr</span></span>
-                </div>
-                
-                <div v-if="arrowSetup.bushing_weight && arrowSetup.bushing_weight > 0" class="flex items-center space-x-2">
-                  <i class="fas fa-ring text-green-600 dark:text-green-400"></i>
-                  <span class="text-gray-700 dark:text-gray-300">Bushing: <span class="font-medium text-gray-900 dark:text-gray-100">{{ arrowSetup.bushing_weight }} gr</span></span>
-                </div>
-              </div>
-              
-              <!-- Weight Totals -->
-              <div v-if="calculateTotalComponentWeight(arrowSetup) || calculateTotalArrowWeight(arrowSetup)" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div v-if="calculateTotalComponentWeight(arrowSetup)" class="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded">
-                  <i class="fas fa-weight-hanging text-blue-600 dark:text-blue-400"></i>
-                  <span class="text-blue-800 dark:text-blue-200">Components: <span class="font-medium">{{ calculateTotalComponentWeight(arrowSetup) }} gr</span></span>
-                </div>
-                
-                <div v-if="calculateTotalArrowWeight(arrowSetup)" class="flex items-center space-x-2 bg-purple-50 dark:bg-purple-900/30 px-3 py-1 rounded">
+              <!-- Essential Weight Info Only -->
+              <div v-if="calculateTotalArrowWeight(arrowSetup)" class="text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-2 bg-purple-50 dark:bg-purple-900/30 px-3 py-1 rounded">
                   <i class="fas fa-balance-scale text-purple-600 dark:text-purple-400"></i>
-                  <span class="text-purple-800 dark:text-purple-200">Total Arrow: <span class="font-medium">{{ calculateTotalArrowWeight(arrowSetup) }} gr</span></span>
+                  <span class="text-purple-800 dark:text-purple-200">Total Weight: <span class="font-medium">{{ calculateTotalArrowWeight(arrowSetup) }} gr</span></span>
                 </div>
               </div>
               
-              <!-- Performance Analysis Section -->
-              <div v-if="true" class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 mt-2">
-                <!-- Performance Header -->
-                <div class="flex items-center justify-between mb-3">
-                  <h5 class="text-sm font-semibold text-green-800 dark:text-green-200 uppercase tracking-wide">
-                    <i class="fas fa-chart-line mr-2"></i>
-                    Performance Analysis
-                  </h5>
-                  <div class="flex items-center space-x-2">
-                    <!-- Overall Score -->
-                    <div v-if="arrowSetup.performance?.performance_summary" class="flex items-center space-x-1">
-                      <span :class="getPerformanceScoreClass(arrowSetup.performance.performance_summary)" class="text-xl font-bold">
-                        {{ getPerformanceScore(arrowSetup.performance.performance_summary) }}/100
-                      </span>
-                      <PerformanceTooltip 
-                        :title="'Overall Performance Score'"
-                        :content="'Composite score based on speed, kinetic energy, FOC, and arrow efficiency. Higher scores (80+) indicate excellent performance for hunting and target shooting.'"
-                      />
-                    </div>
-                    <!-- Calculate Performance Button -->
-                    <CustomButton
-                      v-if="!arrowSetup.performance?.performance_summary && canCalculatePerformance(arrowSetup)"
-                      @click="calculatePerformance(arrowSetup)"
-                      :disabled="calculatingPerformance === arrowSetup.id"
-                      variant="filled"
-                      size="small"
-                      class="bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 whitespace-nowrap"
-                    >
-                      <i v-if="calculatingPerformance === arrowSetup.id" class="fas fa-spinner fa-spin mr-1"></i>
-                      <i v-else class="fas fa-calculator mr-1"></i>
-                      <span class="text-xs">Calculate Performance</span>
-                    </CustomButton>
-                    <!-- Recalculate Button -->
-                    <CustomButton
-                      v-if="arrowSetup.performance?.performance_summary"
-                      @click="calculatePerformance(arrowSetup)"
-                      :disabled="calculatingPerformance === arrowSetup.id"
-                      variant="outlined"
-                      size="small"
-                      class="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-400 whitespace-nowrap"
-                    >
-                      <i v-if="calculatingPerformance === arrowSetup.id" class="fas fa-spinner fa-spin mr-1"></i>
-                      <i v-else class="fas fa-sync-alt mr-1"></i>
-                      <span class="text-xs hidden sm:inline">Recalculate</span>
-                    </CustomButton>
-                  </div>
-                </div>
-                
-                <!-- Performance Metrics Display -->
-                <div v-if="arrowSetup.performance?.performance_summary" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <!-- Speed -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
-                    <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
-                      {{ formatSpeedValue(arrowSetup.performance.performance_summary.estimated_speed_fps) }}
-                    </div>
-                    <div class="flex items-center justify-center space-x-1">
-                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Speed</span>
-                      <PerformanceTooltip 
-                        :title="'Arrow Speed'"
-                        :content="'Estimated arrow velocity in feet per second. Faster arrows have flatter trajectory and less wind drift. Typical hunting speeds: 250-350 fps.'"
-                      />
-                    </div>
-                  </div>
-                  
-                  <!-- Kinetic Energy -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
-                    <div class="text-lg font-bold text-green-600 dark:text-green-400">
-                      {{ formatKineticEnergy(arrowSetup.performance.performance_summary.kinetic_energy_40yd) }}
-                    </div>
-                    <div class="flex items-center justify-center space-x-1">
-                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">KE @40yd</span>
-                      <PerformanceTooltip 
-                        :title="'Kinetic Energy at 40 Yards'"
-                        :content="'Energy remaining after 40 yards of flight. Determines penetration power. Standards: 25+ ft·lbs (small game), 40+ ft·lbs (deer), 65+ ft·lbs (elk).'"
-                      />
-                    </div>
-                  </div>
-                  
-                  <!-- FOC -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
-                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
-                      {{ formatFocPercentage(arrowSetup.performance.performance_summary.foc_percentage) }}
-                    </div>
-                    <div class="flex items-center justify-center space-x-1">
-                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">FOC</span>
-                      <PerformanceTooltip 
-                        :title="'Front of Center (FOC)'"
-                        :content="'How much weight is forward of the arrow center. Higher FOC improves stability and penetration. Recommended: 10-15% (target), 15-20% (hunting).'"
-                      />
-                    </div>
-                  </div>
-                  
-                  <!-- Penetration -->
-                  <div class="text-center bg-white dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700 relative">
-                    <div :class="getPenetrationClass(arrowSetup.performance.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
-                      {{ arrowSetup.performance.performance_summary.penetration_category }}
-                    </div>
-                    <div class="flex items-center justify-center space-x-1">
-                      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Penetration</span>
-                      <PerformanceTooltip 
-                        :title="'Penetration Rating'"
-                        :content="'Overall penetration capability based on kinetic energy and arrow design. Categories: poor, fair, good, excellent. Higher ratings indicate better ability to penetrate through bone and tissue.'"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Performance Summary Message -->
-                <div v-if="!arrowSetup.performance?.performance_summary && canCalculatePerformance(arrowSetup)" class="text-center py-4">
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Calculate performance metrics or view arrow details for complete analysis
-                  </p>
-                </div>
-                
-                <!-- Cannot Calculate Message -->
-                <div v-else class="text-center py-4">
-                  <p class="text-xs text-gray-500 dark:text-gray-500">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                    Performance calculation requires complete bow setup data
-                  </p>
-                </div>
-              </div>
             </div>
             
-            <!-- Match Score & Notes -->
+            <!-- Action Bar -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div class="flex items-center space-x-3">
-                <!-- Compatibility Score -->
+              <!-- Desktop: Show compatibility score and date -->
+              <div class="hidden sm:flex items-center space-x-3">
                 <div v-if="arrowSetup.compatibility_score" class="flex items-center">
                   <span class="text-xs px-2 py-1 rounded-full" 
                         :class="getCompatibilityClass(arrowSetup.compatibility_score)">
@@ -295,7 +153,6 @@
                   </span>
                 </div>
                 
-                <!-- Date Added -->
                 <span class="text-xs text-gray-500 dark:text-gray-400">
                   <i class="fas fa-clock mr-1"></i>
                   {{ formatDate(arrowSetup.created_at) }}
@@ -303,70 +160,34 @@
               </div>
               
               <!-- Actions -->
-              <div class="flex space-x-1 sm:space-x-2 overflow-x-auto">
-                <!-- For orphaned arrows, emphasize the delete button and disable others -->
+              <div class="flex space-x-2">
+                <!-- For orphaned arrows, only show delete -->
                 <template v-if="!arrowSetup.arrow">
-                  <CustomButton
+                  <button
                     @click="removeArrow(arrowSetup.id)"
-                    variant="filled"
-                    size="small"
-                    class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 whitespace-nowrap"
+                    class="px-3 py-1 text-sm bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 rounded-md transition-colors whitespace-nowrap"
                   >
-                    <i class="fas fa-trash mr-1"></i>
-                    <span class="hidden sm:inline">Delete Orphaned</span>
-                  </CustomButton>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 self-center px-2">
-                    Other actions disabled for orphaned arrows
-                  </span>
+                    <i class="fas fa-trash mr-1 sm:hidden"></i>
+                    <span>Remove</span>
+                  </button>
                 </template>
                 
-                <!-- For normal arrows, show all actions -->
+                <!-- For normal arrows, show only Setup Details and Remove -->
                 <template v-else>
-                  <CustomButton
-                    @click="editArrow(arrowSetup)"
-                    variant="outlined"
-                    size="small"
-                    class="text-orange-600 border-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-400 whitespace-nowrap"
-                  >
-                    <i class="fas fa-edit mr-1"></i>
-                    <span class="hidden sm:inline">Edit</span>
-                  </CustomButton>
-                  <CustomButton
-                    @click="duplicateArrow(arrowSetup)"
-                    variant="outlined"
-                    size="small"
-                    class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 whitespace-nowrap"
-                  >
-                    <i class="fas fa-copy mr-1"></i>
-                    <span class="hidden sm:inline">Duplicate</span>
-                  </CustomButton>
-                  <CustomButton
+                  <button
                     @click="viewArrowSetupDetails(arrowSetup.id)"
-                    variant="filled"
-                    size="small"
-                    class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap"
+                    class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-md transition-colors whitespace-nowrap"
                   >
-                    <i class="fas fa-cog mr-1"></i>
-                    <span class="hidden sm:inline">Setup Details</span>
-                  </CustomButton>
-                  <CustomButton
-                    @click="viewArrowDetails(arrowSetup.arrow_id)"
-                    variant="outlined"
-                    size="small"
-                    class="text-gray-600 border-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-400 whitespace-nowrap"
-                  >
-                    <i class="fas fa-database mr-1"></i>
-                    <span class="hidden sm:inline">Arrow Info</span>
-                  </CustomButton>
-                  <CustomButton
+                    <i class="fas fa-cog mr-1 sm:hidden"></i>
+                    <span>Setup Details</span>
+                  </button>
+                  <button
                     @click="removeArrow(arrowSetup.id)"
-                    variant="outlined"
-                    size="small"
-                    class="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 whitespace-nowrap"
+                    class="px-3 py-1 text-sm border border-red-600 text-red-600 hover:bg-red-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900/20 rounded-md transition-colors whitespace-nowrap"
                   >
-                    <i class="fas fa-trash mr-1"></i>
-                    <span class="hidden sm:inline">Remove</span>
-                  </CustomButton>
+                    <i class="fas fa-trash mr-1 sm:hidden"></i>
+                    <span>Remove</span>
+                  </button>
                 </template>
               </div>
             </div>
