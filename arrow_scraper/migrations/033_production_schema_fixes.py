@@ -18,7 +18,10 @@ def get_migration_info():
         'version': 33,
         'description': 'Production schema fixes for flight path and chronograph functionality',
         'author': 'System',
-        'created_at': '2025-08-18'
+        'created_at': '2025-08-18',
+        'target_database': 'arrow',
+        'dependencies': [],
+        'environments': ['all']
     }
 
 def migrate_up(cursor):

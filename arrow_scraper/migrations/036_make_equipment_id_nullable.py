@@ -17,7 +17,10 @@ def get_migration_info():
         'version': 36,
         'description': 'Make equipment_id nullable in bow_equipment table',
         'author': 'System',
-        'created_at': '2025-08-20'
+        'created_at': '2025-08-20',
+        'target_database': 'arrow',
+        'dependencies': [],
+        'environments': ['all']
     }
 
 def migrate_up(cursor):

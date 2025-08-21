@@ -1641,7 +1641,10 @@ def get_migration_info():
         'version': 37,
         'description': 'Migration description',
         'author': 'System',
-        'created_at': '2025-08-21'
+        'created_at': '2025-08-21',
+        'target_database': 'arrow',  # REQUIRED: 'arrow' or 'user'
+        'dependencies': [],          # Array of required migration versions
+        'environments': ['all']      # Supported environments
     }
 
 def migrate_up(cursor):

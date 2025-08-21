@@ -20,7 +20,10 @@ def get_migration_info():
         'version': 35,
         'description': 'Enhanced Interactive Tuning System with permanent test storage',
         'author': 'System',
-        'created_at': '2025-08-20'
+        'created_at': '2025-08-20',
+        'target_database': 'arrow',
+        'dependencies': [],
+        'environments': ['all']
     }
 
 def migrate_up(cursor):

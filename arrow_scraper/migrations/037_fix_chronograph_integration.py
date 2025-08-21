@@ -17,7 +17,10 @@ def get_migration_info():
         'version': 37,
         'description': 'Fix Chronograph Integration - Setup arrow ID mapping and performance calculation priority',
         'author': 'System',
-        'created_at': '2025-08-21'
+        'created_at': '2025-08-21',
+        'target_database': 'arrow',
+        'dependencies': [],
+        'environments': ['all']
     }
 
 def migrate_up(cursor):
