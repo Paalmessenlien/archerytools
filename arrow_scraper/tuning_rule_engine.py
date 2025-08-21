@@ -352,7 +352,7 @@ class BareshaftTuningRules(TuningRuleEngine):
                 'offset_direction': offset_direction,
                 'offset_cm': offset_cm,
                 'tolerance_cm': scaled_tolerance,
-                'within_tolerance': offset_cm <= scaled_tolerance,
+                'within_tolerance': str(offset_cm <= scaled_tolerance),  # Convert boolean to string for JSON serialization
                 'spine_indication': self._interpret_spine_indication(offset_direction),
                 'next_step': 'Make adjustment and retest'
             }
@@ -549,7 +549,7 @@ class WalkbackTuningRules(TuningRuleEngine):
                 'intercept_cm': intercept,
                 'r_squared': r_squared,
                 'slope_tolerance': slope_tolerance,
-                'within_slope_tolerance': abs(slope) <= slope_tolerance,
+                'within_slope_tolerance': str(abs(slope) <= slope_tolerance),  # Convert boolean to string for JSON serialization
                 'drift_direction': 'right' if slope > 0 else 'left' if slope < 0 else 'none',
                 'next_step': self._determine_next_walkback_step(slope, intercept, r_squared)
             }

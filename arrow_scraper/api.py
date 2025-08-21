@@ -5238,21 +5238,24 @@ def add_bow_equipment(current_user, setup_id):
         
         # Auto-learn from this equipment entry
         try:
-            from equipment_learning_manager import EquipmentLearningManager
-            learning = EquipmentLearningManager()
-            learning_info = learning.learn_equipment_entry(
-                linked_manufacturer_name,
-                data['model_name'], 
-                data['category_name'],
-                current_user['id']
-            )
-            
-            if learning_info['new_manufacturer']:
-                print(f"📚 New manufacturer learned: '{linked_manufacturer_name}' (pending approval)")
-            if learning_info['new_model']:
-                print(f"📚 New model learned: '{data['model_name']}' for {linked_manufacturer_name}")
-            else:
-                print(f"📊 Model usage updated: '{data['model_name']}' used {learning_info['model_usage_count']} times")
+            try:
+                from equipment_learning_manager import EquipmentLearningManager
+                learning = EquipmentLearningManager()
+                learning_info = learning.learn_equipment_entry(
+                    linked_manufacturer_name,
+                    data['model_name'], 
+                    data['category_name'],
+                    current_user['id']
+                )
+                
+                if learning_info['new_manufacturer']:
+                    print(f"📚 New manufacturer learned: '{linked_manufacturer_name}' (pending approval)")
+                if learning_info['new_model']:
+                    print(f"📚 New model learned: '{data['model_name']}' for {linked_manufacturer_name}")
+                else:
+                    print(f"📊 Model usage updated: '{data['model_name']}' used {learning_info['model_usage_count']} times")
+            except ImportError:
+                print("Info: Equipment learning manager not available, skipping auto-learning")
                 
         except Exception as e:
             print(f"Warning: Auto-learning failed: {e}")
@@ -5275,8 +5278,16 @@ def add_bow_equipment(current_user, setup_id):
         return jsonify(result), 201
         
     except Exception as e:
+        import traceback
+        error_details = {
+            'error': str(e),
+            'type': type(e).__name__,
+            'traceback': traceback.format_exc()
+        }
         print(f"Error adding custom bow equipment: {e}")
-        return jsonify({'error': 'Failed to add equipment'}), 500
+        print(f"Error type: {type(e).__name__}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Failed to add equipment: {str(e)}'}), 500
 
 @app.route('/api/bow-setups/<int:setup_id>/equipment/<int:equipment_id>', methods=['PUT'])
 @token_required
