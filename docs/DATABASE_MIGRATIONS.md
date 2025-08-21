@@ -6,33 +6,80 @@ This document provides comprehensive guidance on the database migration system u
 
 The Archery Tools project uses a robust, versioned database migration system that ensures consistent database schema evolution across development, staging, and production environments. The system supports both arrow database (`arrow_database.db`) and user database (`user_data.db`) migrations with dependency management, rollback capabilities, and enhanced admin panel management.
 
-## ⚠️ CRITICAL: Migration Interface Requirements
+## ⚠️ CRITICAL: Recommended Migration Format (August 2025)
 
-**ALL migrations MUST follow the exact method signatures below or they will fail in production:**
+**For reliable production deployment, use the CURSOR-BASED format that matches successful migrations like 036, 037:**
 
 ```python
-def up(self, db_path, environment='development'):
-    """Apply the migration - REQUIRED SIGNATURE"""
-    # Your migration code here
-    return True  # MUST return True for success
+#!/usr/bin/env python3
+"""
+Migration XXX: Brief Description
+"""
+import sqlite3
+import sys
+import os
 
-def down(self, db_path, environment='development'):
-    """Rollback the migration - REQUIRED SIGNATURE"""  
-    # Your rollback code here
-    return True  # MUST return True for success
+def get_migration_info():
+    """Return migration metadata"""
+    return {
+        'version': XXX,
+        'description': 'Brief description',
+        'author': 'System', 
+        'created_at': '2025-08-21'
+    }
+
+def migrate_up(cursor):
+    """Apply the migration"""
+    conn = cursor.connection
+    try:
+        print("🔧 Migration XXX: Description...")
+        cursor.execute("CREATE TABLE ...")
+        conn.commit()
+        print("🎯 Migration XXX completed successfully!")
+        return True
+    except Exception as e:
+        print(f"❌ Migration XXX failed: {e}")
+        conn.rollback()
+        return False
+
+def migrate_down(cursor):
+    """Rollback the migration"""
+    conn = cursor.connection
+    try:
+        cursor.execute("DROP TABLE ...")
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        return False
+
+if __name__ == "__main__":
+    # Test standalone
+    db_path = os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db')
+    conn = sqlite3.connect(db_path)
+    try:
+        success = migrate_up(conn.cursor())
+        print("✅ Migration test completed successfully" if success else "❌ Migration test failed")
+    finally:
+        conn.close()
 ```
 
-**❌ WRONG - These will cause 500 errors:**
-```python
-def up(self):  # Missing required parameters
-def up(self, db_path):  # Missing environment parameter  
-def up(self, db_path: str, environment: str):  # Type hints cause issues
-```
+**✅ WHY THIS FORMAT WORKS:**
+- **Proven in Production**: Migrations 036, 037 use this format successfully
+- **Auto-Discovery**: Migration manager Method 4 detects `migrate_up(cursor)` functions
+- **Database Management**: Uses cursor.connection for proper transaction handling
+- **Error Handling**: Built-in rollback and error reporting
+- **Standalone Testing**: Can be tested directly with `python migration_file.py`
 
-**✅ CORRECT - Production-compatible signatures:**
+**❌ AVOID - These formats cause production failures:**
 ```python
-def up(self, db_path, environment='development'):
-def down(self, db_path, environment='development'):
+# BaseMigration class - complex path resolution issues
+class Migration037(BaseMigration):
+    def up(self, db_path: str, environment: str) -> bool: pass
+
+# Wrong signatures - parameter mismatch errors  
+def up(self): pass  # Missing parameters
+def up(self, db_path: str, environment: str): pass  # Type hints cause issues
 ```
 
 ### Recent Enhancements (August 2025)
@@ -138,7 +185,114 @@ arrow_scraper/
 └── run_migrations.py
 ```
 
-### Migration File Template
+### Migration File Templates
+
+#### 🚀 **Recommended: Cursor-Based Template (Production-Tested)**
+
+This format is used by successful migrations like 036, 037 and works reliably in production:
+
+```python
+#!/usr/bin/env python3
+"""
+Migration XXX: [Brief Description]
+[Detailed description of what this migration does]
+"""
+
+import sqlite3
+import sys
+import os
+
+def get_migration_info():
+    """Return migration metadata"""
+    return {
+        'version': XXX,
+        'description': '[Brief Description]',
+        'author': 'System',
+        'created_at': '2025-08-21'
+    }
+
+def migrate_up(cursor):
+    """Apply the migration"""
+    conn = cursor.connection
+    
+    try:
+        print("🔧 Migration XXX: [Description]...")
+        
+        # Your migration SQL here
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS new_table (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Add indexes if needed
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_new_table_name 
+            ON new_table (name)
+        """)
+        
+        conn.commit()
+        print("🎯 Migration XXX completed successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Migration XXX failed: {e}")
+        conn.rollback()
+        return False
+
+def migrate_down(cursor):
+    """Rollback the migration"""
+    conn = cursor.connection
+    
+    try:
+        print("🔄 Rolling back Migration XXX...")
+        
+        # Remove what was created
+        cursor.execute("DROP TABLE IF EXISTS new_table")
+        
+        conn.commit()
+        print("🔄 Migration XXX rollback completed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Migration XXX rollback failed: {e}")
+        conn.rollback()
+        return False
+
+if __name__ == "__main__":
+    # Test the migration
+    db_path = os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db')
+    
+    if not os.path.exists(db_path):
+        print(f"❌ Database not found: {db_path}")
+        sys.exit(1)
+    
+    conn = sqlite3.connect(db_path)
+    
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == 'down':
+            success = migrate_down(conn.cursor())
+        else:
+            success = migrate_up(conn.cursor())
+        
+        if success:
+            print("✅ Migration test completed successfully")
+        else:
+            print("❌ Migration test failed")
+            sys.exit(1)
+            
+    except Exception as e:
+        print(f"❌ Migration test error: {e}")
+        sys.exit(1)
+    finally:
+        conn.close()
+```
+
+#### 🏗️ **Alternative: Class-Based Template (Advanced)**
+
+For more complex migrations that need dependency management:
 
 ```python
 #!/usr/bin/env python3
@@ -618,15 +772,55 @@ def migrate_down():
     pass
 ```
 
-**Method 4: Cursor-Based (New in August 2025)**
+**Method 4: Cursor-Based (Recommended for Production - August 2025)**
 ```python
+def get_migration_info():
+    """Return migration metadata"""
+    return {
+        'version': 37,
+        'description': 'Fix Chronograph Integration - Setup arrow ID mapping',
+        'author': 'System',
+        'created_at': '2025-08-21'
+    }
+
 def migrate_up(cursor):
     """Migration using cursor parameter"""
-    cursor.execute("CREATE TABLE ...")
+    conn = cursor.connection
+    try:
+        print("🔧 Migration 037: Fixing chronograph integration...")
+        cursor.execute("CREATE TABLE ...")
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"❌ Migration failed: {e}")
+        conn.rollback()
+        return False
     
 def migrate_down(cursor):
     """Rollback using cursor parameter"""
-    cursor.execute("DROP TABLE ...")
+    conn = cursor.connection
+    try:
+        cursor.execute("DROP TABLE ...")
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"❌ Rollback failed: {e}")
+        conn.rollback()
+        return False
+
+if __name__ == "__main__":
+    # Test the migration
+    db_path = os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db')
+    conn = sqlite3.connect(db_path)
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == 'down':
+            success = migrate_down(conn.cursor())
+        else:
+            success = migrate_up(conn.cursor())
+        if success:
+            print("✅ Migration test completed successfully")
+    finally:
+        conn.close()
 ```
 
 #### Environment-Aware Database Path Resolution
@@ -1437,19 +1631,47 @@ def migrate_up(cursor):
 
 **Error**: API Error 500: {"error":"Some migrations failed"}
 
-**Cause**: Incorrect method signatures in migration class
+**Cause**: Incorrect migration format - using BaseMigration class instead of cursor-based format
 
-**Solution**: Ensure your migration uses the exact signature:
+**Solution**: Use the **cursor-based format** (like Migration 036, 037):
 ```python
-def up(self, db_path, environment='development'):  # ✅ CORRECT
-def down(self, db_path, environment='development'):  # ✅ CORRECT
+# ✅ CORRECT - Cursor-based format (RECOMMENDED)
+def get_migration_info():
+    return {
+        'version': 37,
+        'description': 'Migration description',
+        'author': 'System',
+        'created_at': '2025-08-21'
+    }
+
+def migrate_up(cursor):
+    conn = cursor.connection
+    try:
+        cursor.execute("CREATE TABLE ...")
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        return False
+
+def migrate_down(cursor):
+    # Similar pattern
+    pass
 ```
 
-**NOT:**
+**NOT these formats:**
 ```python
-def up(self):  # ❌ Missing parameters
-def up(self, db_path: str, environment: str):  # ❌ Type hints
+# ❌ BaseMigration class format - causes production failures
+class Migration037(BaseMigration):
+    def up(self, db_path: str, environment: str) -> bool:
+        pass
+
+# ❌ Wrong method signatures
+def up(self):  # Missing parameters
+def up(self, db_path: str, environment: str):  # Type hints cause issues
 ```
+
+**Root Cause**: Migration discovery uses different methods. The cursor-based format (`migrate_up(cursor)`) is detected by Method 4 in the migration manager and works reliably in production.
 
 ### 2. **Migration Not Found/Discovered**
 
