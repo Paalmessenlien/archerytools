@@ -982,7 +982,7 @@
               
               <div v-show="showAllMigrations" class="space-y-2 max-h-96 overflow-y-auto">
                 <div
-                  v-for="(migration, version) in sortedMigrations"
+                  v-for="(migration, version, index) in sortedMigrations"
                   :key="version"
                   class="flex justify-between items-center p-3 rounded-lg"
                   :class="{
@@ -992,6 +992,11 @@
                 >
                   <div class="flex-1">
                     <div class="flex items-center space-x-2">
+                      <!-- Migration Number -->
+                      <span class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium min-w-8 text-center">
+                        {{ index + 1 }}
+                      </span>
+                      
                       <!-- Migration Version -->
                       <span class="font-mono text-sm font-medium"
                             :class="{

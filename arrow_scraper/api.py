@@ -9643,9 +9643,10 @@ def get_migration_status(current_user):
         from database_migration_manager import DatabaseMigrationManager
         import json
         
-        # Migration target mapping based on typical migration patterns
+        # Migration target mapping based on unified database architecture
+        # Note: With unified architecture, all migrations target the same database
         migration_targets = {
-            # User database migrations (setup_arrows, users, bow_setups, etc.)
+            # Legacy mapping for reference (all are now in unified database)
             '001': 'user',    # Initial user database schema
             '002': 'user',    # User authentication tables
             '003': 'user',    # Bow setups and setup_arrows
@@ -9666,6 +9667,23 @@ def get_migration_status(current_user):
             '018': 'user',    # Equipment ID nullable
             '019': 'user',    # Chronograph data
             '020': 'user',    # Enhanced string equipment fields
+            '021': 'user',    # Performance calculation fixes
+            '022': 'user',    # Performance data column
+            '023': 'user',    # User database consolidation
+            '024': 'user',    # Schema columns additions
+            '025': 'user',    # Equipment ID nullable fixes
+            '026': 'user',    # Draw length and peep sight category
+            '027': 'user',    # IBO speed unified database
+            '028': 'user',    # Remaining schema columns
+            '029': 'user',    # Schema issues fixes
+            '030': 'user',    # Draw length architecture
+            '031': 'user',    # User profile columns
+            '032': 'user',    # Change description column
+            '033': 'user',    # Production schema fixes
+            '034': 'user',    # Change log service SQL
+            '035': 'user',    # Enhanced tuning system
+            '036': 'user',    # Equipment ID nullable
+            '037': 'user',    # Chronograph integration fixes
             
             # Arrow database migrations (arrow specs, spine data, components)
             'spine_calc': 'arrow',  # Spine calculation system
