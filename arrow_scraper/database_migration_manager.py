@@ -460,11 +460,13 @@ class DatabaseMigrationManager:
                             self.description = info.get('description', self.description)
                             self.dependencies = info.get('dependencies', [])
                             self.environments = info.get('environments', ['all'])
+                            self.target_database = info.get('target_database', 'unknown')
                     except Exception:
                         pass  # Fall back to defaults
                 
                 self.dependencies = getattr(self, 'dependencies', [])
                 self.environments = getattr(self, 'environments', ['all'])
+                self.target_database = getattr(self, 'target_database', 'unknown')
                 self.file_path = file_path
                 self.logger = manager_logger  # Use the manager's logger
             
