@@ -84,6 +84,11 @@ Content-Type: application/json
 
 **Response:** `201 Created` with created chronograph data object
 
+**Enhanced Implementation (August 2025):**
+- API automatically retrieves `arrow_length` and `point_weight` from `setup_arrows` table
+- Inserts data into both legacy and new column formats for schema compatibility
+- Handles mixed database schemas resulting from partial migration implementations
+
 ### Get Chronograph Data for Setup
 ```http
 GET /api/chronograph-data/setup/{setup_id}
@@ -310,7 +315,7 @@ Store Performance Data (JSON in setup_arrows.performance_data)
 
 **File:** `arrow_scraper/migrations/019_add_chronograph_data.py`
 
-### Migration 037: Fix Chronograph Integration
+### Migration 037: Fix Chronograph Integration (Updated August 2025)
 
 **File:** `arrow_scraper/migrations/037_fix_chronograph_integration.py`
 
@@ -319,11 +324,21 @@ Store Performance Data (JSON in setup_arrows.performance_data)
 - Performance indexes for fast queries
 - Foreign key relationships with proper cascading
 
-**Migration 037 Fixes:**
-- Setup arrow ID mapping consistency
-- Chronograph data verification status
+**Migration 037 Fixes (Enhanced August 2025):**
+- **Schema Compatibility**: Detects existing table schema and adds missing columns automatically
+- **Column Mapping**: Handles transitions between old (`measured_speed`) and new (`measured_speed_fps`) column names
+- **Robust Migration**: Works with both complete and partial chronograph table implementations
+- **Missing Column Addition**: Adds required columns (`setup_arrow_id`, `verified`, `arrow_weight_grains`, etc.) if missing
+- **Default Value Setting**: Sets appropriate defaults for newly added columns
+- Setup arrow ID mapping consistency validation
 - Performance cache clearing for recalculation
-- Database indexes for optimized queries
+- Enhanced database indexes for optimized queries
+
+**Schema Detection Features:**
+- Automatically detects which columns exist in current table
+- Adds missing required columns with proper data types
+- Maps old column names to new schema format
+- Maintains backward compatibility with existing data
 
 **Rollback Support:**
 ```bash
@@ -428,12 +443,19 @@ performance_data = calculate_arrow_performance(
 
 ### Common Issues
 
-**1. No Chronograph Data Found**
+**1. API Error 500: "Failed to create chronograph data" (Fixed August 2025)**
+- **Cause**: `NOT NULL constraint failed: chronograph_data.arrow_length`
+- **Root Issue**: Database schema mismatch between old and new column formats
+- **Fix Applied**: API endpoint now queries `setup_arrows` table to get required `arrow_length` and `point_weight` values
+- **Solution**: Updated API inserts data into both old and new column formats for full compatibility
+- **Verification**: Check API logs for "Error creating chronograph data" messages
+
+**2. No Chronograph Data Found**
 - Check `setup_id` and `arrow_id` parameters
 - Verify data exists with `verified = 1`
 - Check foreign key relationships
 
-**2. Speed Calculation Fallback**
+**3. Speed Calculation Fallback**
 - System falls back to enhanced estimation if chronograph lookup fails
 - Check database connectivity and table existence
 - Verify migration 019 has been applied
