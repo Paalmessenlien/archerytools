@@ -9679,11 +9679,11 @@ def get_migration_status(current_user):
             '030': 'user',    # Draw length architecture
             '031': 'user',    # User profile columns
             '032': 'user',    # Change description column
-            '033': 'user',    # Production schema fixes
+            '033': 'arrow',   # Production schema fixes (unified database)
             '034': 'user',    # Change log service SQL
-            '035': 'user',    # Enhanced tuning system
-            '036': 'user',    # Equipment ID nullable
-            '037': 'user',    # Chronograph integration fixes
+            '035': 'arrow',   # Enhanced tuning system (unified database)
+            '036': 'arrow',   # Equipment ID nullable (unified database)
+            '037': 'arrow',   # Chronograph integration fixes (unified database)
             
             # Arrow database migrations (arrow specs, spine data, components)
             'spine_calc': 'arrow',  # Spine calculation system
