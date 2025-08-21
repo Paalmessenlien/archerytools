@@ -46,8 +46,21 @@ class Migration037(BaseMigration):
     
     def up(self, db_path: str, environment: str) -> bool:
         """Apply the migration - Fix chronograph integration"""
+        print(f"🔄 Migration {self.version}: Starting up() method...")
+        print(f"   Provided db_path: {db_path}")
+        print(f"   Environment: {environment}")
+        
         if not db_path:
-            db_path = self.get_database_path()
+            print("   No db_path provided, resolving...")
+            try:
+                db_path = self.get_database_path()
+                print(f"   Resolved db_path: {db_path}")
+            except Exception as e:
+                print(f"   ❌ Failed to resolve db_path: {e}")
+                return False
+        
+        print(f"   Using database: {db_path}")
+        print(f"   Database exists: {os.path.exists(db_path)}")
         
         try:
             conn = sqlite3.connect(db_path)
@@ -59,9 +72,12 @@ class Migration037(BaseMigration):
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='chronograph_data'")
             chronograph_table_exists = cursor.fetchone() is not None
             
+            print(f"   Chronograph table exists: {chronograph_table_exists}")
+            
             if not chronograph_table_exists:
                 print("   ⚠️  chronograph_data table does not exist, skipping chronograph-specific fixes")
                 print("   ✅ Migration completed (no chronograph data to fix)")
+                conn.close()
                 return True
             
             # 1. Check for chronograph data with mismatched setup_arrow_id
