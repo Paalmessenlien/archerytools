@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Migration 026: Fix Chronograph Integration
+Migration 037: Fix Chronograph Integration
 
 This migration addresses the issue where performance calculations are not using
 chronograph data despite it being available in the database.
@@ -41,7 +41,7 @@ def run_migration(db_path=None):
             if not db_path:
                 raise FileNotFoundError("Could not find arrow database file")
     
-    print(f"🔄 Running Migration 026: Fix Chronograph Integration")
+    print(f"🔄 Running Migration 037: Fix Chronograph Integration")
     print(f"📍 Database: {db_path}")
     
     try:
@@ -54,9 +54,9 @@ def run_migration(db_path=None):
         migrations_table_exists = cursor.fetchone()
         
         if migrations_table_exists:
-            cursor.execute("SELECT version FROM migrations WHERE version = '026'")
+            cursor.execute("SELECT version FROM migrations WHERE version = '037'")
             if cursor.fetchone():
-                print("✅ Migration 026 already applied")
+                print("✅ Migration 037 already applied")
                 return
         else:
             # Create migrations table if it doesn't exist
@@ -159,18 +159,18 @@ def run_migration(db_path=None):
         # Record migration completion
         cursor.execute('''
             INSERT OR REPLACE INTO migrations (version, description)
-            VALUES ('026', 'Fix Chronograph Integration - Setup arrow ID mapping and performance calculation priority')
+            VALUES ('037', 'Fix Chronograph Integration - Setup arrow ID mapping and performance calculation priority')
         ''')
         
         conn.commit()
-        print(f"\n✅ Migration 026 completed successfully!")
+        print(f"\n✅ Migration 037 completed successfully!")
         print(f"🎯 Next steps:")
         print(f"   1. Restart the API server to load updated chronograph integration")
         print(f"   2. Test performance calculation on arrows with chronograph data")
         print(f"   3. Verify that speed source shows 'Measured' instead of 'Estimated'")
         
     except Exception as e:
-        print(f"❌ Migration 026 failed: {e}")
+        print(f"❌ Migration 037 failed: {e}")
         if conn:
             conn.rollback()
         raise
@@ -180,7 +180,7 @@ def run_migration(db_path=None):
 
 def rollback_migration(db_path=None):
     """Rollback migration 026 changes"""
-    print("⚠️  Migration 026 rollback not implemented - changes are data fixes, not schema changes")
+    print("⚠️  Migration 037 rollback not implemented - changes are data fixes, not schema changes")
     print("   To rollback, restore from a database backup taken before this migration")
 
 if __name__ == "__main__":

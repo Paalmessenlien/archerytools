@@ -310,19 +310,29 @@ Store Performance Data (JSON in setup_arrows.performance_data)
 
 **File:** `arrow_scraper/migrations/019_add_chronograph_data.py`
 
-**Creates:**
+### Migration 037: Fix Chronograph Integration
+
+**File:** `arrow_scraper/migrations/037_fix_chronograph_integration.py`
+
+**Migration 019 Creates:**
 - `chronograph_data` table with full schema
 - Performance indexes for fast queries
 - Foreign key relationships with proper cascading
 
+**Migration 037 Fixes:**
+- Setup arrow ID mapping consistency
+- Chronograph data verification status
+- Performance cache clearing for recalculation
+- Database indexes for optimized queries
+
 **Rollback Support:**
 ```bash
-python arrow_scraper/migrations/019_add_chronograph_data.py /path/to/user_data.db --rollback
+python arrow_scraper/migrations/019_add_chronograph_data.py /path/to/database.db --rollback
 ```
 
 **Automatic Application:**
-- Applied automatically during server startup via migration manager
-- Safe to run multiple times (uses `IF NOT EXISTS`)
+- Both migrations applied automatically during server startup via migration manager
+- Safe to run multiple times (uses `IF NOT EXISTS` and proper checks)
 
 ## Usage Examples
 
