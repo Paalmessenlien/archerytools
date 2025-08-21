@@ -55,6 +55,15 @@ class Migration037(BaseMigration):
             
             print(f"🔄 Migration {self.version}: Fixing chronograph integration...")
             
+            # Check if chronograph_data table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='chronograph_data'")
+            chronograph_table_exists = cursor.fetchone() is not None
+            
+            if not chronograph_table_exists:
+                print("   ⚠️  chronograph_data table does not exist, skipping chronograph-specific fixes")
+                print("   ✅ Migration completed (no chronograph data to fix)")
+                return True
+            
             # 1. Check for chronograph data with mismatched setup_arrow_id
             print("1. Checking for chronograph data consistency...")
             cursor.execute('''
@@ -177,14 +186,19 @@ class Migration037(BaseMigration):
             
             # Check if chronograph_data table exists
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='chronograph_data'")
-            if not cursor.fetchone():
-                print("❌ chronograph_data table does not exist")
-                return False
+            chronograph_exists = cursor.fetchone() is not None
             
-            # Check if the index was created
+            if not chronograph_exists:
+                print("ℹ️  chronograph_data table does not exist - migration completed successfully (no data to fix)")
+                conn.close()
+                return True
+            
+            # Check if the index was created (only if chronograph table exists)
             cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_chronograph_setup_arrow'")
             if not cursor.fetchone():
                 print("⚠️  chronograph index not found, but migration may still be valid")
+            else:
+                print("✅ chronograph index found")
             
             conn.close()
             print("✅ Migration validation passed")
