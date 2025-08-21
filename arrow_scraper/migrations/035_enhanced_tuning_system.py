@@ -269,12 +269,26 @@ def migrate_down(cursor):
         return False
 
 if __name__ == "__main__":
-    # Test the migration
-    db_path = os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db')
+    # Test the migration - try multiple database paths
+    possible_paths = [
+        '/app/databases/arrow_database.db',  # Docker production
+        '/root/archerytools/databases/arrow_database.db',  # Production host
+        os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db'),  # Development
+        'databases/arrow_database.db',  # Relative path
+        'arrow_database.db'  # Current directory
+    ]
     
-    if not os.path.exists(db_path):
-        print(f"❌ Database not found: {db_path}")
+    db_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            db_path = path
+            break
+    
+    if not db_path:
+        print(f"❌ Database not found in any location: {possible_paths}")
         sys.exit(1)
+    
+    print(f"📁 Using database: {db_path}")
     
     conn = sqlite3.connect(db_path)
     
