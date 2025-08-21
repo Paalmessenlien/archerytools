@@ -742,17 +742,9 @@ run_database_migrations() {
         print_message "$BLUE" "   🎯 Using unified database (post-consolidation)"
         export USER_DATABASE_PATH="$SCRIPT_DIR/databases/arrow_database.db"
         
-        # Run essential migration 033 directly for production readiness
-        cd arrow_scraper
-        if [[ -f "migrations/033_production_schema_fixes.py" ]]; then
-            print_message "$BLUE" "🔧 Running production schema fixes (migration 033)..."
-            if python3 migrations/033_production_schema_fixes.py; then
-                print_message "$GREEN" "✅ Production schema migration completed successfully"
-            else
-                print_message "$YELLOW" "⚠️  Production schema migration had issues, but continuing..."
-            fi
-        fi
-        cd "$SCRIPT_DIR"
+        # Database migrations will be handled by API container startup
+        print_message "$BLUE" "🔧 Database migrations will be handled by API container startup process..."
+        print_message "$BLUE" "   ✅ Production schema fixes will run automatically inside Docker container"
         return 0
     else
         print_message "$BLUE" "   🔄 Using separate user database (pre-consolidation)"
