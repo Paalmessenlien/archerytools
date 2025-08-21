@@ -116,12 +116,8 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
                 if chronograph_data:
                     measured_speed, measured_weight, std_dev, shot_count = chronograph_data
                     
-                    # Adjust for different arrow weight using kinetic energy conservation
-                    if measured_weight != arrow_weight_grains:
-                        speed_ratio = (measured_weight / arrow_weight_grains) ** 0.5
-                        adjusted_speed = measured_speed * speed_ratio
-                    else:
-                        adjusted_speed = measured_speed
+                    # Use measured speed directly - chronograph data represents this exact arrow configuration
+                    adjusted_speed = measured_speed
                     
                     confidence = min(100, (shot_count * 10) + (85 if std_dev and std_dev < 5 else 70))
                     
@@ -2836,11 +2832,15 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
             enhanced_speed = None
             try:
                 # Prepare data for enhanced speed calculation
+                # Convert Row objects to dict for .get() method compatibility
+                bow_config_dict = dict(bow_config) if bow_config else {}
+                setup_arrow_dict = dict(setup_arrow)
+                
                 speed_request_data = {
-                    'bow_ibo_speed': bow_config.get('ibo_speed', setup_arrow.get('ibo_speed', 320)),
-                    'bow_draw_weight': bow_config.get('draw_weight', setup_arrow.get('draw_weight', 50)),
-                    'bow_draw_length': bow_config.get('draw_length', 29),
-                    'bow_type': bow_config.get('bow_type', setup_arrow.get('bow_type', 'compound')),
+                    'bow_ibo_speed': bow_config_dict.get('ibo_speed', setup_arrow_dict.get('ibo_speed', 320)),
+                    'bow_draw_weight': bow_config_dict.get('draw_weight', setup_arrow_dict.get('draw_weight', 50)),
+                    'bow_draw_length': bow_config_dict.get('draw_length', 29),
+                    'bow_type': bow_config_dict.get('bow_type', setup_arrow_dict.get('bow_type', 'compound')),
                     'arrow_weight_grains': (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25,
                     'string_material': 'dacron',  # Default to slowest for safety
                     'setup_id': setup_arrow['setup_id'],
@@ -2876,14 +2876,33 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                     setup_id=speed_request_data['setup_id'],
                     arrow_id=speed_request_data['arrow_id']
                 )
-                print(f"Enhanced speed calculated: {enhanced_speed} FPS (vs old method would be ~{(speed_request_data['bow_draw_weight'] * 10) - (speed_request_data['arrow_weight_grains'] - 350) * 0.1})")
+                print(f"🎯 Enhanced speed calculated: {enhanced_speed} FPS for setup_id={speed_request_data['setup_id']}, arrow_id={speed_request_data['arrow_id']}")
+                
+                # Ensure we have a valid speed (should be > 0 and < 500 fps)
+                if enhanced_speed and isinstance(enhanced_speed, (int, float)) and 50 < enhanced_speed < 500:
+                    print(f"✅ Using enhanced speed: {enhanced_speed} FPS")
+                else:
+                    print(f"⚠️  Enhanced speed invalid ({enhanced_speed}), falling back to basic calculation")
+                    enhanced_speed = None
                 
             except Exception as speed_error:
-                print(f"Enhanced speed calculation failed, falling back to basic calculation: {speed_error}")
+                print(f"❌ Enhanced speed calculation failed, falling back to basic calculation: {speed_error}")
+                import traceback
+                traceback.print_exc()
                 enhanced_speed = None
             
             # Calculate performance with enhanced speed
             performance_data = calculate_arrow_performance(mock_profile, mock_arrow, estimated_speed=enhanced_speed)
+            
+            # Add speed source information to performance data
+            if performance_data and 'performance_summary' in performance_data:
+                if enhanced_speed and isinstance(enhanced_speed, (int, float)):
+                    performance_data['performance_summary']['speed_source'] = 'chronograph'
+                    performance_data['performance_summary']['speed_source_info'] = f'Weight-adjusted from measured chronograph data'
+                    print(f"📊 Performance data updated with chronograph speed source")
+                else:
+                    performance_data['performance_summary']['speed_source'] = 'estimated'
+                    performance_data['performance_summary']['speed_source_info'] = f'Fallback calculation (no chronograph data)'
             
             # Store performance data as JSON in dedicated performance_data column
             import json
@@ -11048,15 +11067,15 @@ def create_chronograph_data(current_user):
             INSERT INTO chronograph_data 
             (setup_id, arrow_id, setup_arrow_id, measured_speed_fps, arrow_weight_grains,
              temperature_f, humidity_percent, chronograph_model, shot_count, std_deviation,
-             min_speed_fps, max_speed_fps, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             min_speed_fps, max_speed_fps, notes, verified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data['setup_id'], data.get('arrow_id'), data['setup_arrow_id'],
             data['measured_speed_fps'], data['arrow_weight_grains'],
             data.get('temperature_f', 70), data.get('humidity_percent', 50),
             data.get('chronograph_model', ''), data.get('shot_count', 1),
             data.get('std_deviation'), data.get('min_speed_fps'), data.get('max_speed_fps'),
-            data.get('notes', '')
+            data.get('notes', ''), 1  # Set verified = 1 by default
         ))
         
         chronograph_id = cursor.lastrowid

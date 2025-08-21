@@ -240,15 +240,19 @@ const handleSpeedCalculated = (speedData) => {
 The chronograph data system integrates with `calculate_enhanced_arrow_speed_internal()` function:
 
 **Priority Order:**
-1. **Chronograph Data** (Highest Priority) - Uses measured speeds with weight adjustments
+1. **Chronograph Data** (Highest Priority) - Uses measured speeds directly for exact arrow configurations
 2. **IBO + String Material Estimation** - Enhanced calculations with string material modifiers
 3. **Basic Calculation** (Fallback) - Simple draw weight based estimation
 
-**Weight Adjustment Formula:**
-When chronograph data exists for different arrow weight:
+**Direct Speed Usage (August 2025 Update):**
+Chronograph data represents the exact arrow configuration and is used directly without weight adjustments:
 ```
-adjusted_speed = measured_speed * (measured_weight / target_weight)^0.5
+final_speed = measured_speed  // Direct usage for exact configuration
+confidence = min(100, (shot_count * 10) + (85 if std_dev < 5 else 70))
 ```
+
+**Previous Weight Adjustment (Deprecated):**
+The system previously applied weight adjustments, but this was removed in August 2025 based on user feedback that chronograph data should represent the exact arrow configuration being used.
 
 ### 2. Performance Calculation Integration
 
@@ -280,9 +284,9 @@ Performance Recalculation → Updated UI
 ```
 Speed Request → Check Chronograph Data → Found?
                         ↓                    ↓
-                   Use Measured Speed    Use Enhanced Estimation
-                        ↓                    ↓
-                Weight Adjustment      String Material Modifier
+                Use Measured Speed       Use Enhanced Estimation
+                   (Direct Usage)           ↓
+                        ↓              String Material Modifier
                         ↓                    ↓
                 Final Speed ← ← ← ← ← ← ← ← ←
 ```
@@ -397,8 +401,8 @@ performance_data = calculate_arrow_performance(
 
 ### 2. Weight Consistency
 - Record exact arrow weight during measurement
-- Account for arrow modifications (different points, inserts)
-- Use weight adjustment formulas for different configurations
+- Account for arrow modifications (different points, inserts) 
+- Chronograph data represents exact configuration - no weight adjustments applied (August 2025 update)
 
 ### 3. Performance Integration
 - Let system prioritize chronograph data automatically
@@ -424,10 +428,10 @@ performance_data = calculate_arrow_performance(
 - Check database connectivity and table existence
 - Verify migration 019 has been applied
 
-**3. Weight Adjustment Issues**
-- Ensure arrow weights are positive values
-- Check for reasonable weight differences (±50 grains typical)
-- Verify kinetic energy conservation formula implementation
+**3. Direct Speed Usage (Updated)**
+- Chronograph data is used directly without weight adjustments (August 2025)
+- Verify measured speed is reasonable for arrow configuration
+- Ensure chronograph data matches the exact arrow setup being calculated
 
 **4. Component Integration**
 - Ensure ChronographDataEntry component receives valid props

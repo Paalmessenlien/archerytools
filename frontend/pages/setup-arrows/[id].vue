@@ -199,6 +199,7 @@
           <!-- Section Content -->
           <div v-if="expandedSections.performance" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowPerformanceAnalysis
+              ref="performanceAnalysisRef"
               :setup-arrow="setupArrowData.setup_arrow"
               :bow-config="setupArrowData.bow_setup"
               :arrow="setupArrowData.arrow"
@@ -511,6 +512,7 @@ const bowSetupPickerStore = useBowSetupPickerStore()
 
 // State
 const setupArrowData = ref(null)
+const performanceAnalysisRef = ref(null)
 const loading = ref(true)
 const error = ref('')
 const editMode = ref(false)
@@ -686,11 +688,27 @@ const handlePerformanceUpdate = (performanceData) => {
   }
 }
 
-const handleChronographDataUpdate = (data) => {
+const handleChronographDataUpdate = async (data) => {
   console.log('Chronograph data updated:', data)
-  // Optionally reload performance data when chronograph data changes
+  // Trigger performance recalculation when chronograph data changes
   if (setupArrowData.value) {
-    loadSetupArrowDetails()
+    try {
+      // First reload arrow details to get latest data
+      await loadSetupArrowDetails()
+      
+      // Then trigger performance recalculation directly on the performance component
+      if (performanceAnalysisRef.value && performanceAnalysisRef.value.calculatePerformance) {
+        await performanceAnalysisRef.value.calculatePerformance()
+      } else {
+        // Fallback to the page-level calculation
+        await calculatePerformance()
+      }
+      
+      showNotification('Performance updated with measured speed data', 'success')
+    } catch (error) {
+      console.error('Error updating performance after chronograph data change:', error)
+      showNotification('Error updating performance calculations', 'error')
+    }
   }
 }
 
