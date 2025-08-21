@@ -11193,16 +11193,30 @@ def create_chronograph_data(current_user):
             return jsonify({"error": "Database not available"}), 500
         cursor = user_db.get_connection().cursor()
         
-        # Insert chronograph data
+        # Get arrow_length and point_weight from setup_arrows table
+        cursor.execute('''
+            SELECT arrow_length, point_weight, arrow_id 
+            FROM setup_arrows 
+            WHERE id = ?
+        ''', (data['setup_arrow_id'],))
+        setup_arrow = cursor.fetchone()
+        
+        if not setup_arrow:
+            return jsonify({'error': 'Setup arrow not found'}), 404
+        
+        arrow_length, point_weight, arrow_id = setup_arrow
+        
+        # Insert chronograph data with both old and new column formats for compatibility
         cursor.execute('''
             INSERT INTO chronograph_data 
-            (setup_id, arrow_id, setup_arrow_id, measured_speed_fps, arrow_weight_grains,
+            (setup_id, arrow_id, arrow_length, point_weight, measured_speed,
+             setup_arrow_id, measured_speed_fps, arrow_weight_grains,
              temperature_f, humidity_percent, chronograph_model, shot_count, std_deviation,
              min_speed_fps, max_speed_fps, notes, verified)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data['setup_id'], data.get('arrow_id'), data['setup_arrow_id'],
-            data['measured_speed_fps'], data['arrow_weight_grains'],
+            data['setup_id'], arrow_id, arrow_length, point_weight, data['measured_speed_fps'],
+            data['setup_arrow_id'], data['measured_speed_fps'], data['arrow_weight_grains'],
             data.get('temperature_f', 70), data.get('humidity_percent', 50),
             data.get('chronograph_model', ''), data.get('shot_count', 1),
             data.get('std_deviation'), data.get('min_speed_fps'), data.get('max_speed_fps'),
