@@ -963,6 +963,110 @@
                 </div>
               </div>
             </div>
+
+            <!-- Complete Migration History -->
+            <div v-if="migrationStatus?.migrations && Object.keys(migrationStatus.migrations).length > 0" class="mb-6">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-md font-medium text-gray-900 dark:text-gray-100">
+                  Complete Migration History
+                </h3>
+                <CustomButton
+                  @click="showAllMigrations = !showAllMigrations"
+                  variant="text"
+                  class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <i :class="showAllMigrations ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="mr-2"></i>
+                  {{ showAllMigrations ? 'Hide All' : 'Show All' }} ({{ Object.keys(migrationStatus.migrations).length }})
+                </CustomButton>
+              </div>
+              
+              <div v-show="showAllMigrations" class="space-y-2 max-h-96 overflow-y-auto">
+                <div
+                  v-for="(migration, version) in sortedMigrations"
+                  :key="version"
+                  class="flex justify-between items-center p-3 rounded-lg"
+                  :class="{
+                    'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800': migration.applied,
+                    'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800': !migration.applied
+                  }"
+                >
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                      <!-- Migration Version -->
+                      <span class="font-mono text-sm font-medium"
+                            :class="{
+                              'text-green-800 dark:text-green-300': migration.applied,
+                              'text-yellow-800 dark:text-yellow-300': !migration.applied
+                            }">
+                        Migration {{ version }}
+                      </span>
+                      
+                      <!-- Target Database Badge -->
+                      <span v-if="migration.target_database" 
+                            class="text-xs px-2 py-1 rounded-full font-medium"
+                            :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': migration.target_database === 'arrow',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': migration.target_database === 'user'
+                            }">
+                        {{ migration.target_database === 'arrow' ? 'Arrow DB' : 'User DB' }}
+                      </span>
+                      
+                      <!-- Status Badge -->
+                      <span class="text-xs px-2 py-1 rounded font-medium"
+                            :class="{
+                              'bg-green-200 text-green-800 dark:bg-green-800/50 dark:text-green-200': migration.applied,
+                              'bg-yellow-200 text-yellow-800 dark:bg-yellow-800/50 dark:text-yellow-200': !migration.applied
+                            }">
+                        {{ migration.applied ? 'Applied' : 'Pending' }}
+                      </span>
+                    </div>
+                    
+                    <!-- Migration Description -->
+                    <div class="text-sm mt-1"
+                         :class="{
+                           'text-gray-600 dark:text-gray-400': migration.applied,
+                           'text-gray-700 dark:text-gray-300': !migration.applied
+                         }">
+                      {{ migration.description || 'No description available' }}
+                    </div>
+                  </div>
+                  
+                  <div class="text-right">
+                    <!-- Database Status Indicators -->
+                    <div v-if="migration.status_in_arrow_db !== undefined || migration.status_in_user_db !== undefined" 
+                         class="flex space-x-1 justify-end mb-2">
+                      <span v-if="migration.status_in_arrow_db !== undefined"
+                            class="text-xs px-1.5 py-0.5 rounded font-medium"
+                            :class="{
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_arrow_db,
+                              'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300': !migration.status_in_arrow_db
+                            }"
+                            :title="'Arrow DB: ' + (migration.status_in_arrow_db ? 'Applied' : 'Pending')">
+                        A
+                      </span>
+                      <span v-if="migration.status_in_user_db !== undefined"
+                            class="text-xs px-1.5 py-0.5 rounded font-medium"
+                            :class="{
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': migration.status_in_user_db,
+                              'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300': !migration.status_in_user_db
+                            }"
+                            :title="'User DB: ' + (migration.status_in_user_db ? 'Applied' : 'Pending')">
+                        U
+                      </span>
+                    </div>
+                    
+                    <!-- Applied Date -->
+                    <div class="text-xs"
+                         :class="{
+                           'text-gray-500 dark:text-gray-400': migration.applied,
+                           'text-gray-600 dark:text-gray-300': !migration.applied
+                         }">
+                      {{ migration.applied_at ? new Date(migration.applied_at).toLocaleString() : (migration.applied ? 'Applied' : 'Not Applied') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </md-elevated-card>
 
@@ -2144,6 +2248,28 @@ const filteredBackups = computed(() => {
   return filtered
 })
 
+// Sorted migrations computed property  
+const sortedMigrations = computed(() => {
+  if (!migrationStatus.value?.migrations) return {}
+  
+  // Sort migrations by version number (treating them as numbers when possible)
+  const entries = Object.entries(migrationStatus.value.migrations)
+  entries.sort(([a], [b]) => {
+    // Try to parse as numbers first
+    const numA = parseInt(a)
+    const numB = parseInt(b)
+    
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB // Ascending numerical order
+    }
+    
+    // Fallback to string comparison
+    return a.localeCompare(b)
+  })
+  
+  return Object.fromEntries(entries)
+})
+
 // System information state
 const systemInfo = ref(null)
 const isLoadingSystemInfo = ref(false)
@@ -2185,6 +2311,7 @@ const scraping = ref({
 
 // Maintenance state
 const migrationStatus = ref(null)
+const showAllMigrations = ref(false)
 const databaseHealth = ref(null)
 const isOptimizing = ref(false)
 const isVacuuming = ref(false)
