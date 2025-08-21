@@ -240,6 +240,9 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 
+// Define emits to prevent warnings
+const emit = defineEmits(['login'])
+
 const { user, logout, loginWithGoogle } = useAuth()
 const route = useRoute()
 const { isAdmin } = useAuth()
@@ -274,6 +277,7 @@ const closeMenu = () => {
 
 const handleLogin = async () => {
   try {
+    emit('login')
     await loginWithGoogle()
     closeMenu()
   } catch (error) {

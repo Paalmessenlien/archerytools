@@ -21,6 +21,7 @@ class Migration037(BaseMigration):
         self.description = "Fix Chronograph Integration - Setup arrow ID mapping and performance calculation priority"
         self.dependencies = []  # No dependencies
         self.environments = ['all']  # Can run in any environment
+        self.target_database = 'arrow'  # Target unified database
         
     def get_database_path(self):
         """Get the database path, prioritizing environment variables"""

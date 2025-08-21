@@ -52,15 +52,15 @@
                             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Navigation</h3>
                             
                             <NuxtLink
-                              :to="user ? '/my-setup' : '/'"
+                              :to="(isInitialized && isLoggedIn && user) ? '/my-setup' : '/'"
                               @click="closeDesktopMenu"
                               class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': (user && $route.path === '/my-setup') || (!user && $route.path === '/') }"
+                              :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': ((isInitialized && isLoggedIn && user) && $route.path === '/my-setup') || ((!isInitialized || !isLoggedIn || !user) && $route.path === '/') }"
                             >
                               <i class="fas fa-home text-blue-600 dark:text-purple-400 w-5"></i>
                               <div>
-                                <div class="font-medium text-gray-900 dark:text-gray-100">{{ user ? 'Dashboard' : 'Home' }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ user ? 'My bow setups' : 'Welcome page' }}</div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">{{ (isInitialized && isLoggedIn && user) ? 'Dashboard' : 'Home' }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ (isInitialized && isLoggedIn && user) ? 'My bow setups' : 'Welcome page' }}</div>
                               </div>
                             </NuxtLink>
                             
@@ -152,7 +152,7 @@
                         </div>
                         
                         <!-- Admin Section -->
-                        <div v-if="user && isAdmin" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div v-if="isInitialized && isLoggedIn && user && isAdmin" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                           <NuxtLink
                             to="/admin"
                             @click="closeDesktopMenu"
@@ -197,8 +197,10 @@
                   </div>
                   
                   <!-- User Actions -->
+                  <!-- Show placeholder during initialization to prevent hydration mismatch -->
+                  <div v-if="!isInitialized" class="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
                   <CustomButton
-                    v-if="user"
+                    v-else-if="isLoggedIn && user"
                     @click="logout"
                     variant="outlined"
                     class="text-gray-700 dark:text-gray-200"
@@ -224,7 +226,7 @@
     </header>
 
     <!-- Bow Setup Picker - All Screen Sizes -->
-    <BowSetupPicker v-if="user" class="sticky top-16 bow-setup-picker sticky-element-fix" />
+    <BowSetupPicker v-if="isInitialized && isLoggedIn && user" class="sticky top-16 bow-setup-picker sticky-element-fix" />
 
     <!-- Main Content -->
     <main class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
@@ -254,7 +256,7 @@ import { useAuth } from '~/composables/useAuth'
 const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)
 
-const { user, logout, loginWithGoogle, fetchUser, initializeGoogleAuth } = useAuth()
+const { user, logout, loginWithGoogle, fetchUser, initializeGoogleAuth, isInitialized, isLoggedIn, initializeClientAuth } = useAuth()
 const router = useRouter()
 
 // Desktop menu state
@@ -294,8 +296,9 @@ const redirectToLogin = () => {
   router.push('/login')
 }
 
-// Fetch user on mount if token exists
+// Initialize auth on mount
 onMounted(() => {
+  initializeClientAuth()
   fetchUser()
   initializeGoogleAuth()
   

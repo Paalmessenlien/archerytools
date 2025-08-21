@@ -5,6 +5,8 @@ import { ref } from 'vue';
 // Initialize as null to avoid hydration mismatches, load from localStorage on client only
 const token = ref(null);
 const user = ref(null);
+const isInitialized = ref(false);
+const isLoggedIn = ref(false);
 let googleAuthClient = null; // Singleton for the Google Auth client
 
 export const useAuth = () => {
@@ -12,11 +14,15 @@ export const useAuth = () => {
 
   // Initialize token from localStorage only on client, avoid SSR hydration issues
   const initializeClientAuth = () => {
-    if (process.client && !token.value) {
+    if (process.client && !isInitialized.value) {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         token.value = storedToken;
+        isLoggedIn.value = true;
+        // Fetch user data on initialization if token exists
+        fetchUser();
       }
+      isInitialized.value = true;
     }
   };
 
@@ -84,6 +90,7 @@ export const useAuth = () => {
 
   const setToken = (newToken) => {
     token.value = newToken;
+    isLoggedIn.value = !!newToken;
     if (process.client) {
       localStorage.setItem('token', newToken);
     }
@@ -91,6 +98,7 @@ export const useAuth = () => {
 
   const removeToken = () => {
     token.value = null;
+    isLoggedIn.value = false;
     if (process.client) {
       localStorage.removeItem('token');
     }
@@ -112,6 +120,7 @@ export const useAuth = () => {
   const logout = () => {
     removeToken();
     user.value = null;
+    isLoggedIn.value = false;
   };
 
   const fetchUser = async () => {
@@ -125,6 +134,7 @@ export const useAuth = () => {
       });
       if (res.ok) {
         user.value = await res.json();
+        isLoggedIn.value = true;
       } else {
         logout();
       }
@@ -432,6 +442,8 @@ export const useAuth = () => {
   return {
     token,
     user,
+    isLoggedIn,
+    isInitialized,
     initializeClientAuth,
     initializeGoogleAuth,
     loginWithGoogle,
