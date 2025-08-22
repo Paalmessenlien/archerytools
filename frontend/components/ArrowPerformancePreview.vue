@@ -35,10 +35,17 @@
       
       <!-- Estimated Speed -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
-        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Est. Speed</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Speed</div>
         <div class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ liveCalculations.estimatedSpeed }} FPS</div>
         <div class="text-xs mt-1" :class="getChangeClass('speed')">
           {{ getSpeedChange() }}
+        </div>
+        <!-- Speed Source Indicator -->
+        <div v-if="liveCalculations.speedSource" class="flex items-center justify-center mt-1">
+          <span class="text-xs px-1.5 py-0.5 rounded-full" :class="getSpeedSourceClass(liveCalculations.speedSource)">
+            <i :class="getSpeedSourceIcon(liveCalculations.speedSource)" class="mr-1"></i>
+            {{ getSpeedSourceText(liveCalculations.speedSource) }}
+          </span>
         </div>
       </div>
       
@@ -87,129 +94,14 @@
       </div>
     </div>
 
-    <!-- Flight Trajectory Visualization -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          <i class="fas fa-project-diagram mr-2 text-indigo-600"></i>
-          Flight Trajectory
-        </h4>
-        <div class="flex items-center space-x-4 text-sm">
-          <!-- Unit Toggle -->
-          <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              @click="distanceUnit = 'yards'"
-              :class="[
-                'px-3 py-1 rounded text-xs font-medium transition-colors',
-                distanceUnit === 'yards' 
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              ]"
-            >
-              Yards
-            </button>
-            <button
-              @click="distanceUnit = 'meters'"
-              :class="[
-                'px-3 py-1 rounded text-xs font-medium transition-colors',
-                distanceUnit === 'meters' 
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              ]"
-            >
-              Meters
-            </button>
-          </div>
-          
-          <div class="flex items-center">
-            <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-            <span class="text-gray-600 dark:text-gray-400">Current Setup</span>
-          </div>
-          <div v-if="originalPerformance" class="flex items-center">
-            <div class="w-3 h-3 border-2 border-gray-400 rounded mr-2"></div>
-            <span class="text-gray-600 dark:text-gray-400">Original</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Trajectory Chart Container -->
-      <div class="relative bg-gray-50 dark:bg-gray-900 rounded-lg p-4" style="height: 200px;">
-        <svg 
-          ref="trajectoryChart" 
-          class="w-full h-full" 
-          viewBox="0 0 800 200"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <!-- Grid lines -->
-          <defs>
-            <pattern id="grid" width="80" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 80 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" stroke-width="0.5" opacity="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-          
-          <!-- Trajectory Path -->
-          <path 
-            :d="trajectoryPath" 
-            fill="none" 
-            stroke="#3b82f6" 
-            stroke-width="2"
-            class="drop-shadow-sm"
-          />
-          
-          <!-- Original Trajectory (if available) -->
-          <path 
-            v-if="originalTrajectoryPath" 
-            :d="originalTrajectoryPath" 
-            fill="none" 
-            stroke="#9ca3af" 
-            stroke-width="1.5"
-            stroke-dasharray="5,5"
-            opacity="0.7"
-          />
-          
-          <!-- Distance Markers -->
-          <g v-for="marker in trajectoryMarkers" :key="marker.distance">
-            <circle 
-              :cx="marker.x" 
-              :cy="marker.y" 
-              r="3" 
-              fill="#3b82f6"
-              class="drop-shadow-sm"
-            />
-            <text 
-              :x="marker.x" 
-              :y="marker.y - 8" 
-              text-anchor="middle" 
-              class="text-xs fill-gray-600 dark:fill-gray-400"
-            >
-              {{ formatDistance(marker.distance) }}{{ distanceUnitLabel }}
-            </text>
-          </g>
-          
-          <!-- Axis Labels -->
-          <text x="400" y="195" text-anchor="middle" class="text-xs fill-gray-600 dark:fill-gray-400">
-            Distance ({{ distanceUnit }})
-          </text>
-          <text x="15" y="20" class="text-xs fill-gray-600 dark:fill-gray-400">
-            Height
-          </text>
-        </svg>
-        
-        <!-- Trajectory Stats Overlay -->
-        <div class="absolute top-2 right-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
-          <div class="text-xs space-y-1">
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Max Height:</span>
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{ liveCalculations.maxHeight }}"</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ formatDistance(40) }}{{ distanceUnitLabel }} Drop:</span>
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{ liveCalculations.drop40yd }}"</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Flight Trajectory Visualization using TrajectoryChart -->
+    <div v-if="hasValidTrajectoryData" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <TrajectoryChart 
+        :arrow-data="getArrowDataForTrajectory()"
+        :bow-config="getBowConfigForTrajectory()"
+        :mobile-horizontal="false"
+        :key="trajectoryChartKey"
+      />
     </div>
 
     <!-- Detailed Ballistics Table -->
@@ -236,7 +128,7 @@
               :key="point.distance"
               class="border-b border-gray-100 dark:border-gray-800"
             >
-              <td class="py-2 font-medium">{{ formatDistance(point.distance) }} {{ distanceUnitLabel }}</td>
+              <td class="py-2 font-medium">{{ point.distance }} yd</td>
               <td class="text-right py-2">{{ point.speed }} FPS</td>
               <td class="text-right py-2" :class="point.drop < 0 ? 'text-red-600 dark:text-red-400' : ''">
                 {{ point.drop }}"
@@ -270,7 +162,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useTrajectoryCalculation } from '~/composables/useTrajectoryCalculation'
+import TrajectoryChart from '~/components/TrajectoryChart.vue'
 
 const props = defineProps({
   setupArrow: {
@@ -291,24 +185,47 @@ const props = defineProps({
   }
 })
 
-// Reactive references
-const trajectoryChart = ref(null)
-const distanceUnit = ref('yards') // 'yards' or 'meters'
+// Use the unified trajectory calculation composable
+const {
+  isCalculating: isLoadingPerformance,
+  trajectoryData: apiPerformanceData,
+  error,
+  hasTrajectoryData,
+  performanceSummary,
+  trajectoryPoints,
+  calculateTrajectory,
+  calculateSimplifiedTrajectory,
+  buildArrowData,
+  buildBowConfig
+} = useTrajectoryCalculation()
 
-// Unit conversion functions
-const yardsToMeters = (yards) => yards * 0.9144
-const metersToYards = (meters) => meters / 0.9144
+// TrajectoryChart integration
+const trajectoryChartKey = ref(0)
 
-// Distance formatting and conversion
-const formatDistance = (distanceInYards) => {
-  if (distanceUnit.value === 'meters') {
-    return Math.round(yardsToMeters(distanceInYards) * 10) / 10
+// TrajectoryChart helper functions (same as ArrowPerformanceAnalysis)
+const getArrowDataForTrajectory = () => {
+  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+  
+  return {
+    estimated_speed_fps: arrowData.estimated_speed_fps || 280,
+    total_weight: arrowData.total_weight,
+    outer_diameter: arrowData.outer_diameter,
+    arrow_type: arrowData.arrow_type,
+    manufacturer: arrowData.manufacturer,
+    model_name: arrowData.model_name,
+    spine: arrowData.spine,
+    setup_id: arrowData.setup_id,
+    arrow_id: arrowData.arrow_id,
+    speed_source: arrowData.speed_source
   }
-  return distanceInYards
 }
 
-const distanceUnitLabel = computed(() => {
-  return distanceUnit.value === 'meters' ? 'm' : 'yd'
+const getBowConfigForTrajectory = () => {
+  return buildBowConfig(props.bowConfig)
+}
+
+const hasValidTrajectoryData = computed(() => {
+  return !!(props.setupArrow && props.arrow && props.bowConfig)
 })
 
 // Draw Length Information
@@ -353,35 +270,192 @@ const getBowTypeMessage = () => {
   }
 }
 
-// Live Performance Calculations
-const liveCalculations = computed(() => {
-  const totalWeight = calculateTotalWeight()
-  const estimatedSpeed = calculateEstimatedSpeed(totalWeight)
-  const kineticEnergy = calculateKineticEnergy(estimatedSpeed, totalWeight)
-  const foc = calculateAdvancedFOC()
-  const trajectory = calculateTrajectory(estimatedSpeed, totalWeight)
+// Unified API Performance Calculation using the composable
+const calculatePerformanceAPI = async () => {
+  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+  const bowConfig = buildBowConfig(props.bowConfig)
+  
+  try {
+    // Use the unified trajectory calculation with default environmental conditions
+    const result = await calculateTrajectory(arrowData, bowConfig)
+    
+    // Check if we actually got valid trajectory data, not just a truthy response
+    if (!result || !hasTrajectoryData.value) {
+      console.warn('API Performance calculation failed, using fallback - no valid trajectory data returned')
+    }
+  } catch (error) {
+    console.warn('API Performance calculation failed, using fallback - exception:', error)
+  }
+}
+
+// Helper function for total weight calculation (using composable)
+const calculateTotalWeight = () => {
+  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+  return arrowData.total_weight
+}
+
+// Helper function for simple trajectory calculation
+const calculateTrajectoryPoints = (speed, weight) => {
+  const points = []
+  const distances = Array.from({length: 21}, (_, i) => i * 5) // 0 to 100 yards
+  
+  let maxHeight = 0
+  let drop40yd = 0
+  
+  distances.forEach(distance => {
+    if (distance === 0) {
+      points.push({ distance: 0, drop: 0, height: 0 })
+      return
+    }
+    
+    // Simplified ballistic trajectory calculation
+    const timeToTarget = distance * 3 / speed
+    const gravityDrop = 16.1 * timeToTarget * timeToTarget
+    const sightHeight = 7
+    const zeroDistance = 20
+    
+    let drop = gravityDrop - sightHeight
+    
+    if (distance <= zeroDistance) {
+      drop = drop + (sightHeight * (zeroDistance - distance) / zeroDistance)
+    }
+    
+    const height = Math.abs(drop)
+    if (height > maxHeight) maxHeight = height
+    if (distance === 40) drop40yd = Math.round(drop * 10) / 10
+    
+    points.push({
+      distance,
+      drop: Math.round(drop * 10) / 10,
+      height: Math.round(height * 10) / 10
+    })
+  })
   
   return {
-    totalWeight: Math.round(totalWeight * 10) / 10,
-    estimatedSpeed: Math.round(estimatedSpeed),
-    kineticEnergy: Math.round(kineticEnergy * 10) / 10,
-    foc: Math.round(foc * 10) / 10,
-    trajectory,
-    maxHeight: trajectory.maxHeight,
-    drop40yd: trajectory.drop40yd
+    points,
+    maxHeight: Math.round(maxHeight * 10) / 10,
+    drop40yd
+  }
+}
+
+// Live Performance Calculations (use API data from composable, fallback to simplified)
+const liveCalculations = computed(() => {
+  // Use API data from the composable when available
+  if (hasTrajectoryData.value && performanceSummary.value) {
+    const performance = performanceSummary.value
+    const trajectory = trajectoryPoints.value || []
+    
+    // Find max height and 40yd drop from trajectory data
+    const maxHeight = trajectory.length > 0 ? Math.max(...trajectory.map(p => p.height_inches - 7.0)) : 0
+    const point40yd = trajectory.find(p => Math.abs(p.distance_yards - 40) <= 2)
+    const drop40yd = point40yd ? Math.abs(point40yd.height_inches - 7.0) : 0
+    
+    return {
+      totalWeight: Math.round((performance.total_arrow_weight || calculateTotalWeight()) * 10) / 10,
+      estimatedSpeed: Math.round(performance.estimated_speed_fps || 0),
+      kineticEnergy: Math.round((performance.kinetic_energy_40yd || 0) * 10) / 10,
+      foc: Math.round((performance.foc_percentage || 0) * 10) / 10,
+      trajectory: {
+        points: trajectory.map(p => ({
+          distance: p.distance_yards,
+          drop: Math.round((p.height_inches - 7.0) * 10) / 10,
+          height: Math.round(Math.abs(p.height_inches - 7.0) * 10) / 10
+        })),
+        maxHeight: Math.round(maxHeight * 10) / 10,
+        drop40yd: Math.round(drop40yd * 10) / 10
+      },
+      maxHeight: Math.round(maxHeight * 10) / 10,
+      drop40yd: Math.round(drop40yd * 10) / 10,
+      speedSource: performance.speed_source || 'estimated',
+      confidence: performance.confidence
+    }
+  }
+  
+  // Fallback to simplified calculations using the composable
+  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+  const bowConfig = buildBowConfig(props.bowConfig)
+  const simplified = calculateSimplifiedTrajectory(arrowData, bowConfig)
+  
+  if (simplified.performance_summary) {
+    const performance = simplified.performance_summary
+    const simpleTrajectory = calculateTrajectoryPoints(performance.estimated_speed_fps, performance.total_arrow_weight)
+    
+    return {
+      totalWeight: Math.round(performance.total_arrow_weight * 10) / 10,
+      estimatedSpeed: Math.round(performance.estimated_speed_fps),
+      kineticEnergy: Math.round(performance.kinetic_energy_40yd * 10) / 10,
+      foc: Math.round(performance.foc_percentage * 10) / 10,
+      trajectory: simpleTrajectory,
+      maxHeight: simpleTrajectory.maxHeight,
+      drop40yd: simpleTrajectory.drop40yd,
+      speedSource: performance.speed_source,
+      confidence: null
+    }
+  }
+  
+  // Final fallback
+  return {
+    totalWeight: calculateTotalWeight(),
+    estimatedSpeed: 280,
+    kineticEnergy: 0,
+    foc: 12,
+    trajectory: { points: [], maxHeight: 0, drop40yd: 0 },
+    maxHeight: 0,
+    drop40yd: 0,
+    speedSource: 'estimated',
+    confidence: null
   }
 })
 
-// Ballistics Table Data
+// Watch for changes and recalculate
+watch([() => props.setupArrow, () => props.bowConfig], () => {
+  calculatePerformanceAPI()
+  // Force TrajectoryChart to re-render when props change
+  trajectoryChartKey.value++
+}, { immediate: true, deep: true })
+
+// Ballistics Table Data (use API data from composable when available)
 const ballisticsTable = computed(() => {
+  // Use API trajectory data from the composable if available
+  if (hasTrajectoryData.value && trajectoryPoints.value?.length > 0) {
+    const trajectoryPointsData = trajectoryPoints.value
+    const baseDistances = [10, 20, 30, 40, 50, 60, 80, 100]
+    
+    return baseDistances.map(distanceYards => {
+      const point = trajectoryPointsData.find(p => Math.abs(p.distance_yards - distanceYards) <= 2)
+      
+      if (point) {
+        return {
+          distance: distanceYards,
+          speed: Math.round(point.velocity_fps),
+          drop: Math.round((point.height_inches - 7.0) * 10) / 10,
+          energy: Math.round(point.kinetic_energy_ft_lbs * 10) / 10,
+          time: Math.round(point.time_seconds * 1000) / 1000
+        }
+      }
+      
+      // Fallback to interpolation if exact point not found
+      const speed = liveCalculations.value.estimatedSpeed
+      const weight = liveCalculations.value.totalWeight
+      
+      return {
+        distance: distanceYards,
+        speed: Math.round(calculateSpeedAtDistance(speed, distanceYards)),
+        drop: calculateDropAtDistance(speed, distanceYards),
+        energy: Math.round(calculateEnergyAtDistance(speed, weight, distanceYards) * 10) / 10,
+        time: calculateTimeToDistance(speed, distanceYards)
+      }
+    })
+  }
+  
+  // Fallback to simplified calculations
   const speed = liveCalculations.value.estimatedSpeed
   const weight = liveCalculations.value.totalWeight
   
-  // Base distances in yards, convert to meters if needed
   const baseDistances = [10, 20, 30, 40, 50, 60, 80, 100]
   
   return baseDistances.map(distanceYards => ({
-    distance: distanceYards, // Store original yards for calculations
+    distance: distanceYards,
     speed: Math.round(calculateSpeedAtDistance(speed, distanceYards)),
     drop: calculateDropAtDistance(speed, distanceYards),
     energy: Math.round(calculateEnergyAtDistance(speed, weight, distanceYards) * 10) / 10,
@@ -389,59 +463,6 @@ const ballisticsTable = computed(() => {
   }))
 })
 
-// Trajectory Path for SVG
-const trajectoryPath = computed(() => {
-  const points = liveCalculations.value.trajectory.points
-  if (!points || points.length === 0) return ''
-  
-  const maxDistance = Math.max(...points.map(p => p.distance))
-  const maxDrop = Math.max(...points.map(p => Math.abs(p.drop)))
-  
-  const pathData = points.map((point, index) => {
-    const x = (point.distance / maxDistance) * 750 + 25 // Scale to SVG width
-    const y = 100 - ((point.drop + maxDrop) / (maxDrop * 2)) * 150 + 25 // Invert Y and scale
-    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-  }).join(' ')
-  
-  return pathData
-})
-
-// Original Trajectory Path (if available)
-const originalTrajectoryPath = computed(() => {
-  if (!props.originalPerformance?.trajectory) return null
-  
-  const points = props.originalPerformance.trajectory.points
-  if (!points || points.length === 0) return null
-  
-  const maxDistance = Math.max(...points.map(p => p.distance))
-  const maxDrop = Math.max(...points.map(p => Math.abs(p.drop)))
-  
-  const pathData = points.map((point, index) => {
-    const x = (point.distance / maxDistance) * 750 + 25
-    const y = 100 - ((point.drop + maxDrop) / (maxDrop * 2)) * 150 + 25
-    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-  }).join(' ')
-  
-  return pathData
-})
-
-// Trajectory Markers
-const trajectoryMarkers = computed(() => {
-  const trajectory = liveCalculations.value.trajectory
-  const markerDistances = [20, 40, 60, 80] // Always in yards for calculations
-  const maxDistance = 100
-  
-  return markerDistances.map(distance => {
-    const point = trajectory.points.find(p => p.distance === distance) || { distance, drop: 0 }
-    const maxDrop = 20 // Estimated max drop range
-    
-    return {
-      distance, // Store original distance in yards for calculations
-      x: (distance / maxDistance) * 750 + 25,
-      y: 100 - ((point.drop + maxDrop) / (maxDrop * 2)) * 150 + 25
-    }
-  })
-})
 
 // Performance Recommendations
 const performanceRecommendations = computed(() => {
@@ -487,44 +508,7 @@ const performanceRecommendations = computed(() => {
   return recommendations.slice(0, 3) // Limit to 3 recommendations
 })
 
-// Core Calculation Methods
-const calculateTotalWeight = () => {
-  // Calculate shaft weight using GPI
-  let shaftWeight = 0
-  if (props.arrow?.spine_specifications?.length > 0) {
-    const spineSpec = props.arrow.spine_specifications.find(spec => 
-      spec.spine.toString() === props.setupArrow.calculated_spine?.toString()
-    ) || props.arrow.spine_specifications[0]
-    
-    if (spineSpec?.gpi_weight) {
-      shaftWeight = spineSpec.gpi_weight * (props.setupArrow.arrow_length || 32)
-    }
-  }
-  
-  // Add component weights
-  const componentWeight = 
-    (props.setupArrow.point_weight || 0) +
-    (props.setupArrow.nock_weight || 10) +
-    (props.setupArrow.insert_weight || 0) +
-    (props.setupArrow.bushing_weight || 0) +
-    (props.setupArrow.fletching_weight || 15)
-  
-  return shaftWeight + componentWeight
-}
-
-const calculateEstimatedSpeed = (arrowWeight) => {
-  const bowSpeed = props.bowConfig.ibo_speed || 310 // Default IBO speed
-  const drawWeight = props.bowConfig.draw_weight || 60
-  const drawLength = props.bowConfig.draw_length || 28
-  
-  // Simplified speed estimation based on IBO formula
-  // Adjust for draw weight and length
-  const dwFactor = (drawWeight - 70) / 10 * 10 // +/- 10 fps per 10 lbs
-  const dlFactor = (drawLength - 30) / 1 * 10   // +/- 10 fps per inch
-  const weightFactor = (arrowWeight - 350) / 5 * -2 // -2 fps per 5 grains
-  
-  return Math.max(bowSpeed + dwFactor + dlFactor + weightFactor, 150) // Minimum 150 fps
-}
+// Additional calculation helper methods
 
 const calculateKineticEnergy = (speed, weight) => {
   // KE = (mass × velocity²) / 2gc
@@ -537,22 +521,51 @@ const calculateAdvancedFOC = () => {
   const totalWeight = calculateTotalWeight()
   const pointWeight = props.setupArrow.point_weight || 0
   const insertWeight = props.setupArrow.insert_weight || 0
+  const nockWeight = props.setupArrow.nock_weight || 10
+  const bushingWeight = props.setupArrow.bushing_weight || 0
+  const fletchingWeight = props.setupArrow.fletching_weight || 15
   
-  if (totalWeight === 0) return 0
+  if (totalWeight === 0 || arrowLength === 0) return 0
   
-  // More accurate FOC calculation
-  const frontWeight = pointWeight + insertWeight
-  const balancePoint = arrowLength / 2 // Simplified balance point
-  const centerOfArrow = arrowLength / 2
+  // Industry-accurate FOC calculation using weight distribution method
+  // This method calculates the actual balance point based on component locations
   
-  // FOC = ((Balance Point - Center of Arrow) / Arrow Length) × 100
-  const foc = ((balancePoint - centerOfArrow) / arrowLength) * 100 + 
-             (frontWeight / totalWeight) * 15 // Additional factor for front weight
+  // Component positions along the arrow (in inches from nock end)
+  const nockPosition = 0 // Nock at rear end
+  const fletchingPosition = 3 // Fletching typically 3" from nock
+  const bushingPosition = arrowLength // Bushing at front end (inside shaft)
+  const insertPosition = arrowLength // Insert at front end
+  const pointPosition = arrowLength + 0.5 // Point extends beyond shaft end
   
-  return Math.max(foc, 0)
+  // Shaft weight distribution (assuming uniform carbon/aluminum shaft)
+  const shaftWeight = totalWeight - pointWeight - insertWeight - nockWeight - bushingWeight - fletchingWeight
+  const shaftCenterPosition = arrowLength / 2 // Shaft center of mass
+  
+  // Calculate weighted balance point using moment arm principle
+  // Sum of (weight × position) divided by total weight
+  const weightedMoments = 
+    (nockWeight * nockPosition) +
+    (fletchingWeight * fletchingPosition) +
+    (shaftWeight * shaftCenterPosition) +
+    (bushingWeight * bushingPosition) +
+    (insertWeight * insertPosition) +
+    (pointWeight * pointPosition)
+  
+  const balancePoint = weightedMoments / totalWeight
+  
+  // Physical center of arrow (geometric center of arrow shaft only)
+  const physicalCenter = arrowLength / 2
+  
+  // Industry standard FOC formula
+  // FOC% = ((Balance Point - Physical Center) / Arrow Length) × 100
+  const focPercentage = ((balancePoint - physicalCenter) / arrowLength) * 100
+  
+  // FOC should typically be between 6% and 20% for hunting arrows
+  // Target arrows often run 8-12% FOC
+  return Math.round(focPercentage * 10) / 10
 }
 
-const calculateTrajectory = (speed, weight) => {
+const calculateLocalTrajectory = (speed, weight) => {
   const points = []
   const distances = Array.from({length: 21}, (_, i) => i * 5) // 0 to 100 yards in 5-yard increments
   
@@ -699,5 +712,36 @@ const getChangeClass = (type) => {
   if (Math.abs(change) < 0.1) return 'text-gray-500'
   if (change > 0) return 'text-green-600 dark:text-green-400'
   return 'text-red-600 dark:text-red-400'
+}
+
+// Speed source indicator methods (same as TrajectoryChart)
+const getSpeedSourceClass = (source) => {
+  if (source === 'chronograph') {
+    return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+  } else if (source === 'enhanced_estimated') {
+    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+  } else {
+    return 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200'
+  }
+}
+
+const getSpeedSourceIcon = (source) => {
+  if (source === 'chronograph') {
+    return 'fas fa-tachometer-alt'
+  } else if (source === 'enhanced_estimated') {
+    return 'fas fa-cog'
+  } else {
+    return 'fas fa-calculator'
+  }
+}
+
+const getSpeedSourceText = (source) => {
+  if (source === 'chronograph') {
+    return 'Measured'
+  } else if (source === 'enhanced_estimated') {
+    return 'Enhanced'
+  } else {
+    return 'Estimated'
+  }
 }
 </script>

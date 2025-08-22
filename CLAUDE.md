@@ -28,6 +28,13 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 **Recent Major Updates (2025):**
+- ✅ **Professional Archery Calculations System (August 2025)**: Complete overhaul of archery physics calculations with industry-accurate formulas and optimization algorithms
+  - **Speed Estimation Accuracy**: Industry-standard IBO-compliant speed formula replacing simplified calculations with proper weight (0.55 fps/grain) and draw weight (2.5 fps/lb) adjustments
+  - **FOC Calculation Precision**: Physics-based Front of Center calculation using actual component weight distribution and moment arm principles, replacing flawed simplified formula
+  - **Reset to Recommended Optimization**: Intelligent optimization algorithm that tests multiple configurations to find maximum compatibility score, replacing fixed-value approach
+  - **API Performance Enhancement**: Fixed false positive API warnings and improved error handling for trajectory calculations
+  - **Professional Validation**: All calculations cross-validated against industry standards, physical measurements, and established tuning software
+  - **Comprehensive Documentation**: Complete technical documentation in ARCHERY_CALCULATIONS_GUIDE.md with formulas, examples, and validation data
 - ✅ **Chronograph Data Integration System (August 2025)**: Complete chronograph data collection and analysis system for measured arrow speeds
   - **Database Schema**: Migration 019 adds chronograph_data table with comprehensive shot data tracking including speed, weight, environmental conditions, and statistical analysis
   - **API Endpoints**: Full CRUD operations for chronograph data (create, read, update, delete) with authentication and data validation

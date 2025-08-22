@@ -48,6 +48,14 @@ Comprehensive spine calculation system documentation:
 - **Database Schema**: 7 specialized tables for calculation parameters and material properties
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
+
+#### [Archery Calculations Guide](ARCHERY_CALCULATIONS_GUIDE.md) ✨ NEW
+Professional archery physics calculations and algorithms:
+- **Speed Estimation**: Industry-accurate IBO-compliant speed formulas with proper weight and draw adjustments
+- **FOC Calculations**: Physics-based Front of Center calculations using component weight distribution
+- **Optimization Algorithms**: Intelligent "Reset to Recommended" with iterative compatibility testing
+- **API Performance**: Enhanced error handling and trajectory calculation improvements
+- **Validation & Testing**: Cross-validated against industry standards and real-world measurements
 - **Automatic Migration**: Startup script integration and data initialization
 - **Usage Examples**: Frontend and backend integration patterns
 

@@ -67,7 +67,7 @@
         </label>
         <select
           v-model="editableConfig.calculated_spine"
-          @change="handleChange"
+          @change="handleSpineChange"
           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
         >
           <option value="">Auto-calculate</option>
@@ -102,6 +102,7 @@
             ></div>
           </div>
           <span class="text-sm font-medium" :class="getCompatibilityTextClass(editableConfig.compatibility_score)">
+            <i v-if="isCalculatingCompatibility" class="fas fa-spinner fa-spin mr-1"></i>
             {{ editableConfig.compatibility_score || 0 }}%
           </span>
         </div>
@@ -234,38 +235,46 @@
     </div>
     
     <!-- Actions -->
-    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <!-- Reset to Recommended Button -->
       <button
-        @click="handleCancel"
+        @click="resetToRecommended"
         type="button"
-        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        class="inline-flex items-center px-4 py-2 border border-orange-300 dark:border-orange-600 rounded-md shadow-sm text-sm font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
       >
-        Cancel
+        <i class="fas fa-magic mr-2"></i>
+        Reset to Recommended
       </button>
-      <button
-        @click="handlePreview"
-        type="button"
-        class="px-4 py-2 border border-blue-300 dark:border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      >
-        <i class="fas fa-eye mr-2"></i>
-        Preview Changes
-      </button>
-      <button
-        @click="handleSave"
-        :disabled="!hasChanges"
-        type="button"
-        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        <i class="fas fa-save mr-2"></i>
-        Save Changes
-      </button>
+      
+      <!-- Cancel and Save Actions -->
+      <div class="flex space-x-3">
+        <button
+          @click="handleCancel"
+          type="button"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Cancel
+        </button>
+        <button
+          @click="handleSave"
+          :disabled="!hasChanges"
+          type="button"
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          <i class="fas fa-save mr-2"></i>
+          Save Changes
+        </button>
+      </div>
     </div>
     
-    <!-- Real-time Preview (when enabled) -->
-    <div v-if="showPreview" class="border-t border-gray-200 dark:border-gray-700 pt-6">
+    <!-- Real-time Performance Preview -->
+    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
       <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
         <i class="fas fa-chart-line mr-2 text-green-600"></i>
-        Performance Preview
+        Live Performance Preview
+        <span class="ml-2 px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+          Real-time
+        </span>
       </h4>
       
       <ArrowPerformancePreview
@@ -280,6 +289,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useApi } from '~/composables/useApi'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 
 const props = defineProps({
@@ -303,10 +313,13 @@ const props = defineProps({
 
 const emit = defineEmits(['update', 'save', 'cancel'])
 
+// Composables
+const api = useApi()
+
 // State
 const editableConfig = ref({})
 const originalConfig = ref({})
-const showPreview = ref(false)
+const showPreview = ref(true) // Always show preview for real-time updates
 
 // Computed
 const availableSpines = computed(() => {
@@ -363,6 +376,40 @@ const hasChanges = computed(() => {
   return hasChanged
 })
 
+// Real-time compatibility score calculation
+const isCalculatingCompatibility = ref(false)
+
+const calculateCompatibilityScore = async () => {
+  if (!props.arrow?.id || isCalculatingCompatibility.value) return
+  
+  isCalculatingCompatibility.value = true
+  
+  try {
+    const response = await api.post('/calculate-compatibility-score', {
+      arrow_id: props.arrow.id,
+      bow_config: {
+        draw_weight: props.bowConfig.draw_weight,
+        draw_length: props.bowConfig.draw_length,
+        bow_type: props.bowConfig.bow_type
+      },
+      arrow_config: {
+        arrow_length: editableConfig.value.arrow_length,
+        point_weight: editableConfig.value.point_weight,
+        calculated_spine: editableConfig.value.calculated_spine
+      }
+    })
+    
+    if (response.compatibility_score !== undefined) {
+      // Update compatibility score in real-time
+      editableConfig.value.compatibility_score = response.compatibility_score
+    }
+  } catch (error) {
+    console.error('Error calculating compatibility score:', error)
+  } finally {
+    isCalculatingCompatibility.value = false
+  }
+}
+
 // Methods
 const initializeConfig = () => {
   const config = {
@@ -394,6 +441,17 @@ const initializeConfig = () => {
 const handleChange = () => {
   // Emit update for real-time preview
   emit('update', { ...editableConfig.value })
+  
+  // Calculate compatibility score when spine, length, or point weight changes
+  calculateCompatibilityScore()
+}
+
+const handleSpineChange = (event) => {
+  // Update the spine value
+  editableConfig.value.calculated_spine = event.target.value
+  
+  // Trigger change handling
+  handleChange()
 }
 
 const handleSave = () => {
@@ -404,9 +462,140 @@ const handleCancel = () => {
   emit('cancel')
 }
 
-const handlePreview = () => {
-  showPreview.value = !showPreview.value
+const resetToRecommended = async () => {
+  try {
+    console.log('Starting Reset to Recommended optimization...')
+    const currentScore = editableConfig.value.compatibility_score || 0
+    
+    // Generate test configurations to find the best compatibility score
+    const testConfigurations = []
+    
+    // Get base recommendations as starting points
+    const recommendedLength = getRecommendedLength()
+    const recommendedSpine = getRecommendedSpineValue()
+    const baseLengths = [recommendedLength - 0.5, recommendedLength, recommendedLength + 0.5].filter(l => l >= 20 && l <= 36)
+    const basePointWeights = [85, 100, 115, 125, 140] // Common point weights
+    
+    // Generate test combinations
+    baseLengths.forEach(length => {
+      basePointWeights.forEach(pointWeight => {
+        availableSpines.value.forEach(spine => {
+          testConfigurations.push({
+            arrow_length: length,
+            point_weight: pointWeight,
+            calculated_spine: String(spine.spine),
+            nock_weight: 10,
+            insert_weight: 0,
+            bushing_weight: 0,
+            fletching_weight: 15
+          })
+        })
+      })
+    })
+    
+    console.log(`Testing ${testConfigurations.length} configurations for optimal compatibility...`)
+    
+    let bestConfig = null
+    let bestScore = currentScore
+    let testedCount = 0
+    
+    // Test configurations in batches to avoid overwhelming the API
+    const batchSize = 10
+    for (let i = 0; i < testConfigurations.length; i += batchSize) {
+      const batch = testConfigurations.slice(i, i + batchSize)
+      
+      // Test each configuration in the batch
+      for (const testConfig of batch) {
+        try {
+          const response = await api.post('/calculate-compatibility-score', {
+            arrow_id: props.arrow.id,
+            bow_config: {
+              draw_weight: props.bowConfig.draw_weight,
+              draw_length: props.bowConfig.draw_length,
+              bow_type: props.bowConfig.bow_type
+            },
+            arrow_config: testConfig
+          })
+          
+          testedCount++
+          
+          if (response.compatibility_score > bestScore) {
+            bestScore = response.compatibility_score
+            bestConfig = { ...testConfig }
+            console.log(`New best configuration found: ${bestScore}% (Length: ${testConfig.arrow_length}", Point: ${testConfig.point_weight}gr, Spine: ${testConfig.calculated_spine})`)
+          }
+        } catch (error) {
+          console.warn('Error testing configuration:', error)
+        }
+      }
+      
+      // Add small delay between batches to be respectful to the API
+      if (i + batchSize < testConfigurations.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+    
+    console.log(`Optimization complete: Tested ${testedCount} configurations`)
+    
+    if (bestConfig && bestScore > currentScore) {
+      const improvement = (bestScore - currentScore).toFixed(1)
+      console.log(`Found better configuration: ${improvement}% improvement (${currentScore}% → ${bestScore}%)`)
+      
+      // Apply the optimized configuration
+      editableConfig.value = {
+        ...editableConfig.value,
+        ...bestConfig,
+        compatibility_score: bestScore,
+        notes: `Optimized for maximum compatibility: ${bestScore}% (+${improvement}% improvement) - Length: ${bestConfig.arrow_length}", Point: ${bestConfig.point_weight}gr, Spine: ${bestConfig.calculated_spine} - ${new Date().toLocaleDateString()}`
+      }
+      
+      // Trigger change event for real-time updates
+      handleChange()
+    } else {
+      console.log(`No improvement found. Current score ${currentScore}% is already optimal.`)
+      
+      // Still apply basic recommended values but inform user
+      const recommendedPointWeight = getRecommendedPointWeight(recommendedLength)
+      
+      editableConfig.value = {
+        ...editableConfig.value,
+        arrow_length: recommendedLength,
+        calculated_spine: recommendedSpine,
+        point_weight: recommendedPointWeight,
+        nock_weight: 10,
+        insert_weight: 0,
+        bushing_weight: 0,
+        fletching_weight: 15,
+        notes: `Applied standard recommendations (current ${currentScore}% compatibility already near-optimal) - ${props.bowConfig.bow_type} bow (${props.bowConfig.draw_weight}lbs @ ${props.bowConfig.draw_length}") - ${new Date().toLocaleDateString()}`
+      }
+      
+      handleChange()
+    }
+  } catch (error) {
+    console.error('Error in Reset to Recommended optimization:', error)
+    
+    // Fallback to simplified calculation if optimization fails
+    const recommendedLength = getRecommendedLength()
+    const recommendedSpine = getRecommendedSpineValue()
+    const recommendedPointWeight = getRecommendedPointWeight(recommendedLength)
+    
+    editableConfig.value = {
+      ...editableConfig.value,
+      arrow_length: recommendedLength,
+      calculated_spine: recommendedSpine,
+      point_weight: recommendedPointWeight,
+      nock_weight: 10,
+      insert_weight: 0,
+      bushing_weight: 0,
+      fletching_weight: 15,
+      notes: `Applied fallback recommendations due to optimization error - ${props.bowConfig.bow_type} bow (${props.bowConfig.draw_weight}lbs @ ${props.bowConfig.draw_length}") - ${new Date().toLocaleDateString()}`
+    }
+    
+    handleChange()
+  }
 }
+
+// Preview is now always shown in real-time, no toggle needed
 
 const getRecommendedLength = () => {
   // Simple recommendation based on bow type and draw length
@@ -426,6 +615,55 @@ const getRecommendedSpine = () => {
   if (drawWeight < 60) return '400-500'
   if (drawWeight < 70) return '340-400'
   return '300-340'
+}
+
+const getRecommendedSpineValue = () => {
+  // Get the actual spine value from available options based on draw weight
+  const drawWeight = props.bowConfig.draw_weight || 60
+  
+  // Find the best spine match from available options
+  let targetSpine = 500 // Default
+  
+  if (drawWeight < 40) targetSpine = 600
+  else if (drawWeight < 50) targetSpine = 500  
+  else if (drawWeight < 60) targetSpine = 400
+  else if (drawWeight < 70) targetSpine = 340
+  else targetSpine = 300
+  
+  // Find the closest available spine option
+  const availableSpine = availableSpines.value.find(spine => 
+    spine.spine === targetSpine
+  )
+  
+  return availableSpine ? String(availableSpine.spine) : String(targetSpine)
+}
+
+const getRecommendedPointWeight = (arrowLength = 32) => {
+  // Calculate point weight for optimal FOC (12-15%)
+  const drawWeight = props.bowConfig.draw_weight || 60
+  const bowType = props.bowConfig.bow_type || 'compound'
+  
+  // Base point weight recommendations
+  let basePointWeight = 100
+  
+  if (bowType === 'traditional') {
+    // Traditional bows benefit from heavier points
+    basePointWeight = Math.max(125, drawWeight * 1.8)
+  } else {
+    // Compound bow recommendations
+    if (drawWeight < 40) basePointWeight = 85
+    else if (drawWeight < 50) basePointWeight = 100
+    else if (drawWeight < 60) basePointWeight = 115
+    else if (drawWeight < 70) basePointWeight = 125
+    else basePointWeight = 140
+  }
+  
+  // Adjust for arrow length (longer arrows need slightly heavier points for good FOC)
+  const lengthAdjustment = (arrowLength - 30) * 2
+  basePointWeight += lengthAdjustment
+  
+  // Round to nearest 5 grains and ensure within limits
+  return Math.max(40, Math.min(300, Math.round(basePointWeight / 5) * 5))
 }
 
 const getSelectedSpineGPI = () => {
