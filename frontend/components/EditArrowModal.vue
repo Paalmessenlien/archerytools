@@ -83,7 +83,7 @@
               @input="editForm.arrow_length = parseFloat($event.target.value)"
               labeled
               ticks
-              class="w-full"
+              class="w-full mobile-slider-safe"
             ></md-slider>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>24"</span>
@@ -104,7 +104,7 @@
               @input="editForm.point_weight = parseFloat($event.target.value)"
               labeled
               ticks
-              class="w-full"
+              class="w-full mobile-slider-safe"
             ></md-slider>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>40 gr</span>
@@ -155,7 +155,7 @@
                     :value="editForm.insert_weight"
                     @input="editForm.insert_weight = parseFloat($event.target.value)"
                     labeled
-                    class="w-full"
+                    class="w-full mobile-slider-safe"
                   ></md-slider>
                   <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span>5 gn</span>
@@ -176,7 +176,7 @@
                   :value="editForm.nock_weight || 10"
                   @input="editForm.nock_weight = parseFloat($event.target.value)"
                   labeled
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>5 gn</span>
@@ -213,7 +213,7 @@
                   :value="editForm.vane_length || 4"
                   @input="editForm.vane_length = parseFloat($event.target.value)"
                   labeled
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>1"</span>
@@ -248,7 +248,7 @@
                     :value="editForm.vane_weight_per || 5"
                     @input="editForm.vane_weight_per = parseFloat($event.target.value)"
                     labeled
-                    class="w-full"
+                    class="w-full mobile-slider-safe"
                   ></md-slider>
                   <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span>1 gn</span>
@@ -270,7 +270,7 @@
                   @input="editForm.number_of_vanes = parseInt($event.target.value)"
                   labeled
                   ticks
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>2</span>

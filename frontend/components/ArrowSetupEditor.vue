@@ -18,7 +18,7 @@
           step="0.25"
           :value="editableConfig.arrow_length || 32"
           @input="editableConfig.arrow_length = parseFloat($event.target.value); handleChange()"
-          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
         />
         <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
           <span>20"</span>
@@ -45,7 +45,7 @@
           step="5"
           :value="editableConfig.point_weight || 100"
           @input="editableConfig.point_weight = parseFloat($event.target.value); handleChange()"
-          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+          class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
         />
         <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
           <span>40 gr</span>

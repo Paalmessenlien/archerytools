@@ -401,13 +401,20 @@
     }
   }
   
-  /* Touch-friendly slider styling */
+  /* Touch-friendly slider styling with improved mobile touch handling */
   .slider-touch {
     height: 12px !important;
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
     cursor: pointer;
+    
+    /* Improved mobile touch handling */
+    touch-action: pan-y; /* Allow vertical scrolling, only capture horizontal touches */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    /* Require intentional touches on mobile */
+    pointer-events: auto;
   }
   
   .slider-touch::-webkit-slider-track {
@@ -715,7 +722,14 @@
   }
 }
 
-/* Custom slider styles */
+/* Custom slider styles with mobile touch optimization */
+input[type="range"] {
+  /* Improved mobile touch handling for all range inputs */
+  touch-action: pan-y; /* Allow vertical scrolling, only capture horizontal touches */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -781,6 +795,10 @@ md-slider {
   --md-slider-inactive-track-height: 4px;
   width: 100%;
   touch-action: pan-y; /* Allow vertical scroll to pass through; adjust slider only on horizontal move */
+  
+  /* Prevent accidental touches on mobile by requiring intentional horizontal gestures */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 /* Larger, more touch-friendly slider on phones */
@@ -1898,6 +1916,15 @@ md-filled-button[aria-label]::after {
   background: #e5e7eb;
   outline: none;
   transition: background 0.2s ease;
+  
+  /* Enhanced mobile touch handling */
+  touch-action: pan-y; /* Allow vertical scrolling, only capture horizontal touches */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  
+  /* Add minimum touch area padding */
+  padding: 8px 0;
+  margin: 4px 0;
 }
 
 .trajectory-range-mobile::-webkit-slider-thumb {
@@ -1994,6 +2021,34 @@ md-filled-button[aria-label]::after {
 /* Mobile trajectory chart canvas optimization */
 .mobile-trajectory-horizontal canvas {
   touch-action: pan-x pan-y;
+}
+
+/* Mobile-optimized slider styles to prevent scroll interference */
+.mobile-slider-safe {
+  touch-action: pan-y !important; /* Only allow vertical scrolling to pass through */
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  
+  /* Require more deliberate touch gestures on mobile */
+  padding: 8px 0 !important;
+  margin: 4px 0 !important;
+  
+  /* Increase touch target size on mobile */
+  min-height: 24px !important;
+}
+
+/* Mobile-optimized Material Design sliders */
+@media (max-width: 640px) {
+  md-slider.mobile-slider-safe {
+    --md-slider-handle-height: 32px !important;
+    --md-slider-handle-width: 32px !important;
+    --md-slider-active-track-height: 10px !important;
+    --md-slider-inactive-track-height: 8px !important;
+    
+    /* Increase container padding for better touch area */
+    padding: 12px 0 !important;
+    margin: 8px 0 !important;
+  }
 }
 
 /* Responsive mobile trajectory layout */

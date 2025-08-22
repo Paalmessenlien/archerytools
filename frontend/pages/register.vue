@@ -43,7 +43,7 @@
               @input="profileData.draw_length = parseFloat($event.target.value)"
               labeled
               ticks
-              class="w-full"
+              class="w-full mobile-slider-safe"
             ></md-slider>
           </div>
 

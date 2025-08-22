@@ -97,7 +97,7 @@
             :min="units === 'metric' ? 25 : 30" 
             :max="units === 'metric' ? 110 : 120" 
             step="5"
-            class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+            class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
           >
           <!-- Quick Range Buttons -->
           <div class="flex flex-wrap gap-1 mt-2">
@@ -128,7 +128,7 @@
                 @change="updateTrajectory"
                 type="range" 
                 min="0" max="15" step="1"
-                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
               >
             </div>
             <div>
@@ -138,7 +138,7 @@
                 @change="updateTrajectory"
                 type="range" 
                 min="30" max="90" step="5"
-                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
               >
             </div>
           </div>
@@ -271,7 +271,7 @@
               :min="units === 'metric' ? 25 : 30" 
               :max="units === 'metric' ? 110 : 120" 
               step="5"
-              class="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+              class="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
             >
             <div class="flex justify-between text-xs text-blue-600 dark:text-blue-400 mt-1">
               <span>{{ units === 'metric' ? 25 : 30 }} {{ getDistanceUnit() }}</span>
@@ -314,7 +314,7 @@
               :min="units === 'metric' ? 2 : 2" 
               :max="units === 'metric' ? 15 : 20" 
               step="1"
-              class="w-full h-3 bg-green-200 rounded-lg appearance-none cursor-pointer"
+              class="w-full h-3 bg-green-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
             >
             <div class="flex justify-between text-xs text-green-600 dark:text-green-400 mt-1">
               <span>{{ units === 'metric' ? 2 : 2 }} {{ getDistanceUnit() }}</span>
@@ -353,7 +353,7 @@
             min="0" 
             max="20" 
             step="1"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
           >
           <span class="text-xs text-gray-500">{{ environmentalConditions.windSpeed }} mph</span>
         </div>
@@ -366,7 +366,7 @@
             min="20" 
             max="100" 
             step="5"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
           >
           <span class="text-xs text-gray-500">{{ environmentalConditions.temperature }}°F</span>
         </div>
@@ -379,7 +379,7 @@
             min="0" 
             max="8000" 
             step="500"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mobile-slider-safe"
           >
           <span class="text-xs text-gray-500">{{ environmentalConditions.altitude }} ft</span>
         </div>

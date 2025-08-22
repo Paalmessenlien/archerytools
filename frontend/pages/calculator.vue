@@ -118,7 +118,7 @@
                 max="80"
                 step="0.5"
                 v-model="localDrawWeight"
-                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+                class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
               />
               <input
                 type="number"
@@ -176,7 +176,7 @@
               max="34"
               step="0.5"
               v-model.number="localArrowLength"
-              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
             />
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>24"</span>
@@ -195,7 +195,7 @@
               max="300"
               step="5"
               v-model.number="localPointWeight"
-              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch"
+              class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
             />
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>40 gn</span>
@@ -247,7 +247,7 @@
                   :value="bowConfig.insert_weight"
                   @input="updateBowConfig({ insert_weight: parseFloat($event.target.value) })"
                   labeled
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>5 gn</span>
@@ -285,7 +285,7 @@
                 :value="bowConfig.vane_length || 4"
                 @input="updateBowConfig({ vane_length: parseFloat($event.target.value) })"
                 labeled
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
               <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>1"</span>
@@ -320,7 +320,7 @@
                   :value="bowConfig.vane_weight_per || 5"
                   @input="updateBowConfig({ vane_weight_per: parseFloat($event.target.value) })"
                   labeled
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>1 gn</span>
@@ -342,7 +342,7 @@
                 @input="updateBowConfig({ number_of_vanes: parseInt($event.target.value) })"
                 labeled
                 ticks
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
               <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>2</span>
@@ -374,7 +374,7 @@
                   :value="bowConfig.bushing_weight"
                   @input="updateBowConfig({ bushing_weight: parseFloat($event.target.value) })"
                   labeled
-                  class="w-full"
+                  class="w-full mobile-slider-safe"
                 ></md-slider>
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>1 gn</span>
@@ -395,7 +395,7 @@
                 :value="bowConfig.nock_weight || 10"
                 @input="updateBowConfig({ nock_weight: parseFloat($event.target.value) })"
                 labeled
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
               <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>5 gn</span>

@@ -115,7 +115,7 @@
                 @input="setupData.draw_length_module = parseFloat($event.target.value)"
                 labeled
                 ticks
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
               <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>24"</span>
