@@ -105,8 +105,8 @@
                   </md-assist-chip>
                   <!-- Total Arrow Weight -->
                   <md-assist-chip 
-                    :label="`Total: ${calculateTotalArrowWeight(recommendation.arrow, bowConfig?.arrow_length || 29)} gn`" 
-                    :title="getWeightCalculationDebug(recommendation.arrow, bowConfig?.arrow_length || 29)"
+                    :label="`Total: ${calculateTotalArrowWeight(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29)} gn`" 
+                    :title="getWeightCalculationDebug(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29)"
                     class="bg-blue-100 dark:bg-blue-900">
                     <i class="fas fa-balance-scale fa-icon" slot="icon" style="color: #3b82f6;"></i>
                   </md-assist-chip>
@@ -717,6 +717,18 @@ const estimateGpiWeight = (spine, material, outerDiameter) => {
   return Math.round(baseGpi * 10) / 10 // Round to 1 decimal place
 }
 
+// Utility function to clean numeric values from strings (removes quotes, units, etc.)
+const cleanNumericValue = (value) => {
+  if (typeof value === 'number') return value
+  if (!value) return null
+  
+  // Convert to string and remove all non-numeric characters except decimal point and negative sign
+  const cleaned = String(value).replace(/[^0-9.-]/g, '')
+  const parsed = parseFloat(cleaned)
+  
+  return isNaN(parsed) ? null : parsed
+}
+
 // Calculate total arrow weight based on GPI and arrow length
 const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) => {
   if (!arrow || !arrow.spine_specifications) return 0
@@ -797,6 +809,10 @@ const getWeightCalculationDebug = (arrow, arrowLength) => {
   const spineSpec = arrow.spine_specifications[0]
   if (!spineSpec) return 'No spine specification'
   
+  // Clean the arrow length value to remove any quotes or units
+  const cleanedLength = cleanNumericValue(arrowLength)
+  console.log(`🔍 Debug: Raw arrow length: "${arrowLength}" → Cleaned: ${cleanedLength}`)
+  
   // Use actual GPI weight or estimate based on arrow characteristics
   let gpiWeight = spineSpec.gpi_weight
   let gpiSource = 'actual'
@@ -847,6 +863,7 @@ const getWeightCalculationDebug = (arrow, arrowLength) => {
   const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
   
   return `${arrow.manufacturer} ${arrow.model_name}
+Raw Length Input: "${arrowLength}" → Cleaned: ${cleanedLength}
 GPI: ${gpiWeight} (${gpiSource})
 Length: ${arrowBaseLength}" (${lengthSource})
 Shaft: ${gpiWeight} × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)}gn
