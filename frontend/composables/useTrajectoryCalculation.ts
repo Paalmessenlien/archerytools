@@ -99,7 +99,8 @@ export const useTrajectoryCalculation = () => {
    * Calculate trajectory using the unified API endpoint
    */
   const calculateTrajectory = async (
-    arrowData: ArrowData,
+    setupArrow: any,
+    arrow: any,
     bowConfig: BowConfig,
     environmental?: EnvironmentalConditions,
     shooting?: ShootingConditions
@@ -110,6 +111,9 @@ export const useTrajectoryCalculation = () => {
     error.value = null
     
     try {
+      // Build arrow data with chronograph priority
+      const arrowData = await buildArrowData(setupArrow, arrow)
+      
       const requestData = {
         arrow_data: {
           estimated_speed_fps: arrowData.estimated_speed_fps || 280,
@@ -174,10 +178,12 @@ export const useTrajectoryCalculation = () => {
   /**
    * Calculate simplified trajectory for fallback scenarios
    */
-  const calculateSimplifiedTrajectory = (
-    arrowData: ArrowData,
+  const calculateSimplifiedTrajectory = async (
+    setupArrow: any,
+    arrow: any,
     bowConfig: BowConfig
-  ): Partial<TrajectoryData> => {
+  ): Promise<Partial<TrajectoryData>> => {
+    const arrowData = await buildArrowData(setupArrow, arrow)
     const speed = arrowData.estimated_speed_fps || estimateSpeed(arrowData.total_weight, bowConfig.drawWeight)
     const kineticEnergyInitial = calculateKineticEnergy(arrowData.total_weight, speed)
     const kineticEnergy40yd = kineticEnergyInitial * 0.7 // Simplified energy retention
@@ -258,13 +264,42 @@ export const useTrajectoryCalculation = () => {
   }
   
   /**
-   * Build arrow data object from component props
+   * Check for chronograph data and return speed if available
    */
-  const buildArrowData = (
+  const getChronographSpeed = async (setupId: number, arrowId: number): Promise<number | null> => {
+    try {
+      const response = await api.post('/calculator/arrow-speed-estimate', {
+        setup_id: setupId,
+        arrow_id: arrowId,
+        bow_ibo_speed: 320, // These values won't be used if chronograph data exists
+        bow_draw_weight: 60,
+        bow_draw_length: 28,
+        arrow_weight_grains: 400
+      })
+      
+      if (response.calculation_method === 'chronograph_data') {
+        console.log('🎯 Chronograph data found:', {
+          speed: response.estimated_speed_fps,
+          confidence: response.confidence_percent,
+          chronograph_data: response.chronograph_data
+        })
+        return response.estimated_speed_fps
+      }
+    } catch (error) {
+      console.warn('Failed to check chronograph data:', error)
+    }
+    
+    return null
+  }
+
+  /**
+   * Build arrow data object from component props with chronograph data priority
+   */
+  const buildArrowData = async (
     setupArrow: any,
     arrow: any,
     performanceData?: any
-  ): ArrowData => {
+  ): Promise<ArrowData> => {
     // Debug logging for arrow object
     if (process.dev) {
       console.log('🔍 Arrow Object Debug:', {
@@ -360,6 +395,23 @@ export const useTrajectoryCalculation = () => {
     
     const totalWeight = Math.round((shaftWeight + componentWeight) * 10) / 10
     
+    // Check for chronograph data first (highest priority)
+    let estimatedSpeed = performanceData?.performance_summary?.estimated_speed_fps
+    let speedSource = performanceData?.performance_summary?.speed_source || 'estimated'
+    
+    if (setupArrow.setup_id && setupArrow.arrow_id) {
+      const chronographSpeed = await getChronographSpeed(setupArrow.setup_id, setupArrow.arrow_id)
+      if (chronographSpeed) {
+        estimatedSpeed = chronographSpeed
+        speedSource = 'chronograph'
+        console.log('🎯 Using chronograph data:', {
+          speed: chronographSpeed,
+          setupId: setupArrow.setup_id,
+          arrowId: setupArrow.arrow_id
+        })
+      }
+    }
+    
     // Debug logging to trace the weight calculation issue
     if (process.dev) {
       console.log('🎯 buildArrowData Debug:', {
@@ -369,12 +421,14 @@ export const useTrajectoryCalculation = () => {
         pointWeight: setupArrow.point_weight,
         nockWeight: setupArrow.nock_weight,
         arrowLength: setupArrow.arrow_length,
-        calculatedSpine: setupArrow.calculated_spine
+        calculatedSpine: setupArrow.calculated_spine,
+        estimatedSpeed,
+        speedSource
       })
     }
     
     return {
-      estimated_speed_fps: performanceData?.performance_summary?.estimated_speed_fps,
+      estimated_speed_fps: estimatedSpeed,
       total_weight: totalWeight,
       outer_diameter: arrow?.spine_specifications?.[0]?.outer_diameter || 0.246,
       arrow_type: arrow?.arrow_type || 'hunting',
@@ -383,7 +437,7 @@ export const useTrajectoryCalculation = () => {
       spine: setupArrow.calculated_spine,
       setup_id: setupArrow.setup_id,
       arrow_id: setupArrow.arrow_id,
-      speed_source: performanceData?.performance_summary?.speed_source || 'estimated'
+      speed_source: speedSource
     }
   }
   
@@ -426,6 +480,7 @@ export const useTrajectoryCalculation = () => {
     buildArrowData,
     buildBowConfig,
     clearTrajectoryData,
+    getChronographSpeed,
     
     // Utility methods
     estimateSpeed,

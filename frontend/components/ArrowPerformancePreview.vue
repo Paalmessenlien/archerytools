@@ -203,8 +203,8 @@ const {
 const trajectoryChartKey = ref(0)
 
 // TrajectoryChart helper functions (same as ArrowPerformanceAnalysis)
-const getArrowDataForTrajectory = () => {
-  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+const getArrowDataForTrajectory = async () => {
+  const arrowData = await buildArrowData(props.setupArrow, props.arrow)
   
   return {
     estimated_speed_fps: arrowData.estimated_speed_fps || 280,
@@ -272,12 +272,11 @@ const getBowTypeMessage = () => {
 
 // Unified API Performance Calculation using the composable
 const calculatePerformanceAPI = async () => {
-  const arrowData = buildArrowData(props.setupArrow, props.arrow)
   const bowConfig = buildBowConfig(props.bowConfig)
   
   try {
     // Use the unified trajectory calculation with default environmental conditions
-    const result = await calculateTrajectory(arrowData, bowConfig)
+    const result = await calculateTrajectory(props.setupArrow, props.arrow, bowConfig)
     
     // Check if we actually got valid trajectory data, not just a truthy response
     if (!result || !hasTrajectoryData.value) {
@@ -289,8 +288,8 @@ const calculatePerformanceAPI = async () => {
 }
 
 // Helper function for total weight calculation (using composable)
-const calculateTotalWeight = () => {
-  const arrowData = buildArrowData(props.setupArrow, props.arrow)
+const calculateTotalWeight = async () => {
+  const arrowData = await buildArrowData(props.setupArrow, props.arrow)
   return arrowData.total_weight
 }
 
@@ -338,78 +337,100 @@ const calculateTrajectoryPoints = (speed, weight) => {
   }
 }
 
-// Live Performance Calculations (use API data from composable, fallback to simplified)
-const liveCalculations = computed(() => {
-  // Use API data from the composable when available
-  if (hasTrajectoryData.value && performanceSummary.value) {
-    const performance = performanceSummary.value
-    const trajectory = trajectoryPoints.value || []
-    
-    // Find max height and 40yd drop from trajectory data
-    const maxHeight = trajectory.length > 0 ? Math.max(...trajectory.map(p => p.height_inches - 7.0)) : 0
-    const point40yd = trajectory.find(p => Math.abs(p.distance_yards - 40) <= 2)
-    const drop40yd = point40yd ? Math.abs(point40yd.height_inches - 7.0) : 0
-    
-    return {
-      totalWeight: Math.round((performance.total_arrow_weight || calculateTotalWeight()) * 10) / 10,
-      estimatedSpeed: Math.round(performance.estimated_speed_fps || 0),
-      kineticEnergy: Math.round((performance.kinetic_energy_40yd || 0) * 10) / 10,
-      foc: Math.round((performance.foc_percentage || 0) * 10) / 10,
-      trajectory: {
-        points: trajectory.map(p => ({
-          distance: p.distance_yards,
-          drop: Math.round((p.height_inches - 7.0) * 10) / 10,
-          height: Math.round(Math.abs(p.height_inches - 7.0) * 10) / 10
-        })),
-        maxHeight: Math.round(maxHeight * 10) / 10,
-        drop40yd: Math.round(drop40yd * 10) / 10
-      },
-      maxHeight: Math.round(maxHeight * 10) / 10,
-      drop40yd: Math.round(drop40yd * 10) / 10,
-      speedSource: performance.speed_source || 'estimated',
-      confidence: performance.confidence
-    }
-  }
-  
-  // Fallback to simplified calculations using the composable
-  const arrowData = buildArrowData(props.setupArrow, props.arrow)
-  const bowConfig = buildBowConfig(props.bowConfig)
-  const simplified = calculateSimplifiedTrajectory(arrowData, bowConfig)
-  
-  if (simplified.performance_summary) {
-    const performance = simplified.performance_summary
-    const simpleTrajectory = calculateTrajectoryPoints(performance.estimated_speed_fps, performance.total_arrow_weight)
-    
-    return {
-      totalWeight: Math.round(performance.total_arrow_weight * 10) / 10,
-      estimatedSpeed: Math.round(performance.estimated_speed_fps),
-      kineticEnergy: Math.round(performance.kinetic_energy_40yd * 10) / 10,
-      foc: Math.round(performance.foc_percentage * 10) / 10,
-      trajectory: simpleTrajectory,
-      maxHeight: simpleTrajectory.maxHeight,
-      drop40yd: simpleTrajectory.drop40yd,
-      speedSource: performance.speed_source,
-      confidence: null
-    }
-  }
-  
-  // Final fallback
-  return {
-    totalWeight: calculateTotalWeight(),
-    estimatedSpeed: 280,
-    kineticEnergy: 0,
-    foc: 12,
-    trajectory: { points: [], maxHeight: 0, drop40yd: 0 },
-    maxHeight: 0,
-    drop40yd: 0,
-    speedSource: 'estimated',
-    confidence: null
-  }
+// Reactive state for live calculations
+const liveCalculationsState = ref({
+  totalWeight: 0,
+  estimatedSpeed: 280,
+  kineticEnergy: 0,
+  foc: 12,
+  trajectory: { points: [], maxHeight: 0, drop40yd: 0 },
+  maxHeight: 0,
+  drop40yd: 0,
+  speedSource: 'estimated',
+  confidence: null
 })
 
+// Update live calculations when data changes
+const updateLiveCalculations = async () => {
+  try {
+    // Use API data from the composable when available
+    if (hasTrajectoryData.value && performanceSummary.value) {
+      const performance = performanceSummary.value
+      const trajectory = trajectoryPoints.value || []
+      
+      // Find max height and 40yd drop from trajectory data
+      const maxHeight = trajectory.length > 0 ? Math.max(...trajectory.map(p => p.height_inches - 7.0)) : 0
+      const point40yd = trajectory.find(p => Math.abs(p.distance_yards - 40) <= 2)
+      const drop40yd = point40yd ? Math.abs(point40yd.height_inches - 7.0) : 0
+      
+      liveCalculationsState.value = {
+        totalWeight: Math.round((performance.total_arrow_weight || await calculateTotalWeight()) * 10) / 10,
+        estimatedSpeed: Math.round(performance.estimated_speed_fps || 0),
+        kineticEnergy: Math.round((performance.kinetic_energy_40yd || 0) * 10) / 10,
+        foc: Math.round((performance.foc_percentage || 0) * 10) / 10,
+        trajectory: {
+          points: trajectory.map(p => ({
+            distance: p.distance_yards,
+            drop: Math.round((p.height_inches - 7.0) * 10) / 10,
+            height: Math.round(Math.abs(p.height_inches - 7.0) * 10) / 10
+          })),
+          maxHeight: Math.round(maxHeight * 10) / 10,
+          drop40yd: Math.round(drop40yd * 10) / 10
+        },
+        maxHeight: Math.round(maxHeight * 10) / 10,
+        drop40yd: Math.round(drop40yd * 10) / 10,
+        speedSource: performance.speed_source || 'estimated',
+        confidence: performance.confidence
+      }
+      return
+    }
+    
+    // Fallback to simplified calculations using the composable
+    const bowConfig = buildBowConfig(props.bowConfig)
+    const simplified = await calculateSimplifiedTrajectory(props.setupArrow, props.arrow, bowConfig)
+    
+    if (simplified.performance_summary) {
+      const performance = simplified.performance_summary
+      const simpleTrajectory = calculateTrajectoryPoints(performance.estimated_speed_fps, performance.total_arrow_weight)
+      
+      liveCalculationsState.value = {
+        totalWeight: Math.round(performance.total_arrow_weight * 10) / 10,
+        estimatedSpeed: Math.round(performance.estimated_speed_fps),
+        kineticEnergy: Math.round(performance.kinetic_energy_40yd * 10) / 10,
+        foc: Math.round(performance.foc_percentage * 10) / 10,
+        trajectory: simpleTrajectory,
+        maxHeight: simpleTrajectory.maxHeight,
+        drop40yd: simpleTrajectory.drop40yd,
+        speedSource: performance.speed_source,
+        confidence: null
+      }
+      return
+    }
+    
+    // Final fallback
+    liveCalculationsState.value = {
+      totalWeight: await calculateTotalWeight(),
+      estimatedSpeed: 280,
+      kineticEnergy: 0,
+      foc: 12,
+      trajectory: { points: [], maxHeight: 0, drop40yd: 0 },
+      maxHeight: 0,
+      drop40yd: 0,
+      speedSource: 'estimated',
+      confidence: null
+    }
+  } catch (error) {
+    console.error('Error updating live calculations:', error)
+  }
+}
+
+// Live Performance Calculations (use reactive state)
+const liveCalculations = computed(() => liveCalculationsState.value)
+
 // Watch for changes and recalculate
-watch([() => props.setupArrow, () => props.bowConfig], () => {
-  calculatePerformanceAPI()
+watch([() => props.setupArrow, () => props.bowConfig], async () => {
+  await calculatePerformanceAPI()
+  await updateLiveCalculations()
   // Force TrajectoryChart to re-render when props change
   trajectoryChartKey.value++
 }, { immediate: true, deep: true })
