@@ -387,21 +387,41 @@ const updateLiveCalculations = async () => {
     
     // Fallback to simplified calculations using the composable
     const bowConfig = buildBowConfig(props.bowConfig)
+    
+    // Check for chronograph data first to ensure consistency with Performance Analysis
+    let chronographSpeed = null
+    if (props.setupArrow.setup_id && props.setupArrow.arrow_id) {
+      try {
+        const { getChronographSpeed } = useTrajectoryCalculation()
+        chronographSpeed = await getChronographSpeed(props.setupArrow.setup_id, props.setupArrow.arrow_id)
+        if (chronographSpeed) {
+          console.log('🎯 Live Preview using chronograph data:', chronographSpeed, 'fps')
+        }
+      } catch (error) {
+        console.warn('Live Preview chronograph check failed:', error)
+      }
+    }
+    
     const simplified = await calculateSimplifiedTrajectory(props.setupArrow, props.arrow, bowConfig)
     
     if (simplified.performance_summary) {
       const performance = simplified.performance_summary
-      const simpleTrajectory = calculateTrajectoryPoints(performance.estimated_speed_fps, performance.total_arrow_weight)
+      
+      // Override with chronograph data if available to ensure consistency
+      const finalSpeed = chronographSpeed || performance.estimated_speed_fps
+      const finalSpeedSource = chronographSpeed ? 'chronograph' : performance.speed_source
+      
+      const simpleTrajectory = calculateTrajectoryPoints(finalSpeed, performance.total_arrow_weight)
       
       liveCalculationsState.value = {
         totalWeight: Math.round(performance.total_arrow_weight * 10) / 10,
-        estimatedSpeed: Math.round(performance.estimated_speed_fps),
+        estimatedSpeed: Math.round(finalSpeed),
         kineticEnergy: Math.round(performance.kinetic_energy_40yd * 10) / 10,
         foc: Math.round(performance.foc_percentage * 10) / 10,
         trajectory: simpleTrajectory,
         maxHeight: simpleTrajectory.maxHeight,
         drop40yd: simpleTrajectory.drop40yd,
-        speedSource: performance.speed_source,
+        speedSource: finalSpeedSource,
         confidence: null
       }
       return
