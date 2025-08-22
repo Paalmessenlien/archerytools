@@ -100,7 +100,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
             try:
                 user_db = get_database()
                 if not user_db:
-                    return jsonify({"error": "Database not available"}), 500
+                    return {"speed": None, "source": "error"}
                 cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
@@ -133,7 +133,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         
         # If chronograph data available, use it
         if chronograph_result:
-            return chronograph_result['speed']
+            return {"speed": chronograph_result['speed'], "source": "chronograph", "confidence": chronograph_result['confidence']}
         
         # String material speed modifiers
         string_speed_modifiers = {
@@ -182,7 +182,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         # Apply reasonable bounds
         estimated_speed = max(150, min(450, estimated_speed))
         
-        return estimated_speed
+        return {"speed": estimated_speed, "source": "enhanced_estimated"}
         
     except Exception as e:
         print(f"Enhanced speed calculation error: {e}, falling back to basic calculation")
@@ -191,7 +191,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
             basic_speed = (bow_draw_weight * 10) - (arrow_weight_grains - 350) * 0.1
         else:
             basic_speed = (bow_draw_weight * 8) - (arrow_weight_grains - 350) * 0.08
-        return max(180, min(350, basic_speed))
+        return {"speed": max(180, min(350, basic_speed)), "source": "estimated"}
 
 def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None):
     """Calculate comprehensive performance metrics for a specific arrow recommendation"""
@@ -2238,7 +2238,7 @@ def add_arrow_to_setup(current_user, setup_id):
                 )
                 
                 # Call enhanced speed calculation (no chronograph data for new arrows)
-                enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                enhanced_speed_result = calculate_enhanced_arrow_speed_internal(
                     bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
                     bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
                     bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
@@ -2248,7 +2248,9 @@ def add_arrow_to_setup(current_user, setup_id):
                     setup_id=None,  # No setup_id for new arrow
                     arrow_id=None   # No chronograph data for new arrow
                 )
-                print(f"Enhanced speed for new arrow addition: {enhanced_speed} FPS")
+                enhanced_speed = enhanced_speed_result.get('speed') if isinstance(enhanced_speed_result, dict) else enhanced_speed_result
+                speed_source = enhanced_speed_result.get('source', 'estimated') if isinstance(enhanced_speed_result, dict) else 'estimated'
+                print(f"Enhanced speed for new arrow addition: {enhanced_speed} FPS (source: {speed_source})")
                 
             except Exception as speed_error:
                 print(f"Enhanced speed calculation failed for new arrow: {speed_error}")
@@ -2671,7 +2673,7 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                     )
                     
                     # Call enhanced speed calculation
-                    enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                    enhanced_speed_result = calculate_enhanced_arrow_speed_internal(
                         bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
                         bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
                         bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
@@ -2681,7 +2683,9 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                         setup_id=setup_arrow['setup_id'],
                         arrow_id=setup_arrow['arrow_id']
                     )
-                    print(f"Bulk enhanced speed for arrow {setup_arrow['arrow_id']}: {enhanced_speed} FPS")
+                    enhanced_speed = enhanced_speed_result.get('speed') if isinstance(enhanced_speed_result, dict) else enhanced_speed_result
+                    speed_source = enhanced_speed_result.get('source', 'estimated') if isinstance(enhanced_speed_result, dict) else 'estimated'
+                    print(f"Bulk enhanced speed for arrow {setup_arrow['arrow_id']}: {enhanced_speed} FPS (source: {speed_source})")
                     
                 except Exception as speed_error:
                     print(f"Bulk enhanced speed calculation failed for arrow {setup_arrow['arrow_id']}: {speed_error}")
@@ -2866,7 +2870,7 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                     print(f"Warning: Could not retrieve string equipment data: {string_error}")
                 
                 # Call enhanced speed calculation function directly
-                enhanced_speed = calculate_enhanced_arrow_speed_internal(
+                enhanced_speed_result = calculate_enhanced_arrow_speed_internal(
                     bow_ibo_speed=speed_request_data['bow_ibo_speed'],
                     bow_draw_weight=speed_request_data['bow_draw_weight'],
                     bow_draw_length=speed_request_data['bow_draw_length'],
@@ -2876,7 +2880,9 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                     setup_id=speed_request_data['setup_id'],
                     arrow_id=speed_request_data['arrow_id']
                 )
-                print(f"🎯 Enhanced speed calculated: {enhanced_speed} FPS for setup_id={speed_request_data['setup_id']}, arrow_id={speed_request_data['arrow_id']}")
+                enhanced_speed = enhanced_speed_result.get('speed') if isinstance(enhanced_speed_result, dict) else enhanced_speed_result
+                speed_source = enhanced_speed_result.get('source', 'estimated') if isinstance(enhanced_speed_result, dict) else 'estimated'
+                print(f"🎯 Enhanced speed calculated: {enhanced_speed} FPS (source: {speed_source}) for setup_id={speed_request_data['setup_id']}, arrow_id={speed_request_data['arrow_id']}")
                 
                 # Ensure we have a valid speed (should be > 0 and < 500 fps)
                 if enhanced_speed and isinstance(enhanced_speed, (int, float)) and 50 < enhanced_speed < 500:
@@ -2896,13 +2902,20 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
             
             # Add speed source information to performance data
             if performance_data and 'performance_summary' in performance_data:
-                if enhanced_speed and isinstance(enhanced_speed, (int, float)):
-                    performance_data['performance_summary']['speed_source'] = 'chronograph'
-                    performance_data['performance_summary']['speed_source_info'] = f'Weight-adjusted from measured chronograph data'
-                    print(f"📊 Performance data updated with chronograph speed source")
+                if enhanced_speed and isinstance(enhanced_speed, (int, float)) and 'speed_source' in locals():
+                    performance_data['performance_summary']['speed_source'] = speed_source
+                    if speed_source == 'chronograph':
+                        performance_data['performance_summary']['speed_source_info'] = f'Weight-adjusted from measured chronograph data'
+                        print(f"📊 Performance data updated with chronograph speed source")
+                    elif speed_source == 'enhanced_estimated':
+                        performance_data['performance_summary']['speed_source_info'] = f'Enhanced calculation with string material and bow efficiency'
+                        print(f"📊 Performance data updated with enhanced estimated speed source")
+                    else:
+                        performance_data['performance_summary']['speed_source_info'] = f'Basic calculation from bow specifications'
+                        print(f"📊 Performance data updated with estimated speed source")
                 else:
                     performance_data['performance_summary']['speed_source'] = 'estimated'
-                    performance_data['performance_summary']['speed_source_info'] = f'Fallback calculation (no chronograph data)'
+                    performance_data['performance_summary']['speed_source_info'] = f'Fallback calculation (no enhanced speed data)'
             
             # Store performance data as JSON in dedicated performance_data column
             import json
