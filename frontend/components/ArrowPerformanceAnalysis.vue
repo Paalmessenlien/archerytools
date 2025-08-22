@@ -539,7 +539,9 @@ onUnmounted(() => {
 })
 
 watch(() => props.setupArrow.performance, (newPerformance) => {
-  if (newPerformance) {
+  if (newPerformance && !performanceData.value) {
+    // Only set initial data if we don't already have performance data
+    // This prevents overwriting calculated data when props change
     performanceData.value = newPerformance
   }
 }, { immediate: true })
