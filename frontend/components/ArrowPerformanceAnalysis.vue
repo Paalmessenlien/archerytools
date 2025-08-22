@@ -39,9 +39,9 @@
     </div>
     
     <!-- Performance Metrics Display -->
-    <div v-if="performanceData?.performance_summary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div v-if="performanceData?.performance_summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <!-- Speed -->
-      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
         <div class="flex items-center justify-between mb-2">
           <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
             {{ formatSpeedValue(performanceData.performance_summary.estimated_speed_fps) }}
@@ -70,7 +70,7 @@
       </div>
       
       <!-- Kinetic Energy -->
-      <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+      <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 sm:p-4 border border-green-200 dark:border-green-800">
         <div class="flex items-center justify-between mb-2">
           <div class="text-lg font-bold text-green-600 dark:text-green-400">
             {{ formatKineticEnergy(performanceData.performance_summary.kinetic_energy_40yd) }}
@@ -87,7 +87,7 @@
       </div>
       
       <!-- FOC -->
-      <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+      <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 sm:p-4 border border-purple-200 dark:border-purple-800">
         <div class="flex items-center justify-between mb-2">
           <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
             {{ formatFocPercentage(performanceData.performance_summary.foc_percentage) }}
@@ -104,7 +104,7 @@
       </div>
       
       <!-- Penetration -->
-      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 sm:p-4 border border-orange-200 dark:border-orange-800">
         <div class="flex items-center justify-between mb-2">
           <div :class="getPenetrationClass(performanceData.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
             {{ performanceData.performance_summary.penetration_category }}
@@ -122,13 +122,13 @@
     </div>
     
     <!-- Detailed Performance Breakdown -->
-    <div v-if="performanceData?.performance_summary" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
+    <div v-if="performanceData?.performance_summary" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 sm:p-6">
       <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
         <i class="fas fa-analytics mr-2 text-gray-600"></i>
         Detailed Analysis
       </h4>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <!-- Performance Metrics -->
         <div class="space-y-3">
           <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300">Performance Metrics</h5>
@@ -169,11 +169,16 @@
     </div>
     
     <!-- Trajectory Chart -->
-    <div v-if="performanceData?.performance_summary && props.arrow" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-      <TrajectoryChart 
-        :arrow-data="getArrowDataForTrajectory()"
-        :bow-config="getBowConfigForTrajectory()"
-      />
+    <div v-if="performanceData?.performance_summary && props.arrow">
+      <!-- Single TrajectoryChart with responsive prop -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg" :class="{'p-6': !isMobile, 'overflow-hidden': isMobile}">
+        <TrajectoryChart 
+          :arrow-data="getArrowDataForTrajectory()"
+          :bow-config="getBowConfigForTrajectory()"
+          :mobile-horizontal="isMobile"
+          :key="trajectoryChartKey"
+        />
+      </div>
     </div>
     
     <!-- No Performance Data -->
@@ -201,7 +206,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useApi } from '~/composables/useApi'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 import TrajectoryChart from '~/components/TrajectoryChart.vue'
@@ -229,6 +234,28 @@ const api = useApi()
 // State
 const isCalculating = ref(false)
 const performanceData = ref(null)
+
+// Mobile detection and trajectory chart state management
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const trajectoryChartKey = ref(0)
+
+// Reactive mobile detection
+const isMobile = computed(() => windowWidth.value < 640) // Tailwind 'sm' breakpoint
+
+// Window resize handler to update mobile state
+const handleResize = () => {
+  const newWidth = window.innerWidth
+  const wasMobile = windowWidth.value < 640
+  const nowMobile = newWidth < 640
+  
+  windowWidth.value = newWidth
+  
+  // Force trajectory chart re-render when switching between mobile/desktop
+  // This ensures the chart state is preserved across responsive changes
+  if (wasMobile !== nowMobile) {
+    trajectoryChartKey.value++
+  }
+}
 
 // Computed
 const hasPerformanceData = computed(() => {
@@ -495,6 +522,22 @@ const getSpeedSourceText = (source) => {
 }
 
 // Lifecycle
+onMounted(() => {
+  // Add window resize listener for mobile detection
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResize)
+    // Initial size detection
+    handleResize()
+  }
+})
+
+onUnmounted(() => {
+  // Remove window resize listener
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', handleResize)
+  }
+})
+
 watch(() => props.setupArrow.performance, (newPerformance) => {
   if (newPerformance) {
     performanceData.value = newPerformance

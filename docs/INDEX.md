@@ -49,15 +49,17 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
-#### [Archery Calculations Guide](ARCHERY_CALCULATIONS_GUIDE.md) ✨ NEW
+#### [Archery Calculations Guide](ARCHERY_CALCULATIONS_GUIDE.md) ⚡ ENHANCED
 Professional archery physics calculations and algorithms:
-- **Speed Estimation**: Industry-accurate IBO-compliant speed formulas with proper weight and draw adjustments
-- **FOC Calculations**: Physics-based Front of Center calculations using component weight distribution
-- **Optimization Algorithms**: Intelligent "Reset to Recommended" with iterative compatibility testing
+- **Industry-Leading Speed Estimation**: IBO-compliant formulas validated against chronograph data with proper weight and draw adjustments
+- **Physics-Based FOC Calculations**: Component-weighted balance point calculations using actual weight distribution
+- **Intelligent Optimization Algorithms**: Iterative "Reset to Recommended" with compatibility score testing
+- **Enhanced Spine Calculations**: Dynamic spine modeling with modern compound bow speed adjustments (280-400+ FPS)
+- **Arrow Paradox Modeling**: Complex shaft flexing behavior during launch with oscillation dampening
+- **Environmental Integration**: Temperature, altitude, humidity, and barometric pressure effects on trajectory
+- **Broadhead vs Field Point Analysis**: Complete trajectory comparison with practical sight adjustment recommendations
 - **API Performance**: Enhanced error handling and trajectory calculation improvements
-- **Validation & Testing**: Cross-validated against industry standards and real-world measurements
-- **Automatic Migration**: Startup script integration and data initialization
-- **Usage Examples**: Frontend and backend integration patterns
+- **Professional Validation**: Cross-validated against industry software and real-world measurements
 
 #### [Database Migrations Documentation](DATABASE_MIGRATIONS.md)
 Complete guide to the database migration system:

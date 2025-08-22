@@ -52,16 +52,16 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="setupArrowData" class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
+    <div v-else-if="setupArrowData" class="container mx-auto px-2 sm:px-4 py-3 sm:py-8 max-w-7xl">
       <!-- Breadcrumb Navigation -->
       <SetupContextBreadcrumb
         :bow-setup="setupArrowData.bow_setup"
         :arrow-name="getArrowDisplayName()"
-        class="mb-6"
+        class="mb-4 sm:mb-6"
       />
 
       <!-- Header -->
-      <div class="space-y-6 mb-8">
+      <div class="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
         <!-- Title and Info -->
         <div>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
@@ -72,21 +72,21 @@
           </p>
           
           <!-- Quick Stats Pills -->
-          <div class="flex flex-wrap items-center gap-3 mt-4">
-            <div class="flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+            <div class="flex items-center px-2 sm:px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-xs sm:text-sm">
               <i class="fas fa-ruler-horizontal mr-2"></i>
               {{ setupArrowData.setup_arrow.arrow_length }}" length
             </div>
-            <div class="flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm">
+            <div class="flex items-center px-2 sm:px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-xs sm:text-sm">
               <i class="fas fa-bullseye mr-2"></i>
               {{ setupArrowData.setup_arrow.point_weight }} gr point
             </div>
-            <div class="flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm">
+            <div class="flex items-center px-2 sm:px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-xs sm:text-sm">
               <i class="fas fa-balance-scale mr-2"></i>
               {{ calculateTotalWeight() }} gr total
             </div>
             <div v-if="setupArrowData.setup_arrow.compatibility_score" 
-                 class="flex items-center px-3 py-1 rounded-full text-sm"
+                 class="flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm"
                  :class="getCompatibilityClass(setupArrowData.setup_arrow.compatibility_score)">
               <i class="fas fa-star mr-2"></i>
               {{ setupArrowData.setup_arrow.compatibility_score }}% match
@@ -95,7 +95,7 @@
         </div>
         
         <!-- Actions - Mobile Responsive -->
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             @click="editMode = !editMode"
             class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
@@ -114,13 +114,13 @@
       </div>
 
       <!-- Mobile-First Accordion Content Interface -->
-      <div class="space-y-4">
+      <div class="space-y-3 sm:space-y-4">
         <!-- Configuration Section - Always Expanded by Default -->
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <!-- Section Header -->
           <button
             @click="toggleSection('config')"
-            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
             :class="{ 'bg-blue-50 dark:bg-blue-900/20': expandedSections.config }"
           >
             <div class="flex items-center">
@@ -150,7 +150,7 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.config" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <div v-if="expandedSections.config" class="p-3 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowSetupEditor
               v-if="editMode"
               :setup-arrow="setupArrowData.setup_arrow"
@@ -178,7 +178,7 @@
           <!-- Section Header -->
           <button
             @click="toggleSection('performance')"
-            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
             :class="{ 'bg-green-50 dark:bg-green-900/20': expandedSections.performance }"
           >
             <div class="flex items-center">
@@ -197,7 +197,7 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.performance" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <div v-if="expandedSections.performance" class="p-3 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowPerformanceAnalysis
               ref="performanceAnalysisRef"
               :setup-arrow="setupArrowData.setup_arrow"
@@ -224,7 +224,7 @@
           <!-- Section Header -->
           <button
             @click="toggleSection('info')"
-            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
             :class="{ 'bg-purple-50 dark:bg-purple-900/20': expandedSections.info }"
           >
             <div class="flex items-center">
@@ -243,7 +243,7 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.info" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <div v-if="expandedSections.info" class="p-3 sm:p-6 space-y-4 sm:space-y-6">
             <ArrowDatabaseInfo
               :arrow="setupArrowData.arrow"
               :spine-specifications="setupArrowData.spine_specifications"
@@ -269,7 +269,7 @@
           <!-- Section Header -->
           <button
             @click="toggleSection('tuning')"
-            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
             :class="{ 'bg-indigo-50 dark:bg-indigo-900/20': expandedSections.tuning }"
           >
             <div class="flex items-center">
@@ -288,7 +288,7 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.tuning" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          <div v-if="expandedSections.tuning" class="p-3 sm:p-6 space-y-4 sm:space-y-6">
             <!-- Guide Selection -->
             <div v-if="!activeTuningSession" class="space-y-4">
               <p class="text-gray-600 dark:text-gray-300 text-sm">
@@ -384,7 +384,7 @@
           <!-- Section Header -->
           <button
             @click="toggleSection('actions')"
-            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
             :class="{ 'bg-orange-50 dark:bg-orange-900/20': expandedSections.actions }"
           >
             <div class="flex items-center">
@@ -403,56 +403,48 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.actions" class="p-4 sm:p-6 space-y-4">
+          <div v-if="expandedSections.actions" class="p-3 sm:p-6 space-y-4">
             <!-- Mobile-Optimized Actions Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 @click="calculatePerformance"
                 :disabled="calculatingPerformance"
-                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-green-50 border-green-200 text-green-700 hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/30 disabled:opacity-50"
+                class="mobile-action-button w-full flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[64px] bg-green-50 border-green-200 text-green-700 hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/30 disabled:opacity-50"
               >
-                <div class="flex items-center">
-                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-green-200 dark:bg-green-800 flex-shrink-0">
-                    <i :class="calculatingPerformance ? 'fas fa-spinner fa-spin' : 'fas fa-calculator'" class="text-green-700 dark:text-green-300 text-sm"></i>
-                  </div>
-                  <span class="font-medium">{{ calculatingPerformance ? 'Calculating...' : 'Recalculate Performance' }}</span>
+                <div class="w-8 h-8 mb-1 flex items-center justify-center rounded-lg bg-green-200 dark:bg-green-800">
+                  <i :class="calculatingPerformance ? 'fas fa-spinner fa-spin' : 'fas fa-calculator'" class="text-green-700 dark:text-green-300 text-sm"></i>
                 </div>
+                <span class="font-medium text-xs sm:text-sm text-center leading-tight">{{ calculatingPerformance ? 'Calculating...' : 'Recalculate' }}</span>
               </button>
               
               <button
                 @click="viewInDatabase"
-                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                class="mobile-action-button w-full flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[64px] bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
               >
-                <div class="flex items-center">
-                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-blue-200 dark:bg-blue-800 flex-shrink-0">
-                    <i class="fas fa-external-link-alt text-blue-700 dark:text-blue-300 text-sm"></i>
-                  </div>
-                  <span class="font-medium">View in Database</span>
+                <div class="w-8 h-8 mb-1 flex items-center justify-center rounded-lg bg-blue-200 dark:bg-blue-800">
+                  <i class="fas fa-external-link-alt text-blue-700 dark:text-blue-300 text-sm"></i>
                 </div>
+                <span class="font-medium text-xs sm:text-sm text-center leading-tight">View Database</span>
               </button>
               
               <button
                 @click="addToCalculator"
-                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-900/20 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
+                class="mobile-action-button w-full flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[64px] bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-900/20 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
               >
-                <div class="flex items-center">
-                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-indigo-200 dark:bg-indigo-800 flex-shrink-0">
-                    <i class="fas fa-plus text-indigo-700 dark:text-indigo-300 text-sm"></i>
-                  </div>
-                  <span class="font-medium">Add to Calculator</span>
+                <div class="w-8 h-8 mb-1 flex items-center justify-center rounded-lg bg-indigo-200 dark:bg-indigo-800">
+                  <i class="fas fa-plus text-indigo-700 dark:text-indigo-300 text-sm"></i>
                 </div>
+                <span class="font-medium text-xs sm:text-sm text-center leading-tight">Add Calculator</span>
               </button>
               
               <button
                 @click="removeArrow"
-                class="mobile-action-button w-full flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[56px] bg-red-50 border-red-200 text-red-700 hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
+                class="mobile-action-button w-full flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 touch-manipulation min-h-[64px] bg-red-50 border-red-200 text-red-700 hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
               >
-                <div class="flex items-center">
-                  <div class="w-8 h-8 mr-3 flex items-center justify-center rounded-lg bg-red-200 dark:bg-red-800 flex-shrink-0">
-                    <i class="fas fa-trash text-red-700 dark:text-red-300 text-sm"></i>
-                  </div>
-                  <span class="font-medium">Remove from Setup</span>
+                <div class="w-8 h-8 mb-1 flex items-center justify-center rounded-lg bg-red-200 dark:bg-red-800">
+                  <i class="fas fa-trash text-red-700 dark:text-red-300 text-sm"></i>
                 </div>
+                <span class="font-medium text-xs sm:text-sm text-center leading-tight">Remove Setup</span>
               </button>
             </div>
           </div>

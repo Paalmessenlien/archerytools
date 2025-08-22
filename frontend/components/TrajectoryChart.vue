@@ -1,5 +1,5 @@
 <template>
-  <div class="trajectory-chart-container bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+  <div class="trajectory-chart-container" :class="props.mobileHorizontal ? '' : 'bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden'">
     <!-- Compact Show Trajectory Button (when chart is not displayed) -->
     <div v-if="!showChart" class="p-4 text-center">
       <button 
@@ -13,7 +13,169 @@
       </button>
     </div>
 
-    <!-- Chart Display (when chart is shown) -->
+    <!-- Mobile Vertical Layout -->
+    <div v-else-if="props.mobileHorizontal" class="p-4">
+      <!-- Header - Mobile Compact -->
+      <div class="mb-4">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-base font-medium text-gray-900 dark:text-white flex items-center">
+              <span class="mr-2 text-sm">🎯</span>
+              Flight Trajectory
+            </h4>
+            <button 
+              @click="hideChart"
+              class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              title="Close trajectory chart"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- Speed Source Indicator -->
+          <div v-if="props.arrowData?.speed_source" class="flex items-center">
+            <span class="text-xs px-2 py-1 rounded-full" :class="getSpeedSourceClass()">
+              <i :class="getSpeedSourceIcon()" class="mr-1"></i>
+              {{ getSpeedSourceText() }}
+            </span>
+          </div>
+          
+          <!-- Controls Row -->
+          <div class="flex flex-col gap-2">
+            <!-- Units Toggle -->
+            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md text-xs">
+              <button 
+                @click="setUnits('imperial')"
+                :class="[
+                  'flex-1 px-2 py-1.5 rounded-l-md transition-colors',
+                  units === 'imperial' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+              >
+                Yards
+              </button>
+              <button 
+                @click="setUnits('metric')"
+                :class="[
+                  'flex-1 px-2 py-1.5 rounded-r-md transition-colors',
+                  units === 'metric' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+              >
+                Meters
+              </button>
+            </div>
+            
+            <!-- Settings Button -->
+            <button 
+              @click="toggleEnvironmentalControls"
+              class="w-full px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+            >
+              <i class="fas fa-cog mr-1"></i>
+              {{ showEnvironmentalControls ? 'Hide Settings' : 'Show Settings' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Environmental Controls -->
+      <div v-if="showEnvironmentalControls" class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Trajectory Settings</h4>
+        
+        <!-- Range Control -->
+        <div class="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <label class="block text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">
+            <i class="fas fa-crosshairs mr-1"></i>
+            Max Range: {{ trajectorySettings.maxRange }} {{ getDistanceUnit() }}
+          </label>
+          <input 
+            v-model.number="trajectorySettings.maxRange"
+            @change="updateTrajectory"
+            type="range" 
+            :min="units === 'metric' ? 25 : 30" 
+            :max="units === 'metric' ? 110 : 120" 
+            step="5"
+            class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+          >
+          <!-- Quick Range Buttons -->
+          <div class="flex flex-wrap gap-1 mt-2">
+            <button
+              v-for="preset in rangePresets.slice(0, 4)"
+              :key="preset.value"
+              @click="setRangePreset(preset.value)"
+              :class="[
+                'px-1.5 py-0.5 text-xs rounded-full transition-colors',
+                trajectorySettings.maxRange === preset.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 hover:bg-blue-300 dark:hover:bg-blue-700'
+              ]"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+        </div>
+        
+        <!-- Environmental Conditions -->
+        <div class="space-y-2">
+          <h6 class="text-xs font-medium text-gray-700 dark:text-gray-300">Environment</h6>
+          <div class="grid grid-cols-1 gap-2">
+            <div>
+              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wind: {{ environmentalConditions.windSpeed }} mph</label>
+              <input 
+                v-model.number="environmentalConditions.windSpeed"
+                @change="updateTrajectory"
+                type="range" 
+                min="0" max="15" step="1"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              >
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Temp: {{ environmentalConditions.temperature }}°F</label>
+              <input 
+                v-model.number="environmentalConditions.temperature"
+                @change="updateTrajectory"
+                type="range" 
+                min="30" max="90" step="5"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="chart-wrapper overflow-x-auto mb-4" style="position: relative; height: clamp(200px, 25vh, 250px); min-height: 180px;">
+        <canvas ref="chartCanvas" class="max-w-full"></canvas>
+      </div>
+
+      <!-- Trajectory Summary -->
+      <div v-if="trajectorySummary" class="grid grid-cols-3 gap-2 text-sm">
+        <div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-center">
+          <div class="text-blue-600 dark:text-blue-400 font-medium text-xs">Max Range</div>
+          <div class="text-gray-900 dark:text-white font-semibold">{{ getDisplayMaxRange() }} {{ getDistanceUnit() }}</div>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/30 p-2 rounded-lg text-center">
+          <div class="text-green-600 dark:text-green-400 font-medium text-xs">Peak Height</div>
+          <div class="text-gray-900 dark:text-white font-semibold">{{ getDisplayPeakHeight() }}{{ getHeightUnit() }}</div>
+        </div>
+        <div class="bg-orange-50 dark:bg-orange-900/30 p-2 rounded-lg text-center">
+          <div class="text-orange-600 dark:text-orange-400 font-medium text-xs">Drop at {{ getDisplayDropReference() }}{{ getDistanceUnit() }}</div>
+          <div class="text-gray-900 dark:text-white font-semibold">{{ getDisplayDropAt40() }}{{ getHeightUnit() }}</div>
+        </div>
+      </div>
+
+      <!-- Loading State for Mobile -->
+      <div v-if="isLoading" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center rounded-lg">
+        <div class="text-center">
+          <div class="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+          <div class="text-xs text-gray-600 dark:text-gray-400">Calculating trajectory...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Vertical Layout (when chart is shown) -->
     <div v-else class="p-4">
       <!-- Header - Mobile Responsive -->
       <div class="mb-4">
@@ -39,7 +201,7 @@
               <button 
                 @click="setUnits('imperial')"
                 :class="[
-                  'flex-1 sm:flex-none px-3 py-2 rounded-l-md transition-colors',
+                  'flex-1 sm:flex-none px-2 py-1.5 rounded-l-md transition-colors',
                   units === 'imperial' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -50,7 +212,7 @@
               <button 
                 @click="setUnits('metric')"
                 :class="[
-                  'flex-1 sm:flex-none px-3 py-2 rounded-r-md transition-colors',
+                  'flex-1 sm:flex-none px-2 py-1.5 rounded-r-md transition-colors',
                   units === 'metric' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -64,7 +226,7 @@
             <div class="flex gap-2">
               <button 
                 @click="toggleEnvironmentalControls"
-                class="flex-1 sm:flex-none px-3 py-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                class="flex-1 sm:flex-none px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
               >
                 <i class="fas fa-cog mr-1"></i>
                 <span class="hidden sm:inline">{{ showEnvironmentalControls ? 'Hide' : 'Settings' }}</span>
@@ -72,7 +234,7 @@
               </button>
               <button 
                 @click="hideChart"
-                class="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                class="px-2 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 title="Close trajectory chart"
               >
                 <i class="fas fa-times"></i>
@@ -91,11 +253,11 @@
       </div>
 
     <!-- Environmental Controls -->
-    <div v-if="showEnvironmentalControls" class="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+    <div v-if="showEnvironmentalControls" class="mb-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
       <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Trajectory Settings</h4>
       
       <!-- Distance Range Control -->
-      <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div class="mb-4 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="flex-1">
             <label class="block text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">
@@ -119,13 +281,13 @@
           </div>
           
           <!-- Quick Range Buttons -->
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-1 sm:gap-2">
             <button
               v-for="preset in rangePresets"
               :key="preset.value"
               @click="setRangePreset(preset.value)"
               :class="[
-                'px-3 py-1 text-xs rounded-full transition-colors',
+                'px-2 py-0.5 text-xs rounded-full transition-colors',
                 trajectorySettings.maxRange === preset.value
                   ? 'bg-blue-600 text-white'
                   : 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 hover:bg-blue-300 dark:hover:bg-blue-700'
@@ -138,7 +300,7 @@
       </div>
 
       <!-- Distance Interval Control -->
-      <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+      <div class="mb-4 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="flex-1">
             <label class="block text-xs text-green-700 dark:text-green-300 mb-2 font-medium">
@@ -162,13 +324,13 @@
           </div>
           
           <!-- Quick Interval Buttons -->
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-1 sm:gap-2">
             <button
               v-for="preset in intervalPresets"
               :key="preset.value"
               @click="setIntervalPreset(preset.value)"
               :class="[
-                'px-3 py-1 text-xs rounded-full transition-colors',
+                'px-2 py-0.5 text-xs rounded-full transition-colors',
                 trajectorySettings.distanceInterval === preset.value
                   ? 'bg-green-600 text-white'
                   : 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-700'
@@ -225,21 +387,21 @@
     </div>
 
     <!-- Chart Container -->
-    <div class="chart-wrapper overflow-x-auto" style="position: relative; height: 280px; min-height: 240px;">
+    <div class="chart-wrapper overflow-x-auto" style="position: relative; height: clamp(220px, 25vh, 280px); min-height: 200px;">
       <canvas ref="chartCanvas" class="max-w-full"></canvas>
     </div>
 
     <!-- Trajectory Summary -->
-    <div v-if="trajectorySummary" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-      <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center sm:text-left">
+    <div v-if="trajectorySummary" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-sm">
+      <div class="bg-blue-50 dark:bg-blue-900/30 p-2 sm:p-3 rounded-lg text-center sm:text-left">
         <div class="text-blue-600 dark:text-blue-400 font-medium">Max Range</div>
         <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayMaxRange() }} {{ getDistanceUnit() }}</div>
       </div>
-      <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg text-center sm:text-left">
+      <div class="bg-green-50 dark:bg-green-900/30 p-2 sm:p-3 rounded-lg text-center sm:text-left">
         <div class="text-green-600 dark:text-green-400 font-medium">Peak Height</div>
         <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayPeakHeight() }}{{ getHeightUnit() }}</div>
       </div>
-      <div class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-lg text-center sm:text-left">
+      <div class="bg-orange-50 dark:bg-orange-900/30 p-2 sm:p-3 rounded-lg text-center sm:text-left">
         <div class="text-orange-600 dark:text-orange-400 font-medium">Drop at {{ getDisplayDropReference() }}{{ getDistanceUnit() }}</div>
         <div class="text-gray-900 dark:text-white font-semibold text-lg">{{ getDisplayDropAt40() }}{{ getHeightUnit() }}</div>
       </div>
@@ -260,6 +422,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, markRaw } from 'vue'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 import { useApi } from '~/composables/useApi'
+import { useTrajectoryCalculation } from '~/composables/useTrajectoryCalculation'
 // Chart.js loaded from CDN to avoid build issues
 const initializeChart = async () => {
   if (typeof window === 'undefined') return null
@@ -293,11 +456,27 @@ const props = defineProps({
   bowConfig: {
     type: Object,
     required: true
+  },
+  mobileHorizontal: {
+    type: Boolean,
+    default: false
   }
 })
 
 // Composables
 const api = useApi()
+const {
+  isCalculating: isApiCalculating,
+  trajectoryData: apiTrajectoryData,
+  error: trajectoryError,
+  hasTrajectoryData,
+  performanceSummary,
+  trajectoryPoints,
+  calculateTrajectory,
+  calculateSimplifiedTrajectory,
+  buildArrowData,
+  buildBowConfig
+} = useTrajectoryCalculation()
 
 // Component state
 const chartCanvas = ref(null)
@@ -702,29 +881,31 @@ const updateTrajectory = async () => {
   isLoading.value = true
 
   try {
-    // Use authenticated API call instead of $fetch
-    const response = await api.post('/calculate-trajectory', {
-      arrow_data: props.arrowData,
-      bow_config: props.bowConfig,
-      environmental_conditions: {
+    // Use the unified trajectory calculation composable
+    const trajectoryData = await calculateTrajectory(
+      props.arrowData,
+      props.bowConfig,
+      {
         temperature_f: environmentalConditions.value.temperature,
         wind_speed_mph: environmentalConditions.value.windSpeed,
         altitude_feet: environmentalConditions.value.altitude,
-        humidity_percent: 50.0,
-        wind_direction_degrees: 90.0, // Right crosswind
-        air_pressure_inHg: 29.92
+        humidity_percent: 50.0
       },
-      shooting_conditions: {
+      {
         shot_angle_degrees: 0.0,
         sight_height_inches: 7.0,
         zero_distance_yards: 20.0,
         max_range_yards: units.value === 'metric' ? metersToYards(trajectorySettings.value.maxRange) : trajectorySettings.value.maxRange
       }
-    })
+    )
 
-    if (response.success && response.trajectory_data) {
-      updateChartData(response.trajectory_data)
-      updateTrajectorySummary(response.trajectory_data)
+    if (trajectoryData) {
+      updateChartData(trajectoryData)
+      updateTrajectorySummary(trajectoryData)
+    } else {
+      // Fallback to simplified trajectory
+      console.warn('API calculation failed, using simplified trajectory')
+      generateFallbackTrajectory()
     }
   } catch (error) {
     console.error('Failed to calculate trajectory:', error)
