@@ -129,7 +129,7 @@
             step="0.5"
             :value="editableConfig.nock_weight || 10"
             @input="editableConfig.nock_weight = parseFloat($event.target.value); handleChange()"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mobile-slider-safe"
           />
           <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>0 gr</span>
@@ -149,7 +149,7 @@
             step="0.5"
             :value="editableConfig.insert_weight || 0"
             @input="editableConfig.insert_weight = parseFloat($event.target.value); handleChange()"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mobile-slider-safe"
           />
           <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>0 gr</span>
@@ -169,7 +169,7 @@
             step="0.5"
             :value="editableConfig.bushing_weight || 0"
             @input="editableConfig.bushing_weight = parseFloat($event.target.value); handleChange()"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mobile-slider-safe"
           />
           <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>0 gr</span>
@@ -189,7 +189,7 @@
             step="0.5"
             :value="editableConfig.fletching_weight || 15"
             @input="editableConfig.fletching_weight = parseFloat($event.target.value); handleChange()"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mobile-slider-safe"
           />
           <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>0 gr</span>
