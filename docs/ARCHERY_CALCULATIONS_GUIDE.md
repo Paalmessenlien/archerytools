@@ -478,6 +478,53 @@ def apply_environmental_effects(self, base_trajectory, environmental_conditions)
 - **Humidity Modeling**: Water vapor effects on air density
 - **Barometric Pressure**: Real-time pressure adjustments
 
+## Arrow Weight Calculation Debugging System
+
+### Interactive Debugging Features
+
+The platform now includes comprehensive debugging tools for diagnosing arrow weight calculation issues:
+
+```javascript
+// Utility function to clean numeric values from strings
+const cleanNumericValue = (value) => {
+  if (typeof value === 'number') return value
+  if (!value) return null
+  
+  // Remove all non-numeric characters except decimal point and negative sign
+  const cleaned = String(value).replace(/[^0-9.-]/g, '')
+  const parsed = parseFloat(cleaned)
+  
+  return isNaN(parsed) ? null : parsed
+}
+
+// Debug function providing detailed calculation breakdown
+const getWeightCalculationDebug = (arrow, arrowLength) => {
+  const cleanedLength = cleanNumericValue(arrowLength)
+  
+  return `${arrow.manufacturer} ${arrow.model_name}
+Raw Length Input: "${arrowLength}" → Cleaned: ${cleanedLength}
+GPI: ${gpiWeight} (${gpiSource})
+Length: ${arrowBaseLength}" (${lengthSource})
+Shaft: ${gpiWeight} × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)}gn
+Components: Point(${pointWeight}) + Insert(${insertWeight}) + Nock(${nockWeight}) + Vanes(${totalVaneWeight.toFixed(1)})
+Total: ${totalWeight.toFixed(1)}gn
+Result: ${isNaN(totalWeight) ? 'NaN - CHECK CALCULATION!' : 'OK'}`
+}
+```
+
+### Key Features:
+- **Hover Tooltips**: Interactive debugging information on weight calculation chips
+- **Input Validation**: Automatic cleaning of string values with quotes/units (e.g., "34"" → 34)
+- **Calculation Breakdown**: Step-by-step component weight analysis
+- **Error Detection**: Clear identification of NaN calculation sources
+- **Raw vs Processed**: Shows original input vs cleaned numeric values
+
+### Common Issues Resolved:
+- **String Arrow Lengths**: Fixed parsing of values like "34"" containing quotes
+- **Missing GPI Data**: Smart estimation based on spine, material, and diameter
+- **Component Weight Validation**: Proper handling of missing component specifications
+- **Length Source Tracking**: Distinguishes between database values and spine-based defaults
+
 ## Implementation Status
 
 ### Completed Enhancements ✅:
@@ -486,6 +533,7 @@ def apply_environmental_effects(self, base_trajectory, environmental_conditions)
 3. **Environmental Factors**: Temperature, altitude, humidity, and barometric pressure effects  
 4. **Broadhead vs Field Point**: Complete trajectory comparison with practical sighting recommendations
 5. **Advanced Ballistics**: Professional-grade ballistics modeling with real-world accuracy
+6. **Weight Calculation Debugging**: Interactive debugging system with hover tooltips and input validation
 
 ### Future Enhancements:
 1. **Traditional Bow Calculations**: Specialized formulas for recurve and longbows
@@ -504,6 +552,7 @@ The Archery Tools platform now provides professional-grade archery calculations 
 - **Arrow Paradox Modeling**: Complex shaft flexing behavior during launch
 - **Environmental Integration**: Temperature, altitude, humidity, and barometric pressure effects
 - **Broadhead vs Field Point Analysis**: Complete trajectory comparison with practical sighting recommendations
+- **Interactive Debugging System**: Comprehensive weight calculation debugging with hover tooltips and input validation
 
 ### Real-World Applications:
 - **Compound Bow Tuning**: Optimized for modern bows from 280-400+ FPS
