@@ -3354,6 +3354,157 @@ def check_arrow_compatibility():
         import traceback
         return jsonify({'error': f'Compatible arrows error: {str(e)}'}), 500
 
+# Real-time compatibility score calculation
+@app.route('/api/calculate-compatibility-score', methods=['POST'])
+def calculate_compatibility_score():
+    """Calculate real-time compatibility score for arrow configuration changes"""
+    try:
+        data = request.get_json()
+        
+        # Extract required parameters
+        arrow_id = data.get('arrow_id')
+        bow_config = data.get('bow_config', {})
+        arrow_config = data.get('arrow_config', {})
+        
+        if not arrow_id:
+            return jsonify({'error': 'arrow_id is required'}), 400
+        
+        # Get arrow details from database
+        db = get_database()
+        arrow_details = db.get_arrow_details(arrow_id)
+        
+        if not arrow_details:
+            return jsonify({'error': 'Arrow not found'}), 404
+        
+        # Create a simplified match request for compatibility calculation
+        from arrow_matching_engine import MatchRequest
+        
+        # Extract bow configuration parameters
+        draw_weight = bow_config.get('draw_weight', 60)
+        draw_length = bow_config.get('draw_length', 28)
+        bow_type = bow_config.get('bow_type', 'compound')
+        
+        # Extract arrow configuration parameters
+        arrow_length = arrow_config.get('arrow_length', 32)
+        point_weight = arrow_config.get('point_weight', 100)
+        calculated_spine = arrow_config.get('calculated_spine')
+        
+        # Calculate optimal spine for this configuration
+        from spine_calculator import SpineCalculator
+        spine_calc = SpineCalculator()
+        
+        # Create bow configuration for spine calculation
+        from spine_calculator import BowConfiguration
+        bow_config_for_calc = BowConfiguration(
+            bow_type=bow_type,
+            draw_weight=draw_weight,
+            draw_length=draw_length
+        )
+        
+        # Use arrow length from configuration instead of default
+        spine_result = spine_calc.calculate_required_spine(
+            bow_config=bow_config_for_calc,
+            arrow_length=arrow_length,
+            point_weight=point_weight
+        )
+        optimal_spine = spine_result['calculated_spine']
+        
+        # Calculate spine range
+        tolerance = 50  # +/- spine tolerance
+        spine_range = {
+            'minimum': optimal_spine - tolerance,
+            'maximum': optimal_spine + tolerance
+        }
+        
+        # Use user-selected spine if provided, otherwise find the best spine match
+        best_spine_match = None
+        min_deviation = float('inf')
+        
+        if calculated_spine:
+            # User has selected a specific spine - use that for calculation
+            selected_spine_value = float(calculated_spine)
+            min_deviation = abs(selected_spine_value - optimal_spine)
+            
+            # Find the matching spine specification for the selected spine
+            for spine_spec in arrow_details['spine_specifications']:
+                if float(spine_spec['spine']) == selected_spine_value:
+                    best_spine_match = spine_spec
+                    break
+            
+            # If selected spine not found in specifications, create a mock one
+            if not best_spine_match:
+                best_spine_match = {
+                    'spine': selected_spine_value,
+                    'gpi_weight': 8.0,  # Default GPI
+                    'outer_diameter': 0.246  # Default diameter
+                }
+        else:
+            # No spine selected - find the best available spine match
+            for spine_spec in arrow_details['spine_specifications']:
+                spine_value = float(spine_spec['spine'])
+                deviation = abs(spine_value - optimal_spine)
+                
+                if deviation < min_deviation:
+                    min_deviation = deviation
+                    best_spine_match = spine_spec
+        
+        if not best_spine_match:
+            return jsonify({'error': 'No spine specifications found for arrow'}), 400
+        
+        # Create a basic match request for scoring
+        match_request = MatchRequest(
+            bow_config=bow_config_for_calc,
+            arrow_length=arrow_length,
+            point_weight=point_weight,
+            preferred_manufacturers=[],
+            material_preference=None,
+            target_diameter_range=None
+        )
+        
+        # Calculate compatibility score using arrow matching engine logic
+        from arrow_matching_engine import ArrowMatchingEngine
+        matching_engine = ArrowMatchingEngine(db)
+        
+        # Calculate match score
+        compatibility_score = matching_engine._calculate_match_score(
+            arrow_details, best_spine_match, optimal_spine, spine_range, match_request
+        )
+        
+        # Round to whole number for display
+        compatibility_score = round(compatibility_score)
+        
+        # Determine compatibility rating
+        if compatibility_score >= 90:
+            rating = 'excellent'
+        elif compatibility_score >= 75:
+            rating = 'good'
+        elif compatibility_score >= 60:
+            rating = 'fair'
+        else:
+            rating = 'poor'
+        
+        # Calculate additional metrics for context
+        spine_accuracy = max(0, 100 - (min_deviation / 50) * 100)  # 50 spine deviation = 0% accuracy
+        
+        return jsonify({
+            'compatibility_score': compatibility_score,
+            'compatibility_rating': rating,
+            'optimal_spine': round(optimal_spine, 1),
+            'selected_spine': float(calculated_spine) if calculated_spine else best_spine_match['spine'],
+            'spine_accuracy': round(spine_accuracy, 1),
+            'spine_deviation': round(min_deviation, 1),
+            'recommendations': {
+                'spine_match': 'excellent' if min_deviation < 25 else 'good' if min_deviation < 50 else 'fair' if min_deviation < 100 else 'poor',
+                'length_match': 'optimal' if 28 <= arrow_length <= 32 else 'acceptable' if 26 <= arrow_length <= 34 else 'suboptimal'
+            }
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Compatibility calculation error: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': f'Compatibility calculation failed: {str(e)}'}), 500
+
 # Static File Serving for Images
 @app.route('/api/images/<filename>')
 def serve_image(filename):
@@ -6219,10 +6370,23 @@ def calculate_trajectory(current_user):
         })
 
     except Exception as e:
-        print(f"Error calculating trajectory: {str(e)}")
+        import traceback
+        error_details = {
+            'error_message': str(e),
+            'error_type': type(e).__name__,
+            'traceback': traceback.format_exc()
+        }
+        print(f"🚨 TRAJECTORY CALCULATION ERROR:")
+        print(f"   Error Type: {type(e).__name__}")
+        print(f"   Error Message: {str(e)}")
+        print(f"   Full Traceback: {traceback.format_exc()}")
+        print(f"   Arrow Data: {arrow_data}")
+        print(f"   Bow Config: {bow_config}")
+        
         return jsonify({
             'success': False,
             'error': str(e),
+            'error_details': error_details,
             'fallback_data': {
                 'trajectory_points': generate_fallback_trajectory(
                     arrow_data.get('estimated_speed_fps', 280),

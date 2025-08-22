@@ -1787,3 +1787,230 @@ md-filled-button[aria-label]::after {
 .dark .mobile-emphasis-low {
   color: #9ca3af;
 }
+
+/* Mobile-Optimized Action Button Layout */
+.mobile-action-button {
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-action-button:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Enhanced mobile action button spacing for 2x2 grid layout */
+.mobile-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 375px) {
+  .mobile-action-grid {
+    gap: 0.625rem;
+  }
+}
+
+@media (min-width: 414px) {
+  .mobile-action-grid {
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .mobile-action-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* Mobile performance metrics grid optimization */
+.mobile-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 375px) {
+  .mobile-metrics-grid {
+    gap: 0.875rem;
+  }
+}
+
+@media (min-width: 414px) {
+  .mobile-metrics-grid {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile Trajectory Chart Optimizations */
+.trajectory-chart-mobile {
+  /* Mobile-optimized chart height using viewport-relative units */
+  min-height: 200px;
+  max-height: 280px;
+  height: clamp(220px, 25vh, 280px);
+}
+
+/* Trajectory chart summary cards mobile optimization */
+.trajectory-summary-mobile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 375px) {
+  .trajectory-summary-mobile {
+    gap: 0.625rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .trajectory-summary-mobile {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* Mobile-optimized trajectory controls */
+.trajectory-controls-mobile {
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .trajectory-controls-mobile {
+    padding: 1rem;
+  }
+}
+
+/* Touch-optimized range sliders for trajectory settings */
+.trajectory-range-mobile {
+  height: 0.875rem; /* Slightly thicker for easier touch interaction */
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0.5rem;
+  background: #e5e7eb;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.trajectory-range-mobile::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.trajectory-range-mobile::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode overrides for trajectory chart */
+.dark .trajectory-range-mobile {
+  background: #374151;
+}
+
+.dark .trajectory-range-mobile::-webkit-slider-thumb {
+  border-color: #1f2937;
+}
+
+.dark .trajectory-range-mobile::-moz-range-thumb {
+  border-color: #1f2937;
+}
+
+/* Mobile Horizontal Trajectory Scroll Layout */
+.mobile-trajectory-horizontal {
+  position: relative;
+  height: 220px; /* Fixed height for horizontal scroll */
+  overflow: hidden;
+}
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Snap scroll behavior for smooth card navigation */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* Smooth scrolling animation */
+.mobile-trajectory-horizontal .overflow-x-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+}
+
+/* Mobile trajectory card styling */
+.mobile-trajectory-horizontal .snap-start {
+  border-right: 1px solid;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-trajectory-horizontal .snap-start:last-child {
+  border-right: none;
+}
+
+/* Touch-friendly mobile trajectory controls */
+.mobile-trajectory-horizontal button {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.mobile-trajectory-horizontal input[type="range"] {
+  touch-action: manipulation;
+  min-height: 44px; /* Minimum touch target size */
+  padding: 10px 0;
+}
+
+/* Mobile trajectory chart canvas optimization */
+.mobile-trajectory-horizontal canvas {
+  touch-action: pan-x pan-y;
+}
+
+/* Responsive mobile trajectory layout */
+@media (max-width: 374px) {
+  .mobile-trajectory-horizontal .w-\[85vw\] {
+    width: 90vw;
+  }
+}
+
+@media (min-width: 375px) and (max-width: 413px) {
+  .mobile-trajectory-horizontal .w-\[85vw\] {
+    width: 85vw;
+  }
+}
+
+@media (min-width: 414px) and (max-width: 639px) {
+  .mobile-trajectory-horizontal .w-\[85vw\] {
+    width: 80vw;
+  }
+}

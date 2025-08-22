@@ -2,7 +2,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Loading State -->
-    <div v-if="loading" class="container mx-auto px-4 py-8">
+    <div v-if="loading" class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="animate-pulse">
         <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 mb-6"></div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="container mx-auto px-4 py-8">
+    <div v-else-if="error" class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <i class="fas fa-exclamation-triangle text-4xl text-red-600 dark:text-red-400 mb-4"></i>
         <h2 class="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">Setup Not Found</h2>
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="setup" class="container mx-auto px-4 py-8 pb-24 md:pb-8">
+    <div v-else-if="setup" class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-8">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
