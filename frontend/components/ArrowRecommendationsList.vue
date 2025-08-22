@@ -756,8 +756,9 @@ const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) =>
   if (spineSpec.length_options && spineSpec.length_options.length > 0) {
     // Use the most common/middle length option from arrow's database specifications
     const sortedLengths = [...spineSpec.length_options].sort((a, b) => a - b)
-    arrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
-    console.log(`📏 Using arrow's base length from database: ${arrowBaseLength}" (options: ${spineSpec.length_options.join(', ')})`)
+    const rawArrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
+    arrowBaseLength = cleanNumericValue(rawArrowBaseLength)
+    console.log(`📏 Using arrow's base length from database: "${rawArrowBaseLength}" → Cleaned: ${arrowBaseLength}" (options: ${spineSpec.length_options.join(', ')})`)
   } else {
     // Arrow has no base length data - use spine-based manufacturer defaults
     if (spineSpec.spine <= 300) {
