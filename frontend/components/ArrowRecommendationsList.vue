@@ -104,7 +104,10 @@
                     <i class="fas fa-weight-hanging fa-icon" slot="icon" style="color: #7c2d12;"></i>
                   </md-assist-chip>
                   <!-- Total Arrow Weight -->
-                  <md-assist-chip :label="`Total: ${calculateTotalArrowWeight(recommendation.arrow, bowConfig.arrow_length)} gn`" class="bg-blue-100 dark:bg-blue-900">
+                  <md-assist-chip 
+                    :label="`Total: ${calculateTotalArrowWeight(recommendation.arrow, bowConfig?.arrow_length || 29)} gn`" 
+                    :title="getWeightCalculationDebug(recommendation.arrow, bowConfig?.arrow_length || 29)"
+                    class="bg-blue-100 dark:bg-blue-900">
                     <i class="fas fa-balance-scale fa-icon" slot="icon" style="color: #3b82f6;"></i>
                   </md-assist-chip>
                 </md-chip-set>
@@ -563,6 +566,19 @@ const getWeightDisplay = (arrow) => {
       ? `${arrow.min_gpi} GPI` 
       : `${arrow.min_gpi}-${arrow.max_gpi} GPI`
   }
+  
+  // Check spine_specifications for actual GPI weight
+  if (arrow.spine_specifications && arrow.spine_specifications.length > 0) {
+    const spec = arrow.spine_specifications[0]
+    if (spec.gpi_weight && spec.gpi_weight > 0) {
+      return `${spec.gpi_weight} GPI`
+    }
+    
+    // If no GPI weight, estimate it based on spine and characteristics
+    const estimatedGpi = estimateGpiWeight(spec.spine, arrow.material, spec.outer_diameter)
+    return `~${estimatedGpi} GPI` // ~ indicates estimated value
+  }
+  
   return 'N/A'
 }
 
@@ -579,7 +595,12 @@ const getNumericWeight = (arrow) => {
   // Check spine_specifications array for GPI weight
   if (arrow.spine_specifications && arrow.spine_specifications.length > 0) {
     const spec = arrow.spine_specifications[0]
-    if (spec.gpi_weight) return spec.gpi_weight
+    if (spec.gpi_weight && spec.gpi_weight > 0) {
+      return spec.gpi_weight
+    }
+    
+    // If no GPI weight, estimate it based on spine and characteristics
+    return estimateGpiWeight(spec.spine, arrow.material, spec.outer_diameter)
   }
   
   return 0
@@ -644,43 +665,197 @@ const calculateVaneWeight = () => {
   return Math.round(calculatedWeight * 10) / 10 // Round to 1 decimal place
 }
 
+// Smart GPI weight estimation based on spine values and arrow characteristics
+const estimateGpiWeight = (spine, material, outerDiameter) => {
+  // Professional GPI weight estimation based on industry standards
+  
+  // Base GPI weight ranges by spine (industry averages)
+  let baseGpi = 8.5 // Default fallback
+  
+  if (spine >= 600) {
+    baseGpi = 12.5 // Very weak spines (heavy arrows)
+  } else if (spine >= 500) {
+    baseGpi = 10.5 // Weak spines 
+  } else if (spine >= 400) {
+    baseGpi = 8.5  // Medium spines
+  } else if (spine >= 340) {
+    baseGpi = 7.5  // Stiff spines
+  } else if (spine >= 300) {
+    baseGpi = 6.8  // Very stiff spines
+  } else if (spine >= 250) {
+    baseGpi = 5.9  // Ultra stiff spines
+  } else {
+    baseGpi = 5.2  // Extremely stiff spines (light, fast arrows)
+  }
+  
+  // Material adjustments
+  if (material) {
+    const materialLower = material.toLowerCase()
+    if (materialLower.includes('aluminum') && materialLower.includes('carbon')) {
+      baseGpi *= 1.15 // Carbon/Aluminum composite arrows are heavier
+    } else if (materialLower.includes('aluminum')) {
+      baseGpi *= 1.3  // Pure aluminum arrows are heavier
+    } else if (materialLower.includes('wood')) {
+      baseGpi *= 1.25 // Wood arrows are heavier
+    }
+    // Carbon arrows use base weight (lightest option)
+  }
+  
+  // Diameter adjustments (larger diameter = more material = heavier)
+  if (outerDiameter) {
+    const diameter = parseFloat(outerDiameter)
+    if (diameter > 0.3) {
+      baseGpi *= 1.2  // Large diameter arrows
+    } else if (diameter > 0.25) {
+      baseGpi *= 1.1  // Standard diameter arrows
+    } else if (diameter < 0.2) {
+      baseGpi *= 0.85 // Ultra-thin arrows
+    }
+    // Standard 0.2-0.25" diameter uses base weight
+  }
+  
+  return Math.round(baseGpi * 10) / 10 // Round to 1 decimal place
+}
+
 // Calculate total arrow weight based on GPI and arrow length
 const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) => {
   if (!arrow || !arrow.spine_specifications) return 0
   
   // Find the appropriate spine specification (use first one if no specific match)
   const spineSpec = arrow.spine_specifications[0]
-  if (!spineSpec || !spineSpec.gpi_weight) return 0
+  if (!spineSpec) return 0
   
-  // Use provided arrow length or default to 32" if no length options available
-  let effectiveLength = arrowLength || 32
-  
-  // If arrow has specific length options, use the closest one
-  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
-    // Find the closest available length
-    const targetLength = arrowLength || 32
-    effectiveLength = spineSpec.length_options.reduce((prev, curr) => 
-      Math.abs(curr - targetLength) < Math.abs(prev - targetLength) ? curr : prev
+  // Use actual GPI weight or estimate based on arrow characteristics
+  let gpiWeight = spineSpec.gpi_weight
+  if (!gpiWeight || gpiWeight <= 0) {
+    gpiWeight = estimateGpiWeight(
+      spineSpec.spine, 
+      arrow.material, 
+      spineSpec.outer_diameter
     )
+    console.log(`🎯 Estimated GPI weight for ${arrow.manufacturer} ${arrow.model_name} (${spineSpec.spine} spine): ${gpiWeight} GPI`)
   }
   
-  // Calculate shaft weight (GPI * length in inches)
-  const shaftWeight = spineSpec.gpi_weight * effectiveLength
+  // Arrow base length (from manufacturer database) - used for WEIGHT calculation only
+  // This is different from user's calculator length which is used for tuning/spine calculations
+  let arrowBaseLength = null
   
-  // Add component weights
-  const pointWeight = componentWeights.point_weight || bowConfig.value.point_weight || 125
-  const insertWeight = componentWeights.insert_weight || bowConfig.value.insert_weight || 0
-  const nockWeight = componentWeights.nock_weight || bowConfig.value.nock_weight || 10
-  const bushingWeight = componentWeights.bushing_weight || bowConfig.value.bushing_weight || 0
+  // First priority: Use arrow's own base length from database
+  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
+    // Use the most common/middle length option from arrow's database specifications
+    const sortedLengths = [...spineSpec.length_options].sort((a, b) => a - b)
+    arrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
+    console.log(`📏 Using arrow's base length from database: ${arrowBaseLength}" (options: ${spineSpec.length_options.join(', ')})`)
+  } else {
+    // Arrow has no base length data - use spine-based manufacturer defaults
+    if (spineSpec.spine <= 300) {
+      arrowBaseLength = 28  // Very stiff spines typically come in shorter lengths
+    } else if (spineSpec.spine <= 350) {
+      arrowBaseLength = 29  // Standard target/hunting length
+    } else if (spineSpec.spine <= 400) {
+      arrowBaseLength = 30  // Medium spine hunting arrows
+    } else {
+      arrowBaseLength = 31  // Weak spine traditional/longer arrows
+    }
+    console.log(`⚠️  Arrow has no base length data - using spine-based default: ${arrowBaseLength}" (spine: ${spineSpec.spine})`)
+  }
+  
+  // Ensure we have a valid base length for calculation
+  if (!arrowBaseLength || arrowBaseLength <= 0) {
+    console.error(`❌ Cannot calculate weight - no valid base length for ${arrow.manufacturer} ${arrow.model_name}`)
+    return 0
+  }
+  
+  // Calculate shaft weight using arrow's base length (not user's calculator length)
+  const shaftWeight = gpiWeight * arrowBaseLength
+  
+  // Add component weights from user's bow configuration
+  const pointWeight = componentWeights.point_weight || bowConfig.value?.point_weight || 125
+  const insertWeight = componentWeights.insert_weight || bowConfig.value?.insert_weight || 0
+  const nockWeight = componentWeights.nock_weight || bowConfig.value?.nock_weight || 10
+  const bushingWeight = componentWeights.bushing_weight || bowConfig.value?.bushing_weight || 0
   const vaneWeightPerVane = componentWeights.vane_weight_per || calculateVaneWeight()
-  const numberOfVanes = componentWeights.number_of_vanes || bowConfig.value.number_of_vanes || 3
+  const numberOfVanes = componentWeights.number_of_vanes || bowConfig.value?.number_of_vanes || 3
   
   const totalVaneWeight = vaneWeightPerVane * numberOfVanes
   
   // Total arrow weight = shaft + components
   const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
   
+  console.log(`⚖️  Weight calculation for ${arrow.manufacturer} ${arrow.model_name}:`)
+  console.log(`   Shaft: ${gpiWeight} GPI × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)} gn`)
+  console.log(`   Components: Point(${pointWeight}) + Insert(${insertWeight}) + Nock(${nockWeight}) + Vanes(${totalVaneWeight.toFixed(1)}) = ${(pointWeight + insertWeight + nockWeight + totalVaneWeight).toFixed(1)} gn`)
+  console.log(`   Total: ${totalWeight.toFixed(1)} gn`)
+  
   return Math.round(totalWeight * 10) / 10 // Round to 1 decimal place
+}
+
+// Debug function to get detailed calculation info for tooltips
+const getWeightCalculationDebug = (arrow, arrowLength) => {
+  if (!arrow || !arrow.spine_specifications) return 'No arrow or spine specs'
+  
+  const spineSpec = arrow.spine_specifications[0]
+  if (!spineSpec) return 'No spine specification'
+  
+  // Use actual GPI weight or estimate based on arrow characteristics
+  let gpiWeight = spineSpec.gpi_weight
+  let gpiSource = 'actual'
+  if (!gpiWeight || gpiWeight <= 0) {
+    gpiWeight = estimateGpiWeight(
+      spineSpec.spine, 
+      arrow.material, 
+      spineSpec.outer_diameter
+    )
+    gpiSource = 'estimated'
+  }
+  
+  // Arrow base length calculation
+  let arrowBaseLength = null
+  let lengthSource = 'unknown'
+  
+  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
+    const sortedLengths = [...spineSpec.length_options].sort((a, b) => a - b)
+    arrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
+    lengthSource = `database (${spineSpec.length_options.join(', ')})`
+  } else {
+    if (spineSpec.spine <= 300) {
+      arrowBaseLength = 28
+    } else if (spineSpec.spine <= 350) {
+      arrowBaseLength = 29
+    } else if (spineSpec.spine <= 400) {
+      arrowBaseLength = 30
+    } else {
+      arrowBaseLength = 31
+    }
+    lengthSource = `spine-based default`
+  }
+  
+  if (!arrowBaseLength || arrowBaseLength <= 0) {
+    return `ERROR: No valid base length for ${arrow.manufacturer} ${arrow.model_name}`
+  }
+  
+  // Calculate components
+  const shaftWeight = gpiWeight * arrowBaseLength
+  const pointWeight = bowConfig.value?.point_weight || 125
+  const insertWeight = bowConfig.value?.insert_weight || 0
+  const nockWeight = bowConfig.value?.nock_weight || 10
+  const bushingWeight = bowConfig.value?.bushing_weight || 0
+  const vaneWeightPerVane = calculateVaneWeight()
+  const numberOfVanes = bowConfig.value?.number_of_vanes || 3
+  const totalVaneWeight = vaneWeightPerVane * numberOfVanes
+  
+  const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
+  
+  return `${arrow.manufacturer} ${arrow.model_name}
+GPI: ${gpiWeight} (${gpiSource})
+Length: ${arrowBaseLength}" (${lengthSource})
+Shaft: ${gpiWeight} × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)}gn
+Point: ${pointWeight}gn
+Insert: ${insertWeight}gn
+Nock: ${nockWeight}gn
+Vanes: ${numberOfVanes} × ${vaneWeightPerVane.toFixed(1)} = ${totalVaneWeight.toFixed(1)}gn
+Total: ${totalWeight.toFixed(1)}gn
+Result: ${isNaN(totalWeight) ? 'NaN - CHECK CALCULATION!' : 'OK'}`
 }
 
 const addToSetup = async (recommendation) => {
