@@ -92,6 +92,8 @@ def get_tuning_system():
     return tuning_system
 
 def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_draw_length, bow_type, arrow_weight_grains, string_material='dacron', setup_id=None, arrow_id=None):
+    print(f"🔍🔍🔍 ENHANCED SPEED FUNCTION CALLED: setup_id={setup_id}, arrow_id={arrow_id}")
+    print(f"   Input params: IBO={bow_ibo_speed}, weight={bow_draw_weight}, length={bow_draw_length}, type={bow_type}, arrow_weight={arrow_weight_grains}")
     """Internal helper for enhanced arrow speed calculation with chronograph data and string materials"""
     try:
         # Check for chronograph data first (most accurate)
@@ -179,8 +181,23 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         adjusted_ibo = bow_ibo_speed + weight_adjustment + length_adjustment
         estimated_speed = adjusted_ibo * weight_ratio * string_modifier * bow_efficiency
         
+        # Debug logging
+        print(f"🔍 Enhanced Speed Calculation Debug:")
+        print(f"   bow_ibo_speed: {bow_ibo_speed}")
+        print(f"   bow_draw_weight: {bow_draw_weight}")
+        print(f"   bow_draw_length: {bow_draw_length}")
+        print(f"   arrow_weight_grains: {arrow_weight_grains}")
+        print(f"   weight_adjustment: {weight_adjustment}")
+        print(f"   length_adjustment: {length_adjustment}")
+        print(f"   weight_ratio: {weight_ratio}")
+        print(f"   string_modifier: {string_modifier}")
+        print(f"   bow_efficiency: {bow_efficiency}")
+        print(f"   adjusted_ibo: {adjusted_ibo}")
+        print(f"   raw estimated_speed: {estimated_speed}")
+        
         # Apply reasonable bounds
         estimated_speed = max(150, min(450, estimated_speed))
+        print(f"   final estimated_speed (after bounds): {estimated_speed}")
         
         return {"speed": estimated_speed, "source": "enhanced_estimated"}
         
@@ -3209,6 +3226,10 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
             except:
                 performance_data = None
         
+        # Add spine specifications to arrow data if arrow data exists
+        if arrow_data and spine_specifications:
+            arrow_data['spine_specifications'] = spine_specifications
+        
         # Build comprehensive response
         response_data = {
             'setup_arrow': {
@@ -3230,7 +3251,7 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
                 'performance': performance_data
             },
             'arrow': arrow_data,
-            'spine_specifications': spine_specifications,
+            'spine_specifications': spine_specifications,  # Keep for backward compatibility
             'bow_setup': {
                 'id': setup_dict['bow_setup_id'],
                 'name': setup_dict['bow_setup_name'],
