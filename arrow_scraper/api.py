@@ -167,10 +167,10 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         reference_draw_weight = 70.0  # IBO standard draw weight
         reference_draw_length = 30.0  # IBO standard draw length
         
-        # Adjust for draw weight difference (approximately 10 fps per pound for compounds)
-        weight_adjustment = (bow_draw_weight - reference_draw_weight) * 10
+        # Adjust for draw weight difference (approximately 2.5 fps per pound - more realistic)
+        weight_adjustment = (bow_draw_weight - reference_draw_weight) * 2.5
         
-        # Adjust for draw length difference (approximately 10 fps per inch)
+        # Adjust for draw length difference (approximately 10 fps per inch)  
         length_adjustment = (bow_draw_length - reference_draw_length) * 10
         
         # Adjust for arrow weight difference using kinetic energy conservation
@@ -2857,16 +2857,38 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                 bow_config_dict = dict(bow_config) if bow_config else {}
                 setup_arrow_dict = dict(setup_arrow)
                 
+                calculated_arrow_weight = (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25
+                
+                # Get user's draw length for proper calculation
+                user_draw_length = 29  # Default fallback
+                try:
+                    cursor.execute('SELECT user_draw_length FROM users WHERE id = ?', (current_user['id'],))
+                    user_result = cursor.fetchone()
+                    if user_result and user_result['user_draw_length']:
+                        user_draw_length = user_result['user_draw_length']
+                except:
+                    pass  # Use default
+                
                 speed_request_data = {
                     'bow_ibo_speed': bow_config_dict.get('ibo_speed', setup_arrow_dict.get('ibo_speed', 320)),
                     'bow_draw_weight': bow_config_dict.get('draw_weight', setup_arrow_dict.get('draw_weight', 50)),
-                    'bow_draw_length': bow_config_dict.get('draw_length', 29),
+                    'bow_draw_length': bow_config_dict.get('draw_length', user_draw_length),
                     'bow_type': bow_config_dict.get('bow_type', setup_arrow_dict.get('bow_type', 'compound')),
-                    'arrow_weight_grains': (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25,
+                    'arrow_weight_grains': calculated_arrow_weight,
                     'string_material': 'dacron',  # Default to slowest for safety
                     'setup_id': setup_arrow['setup_id'],
                     'arrow_id': setup_arrow['arrow_id']
                 }
+                
+                print(f"🔍 Speed Request Data Debug:")
+                print(f"   bow_ibo_speed: {speed_request_data['bow_ibo_speed']}")
+                print(f"   bow_draw_weight: {speed_request_data['bow_draw_weight']}")
+                print(f"   bow_draw_length: {speed_request_data['bow_draw_length']}")
+                print(f"   bow_type: {speed_request_data['bow_type']}")
+                print(f"   arrow_weight_grains: {speed_request_data['arrow_weight_grains']} (gpi: {mock_arrow.gpi_weight}, length: {mock_profile.arrow_length}, point: {mock_profile.point_weight_preference})")
+                print(f"   string_material: {speed_request_data['string_material']}")
+                print(f"   setup_id: {speed_request_data['setup_id']}")
+                print(f"   arrow_id: {speed_request_data['arrow_id']}")
                 
                 # Get string equipment data for speed calculation
                 try:
