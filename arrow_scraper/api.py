@@ -91,9 +91,24 @@ def get_tuning_system():
             tuning_system = None
     return tuning_system
 
+def get_fallback_ata_speed(bow_type, bow_ibo_speed=None):
+    """Get appropriate fallback ATA speed based on bow type"""
+    # If we have a valid IBO speed, use it
+    if bow_ibo_speed and bow_ibo_speed > 0:
+        return bow_ibo_speed
+    
+    # Fallback ATA speeds based on typical bow performance
+    bow_type_ata_speeds = {
+        'compound': 320,      # Modern compound bows (IBO standard)
+        'recurve': 210,       # Traditional recurve (AMO standard) 
+        'longbow': 190,       # Traditional longbow
+        'traditional': 180,   # General traditional bow
+        'barebow': 200        # Barebow recurve
+    }
+    
+    return bow_type_ata_speeds.get(bow_type.lower(), 320)
+
 def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_draw_length, bow_type, arrow_weight_grains, string_material='dacron', setup_id=None, arrow_id=None):
-    print(f"🔍🔍🔍 ENHANCED SPEED FUNCTION CALLED: setup_id={setup_id}, arrow_id={arrow_id}")
-    print(f"   Input params: IBO={bow_ibo_speed}, weight={bow_draw_weight}, length={bow_draw_length}, type={bow_type}, arrow_weight={arrow_weight_grains}")
     """Internal helper for enhanced arrow speed calculation with chronograph data and string materials"""
     try:
         # Check for chronograph data first (most accurate)
@@ -150,22 +165,31 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         # Get string material modifier
         string_modifier = string_speed_modifiers.get(string_material.lower(), 0.92)  # Default to dacron
         
-        # Bow type specific efficiency factors
+        # Bow type specific efficiency factors (adjusted for realistic speeds)
         bow_type_factors = {
             'compound': 0.95,         # Most efficient transfer
-            'recurve': 0.85,          # Traditional recurve efficiency
-            'longbow': 0.75,          # Traditional longbow efficiency  
-            'traditional': 0.70,      # Traditional bow efficiency
-            'barebow': 0.80          # Barebow efficiency
+            'recurve': 0.90,          # Traditional recurve efficiency (improved)
+            'longbow': 0.88,          # Traditional longbow efficiency (improved)
+            'traditional': 0.85,      # Traditional bow efficiency (improved)
+            'barebow': 0.88          # Barebow efficiency (improved)
         }
         
         bow_efficiency = bow_type_factors.get(bow_type.lower(), 0.95)
         
-        # Enhanced IBO-based speed calculation
-        # IBO standard: 350gr arrow, 30" draw, 70lb bow = 'ibo_speed' FPS
-        reference_weight = 350.0  # IBO standard arrow weight
-        reference_draw_weight = 70.0  # IBO standard draw weight
-        reference_draw_length = 30.0  # IBO standard draw length
+        # Use proper ATA speed with fallback based on bow type
+        effective_ata_speed = get_fallback_ata_speed(bow_type, bow_ibo_speed)
+        
+        # Enhanced IBO-based speed calculation with bow-type specific reference parameters
+        if bow_type.lower() in ['compound']:
+            # IBO standard for compounds: 350gr arrow, 30" draw, 70lb bow
+            reference_weight = 350.0
+            reference_draw_weight = 70.0
+            reference_draw_length = 30.0
+        else:
+            # AMO standard for traditional bows: typically tested at lower weights and lengths
+            reference_weight = 350.0  # Keep same arrow weight standard
+            reference_draw_weight = 50.0  # More realistic for traditional bows
+            reference_draw_length = 28.0  # More common traditional draw length
         
         # Adjust for draw weight difference (approximately 2.5 fps per pound - more realistic)
         weight_adjustment = (bow_draw_weight - reference_draw_weight) * 2.5
@@ -177,27 +201,17 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         # Heavier arrows = slower speed, lighter arrows = faster speed
         weight_ratio = (reference_weight / arrow_weight_grains) ** 0.5
         
-        # Calculate base speed with adjustments
-        adjusted_ibo = bow_ibo_speed + weight_adjustment + length_adjustment
+        # Calculate base speed with adjustments using effective ATA speed
+        adjusted_ibo = effective_ata_speed + weight_adjustment + length_adjustment
         estimated_speed = adjusted_ibo * weight_ratio * string_modifier * bow_efficiency
         
-        # Debug logging
-        print(f"🔍 Enhanced Speed Calculation Debug:")
-        print(f"   bow_ibo_speed: {bow_ibo_speed}")
-        print(f"   bow_draw_weight: {bow_draw_weight}")
-        print(f"   bow_draw_length: {bow_draw_length}")
-        print(f"   arrow_weight_grains: {arrow_weight_grains}")
-        print(f"   weight_adjustment: {weight_adjustment}")
-        print(f"   length_adjustment: {length_adjustment}")
-        print(f"   weight_ratio: {weight_ratio}")
-        print(f"   string_modifier: {string_modifier}")
-        print(f"   bow_efficiency: {bow_efficiency}")
-        print(f"   adjusted_ibo: {adjusted_ibo}")
-        print(f"   raw estimated_speed: {estimated_speed}")
+        # Apply reasonable bounds based on bow type
+        if bow_type.lower() in ['compound']:
+            min_speed, max_speed = 180, 450  # Compound bow bounds
+        else:
+            min_speed, max_speed = 120, 350  # Traditional bow bounds (lower minimum)
         
-        # Apply reasonable bounds
-        estimated_speed = max(150, min(450, estimated_speed))
-        print(f"   final estimated_speed (after bounds): {estimated_speed}")
+        estimated_speed = max(min_speed, min(max_speed, estimated_speed))
         
         return {"speed": estimated_speed, "source": "enhanced_estimated"}
         
@@ -2256,7 +2270,7 @@ def add_arrow_to_setup(current_user, setup_id):
                 
                 # Call enhanced speed calculation (no chronograph data for new arrows)
                 enhanced_speed_result = calculate_enhanced_arrow_speed_internal(
-                    bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
+                    bow_ibo_speed=dict(bow_setup).get('ibo_speed', 0),  # Let the function handle fallbacks
                     bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
                     bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
                     bow_type=dict(bow_setup).get('bow_type', 'compound'),
@@ -2691,7 +2705,7 @@ def calculate_setup_arrows_performance(current_user, setup_id):
                     
                     # Call enhanced speed calculation
                     enhanced_speed_result = calculate_enhanced_arrow_speed_internal(
-                        bow_ibo_speed=dict(bow_setup).get('ibo_speed', 320),
+                        bow_ibo_speed=dict(bow_setup).get('ibo_speed', 0),  # Let the function handle fallbacks
                         bow_draw_weight=dict(bow_setup).get('draw_weight', 50),
                         bow_draw_length=effective_draw_length,  # Use bow-type specific draw length
                         bow_type=dict(bow_setup).get('bow_type', 'compound'),
@@ -2870,7 +2884,7 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                     pass  # Use default
                 
                 speed_request_data = {
-                    'bow_ibo_speed': bow_config_dict.get('ibo_speed', setup_arrow_dict.get('ibo_speed', 320)),
+                    'bow_ibo_speed': bow_config_dict.get('ibo_speed', setup_arrow_dict.get('ibo_speed', 0)),  # Let the function handle fallbacks
                     'bow_draw_weight': bow_config_dict.get('draw_weight', setup_arrow_dict.get('draw_weight', 50)),
                     'bow_draw_length': bow_config_dict.get('draw_length', user_draw_length),
                     'bow_type': bow_config_dict.get('bow_type', setup_arrow_dict.get('bow_type', 'compound')),
