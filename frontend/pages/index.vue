@@ -28,18 +28,6 @@
         </div>
       </div>
 
-      <!-- Login Button -->
-      <div class="mobile-section-spacing md:mb-8">
-        <CustomButton
-          @click="handleLogin"
-          variant="primary"
-          size="large"
-          class="mobile-primary-action"
-        >
-          <i class="fab fa-google mr-2"></i>
-          Login with Google
-        </CustomButton>
-      </div>
 
       <!-- Quick Info -->
       <div class="mobile-emphasis-medium text-gray-600 dark:text-gray-400 mobile-section-spacing">
