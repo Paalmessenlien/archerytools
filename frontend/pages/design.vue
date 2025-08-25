@@ -219,7 +219,7 @@ const sections = [
 ]
 </script>
 
-<style scoped>
+<style>
 /* Custom scrollbar for navigation */
 nav::-webkit-scrollbar {
   display: none;
