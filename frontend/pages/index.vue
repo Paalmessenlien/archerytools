@@ -33,7 +33,8 @@
         <CustomButton
           @click="handleLogin"
           variant="filled"
-          class="mobile-primary-action bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 px-6 sm-mobile:px-8 py-3 text-base sm-mobile:text-lg"
+          size="large"
+          class="mobile-primary-action !bg-blue-600 !text-white hover:!bg-blue-700 dark:!bg-purple-600 dark:hover:!bg-purple-700 !border-blue-600 dark:!border-purple-600 focus:!ring-blue-500 dark:focus:!ring-purple-500"
         >
           <i class="fab fa-google mr-2"></i>
           Login with Google
