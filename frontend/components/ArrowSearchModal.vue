@@ -102,7 +102,7 @@
                 @input="updateAdjustment('arrow_length', parseFloat($event.target.value))"
                 labeled
                 ticks
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
             </div>
             
@@ -119,7 +119,7 @@
                 @input="updateAdjustment('point_weight', parseInt($event.target.value))"
                 labeled
                 ticks
-                class="w-full"
+                class="w-full mobile-slider-safe"
               ></md-slider>
             </div>
           </div>

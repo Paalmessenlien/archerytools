@@ -733,9 +733,16 @@
 /* Custom slider styles with mobile touch optimization */
 input[type="range"] {
   /* Improved mobile touch handling for all range inputs */
-  touch-action: pan-y; /* Allow vertical scrolling, only capture horizontal touches */
+  touch-action: manipulation; /* Prevent double-tap zoom, allow basic manipulation */
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  
+  /* Add minimum touch area padding on mobile */
+  padding: 8px 0;
+  margin: 4px 0;
+  
+  /* Better mobile thumb size */
+  min-height: 20px;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -802,11 +809,18 @@ md-slider {
   --md-slider-active-track-height: 6px;
   --md-slider-inactive-track-height: 4px;
   width: 100%;
-  touch-action: pan-y; /* Allow vertical scroll to pass through; adjust slider only on horizontal move */
+  touch-action: manipulation; /* Prevent zoom but allow basic touch manipulation */
   
-  /* Prevent accidental touches on mobile by requiring intentional horizontal gestures */
+  /* Prevent accidental touches on mobile by requiring intentional gestures */
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+/* Apply the same mobile-safe strategy to Material Web sliders when they have the class */
+md-slider.mobile-slider-safe {
+  touch-action: none !important; /* Prevent all touch interference for safe mobile experience */
+  padding: 10px 0 !important;
+  margin: 6px 0 !important;
 }
 
 /* Larger, more touch-friendly slider on phones */
@@ -2033,16 +2047,38 @@ md-filled-button[aria-label]::after {
 
 /* Mobile-optimized slider styles to prevent scroll interference */
 .mobile-slider-safe {
-  touch-action: pan-y !important; /* Only allow vertical scrolling to pass through */
+  touch-action: none !important; /* Prevent all touch actions to eliminate scroll interference */
   -webkit-tap-highlight-color: transparent !important;
   user-select: none !important;
   
   /* Require more deliberate touch gestures on mobile */
-  padding: 8px 0 !important;
-  margin: 4px 0 !important;
+  padding: 10px 0 !important;
+  margin: 6px 0 !important;
   
   /* Increase touch target size on mobile */
-  min-height: 24px !important;
+  min-height: 32px !important;
+  
+  /* Add container wrapper for touch isolation */
+  position: relative !important;
+}
+
+/* Container-based touch isolation for sliders */
+.slider-container-mobile {
+  touch-action: none;
+  padding: 12px 0;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fallback for when touch-action: none is not supported */
+@supports not (touch-action: none) {
+  .mobile-slider-safe {
+    touch-action: manipulation !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+  }
 }
 
 /* Mobile-optimized Material Design sliders */

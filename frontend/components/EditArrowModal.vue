@@ -302,7 +302,7 @@
                     :value="editForm.bushing_weight"
                     @input="editForm.bushing_weight = parseFloat($event.target.value)"
                     labeled
-                    class="w-full"
+                    class="w-full mobile-slider-safe"
                   ></md-slider>
                   <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span>1 gn</span>

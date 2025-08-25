@@ -47,7 +47,7 @@
               max="80" 
               step="0.5" 
               v-model.number="setupData.draw_weight"
-              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider mobile-slider-safe"
             />
             <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
               <span>20 lbs</span>
