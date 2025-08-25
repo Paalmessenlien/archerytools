@@ -66,6 +66,7 @@ CORS(app,
 # Global variables for lazy initialization
 tuning_system = None
 database = None
+unified_database = None
 component_database = None
 spine_service = None
 compatibility_engine = None
@@ -362,6 +363,19 @@ def get_database():
             traceback.print_exc()
             database = None
     return database
+
+def get_unified_database():
+    """Get unified database with lazy initialization for journal and user data"""
+    global unified_database
+    if unified_database is None:
+        try:
+            unified_database = UnifiedDatabase()
+        except Exception as e:
+            import traceback
+            print(f"Error creating UnifiedDatabase: {e}")
+            traceback.print_exc()
+            unified_database = None
+    return unified_database
 
 def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=28.0):
     """
@@ -11892,7 +11906,7 @@ def get_improvement_areas(foc_result: dict, penetration_result: dict,
 def get_journal_entries(current_user):
     """Get journal entries for current user with filtering options"""
     try:
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
@@ -11904,8 +11918,7 @@ def get_journal_entries(current_user):
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
         
-        conn = sqlite3.connect(db.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Build the WHERE clause
@@ -11966,11 +11979,29 @@ def get_journal_entries(current_user):
                     entry['tags'] = []
             else:
                 entry['tags'] = []
+            
+            # Get images for this entry
+            cursor.execute('''
+                SELECT cdn_url, description, original_filename, created_at
+                FROM journal_attachments 
+                WHERE journal_entry_id = ? AND file_type = 'image'
+                ORDER BY is_primary DESC, created_at ASC
+            ''', (entry['id'],))
+            
+            images = []
+            for img_row in cursor.fetchall():
+                images.append({
+                    'url': img_row['cdn_url'],
+                    'alt': img_row['description'] or img_row['original_filename'],
+                    'uploadedAt': img_row['created_at']
+                })
+            entry['images'] = images
+            
             entries.append(entry)
         
         # Get total count for pagination
         count_query = f'SELECT COUNT(*) as total FROM journal_entries je WHERE {where_clause}'
-        cursor.execute(count_query, params[:-2])  # Remove limit/offset params
+        cursor.execute(count_query, params)  # Use original params (limit/offset were added separately)
         total_count = cursor.fetchone()['total']
         
         conn.close()
@@ -12002,11 +12033,11 @@ def create_journal_entry(current_user):
         if not data.get('title') or not data.get('content'):
             return jsonify({'error': 'Title and content are required'}), 400
         
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Validate bow setup belongs to user if provided
@@ -12034,6 +12065,24 @@ def create_journal_entry(current_user):
         ))
         
         entry_id = cursor.lastrowid
+        
+        # Handle image attachments if provided
+        if data.get('images'):
+            for i, image in enumerate(data['images']):
+                cursor.execute('''
+                    INSERT INTO journal_attachments 
+                    (journal_entry_id, filename, original_filename, file_type, 
+                     cdn_url, description, is_primary)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    entry_id,
+                    f"journal_image_{entry_id}_{i}",
+                    image.get('alt', f'Journal image {i+1}'),
+                    'image',
+                    image['url'],
+                    image.get('alt', ''),
+                    i == 0  # First image is primary
+                ))
         
         # Handle equipment references if provided
         if data.get('equipment_references'):
@@ -12083,12 +12132,11 @@ def create_journal_entry(current_user):
 def get_journal_entry(current_user, entry_id):
     """Get a specific journal entry with all related data"""
     try:
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Get entry with setup info
@@ -12123,7 +12171,18 @@ def get_journal_entry(current_user, entry_id):
             WHERE journal_entry_id = ? 
             ORDER BY is_primary DESC, created_at ASC
         ''', (entry_id,))
-        entry['attachments'] = [dict(row) for row in cursor.fetchall()]
+        attachments = [dict(row) for row in cursor.fetchall()]
+        entry['attachments'] = attachments
+        
+        # Convert image attachments to the format expected by frontend
+        entry['images'] = []
+        for attachment in attachments:
+            if attachment['file_type'] == 'image' and attachment['cdn_url']:
+                entry['images'].append({
+                    'url': attachment['cdn_url'],
+                    'alt': attachment['description'] or attachment['original_filename'],
+                    'uploadedAt': attachment['created_at']
+                })
         
         # Get equipment references
         cursor.execute('''
@@ -12163,11 +12222,11 @@ def update_journal_entry(current_user, entry_id):
     try:
         data = request.get_json()
         
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Verify ownership
@@ -12200,6 +12259,29 @@ def update_journal_entry(current_user, entry_id):
             update_fields.append('is_private = ?')
             params.append(data['is_private'])
         
+        # Handle image updates if provided
+        if 'images' in data:
+            # Remove existing image attachments
+            cursor.execute('DELETE FROM journal_attachments WHERE journal_entry_id = ? AND file_type = ?', 
+                         (entry_id, 'image'))
+            
+            # Add new image attachments
+            for i, image in enumerate(data['images']):
+                cursor.execute('''
+                    INSERT INTO journal_attachments 
+                    (journal_entry_id, filename, original_filename, file_type, 
+                     cdn_url, description, is_primary)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    entry_id,
+                    f"journal_image_{entry_id}_{i}",
+                    image.get('alt', f'Journal image {i+1}'),
+                    'image',
+                    image['url'],
+                    image.get('alt', ''),
+                    i == 0  # First image is primary
+                ))
+        
         if update_fields:
             update_fields.append('updated_at = CURRENT_TIMESTAMP')
             params.append(entry_id)
@@ -12226,11 +12308,11 @@ def update_journal_entry(current_user, entry_id):
 def delete_journal_entry(current_user, entry_id):
     """Delete a journal entry and all related data"""
     try:
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Verify ownership
@@ -12266,12 +12348,11 @@ def search_journal_entries(current_user):
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
         
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Build search parameters
@@ -12339,11 +12420,11 @@ def search_journal_entries(current_user):
 def get_journal_tags(current_user):
     """Get all unique tags used by the current user"""
     try:
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -12395,12 +12476,11 @@ def create_journal_entry_from_change_log(current_user):
         if not data.get('change_log_type') or not data.get('change_log_id'):
             return jsonify({'error': 'Change log type and ID are required'}), 400
         
-        db = get_database()
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database connection failed'}), 500
         
-        conn = sqlite3.connect(db.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = db.get_connection()
         cursor = conn.cursor()
         
         # Fetch the change log entry to generate title and content

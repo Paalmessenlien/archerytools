@@ -1,5 +1,5 @@
 <template>
-  <div class="journal-entry-card" @click="$emit('view', entry)">
+  <div :class="['journal-entry-card', `card-${viewMode}`]" @click="$emit('view', entry)">
     <div class="entry-header">
       <div class="entry-meta">
         <div class="entry-type-badge" :class="`type-${entry.entry_type}`">
@@ -27,6 +27,28 @@
         {{ entry.setup_name }} ({{ entry.bow_type }})
       </div>
       
+      <!-- Entry Images -->
+      <div v-if="entry.images && entry.images.length" class="entry-images">
+        <div class="image-gallery" :class="{ 'single-image': entry.images.length === 1 }">
+          <img 
+            v-for="(image, index) in displayImages" 
+            :key="index"
+            :src="image.url" 
+            :alt="image.alt || 'Journal image'"
+            class="gallery-image"
+            @click="openImageModal(image, index)"
+            loading="lazy"
+          />
+          <div 
+            v-if="entry.images.length > maxDisplayImages" 
+            class="more-images-indicator"
+            @click="showAllImages"
+          >
+            <span class="more-count">+{{ entry.images.length - maxDisplayImages }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="entry-preview">
         {{ getContentPreview(entry.content) }}
       </div>
@@ -60,10 +82,34 @@ const props = defineProps({
   entry: {
     type: Object,
     required: true
+  },
+  viewMode: {
+    type: String,
+    default: 'list',
+    validator: (value) => ['list', 'grid'].includes(value)
   }
 })
 
 const emit = defineEmits(['view', 'edit', 'delete'])
+
+// Image display configuration
+const maxDisplayImages = computed(() => props.viewMode === 'grid' ? 2 : 4)
+const displayImages = computed(() => {
+  if (!props.entry.images || props.entry.images.length === 0) return []
+  return props.entry.images.slice(0, maxDisplayImages.value)
+})
+
+// Image modal/gallery functions
+const openImageModal = (image, index) => {
+  // TODO: Implement image modal/lightbox functionality
+  // For now, open in new tab
+  window.open(image.url, '_blank')
+}
+
+const showAllImages = () => {
+  // TODO: Implement show all images functionality
+  console.log('Show all images:', props.entry.images)
+}
 
 const entryTypeMap = {
   general: { label: 'General', icon: 'notes' },
@@ -115,6 +161,61 @@ const getContentPreview = (content) => {
   grid-template-columns: 1fr auto;
   gap: 1rem;
   align-items: start;
+}
+
+/* Grid view specific styling */
+.journal-entry-card.card-grid {
+  height: 300px;
+  overflow: hidden;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+}
+
+.card-grid .entry-header {
+  margin-bottom: 0.5rem;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.card-grid .entry-content {
+  grid-column: 1;
+  grid-row: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-grid .entry-title {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-grid .entry-preview {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  flex: 1;
+}
+
+.card-grid .entry-image {
+  grid-column: 1;
+  grid-row: 3;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-grid .entry-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .journal-entry-card:hover {
@@ -277,6 +378,64 @@ const getContentPreview = (content) => {
   object-fit: cover;
 }
 
+/* Image Gallery Styles */
+.entry-images {
+  margin-bottom: 1rem;
+}
+
+.image-gallery {
+  display: grid;
+  gap: 0.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.image-gallery:not(.single-image) {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  max-height: 200px;
+}
+
+.image-gallery.single-image {
+  grid-template-columns: 1fr;
+  max-height: 300px;
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.gallery-image:hover {
+  transform: scale(1.02);
+  opacity: 0.9;
+}
+
+.more-images-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  min-height: 120px;
+}
+
+.more-images-indicator:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.more-count {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .journal-entry-card {
@@ -303,6 +462,19 @@ const getContentPreview = (content) => {
 
   .entry-tags {
     margin-bottom: 0.5rem;
+  }
+  
+  .image-gallery:not(.single-image) {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    max-height: 150px;
+  }
+  
+  .gallery-image {
+    min-height: 100px;
+  }
+  
+  .more-images-indicator {
+    min-height: 100px;
   }
 }
 </style>
