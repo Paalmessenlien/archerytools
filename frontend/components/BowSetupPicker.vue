@@ -3,7 +3,7 @@
     <!-- Responsive Picker for All Screen Sizes -->
     <div class="responsive-picker">
       <div class="picker-container bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div class="container mx-auto px-2 py-1.5">
+        <div class="px-4 mx-auto max-w-6xl sm:px-6 lg:px-6 py-1.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-1.5 md:space-x-3">
               <span class="text-sm font-medium text-gray-600 dark:text-gray-400 hidden md:inline">Active Bow:</span>
@@ -128,12 +128,12 @@
             </div>
             
             <!-- Quick Actions -->
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3">
               <NuxtLink
                 to="/my-setup"
-                class="hidden md:inline-flex items-center px-2 md:px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+                class="hidden md:inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
               >
-                <i class="fas fa-cog mr-1 md:mr-1.5"></i>
+                <i class="fas fa-cog mr-1.5"></i>
                 <span class="hidden sm:inline">Manage Bows</span>
                 <span class="sm:hidden">Manage</span>
               </NuxtLink>

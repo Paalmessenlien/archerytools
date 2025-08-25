@@ -194,8 +194,8 @@
           </div>
 
           <div v-else>
-            <!-- Add New Setup Button -->
-            <div class="flex justify-center mb-6">
+            <!-- Add New Setup Button - Only show when setups exist -->
+            <div v-if="bowSetups.length > 0" class="flex justify-center mb-6">
               <CustomButton
                 @click="openAddSetupModal"
                 variant="filled"

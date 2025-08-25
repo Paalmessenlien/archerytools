@@ -246,16 +246,16 @@
                 </md-filled-select>
               </div>
               <div v-if="bowConfig.insert_weight > 0">
-                <md-slider
+                <input
+                  type="range"
                   min="5"
                   max="30"
                   step="0.5"
                   :value="bowConfig.insert_weight"
                   @input="updateBowConfig({ insert_weight: parseFloat($event.target.value) })"
-                  labeled
-                  class="w-full mobile-slider-safe"
-                ></md-slider>
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                />
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>5 gn</span>
                   <span>30 gn</span>
                 </div>
@@ -284,16 +284,16 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Vane Length: <span class="font-semibold text-primary">{{ bowConfig.vane_length || 4 }}"</span>
               </label>
-              <md-slider
+              <input
+                type="range"
                 min="1"
                 max="6"
                 step="0.25"
                 :value="bowConfig.vane_length || 4"
                 @input="updateBowConfig({ vane_length: parseFloat($event.target.value) })"
-                labeled
-                class="w-full mobile-slider-safe"
-              ></md-slider>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+              />
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>1"</span>
                 <span>6"</span>
               </div>
@@ -319,16 +319,16 @@
                 Calculated based on type and length
               </div>
               <div v-if="bowConfig.vane_weight_override">
-                <md-slider
+                <input
+                  type="range"
                   min="1"
                   max="15"
                   step="0.25"
                   :value="bowConfig.vane_weight_per || 5"
                   @input="updateBowConfig({ vane_weight_per: parseFloat($event.target.value) })"
-                  labeled
-                  class="w-full mobile-slider-safe"
-                ></md-slider>
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                />
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>1 gn</span>
                   <span>15 gn</span>
                 </div>
@@ -340,17 +340,16 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Number of Vanes: <span class="font-semibold text-primary">{{ bowConfig.number_of_vanes || 3 }}</span>
               </label>
-              <md-slider
+              <input
+                type="range"
                 min="2"
                 max="6"
                 step="1"
                 :value="bowConfig.number_of_vanes || 3"
                 @input="updateBowConfig({ number_of_vanes: parseInt($event.target.value) })"
-                labeled
-                ticks
-                class="w-full mobile-slider-safe"
-              ></md-slider>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+              />
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>2</span>
                 <span>6</span>
               </div>
@@ -373,16 +372,16 @@
                 </md-filled-select>
               </div>
               <div v-if="bowConfig.bushing_weight > 0">
-                <md-slider
+                <input
+                  type="range"
                   min="1"
                   max="15"
                   step="0.25"
                   :value="bowConfig.bushing_weight"
                   @input="updateBowConfig({ bushing_weight: parseFloat($event.target.value) })"
-                  labeled
-                  class="w-full mobile-slider-safe"
-                ></md-slider>
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                />
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>1 gn</span>
                   <span>15 gn</span>
                 </div>
@@ -394,16 +393,16 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Nock Weight: <span class="font-semibold text-primary">{{ bowConfig.nock_weight || 10 }} gn</span>
               </label>
-              <md-slider
+              <input
+                type="range"
                 min="5"
                 max="25"
                 step="0.5"
                 :value="bowConfig.nock_weight || 10"
                 @input="updateBowConfig({ nock_weight: parseFloat($event.target.value) })"
-                labeled
-                class="w-full mobile-slider-safe"
-              ></md-slider>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+              />
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>5 gn</span>
                 <span>25 gn</span>
               </div>

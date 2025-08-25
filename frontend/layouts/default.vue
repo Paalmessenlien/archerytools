@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sticky top-0 sticky-header">
-      <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="px-4 mx-auto max-w-6xl sm:px-6 lg:px-6">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-3">
             <!-- Logo -->
@@ -242,9 +242,41 @@
     <BowSetupPicker v-if="isInitialized && isLoggedIn && user" class="sticky top-16 bow-setup-picker sticky-element-fix" />
 
     <!-- Main Content -->
-    <main class="px-1 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-24 md:pb-6">
+    <main 
+      class="px-1 py-4 mx-auto max-w-6xl sm:px-6 lg:px-6"
+      :class="isInitialized && isLoggedIn && user ? 'min-h-[calc(100vh-107px)]' : 'min-h-[calc(100vh-65px)]'"
+    >
       <slot />
     </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12 mb-20 md:mb-0">
+      <div class="px-4 py-8 mx-auto max-w-6xl sm:px-6 lg:px-6">
+        <div class="text-center space-y-4">
+          <!-- Beta Warning -->
+          <div class="inline-flex items-center px-4 py-2 bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 rounded-lg text-sm font-medium">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span>BETA SOFTWARE - Features may change and data may be reset</span>
+          </div>
+          
+          <!-- Copyright and Info -->
+          <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <p>&copy; {{ new Date().getFullYear() }} ArcheryTool Beta - Professional Archery Tools</p>
+            <p>Invitation-only access during beta testing phase</p>
+          </div>
+          
+          <!-- Links -->
+          <div class="flex justify-center space-x-6 text-sm">
+            <NuxtLink to="/about" class="text-blue-600 dark:text-purple-400 hover:text-blue-700 dark:hover:text-purple-300 transition-colors">
+              About
+            </NuxtLink>
+            <NuxtLink to="/info" class="text-blue-600 dark:text-purple-400 hover:text-blue-700 dark:hover:text-purple-300 transition-colors">
+              Help
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <!-- Loading Indicator -->
     <div v-if="isLoading" class="fixed inset-0 loading-overlay flex items-center justify-center bg-black bg-opacity-50">
