@@ -134,20 +134,61 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, defineAsyncComponent, h } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import DarkModeToggle from '~/components/DarkModeToggle.vue'
 import CustomButton from '~/components/CustomButton.vue'
 
-// Lazy import design system components
-const DesignSystemOverview = defineAsyncComponent(() => import('~/components/design-system/DesignSystemOverview.vue'))
-const DesignSystemColors = defineAsyncComponent(() => import('~/components/design-system/DesignSystemColors.vue'))
-const DesignSystemTypography = defineAsyncComponent(() => import('~/components/design-system/DesignSystemTypography.vue'))
-const DesignSystemComponents = defineAsyncComponent(() => import('~/components/design-system/DesignSystemComponents.vue'))
-const DesignSystemLayout = defineAsyncComponent(() => import('~/components/design-system/DesignSystemLayout.vue'))
-const DesignSystemMobile = defineAsyncComponent(() => import('~/components/design-system/DesignSystemMobile.vue'))
-const DesignSystemIcons = defineAsyncComponent(() => import('~/components/design-system/DesignSystemIcons.vue'))
-const DesignSystemAnimations = defineAsyncComponent(() => import('~/components/design-system/DesignSystemAnimations.vue'))
+// Lazy import design system components for better performance
+const DesignSystemOverview = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemOverview.vue'),
+  delay: 200,
+  timeout: 3000,
+  errorComponent: () => h('div', { class: 'text-red-600 p-4' }, 'Failed to load component'),
+  loadingComponent: () => h('div', { class: 'animate-pulse p-4' }, 'Loading...')
+})
+
+const DesignSystemColors = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemColors.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemTypography = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemTypography.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemComponents = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemComponents.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemLayout = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemLayout.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemMobile = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemMobile.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemIcons = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemIcons.vue'),
+  delay: 200,
+  timeout: 3000
+})
+
+const DesignSystemAnimations = defineAsyncComponent({
+  loader: () => import('~/components/design-system/DesignSystemAnimations.vue'),
+  delay: 200,
+  timeout: 3000
+})
 
 // Meta
 useHead({

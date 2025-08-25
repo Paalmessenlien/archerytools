@@ -623,37 +623,117 @@ const activeFeatures = computed(() => {
 </script>
 
 <style scoped>
-/* Custom slider styling */
+/* Custom slider styling - Cross-browser compatible */
 .slider {
   -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
+  width: 100%;
+  height: 0.5rem;
   background: transparent;
   cursor: pointer;
+  border: none;
+  outline: none;
 }
 
+/* WebKit browsers (Chrome, Safari, Edge) */
 .slider::-webkit-slider-track {
   background: #d1d5db;
   border-radius: 0.375rem;
   height: 0.5rem;
+  border: none;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   background: #3b82f6;
+  border: none;
   border-radius: 50%;
   height: 1.25rem;
   width: 1.25rem;
   margin-top: -0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .slider::-webkit-slider-thumb:hover {
   background: #2563eb;
   transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
+.slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Firefox */
+.slider::-moz-range-track {
+  background: #d1d5db;
+  border-radius: 0.375rem;
+  height: 0.5rem;
+  border: none;
+  outline: none;
+}
+
+.slider::-moz-range-thumb {
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  height: 1.25rem;
+  width: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Remove default Firefox styling */
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.slider::-moz-range-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Firefox focus outline removal */
+.slider::-moz-focus-outer {
+  border: 0;
+}
+
+/* Internet Explorer/Edge legacy support */
+.slider::-ms-track {
+  background: #d1d5db;
+  border-radius: 0.375rem;
+  height: 0.5rem;
+  border: none;
+  color: transparent;
+}
+
+.slider::-ms-thumb {
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  height: 1.25rem;
+  width: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slider::-ms-fill-lower {
+  background: transparent;
+}
+
+.slider::-ms-fill-upper {
+  background: transparent;
+}
+
+/* Dark mode styling */
 .dark .slider::-webkit-slider-track {
   background: #374151;
 }
@@ -666,29 +746,6 @@ const activeFeatures = computed(() => {
   background: #7c3aed;
 }
 
-/* Firefox slider styling */
-.slider::-moz-range-track {
-  background: #d1d5db;
-  border-radius: 0.375rem;
-  height: 0.5rem;
-  border: none;
-}
-
-.slider::-moz-range-thumb {
-  background: #3b82f6;
-  border: none;
-  border-radius: 50%;
-  height: 1.25rem;
-  width: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.slider::-moz-range-thumb:hover {
-  background: #2563eb;
-  transform: scale(1.1);
-}
-
 .dark .slider::-moz-range-track {
   background: #374151;
 }
@@ -699,5 +756,53 @@ const activeFeatures = computed(() => {
 
 .dark .slider::-moz-range-thumb:hover {
   background: #7c3aed;
+}
+
+.dark .slider::-ms-track {
+  background: #374151;
+}
+
+.dark .slider::-ms-thumb {
+  background: #8b5cf6;
+}
+
+/* Focus states for accessibility */
+.slider:focus {
+  outline: none;
+}
+
+.slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.dark .slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px #8b5cf6, 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+.dark .slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 2px #8b5cf6, 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+/* Fallback for browsers that don't support CSS Grid */
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .grid > * {
+    flex: 1 0 auto;
+    min-width: 250px;
+    margin: 0.5rem;
+  }
+}
+
+/* Ensure proper box-sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 </style>
