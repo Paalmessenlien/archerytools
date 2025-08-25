@@ -22,9 +22,13 @@
             <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
             <span class="mobile-body-medium md:text-base">{{ notification.message }}</span>
           </div>
-          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100 mobile-touch-target">
-            <i class="fas fa-times"></i>
-          </button>
+          <CustomButton
+            @click="hideNotification"
+            variant="text"
+            size="small"
+            class="ml-4 opacity-70 hover:opacity-100 mobile-touch-target !p-1 !min-h-0"
+            icon="fas fa-times"
+          />
         </div>
       </div>
     </div>
@@ -389,38 +393,42 @@
 
                 <!-- Custom Left Actions for Bow Setups -->
                 <template #actions-left="{ item: setup, closeActions }">
-                  <button 
+                  <CustomButton
                     @click.stop="navigateToBowDetail(setup.id); closeActions()"
-                    class="action-button action-edit"
-                    title="Edit Setup"
-                  >
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button 
+                    variant="secondary"
+                    size="small"
+                    class="action-button action-edit !min-h-0"
+                    :title="'Edit Setup'"
+                    icon="fas fa-edit"
+                  />
+                  <CustomButton
                     @click.stop="() => { selectedSetupForActions = setup; showBowActionSheet = true; closeActions(); }"
-                    class="action-button action-menu"
-                    title="More Actions"
-                  >
-                    <i class="fas fa-ellipsis-h"></i>
-                  </button>
+                    variant="secondary"
+                    size="small"
+                    class="action-button action-menu !min-h-0"
+                    :title="'More Actions'"
+                    icon="fas fa-ellipsis-h"
+                  />
                 </template>
 
                 <!-- Custom Right Actions for Bow Setups -->
                 <template #actions-right="{ item: setup, closeActions }">
-                  <button 
+                  <CustomButton
                     @click.stop="navigateToCalculatorWithSetup(setup.id); closeActions()"
-                    class="action-button action-search"
-                    title="Find Arrows"
-                  >
-                    <i class="fas fa-search"></i>
-                  </button>
-                  <button 
+                    variant="primary"
+                    size="small"
+                    class="action-button action-search !min-h-0"
+                    :title="'Find Arrows'"
+                    icon="fas fa-search"
+                  />
+                  <CustomButton
                     @click.stop="confirmDeleteSetup(setup.id); closeActions()"
-                    class="action-button action-delete"
-                    title="Delete Setup"
-                  >
-                    <i class="fas fa-trash"></i>
-                  </button>
+                    variant="danger"
+                    size="small"
+                    class="action-button action-delete !min-h-0"
+                    :title="'Delete Setup'"
+                    icon="fas fa-trash"
+                  />
                 </template>
               </MobileCardStack>
             

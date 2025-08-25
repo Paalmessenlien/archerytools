@@ -16,8 +16,8 @@ defineEmits(['click'])
 const props = defineProps({
   variant: {
     type: String,
-    default: 'filled', // filled, outlined, text, primary
-    validator: (value) => ['filled', 'outlined', 'text', 'primary'].includes(value)
+    default: 'filled', // filled, outlined, text, primary, secondary, danger, success
+    validator: (value) => ['filled', 'outlined', 'text', 'primary', 'secondary', 'danger', 'success'].includes(value)
   },
   size: {
     type: String,
@@ -118,6 +118,48 @@ const buttonClasses = computed(() => {
       'dark:text-gray-300',
       'dark:hover:bg-gray-800',
       'dark:focus:ring-gray-600'
+    ],
+    secondary: [
+      'bg-white',
+      'text-gray-900',
+      'border-gray-300',
+      'hover:bg-gray-50',
+      'focus:ring-gray-300',
+      'active:bg-gray-100',
+      'dark:bg-gray-800',
+      'dark:text-gray-100',
+      'dark:border-gray-600',
+      'dark:hover:bg-gray-700',
+      'dark:focus:ring-gray-500',
+      'dark:active:bg-gray-600'
+    ],
+    danger: [
+      'bg-red-600',
+      'text-white',
+      'border-red-600',
+      'hover:bg-red-700',
+      'focus:ring-red-500',
+      'active:bg-red-800',
+      'dark:bg-red-600',
+      'dark:text-white',
+      'dark:border-red-600',
+      'dark:hover:bg-red-700',
+      'dark:focus:ring-red-500',
+      'dark:active:bg-red-800'
+    ],
+    success: [
+      'bg-green-600',
+      'text-white',
+      'border-green-600',
+      'hover:bg-green-700',
+      'focus:ring-green-500',
+      'active:bg-green-800',
+      'dark:bg-green-600',
+      'dark:text-white',
+      'dark:border-green-600',
+      'dark:hover:bg-green-700',
+      'dark:focus:ring-green-500',
+      'dark:active:bg-green-800'
     ]
   }
 

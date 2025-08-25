@@ -17,9 +17,13 @@
             <i v-if="notification.type === 'warning'" class="fas fa-exclamation-triangle mr-2"></i>
             <span class="text-sm">{{ notification.message }}</span>
           </div>
-          <button @click="hideNotification" class="ml-4 opacity-70 hover:opacity-100">
-            <i class="fas fa-times"></i>
-          </button>
+          <CustomButton
+            @click="hideNotification"
+            variant="text"
+            size="small"
+            class="ml-4 opacity-70 hover:opacity-100 !p-1 !min-h-0"
+            icon="fas fa-times"
+          />
         </div>
       </div>
     </div>
@@ -530,13 +534,15 @@
               <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
               Match Summary
             </h4>
-            <button
+            <CustomButton
               @click="showMatchSummary = !showMatchSummary"
-              class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 rounded-md transition-colors touch-target"
+              variant="text"
+              size="small"
+              class="!px-2 !py-1 !text-xs text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 !min-h-0"
             >
-              <i class="fas transition-transform text-xs" :class="showMatchSummary ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-              <span class="ml-1">{{ showMatchSummary ? 'Hide' : 'Show' }}</span>
-            </button>
+              <i class="fas transition-transform text-xs mr-1" :class="showMatchSummary ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              {{ showMatchSummary ? 'Hide' : 'Show' }}
+            </CustomButton>
           </div>
           
           <!-- Match Distribution Content -->
