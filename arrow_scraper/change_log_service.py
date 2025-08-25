@@ -536,13 +536,70 @@ class ChangeLogService:
                 date_filter = "AND created_at >= ?"
                 params.append(cutoff_date.isoformat())
             
-            # Use the unified view we created
+            # Get unified changes with UNION query instead of view
             cursor.execute(f'''
-                SELECT * FROM unified_change_history
-                WHERE bow_setup_id = ? {date_filter}
+                SELECT 
+                    'equipment' as change_source,
+                    ecl.id,
+                    ecl.bow_equipment_id as item_id,
+                    ecl.change_type,
+                    ecl.field_name,
+                    ecl.old_value,
+                    ecl.new_value,
+                    ecl.change_description,
+                    ecl.change_reason,
+                    ecl.created_at,
+                    be.manufacturer_name,
+                    be.model_name,
+                    be.category_name
+                FROM equipment_change_log ecl
+                LEFT JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                JOIN bow_setups bs ON be.bow_setup_id = bs.id
+                WHERE bs.id = ? {date_filter}
+                
+                UNION ALL
+                
+                SELECT 
+                    'setup' as change_source,
+                    scl.id,
+                    NULL as item_id,
+                    scl.change_type,
+                    scl.field_name,
+                    scl.old_value,
+                    scl.new_value,
+                    scl.change_description,
+                    NULL as change_reason,
+                    scl.created_at,
+                    NULL as manufacturer_name,
+                    NULL as model_name,
+                    NULL as category_name
+                FROM setup_change_log scl
+                WHERE scl.bow_setup_id = ? {date_filter}
+                
+                UNION ALL
+                
+                SELECT 
+                    'arrow' as change_source,
+                    acl.id,
+                    sa.arrow_id as item_id,
+                    acl.change_type,
+                    acl.field_name,
+                    acl.old_value,
+                    acl.new_value,
+                    acl.change_description,
+                    acl.change_reason,
+                    acl.created_at,
+                    a.manufacturer as manufacturer_name,
+                    a.model_name,
+                    NULL as category_name
+                FROM arrow_change_log acl
+                LEFT JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                LEFT JOIN arrows a ON sa.arrow_id = a.id
+                WHERE sa.setup_id = ? {date_filter}
+                
                 ORDER BY created_at DESC
                 LIMIT ?
-            ''', params + [limit])
+            ''', params + [bow_setup_id] + (params[1:] if days_back else []) + [bow_setup_id] + (params[1:] if days_back else []) + [limit])
             
             changes = []
             for row in cursor.fetchall():

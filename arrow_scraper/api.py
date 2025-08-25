@@ -5476,6 +5476,29 @@ def add_bow_equipment(current_user, setup_id):
         bow_equipment_id = cursor.lastrowid
         conn.commit()
         
+        # Log the equipment addition
+        try:
+            from change_log_service import ChangeLogService
+            change_service = ChangeLogService()
+            
+            equipment_name = f"{data['manufacturer_name']} {data['model_name']}"
+            change_description = f"Equipment added: {equipment_name} ({data['category_name']})"
+            
+            change_service.log_equipment_change(
+                bow_setup_id=setup_id,
+                equipment_id=bow_equipment_id,
+                user_id=current_user['id'],
+                change_type='add',
+                field_name=None,
+                old_value=None,
+                new_value=None,
+                change_description=change_description,
+                change_reason=data.get('notes', 'Equipment added to setup')
+            )
+            print(f"✅ Logged equipment addition: {equipment_name}")
+        except Exception as log_error:
+            print(f"⚠️  Failed to log equipment addition: {log_error}")
+        
         # Auto-learn from this equipment entry
         try:
             try:
@@ -10798,6 +10821,145 @@ def get_bow_setup_change_statistics(current_user, setup_id):
         print(f"Error getting change statistics: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ===== ACTIVE BOW SETUP API ENDPOINTS =====
+
+@app.route('/api/user/active-bow-setup', methods=['GET'])
+@token_required
+def get_active_bow_setup(current_user):
+    """Get user's currently active bow setup"""
+    try:
+        user_db = get_database()
+        if not user_db:
+            return jsonify({"error": "Database not available"}), 500
+        
+        conn = user_db.get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Get user's active bow setup ID
+        cursor.execute(
+            'SELECT active_bow_setup_id FROM users WHERE id = ?',
+            (current_user['id'],)
+        )
+        result = cursor.fetchone()
+        
+        if not result or not result['active_bow_setup_id']:
+            # No active setup set, get the most recently updated setup
+            cursor.execute('''
+                SELECT id, name, bow_type, draw_weight, updated_at
+                FROM bow_setups 
+                WHERE user_id = ?
+                ORDER BY updated_at DESC
+                LIMIT 1
+            ''', (current_user['id'],))
+            
+            most_recent = cursor.fetchone()
+            if most_recent:
+                # Auto-set this as active
+                cursor.execute(
+                    'UPDATE users SET active_bow_setup_id = ? WHERE id = ?',
+                    (most_recent['id'], current_user['id'])
+                )
+                conn.commit()
+                
+                conn.close()
+                return jsonify({
+                    'active_bow_setup': dict(most_recent),
+                    'auto_selected': True
+                })
+            else:
+                conn.close()
+                return jsonify({
+                    'active_bow_setup': None,
+                    'message': 'No bow setups found'
+                })
+        
+        # Get the active setup details
+        active_setup_id = result['active_bow_setup_id']
+        cursor.execute('''
+            SELECT id, name, bow_type, draw_weight, updated_at
+            FROM bow_setups 
+            WHERE id = ? AND user_id = ?
+        ''', (active_setup_id, current_user['id']))
+        
+        active_setup = cursor.fetchone()
+        conn.close()
+        
+        if not active_setup:
+            # Active setup doesn't exist anymore, clear it
+            conn = user_db.get_connection()
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                'UPDATE users SET active_bow_setup_id = NULL WHERE id = ?',
+                (current_user['id'],)
+            )
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'active_bow_setup': None,
+                'message': 'Previously active setup no longer exists'
+            })
+        
+        return jsonify({
+            'active_bow_setup': dict(active_setup),
+            'auto_selected': False
+        })
+        
+    except Exception as e:
+        print(f"Error getting active bow setup: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/active-bow-setup', methods=['PUT'])
+@token_required
+def set_active_bow_setup(current_user):
+    """Set user's active bow setup"""
+    try:
+        data = request.get_json()
+        setup_id = data.get('bow_setup_id')
+        
+        if not setup_id:
+            return jsonify({'error': 'bow_setup_id is required'}), 400
+        
+        user_db = get_database()
+        if not user_db:
+            return jsonify({"error": "Database not available"}), 500
+        
+        conn = user_db.get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Verify the setup exists and belongs to the user
+        cursor.execute('''
+            SELECT id, name, bow_type FROM bow_setups 
+            WHERE id = ? AND user_id = ?
+        ''', (setup_id, current_user['id']))
+        
+        setup = cursor.fetchone()
+        if not setup:
+            conn.close()
+            return jsonify({'error': 'Bow setup not found'}), 404
+        
+        # Update user's active bow setup
+        cursor.execute('''
+            UPDATE users SET active_bow_setup_id = ? WHERE id = ?
+        ''', (setup_id, current_user['id']))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Active bow setup updated successfully',
+            'active_bow_setup': dict(setup)
+        })
+        
+    except Exception as e:
+        print(f"Error setting active bow setup: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # ===== GLOBAL CHANGE LOG API ENDPOINTS =====
 
 @app.route('/api/change-log/global', methods=['GET'])
@@ -10816,9 +10978,9 @@ def get_global_change_log(current_user):
         
         # Get all user's bow setups
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT id, name FROM bow_setups WHERE user_id = ?', (current_user['id'],))
@@ -10901,9 +11063,9 @@ def get_global_statistics(current_user):
         
         # Get all user's bow setups
         user_db = get_database()
-        if not db:
+        if not user_db:
             return jsonify({"error": "Database not available"}), 500
-        conn = db.get_connection()
+        conn = user_db.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('SELECT id FROM bow_setups WHERE user_id = ?', (current_user['id'],))
@@ -11720,6 +11882,686 @@ def get_improvement_areas(foc_result: dict, penetration_result: dict,
         improvements.append("Overall setup tuning needed for intended use")
     
     return improvements or ["Setup is well-optimized"]
+
+# ==========================================
+# Journal System API Endpoints
+# ==========================================
+
+@app.route('/api/journal/entries', methods=['GET'])
+@token_required
+def get_journal_entries(current_user):
+    """Get journal entries for current user with filtering options"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        # Get query parameters for filtering
+        bow_setup_id = request.args.get('bow_setup_id', type=int)
+        entry_type = request.args.get('entry_type')
+        search_query = request.args.get('search')
+        tags = request.args.get('tags')  # Comma-separated tags
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        
+        conn = sqlite3.connect(db.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Build the WHERE clause
+        where_conditions = ['je.user_id = ?']
+        params = [current_user['id']]
+        
+        if bow_setup_id:
+            where_conditions.append('je.bow_setup_id = ?')
+            params.append(bow_setup_id)
+        
+        if entry_type:
+            where_conditions.append('je.entry_type = ?')
+            params.append(entry_type)
+        
+        # Full-text search if query provided
+        if search_query:
+            where_conditions.append('je.id IN (SELECT rowid FROM journal_fts WHERE journal_fts MATCH ?)')
+            params.append(search_query)
+        
+        # Tag filtering - check if any provided tag is in the JSON array
+        if tags:
+            tag_list = [tag.strip() for tag in tags.split(',')]
+            tag_conditions = []
+            for tag in tag_list:
+                tag_conditions.append('je.tags LIKE ?')
+                params.append(f'%"{tag}"%')
+            if tag_conditions:
+                where_conditions.append(f'({" OR ".join(tag_conditions)})')
+        
+        where_clause = ' AND '.join(where_conditions)
+        offset = (page - 1) * limit
+        
+        # Get entries with setup information
+        query = f'''
+            SELECT 
+                je.*,
+                bs.name as setup_name,
+                bs.bow_type,
+                (SELECT COUNT(*) FROM journal_attachments ja WHERE ja.journal_entry_id = je.id) as attachment_count,
+                (SELECT ja.cdn_url FROM journal_attachments ja WHERE ja.journal_entry_id = je.id AND ja.is_primary = 1 LIMIT 1) as primary_image_url
+            FROM journal_entries je
+            LEFT JOIN bow_setups bs ON je.bow_setup_id = bs.id
+            WHERE {where_clause}
+            ORDER BY je.created_at DESC
+            LIMIT ? OFFSET ?
+        '''
+        
+        cursor.execute(query, params + [limit, offset])
+        entries = []
+        
+        for row in cursor.fetchall():
+            entry = dict(row)
+            # Parse tags JSON
+            if entry['tags']:
+                try:
+                    entry['tags'] = json.loads(entry['tags'])
+                except:
+                    entry['tags'] = []
+            else:
+                entry['tags'] = []
+            entries.append(entry)
+        
+        # Get total count for pagination
+        count_query = f'SELECT COUNT(*) as total FROM journal_entries je WHERE {where_clause}'
+        cursor.execute(count_query, params[:-2])  # Remove limit/offset params
+        total_count = cursor.fetchone()['total']
+        
+        conn.close()
+        
+        return jsonify({
+            'entries': entries,
+            'pagination': {
+                'page': page,
+                'limit': limit,
+                'total': total_count,
+                'pages': (total_count + limit - 1) // limit
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error fetching journal entries: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to fetch journal entries'}), 500
+
+@app.route('/api/journal/entries', methods=['POST'])
+@token_required
+def create_journal_entry(current_user):
+    """Create a new journal entry"""
+    try:
+        data = request.get_json()
+        
+        # Validation
+        if not data.get('title') or not data.get('content'):
+            return jsonify({'error': 'Title and content are required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        cursor = conn.cursor()
+        
+        # Validate bow setup belongs to user if provided
+        if data.get('bow_setup_id'):
+            cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?', 
+                         (data['bow_setup_id'], current_user['id']))
+            if not cursor.fetchone():
+                return jsonify({'error': 'Invalid bow setup'}), 400
+        
+        # Create journal entry
+        tags_json = json.dumps(data.get('tags', [])) if data.get('tags') else None
+        
+        cursor.execute('''
+            INSERT INTO journal_entries 
+            (user_id, bow_setup_id, title, content, entry_type, tags, is_private)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            current_user['id'],
+            data.get('bow_setup_id'),
+            data['title'],
+            data['content'],
+            data.get('entry_type', 'general'),
+            tags_json,
+            data.get('is_private', False)
+        ))
+        
+        entry_id = cursor.lastrowid
+        
+        # Handle equipment references if provided
+        if data.get('equipment_references'):
+            for ref in data['equipment_references']:
+                cursor.execute('''
+                    INSERT INTO journal_equipment_references 
+                    (journal_entry_id, bow_equipment_id, arrow_id, reference_type, notes)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (
+                    entry_id,
+                    ref.get('bow_equipment_id'),
+                    ref.get('arrow_id'),
+                    ref.get('reference_type', 'mentioned'),
+                    ref.get('notes')
+                ))
+        
+        # Handle change log links if provided
+        if data.get('change_log_links'):
+            for link in data['change_log_links']:
+                cursor.execute('''
+                    INSERT INTO journal_change_links 
+                    (journal_entry_id, change_log_type, change_log_id, link_type)
+                    VALUES (?, ?, ?, ?)
+                ''', (
+                    entry_id,
+                    link['change_log_type'],
+                    link['change_log_id'],
+                    link.get('link_type', 'documents')
+                ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Journal entry created successfully',
+            'entry_id': entry_id
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating journal entry: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to create journal entry'}), 500
+
+@app.route('/api/journal/entries/<int:entry_id>', methods=['GET'])
+@token_required
+def get_journal_entry(current_user, entry_id):
+    """Get a specific journal entry with all related data"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Get entry with setup info
+        cursor.execute('''
+            SELECT 
+                je.*,
+                bs.name as setup_name,
+                bs.bow_type
+            FROM journal_entries je
+            LEFT JOIN bow_setups bs ON je.bow_setup_id = bs.id
+            WHERE je.id = ? AND je.user_id = ?
+        ''', (entry_id, current_user['id']))
+        
+        entry_row = cursor.fetchone()
+        if not entry_row:
+            return jsonify({'error': 'Journal entry not found'}), 404
+        
+        entry = dict(entry_row)
+        
+        # Parse tags
+        if entry['tags']:
+            try:
+                entry['tags'] = json.loads(entry['tags'])
+            except:
+                entry['tags'] = []
+        else:
+            entry['tags'] = []
+        
+        # Get attachments
+        cursor.execute('''
+            SELECT * FROM journal_attachments 
+            WHERE journal_entry_id = ? 
+            ORDER BY is_primary DESC, created_at ASC
+        ''', (entry_id,))
+        entry['attachments'] = [dict(row) for row in cursor.fetchall()]
+        
+        # Get equipment references
+        cursor.execute('''
+            SELECT 
+                jer.*,
+                be.manufacturer_name, be.model_name, be.category_name,
+                a.manufacturer as arrow_manufacturer, a.model_name as arrow_model
+            FROM journal_equipment_references jer
+            LEFT JOIN bow_equipment be ON jer.bow_equipment_id = be.id
+            LEFT JOIN arrows a ON jer.arrow_id = a.id
+            WHERE jer.journal_entry_id = ?
+        ''', (entry_id,))
+        entry['equipment_references'] = [dict(row) for row in cursor.fetchall()]
+        
+        # Get change log links
+        cursor.execute('''
+            SELECT * FROM journal_change_links 
+            WHERE journal_entry_id = ?
+            ORDER BY created_at ASC
+        ''', (entry_id,))
+        entry['change_log_links'] = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({'entry': entry})
+        
+    except Exception as e:
+        print(f"Error fetching journal entry: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to fetch journal entry'}), 500
+
+@app.route('/api/journal/entries/<int:entry_id>', methods=['PUT'])
+@token_required
+def update_journal_entry(current_user, entry_id):
+    """Update an existing journal entry"""
+    try:
+        data = request.get_json()
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        cursor = conn.cursor()
+        
+        # Verify ownership
+        cursor.execute('SELECT id FROM journal_entries WHERE id = ? AND user_id = ?', 
+                      (entry_id, current_user['id']))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Journal entry not found'}), 404
+        
+        # Update journal entry
+        update_fields = []
+        params = []
+        
+        if 'title' in data:
+            update_fields.append('title = ?')
+            params.append(data['title'])
+        
+        if 'content' in data:
+            update_fields.append('content = ?')
+            params.append(data['content'])
+        
+        if 'entry_type' in data:
+            update_fields.append('entry_type = ?')
+            params.append(data['entry_type'])
+        
+        if 'tags' in data:
+            update_fields.append('tags = ?')
+            params.append(json.dumps(data['tags']) if data['tags'] else None)
+        
+        if 'is_private' in data:
+            update_fields.append('is_private = ?')
+            params.append(data['is_private'])
+        
+        if update_fields:
+            update_fields.append('updated_at = CURRENT_TIMESTAMP')
+            params.append(entry_id)
+            
+            cursor.execute(f'''
+                UPDATE journal_entries 
+                SET {', '.join(update_fields)}
+                WHERE id = ?
+            ''', params)
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Journal entry updated successfully'})
+        
+    except Exception as e:
+        print(f"Error updating journal entry: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to update journal entry'}), 500
+
+@app.route('/api/journal/entries/<int:entry_id>', methods=['DELETE'])
+@token_required
+def delete_journal_entry(current_user, entry_id):
+    """Delete a journal entry and all related data"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        cursor = conn.cursor()
+        
+        # Verify ownership
+        cursor.execute('SELECT id FROM journal_entries WHERE id = ? AND user_id = ?', 
+                      (entry_id, current_user['id']))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Journal entry not found'}), 404
+        
+        # Delete entry (cascading will handle related tables)
+        cursor.execute('DELETE FROM journal_entries WHERE id = ?', (entry_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Journal entry deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting journal entry: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to delete journal entry'}), 500
+
+@app.route('/api/journal/search', methods=['GET'])
+@token_required
+def search_journal_entries(current_user):
+    """Full-text search journal entries"""
+    try:
+        search_query = request.args.get('q')
+        if not search_query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        bow_setup_id = request.args.get('bow_setup_id', type=int)
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Build search parameters
+        where_conditions = ['je.user_id = ?', 'je.id IN (SELECT rowid FROM journal_fts WHERE journal_fts MATCH ?)']
+        params = [current_user['id'], search_query]
+        
+        if bow_setup_id:
+            where_conditions.append('je.bow_setup_id = ?')
+            params.append(bow_setup_id)
+        
+        where_clause = ' AND '.join(where_conditions)
+        offset = (page - 1) * limit
+        
+        # Search entries with ranking
+        cursor.execute(f'''
+            SELECT 
+                je.*,
+                bs.name as setup_name,
+                bs.bow_type,
+                rank
+            FROM journal_entries je
+            LEFT JOIN bow_setups bs ON je.bow_setup_id = bs.id
+            JOIN (
+                SELECT rowid, rank 
+                FROM journal_fts 
+                WHERE journal_fts MATCH ?
+                ORDER BY rank
+            ) fts ON je.id = fts.rowid
+            WHERE {where_clause}
+            ORDER BY fts.rank, je.created_at DESC
+            LIMIT ? OFFSET ?
+        ''', [search_query] + params + [limit, offset])
+        
+        entries = []
+        for row in cursor.fetchall():
+            entry = dict(row)
+            if entry['tags']:
+                try:
+                    entry['tags'] = json.loads(entry['tags'])
+                except:
+                    entry['tags'] = []
+            else:
+                entry['tags'] = []
+            entries.append(entry)
+        
+        conn.close()
+        
+        return jsonify({
+            'entries': entries,
+            'search_query': search_query,
+            'pagination': {
+                'page': page,
+                'limit': limit
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error searching journal entries: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to search journal entries'}), 500
+
+@app.route('/api/journal/tags', methods=['GET'])
+@token_required
+def get_journal_tags(current_user):
+    """Get all unique tags used by the current user"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT DISTINCT tags FROM journal_entries 
+            WHERE user_id = ? AND tags IS NOT NULL AND tags != ''
+        ''', (current_user['id'],))
+        
+        all_tags = set()
+        for row in cursor.fetchall():
+            try:
+                tags = json.loads(row[0])
+                if isinstance(tags, list):
+                    all_tags.update(tags)
+            except:
+                continue
+        
+        conn.close()
+        
+        return jsonify({'tags': sorted(list(all_tags))})
+        
+    except Exception as e:
+        print(f"Error fetching journal tags: {e}")
+        return jsonify({'error': 'Failed to fetch tags'}), 500
+
+@app.route('/api/journal/entry-types', methods=['GET'])
+def get_journal_entry_types():
+    """Get available journal entry types"""
+    entry_types = [
+        {'value': 'general', 'label': 'General Entry', 'description': 'General observations and notes'},
+        {'value': 'setup_change', 'label': 'Setup Change', 'description': 'Changes to bow setup configuration'},
+        {'value': 'equipment_change', 'label': 'Equipment Change', 'description': 'Equipment additions, removals, or modifications'},
+        {'value': 'arrow_change', 'label': 'Arrow Change', 'description': 'Arrow changes and tuning'},
+        {'value': 'tuning_session', 'label': 'Tuning Session', 'description': 'Detailed tuning session notes'},
+        {'value': 'shooting_notes', 'label': 'Shooting Notes', 'description': 'Performance observations and shooting notes'},
+        {'value': 'maintenance', 'label': 'Maintenance', 'description': 'Equipment maintenance activities'},
+        {'value': 'upgrade', 'label': 'Upgrade', 'description': 'Equipment upgrades and improvements'}
+    ]
+    
+    return jsonify({'entry_types': entry_types})
+
+@app.route('/api/journal/entries/from-change-log', methods=['POST'])
+@token_required
+def create_journal_entry_from_change_log(current_user):
+    """Create a journal entry from a change log event with automatic linking"""
+    try:
+        data = request.get_json()
+        
+        # Validation
+        if not data.get('change_log_type') or not data.get('change_log_id'):
+            return jsonify({'error': 'Change log type and ID are required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = sqlite3.connect(db.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Fetch the change log entry to generate title and content
+        change_log_type = data['change_log_type']
+        change_log_id = data['change_log_id']
+        
+        # Get change log details based on type
+        change_details = None
+        bow_setup_id = None
+        
+        if change_log_type == 'equipment':
+            cursor.execute('''
+                SELECT 
+                    ecl.*,
+                    be.manufacturer_name, be.model_name, be.category_name,
+                    bs.id as bow_setup_id, bs.name as setup_name
+                FROM equipment_change_log ecl
+                LEFT JOIN bow_equipment be ON ecl.bow_equipment_id = be.id
+                LEFT JOIN bow_setups bs ON be.bow_setup_id = bs.id
+                WHERE ecl.id = ? AND ecl.user_id = ?
+            ''', (change_log_id, current_user['id']))
+            
+        elif change_log_type == 'setup':
+            cursor.execute('''
+                SELECT 
+                    scl.*,
+                    bs.id as bow_setup_id, bs.name as setup_name
+                FROM setup_change_log scl
+                LEFT JOIN bow_setups bs ON scl.bow_setup_id = bs.id
+                WHERE scl.id = ? AND scl.user_id = ?
+            ''', (change_log_id, current_user['id']))
+            
+        elif change_log_type == 'arrow':
+            cursor.execute('''
+                SELECT 
+                    acl.*,
+                    sa.setup_id as bow_setup_id,
+                    bs.name as setup_name,
+                    a.manufacturer, a.model_name
+                FROM arrow_change_log acl
+                LEFT JOIN setup_arrows sa ON acl.setup_arrow_id = sa.id
+                LEFT JOIN bow_setups bs ON sa.setup_id = bs.id
+                LEFT JOIN arrows a ON sa.arrow_id = a.id
+                WHERE acl.id = ? AND acl.user_id = ?
+            ''', (change_log_id, current_user['id']))
+        
+        change_details = cursor.fetchone()
+        if not change_details:
+            return jsonify({'error': 'Change log entry not found'}), 404
+        
+        bow_setup_id = change_details['bow_setup_id']
+        
+        # Generate automatic title and content based on change log type
+        if change_log_type == 'equipment':
+            equipment_name = f"{change_details['manufacturer_name']} {change_details['model_name']}"
+            title = f"Equipment Change: {equipment_name}"
+            content = f"""Equipment Change Documentation
+
+**Equipment:** {equipment_name} ({change_details['category_name']})
+**Change Type:** {change_details['change_type'].title()}
+**Date:** {change_details['created_at']}
+
+**Change Details:**
+{change_details['change_description'] or 'No description provided'}
+
+**Reason:** {change_details['change_reason'] or 'No reason specified'}
+
+**Field Changes:**
+"""
+            if change_details['field_name']:
+                content += f"- **{change_details['field_name']}:** {change_details['old_value']} → {change_details['new_value']}\n"
+            
+            entry_type = 'equipment_change'
+            tags = ['equipment', change_details['change_type'], change_details['category_name'].lower()]
+            
+        elif change_log_type == 'setup':
+            title = f"Setup Change: {change_details['setup_name']}"
+            content = f"""Setup Change Documentation
+
+**Setup:** {change_details['setup_name']}
+**Change Type:** {change_details['change_type'].title()}
+**Date:** {change_details['created_at']}
+
+**Change Details:**
+{change_details['change_description'] or 'No description provided'}
+
+**Field Changes:**
+"""
+            if change_details['field_name']:
+                content += f"- **{change_details['field_name']}:** {change_details['old_value']} → {change_details['new_value']}\n"
+            
+            entry_type = 'setup_change'
+            tags = ['setup', change_details['change_type']]
+            
+        elif change_log_type == 'arrow':
+            arrow_name = f"{change_details['manufacturer']} {change_details['model_name']}"
+            title = f"Arrow Change: {arrow_name}"
+            content = f"""Arrow Change Documentation
+
+**Arrow:** {arrow_name}
+**Setup:** {change_details['setup_name']}
+**Change Type:** {change_details['change_type'].title()}
+**Date:** {change_details['created_at']}
+
+**Change Details:**
+{change_details['change_description'] or 'No description provided'}
+
+**Reason:** {change_details['change_reason'] or 'No reason specified'}
+
+**Field Changes:**
+"""
+            if change_details['field_name']:
+                content += f"- **{change_details['field_name']}:** {change_details['old_value']} → {change_details['new_value']}\n"
+            
+            entry_type = 'arrow_change'
+            tags = ['arrow', change_details['change_type']]
+        
+        # Add user-provided content if any
+        if data.get('additional_notes'):
+            content += f"\n\n**Additional Notes:**\n{data['additional_notes']}"
+        
+        # Add user-provided tags
+        if data.get('additional_tags'):
+            tags.extend(data['additional_tags'])
+        
+        # Create the journal entry
+        cursor.execute('''
+            INSERT INTO journal_entries 
+            (user_id, bow_setup_id, title, content, entry_type, tags)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            current_user['id'],
+            bow_setup_id,
+            title,
+            content,
+            entry_type,
+            json.dumps(tags)
+        ))
+        
+        journal_entry_id = cursor.lastrowid
+        
+        # Create the change log link
+        cursor.execute('''
+            INSERT INTO journal_change_links 
+            (journal_entry_id, change_log_type, change_log_id, link_type)
+            VALUES (?, ?, ?, 'documents')
+        ''', (journal_entry_id, change_log_type, change_log_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Journal entry created from change log successfully',
+            'journal_entry_id': journal_entry_id
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating journal entry from change log: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to create journal entry from change log'}), 500
 
 # Run the app
 if __name__ == '__main__':

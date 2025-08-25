@@ -287,8 +287,24 @@ const viewMode = ref('setup-specific')
 const loadBowSetups = async () => {
   try {
     loadingSetups.value = true
-    const response = await api.get('/bow-setups')
-    bowSetups.value = response.setups || []
+    
+    // Load bow setups and active setup in parallel
+    const [setupsResponse, activeSetupResponse] = await Promise.all([
+      api.get('/bow-setups'),
+      api.get('/user/active-bow-setup').catch(() => ({ active_bow_setup: null }))
+    ])
+    
+    bowSetups.value = setupsResponse.setups || []
+    
+    // Auto-select the active bow setup if it exists
+    const activeBowSetup = activeSetupResponse.active_bow_setup
+    if (activeBowSetup && bowSetups.value.length > 0) {
+      const activeSetup = bowSetups.value.find(setup => setup.id === activeBowSetup.id)
+      if (activeSetup) {
+        selectedSetup.value = activeSetup
+        await loadStatistics()
+      }
+    }
   } catch (err) {
     console.error('Error loading bow setups:', err)
     error.value = 'Failed to load bow setups'
@@ -300,6 +316,17 @@ const loadBowSetups = async () => {
 const selectBowSetup = async (setup) => {
   selectedSetup.value = setup
   await loadStatistics()
+}
+
+const setActiveSetup = async (setup) => {
+  try {
+    await api.put('/user/active-bow-setup', { bow_setup_id: setup.id })
+    // Visual feedback could be added here
+    console.log(`Set ${setup.name} as active bow setup`)
+  } catch (err) {
+    console.error('Error setting active bow setup:', err)
+    error.value = 'Failed to set active bow setup'
+  }
 }
 
 const loadStatistics = async () => {
