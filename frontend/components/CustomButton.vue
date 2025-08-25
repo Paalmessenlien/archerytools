@@ -16,8 +16,8 @@ defineEmits(['click'])
 const props = defineProps({
   variant: {
     type: String,
-    default: 'filled', // filled, outlined, text
-    validator: (value) => ['filled', 'outlined', 'text'].includes(value)
+    default: 'filled', // filled, outlined, text, primary
+    validator: (value) => ['filled', 'outlined', 'text', 'primary'].includes(value)
   },
   size: {
     type: String,
@@ -83,6 +83,20 @@ const buttonClasses = computed(() => {
       'dark:hover:bg-gray-500',
       'dark:focus:ring-gray-500',
       'dark:active:bg-gray-700'
+    ],
+    primary: [
+      'bg-blue-600',
+      'text-white',
+      'border-blue-600',
+      'hover:bg-blue-700',
+      'focus:ring-blue-500',
+      'active:bg-blue-800',
+      'dark:bg-purple-600',
+      'dark:text-white',
+      'dark:border-purple-600',
+      'dark:hover:bg-purple-700',
+      'dark:focus:ring-purple-500',
+      'dark:active:bg-purple-800'
     ],
     outlined: [
       'bg-transparent',

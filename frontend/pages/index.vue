@@ -32,9 +32,9 @@
       <div class="mobile-section-spacing md:mb-8">
         <CustomButton
           @click="handleLogin"
-          variant="filled"
+          variant="primary"
           size="large"
-          class="mobile-primary-action !bg-blue-600 !text-white hover:!bg-blue-700 dark:!bg-purple-600 dark:hover:!bg-purple-700 !border-blue-600 dark:!border-purple-600 focus:!ring-blue-500 dark:focus:!ring-purple-500"
+          class="mobile-primary-action"
         >
           <i class="fab fa-google mr-2"></i>
           Login with Google
