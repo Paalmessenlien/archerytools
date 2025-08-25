@@ -29,9 +29,11 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Arrow Calculator</h1>
-    </div>
+    <PageHeader
+      title="Arrow Calculator"
+      subtitle="Professional arrow recommendations based on your bow setup"
+      size="large"
+    />
 
     <!-- Bow Setup Loaded Notification -->
     <div v-if="selectedBowSetup" class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
@@ -808,6 +810,7 @@ import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import { useArrowFiltersStore } from '~/stores/arrowFilters'
 import ManufacturerSpineChartSelector from '~/components/ManufacturerSpineChartSelector.vue'
 import SpineConversionWidget from '~/components/SpineConversionWidget.vue'
+import PageHeader from '~/components/PageHeader.vue'
 import CustomButton from '~/components/CustomButton.vue'
 
 // API
