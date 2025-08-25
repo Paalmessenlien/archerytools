@@ -149,6 +149,28 @@ Intelligent manufacturer detection and linking system:
 - **Database Migration**: Migration 020 for enhanced string equipment fields
 - **Frontend Integration**: Automatic material detection in calculator and performance pages
 
+#### [Design System Documentation](DESIGN_SYSTEM_DOCUMENTATION.md) 🎨
+**NEW (August 2025)** - Comprehensive design system for the Archery Tools platform:
+- **Complete Component Library**: Interactive showcase of all UI components with live examples
+- **Material Design 3 Integration**: Google's latest design system with Vue 3 and Tailwind CSS
+- **Interactive Form Elements**: Professional sliders, toggles, and form controls with reactive data
+- **Color & Typography System**: Standardized color palette and responsive typography guidelines
+- **Dark Mode Support**: Complete theming system with light/dark mode compatibility
+- **Mobile-First Design**: Responsive patterns and touch-optimized interactions
+- **Icon Library**: FontAwesome integration with semantic usage guidelines
+- **Animation System**: Motion design patterns with transitions and micro-interactions
+
+#### [Design System Usage Guide](DESIGN_SYSTEM_USAGE_GUIDE.md) 📋
+**NEW (August 2025)** - Practical developer guide for using the design system:
+- **Quick Start**: Access requirements and development workflow
+- **Component Patterns**: Copy-paste examples for common UI components
+- **Form Implementation**: Interactive sliders, inputs, and validation patterns
+- **Performance Components**: Archery-specific metric displays and data visualization
+- **Color Usage Reference**: Semantic color guidelines and dark mode implementation
+- **Responsive Design**: Mobile-first grid systems and typography scaling
+- **Development Checklist**: Quality standards and component creation guidelines
+- **Troubleshooting**: Common issues and solutions for design system integration
+
 ---
 
 ## Quick Reference
@@ -338,7 +360,8 @@ curl http://localhost/health         # Production mode health check
 1. Read [Development Guide](DEVELOPMENT_GUIDE.md) for environment setup
 2. Review [Database Schema](DATABASE_SCHEMA.md) for data structure
 3. Reference [API Documentation](API_ENDPOINTS.md) for endpoint usage
-4. Check project structure in `/frontend/` and `/arrow_scraper/`
+4. Use [Design System Documentation](DESIGN_SYSTEM_DOCUMENTATION.md) and [Usage Guide](DESIGN_SYSTEM_USAGE_GUIDE.md) for UI components
+5. Check project structure in `/frontend/` and `/arrow_scraper/`
 
 ### For Administrators  
 1. Use admin panel at `/admin` (requires admin privileges)

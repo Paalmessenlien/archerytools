@@ -164,6 +164,19 @@
                               <div class="text-xs text-red-500 dark:text-red-400">System administration</div>
                             </div>
                           </NuxtLink>
+                          
+                          <NuxtLink
+                            to="/design"
+                            @click="closeDesktopMenu"
+                            class="flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                            :class="{ 'bg-blue-50 text-blue-600 dark:bg-purple-900/20 dark:text-purple-400': $route.path === '/design' }"
+                          >
+                            <i class="fas fa-palette text-purple-600 dark:text-purple-400 w-5"></i>
+                            <div>
+                              <div class="font-medium">Design System</div>
+                              <div class="text-xs text-purple-500 dark:text-purple-400">UI components & patterns</div>
+                            </div>
+                          </NuxtLink>
                         </div>
                         
                         <!-- About Section -->

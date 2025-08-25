@@ -39,87 +39,11 @@
     </div>
     
     <!-- Performance Metrics Display -->
-    <div v-if="performanceData?.performance_summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <!-- Speed -->
-      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
-            {{ formatSpeedValue(performanceData.performance_summary.estimated_speed_fps) }}
-          </div>
-          <PerformanceTooltip 
-            :title="'Arrow Speed'"
-            :content="'Estimated arrow velocity in feet per second. Faster arrows have flatter trajectory and less wind drift. Typical hunting speeds: 250-350 fps.'"
-          />
-        </div>
-        <div class="text-sm text-blue-800 dark:text-blue-200 font-medium">Speed</div>
-        <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-          {{ getSpeedRating(performanceData.performance_summary.estimated_speed_fps) }}
-        </div>
-        <!-- Speed Source & Confidence Indicator -->
-        <div v-if="performanceData.performance_summary.speed_source" class="flex items-center justify-between mt-2">
-          <div class="flex items-center">
-            <span class="text-xs px-2 py-1 rounded-full" :class="getSpeedSourceClass(performanceData.performance_summary.speed_source)">
-              <i :class="getSpeedSourceIcon(performanceData.performance_summary.speed_source)" class="mr-1"></i>
-              {{ getSpeedSourceText(performanceData.performance_summary.speed_source) }}
-            </span>
-          </div>
-          <div v-if="performanceData.performance_summary.confidence" class="text-xs text-blue-600 dark:text-blue-400">
-            {{ performanceData.performance_summary.confidence }}% confidence
-          </div>
-        </div>
-      </div>
-      
-      <!-- Kinetic Energy -->
-      <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 sm:p-4 border border-green-200 dark:border-green-800">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-lg font-bold text-green-600 dark:text-green-400">
-            {{ formatKineticEnergy(performanceData.performance_summary.kinetic_energy_40yd) }}
-          </div>
-          <PerformanceTooltip 
-            :title="'Kinetic Energy at 40 Yards'"
-            :content="'Energy remaining after 40 yards of flight. Determines penetration power. Standards: 25+ ft·lbs (small game), 40+ ft·lbs (deer), 65+ ft·lbs (elk).'"
-          />
-        </div>
-        <div class="text-sm text-green-800 dark:text-green-200 font-medium">KE @40yd</div>
-        <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-          {{ getKineticEnergyRating(performanceData.performance_summary.kinetic_energy_40yd) }}
-        </div>
-      </div>
-      
-      <!-- FOC -->
-      <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 sm:p-4 border border-purple-200 dark:border-purple-800">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
-            {{ formatFocPercentage(performanceData.performance_summary.foc_percentage) }}
-          </div>
-          <PerformanceTooltip 
-            :title="'Front of Center (FOC)'"
-            :content="'How much weight is forward of the arrow center. Higher FOC improves stability and penetration. Recommended: 10-15% (target), 15-20% (hunting).'"
-          />
-        </div>
-        <div class="text-sm text-purple-800 dark:text-purple-200 font-medium">FOC</div>
-        <div class="text-xs text-purple-600 dark:text-purple-400 mt-1">
-          {{ getFOCRating(performanceData.performance_summary.foc_percentage) }}
-        </div>
-      </div>
-      
-      <!-- Penetration -->
-      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 sm:p-4 border border-orange-200 dark:border-orange-800">
-        <div class="flex items-center justify-between mb-2">
-          <div :class="getPenetrationClass(performanceData.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
-            {{ performanceData.performance_summary.penetration_category }}
-          </div>
-          <PerformanceTooltip 
-            :title="'Penetration Rating'"
-            :content="'Overall penetration capability based on kinetic energy and arrow design. Categories: poor, fair, good, excellent. Higher ratings indicate better ability to penetrate through bone and tissue.'"
-          />
-        </div>
-        <div class="text-sm text-orange-800 dark:text-orange-200 font-medium">Penetration</div>
-        <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-          {{ getPenetrationDescription(performanceData.performance_summary.penetration_category) }}
-        </div>
-      </div>
-    </div>
+    <PerformanceMetricsDisplay 
+      v-if="performanceData?.performance_summary"
+      :metrics="performanceData.performance_summary"
+      :show-detailed="true"
+    />
     
     <!-- Detailed Performance Breakdown -->
     <div v-if="performanceData?.performance_summary" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 sm:p-6">
@@ -208,7 +132,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useApi } from '~/composables/useApi'
+import { usePerformanceAnalysis } from '~/composables/usePerformanceAnalysis'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
+import PerformanceMetricsDisplay from '~/components/PerformanceMetricsDisplay.vue'
 import TrajectoryChart from '~/components/TrajectoryChart.vue'
 
 const props = defineProps({
@@ -230,6 +156,22 @@ const emit = defineEmits(['performance-updated'])
 
 // Composables
 const api = useApi()
+const { 
+  calculateTotalWeight,
+  formatSpeedValue,
+  formatKineticEnergy,
+  formatFocPercentage,
+  formatMomentum,
+  getSpeedRating,
+  getKineticEnergyRating,
+  getFOCRating,
+  getPenetrationDescription,
+  getPerformanceScoreClass,
+  getPenetrationClass,
+  getSpeedSourceClass,
+  getSpeedSourceIcon,
+  getSpeedSourceText
+} = usePerformanceAnalysis()
 
 // State
 const isCalculating = ref(false)
@@ -294,7 +236,7 @@ const canCalculatePerformance = () => {
          props.bowConfig.draw_weight
 }
 
-// Performance helper functions
+// Performance helper functions (using shared composable)
 const getPerformanceScore = (performanceSummary) => {
   if (!performanceSummary) return 0
   
@@ -305,76 +247,6 @@ const getPerformanceScore = (performanceSummary) => {
   
   const compositeScore = (penetrationScore * 0.4) + (keScore * 0.3) + (focScore * 0.3)
   return Math.round(compositeScore)
-}
-
-const getPerformanceScoreClass = (performanceSummary) => {
-  const score = getPerformanceScore(performanceSummary)
-  if (score >= 80) return 'text-green-600 dark:text-green-400'
-  if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
-  return 'text-red-600 dark:text-red-400'
-}
-
-const getPenetrationClass = (category) => {
-  switch (category) {
-    case 'excellent': return 'text-green-600 dark:text-green-400'
-    case 'good': return 'text-blue-600 dark:text-blue-400'
-    case 'fair': return 'text-yellow-600 dark:text-yellow-400'
-    case 'poor': return 'text-red-600 dark:text-red-400'
-    default: return 'text-gray-500 dark:text-gray-400'
-  }
-}
-
-// Formatting functions
-const formatSpeedValue = (speed) => {
-  if (!speed) return '0 fps'
-  return `${parseFloat(speed).toFixed(1)} fps`
-}
-
-const formatKineticEnergy = (ke) => {
-  if (!ke) return '0 ft·lbs'
-  return `${parseFloat(ke).toFixed(2)} ft·lbs`
-}
-
-const formatFocPercentage = (foc) => {
-  if (!foc) return '0%'
-  return `${parseFloat(foc).toFixed(1)}%`
-}
-
-const formatMomentum = (momentum) => {
-  if (!momentum) return '0 slug·fps'
-  return `${parseFloat(momentum).toFixed(2)} slug·fps`
-}
-
-// Rating functions
-const getSpeedRating = (speed) => {
-  if (speed >= 350) return 'Very Fast'
-  if (speed >= 300) return 'Fast'
-  if (speed >= 250) return 'Moderate'
-  return 'Slow'
-}
-
-const getKineticEnergyRating = (ke) => {
-  if (ke >= 65) return 'Excellent (Elk+)'
-  if (ke >= 40) return 'Good (Deer)'
-  if (ke >= 25) return 'Fair (Small Game)'
-  return 'Low'
-}
-
-const getFOCRating = (foc) => {
-  if (foc >= 15 && foc <= 20) return 'Optimal (Hunting)'
-  if (foc >= 10 && foc <= 15) return 'Good (Target)'
-  if (foc >= 8 && foc <= 22) return 'Acceptable'
-  return 'Suboptimal'
-}
-
-const getPenetrationDescription = (category) => {
-  switch (category) {
-    case 'excellent': return 'Maximum penetration'
-    case 'good': return 'Good penetration'
-    case 'fair': return 'Limited penetration'
-    case 'poor': return 'Poor penetration'
-    default: return 'Unknown'
-  }
 }
 
 const calculateEnergyRetention = () => {
@@ -443,7 +315,7 @@ const getArrowDataForTrajectory = () => {
   
   return {
     estimated_speed_fps: performance.estimated_speed_fps || 280,
-    total_weight: calculateTotalWeight(),
+    total_weight: calculateTotalWeightForAnalysis(),
     outer_diameter: props.arrow?.spine_specifications?.[0]?.outer_diameter || 0.246,
     arrow_type: props.arrow?.arrow_type || 'hunting',
     manufacturer: props.arrow?.manufacturer || 'Unknown',
@@ -465,61 +337,11 @@ const getBowConfigForTrajectory = () => {
   }
 }
 
-const calculateTotalWeight = () => {
-  // Calculate shaft weight using GPI
-  let shaftWeight = 0
-  if (props.arrow?.spine_specifications?.length > 0) {
-    const spineSpec = props.arrow.spine_specifications.find(spec => 
-      spec.spine.toString() === props.setupArrow.calculated_spine?.toString()
-    ) || props.arrow.spine_specifications[0]
-    
-    if (spineSpec?.gpi_weight) {
-      shaftWeight = spineSpec.gpi_weight * (props.setupArrow.arrow_length || 32)
-    }
-  }
-  
-  // Add component weights
-  const pointWeight = props.setupArrow.point_weight || 0
-  const nockWeight = props.setupArrow.nock_weight || 10
-  const insertWeight = props.setupArrow.insert_weight || 0
-  const bushingWeight = props.setupArrow.bushing_weight || 0
-  const fletchingWeight = props.setupArrow.fletching_weight || 15
-  
-  const totalWeight = shaftWeight + pointWeight + nockWeight + insertWeight + bushingWeight + fletchingWeight
-  
-  return Math.round(totalWeight * 10) / 10
+const calculateTotalWeightForAnalysis = () => {
+  return calculateTotalWeight(props.arrow, props.setupArrow)
 }
 
-// Speed source indicator methods
-const getSpeedSourceClass = (source) => {
-  if (source === 'chronograph') {
-    return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-  } else if (source === 'enhanced_estimated') {
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-  } else {
-    return 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200'
-  }
-}
-
-const getSpeedSourceIcon = (source) => {
-  if (source === 'chronograph') {
-    return 'fas fa-tachometer-alt'
-  } else if (source === 'enhanced_estimated') {
-    return 'fas fa-cog'
-  } else {
-    return 'fas fa-calculator'
-  }
-}
-
-const getSpeedSourceText = (source) => {
-  if (source === 'chronograph') {
-    return 'Measured'
-  } else if (source === 'enhanced_estimated') {
-    return 'Enhanced'
-  } else {
-    return 'Estimated'
-  }
-}
+// Speed source indicator methods are now handled by the shared composable
 
 // Lifecycle
 onMounted(() => {
