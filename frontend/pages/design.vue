@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Access Denied for Non-Admins -->
-    <div v-if="!isAdmin" class="flex items-center justify-center min-h-screen">
+    <div v-if="!isAdmin" class="min-h-screen grid place-items-center">
       <div class="text-center max-w-md mx-auto p-6">
         <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <i class="fas fa-shield-alt text-4xl text-red-600 dark:text-red-400 mb-4"></i>
