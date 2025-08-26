@@ -24,78 +24,136 @@
       <!-- Main Search Bar -->
       <div class="search-bar-container">
         <div class="search-input-wrapper">
-          <md-outlined-text-field
-            :value="filterState.searchQuery || ''"
-            placeholder="Search journal entries..."
-            class="search-input"
-            @input="(e) => handleSearchChange(e.target.value)"
-          >
-            <i slot="leading-icon" class="fas fa-search"></i>
-          </md-outlined-text-field>
+          <!-- Enhanced Search Input with clearer visual hierarchy -->
+          <div class="search-input-group">
+            <md-outlined-text-field
+              :value="filterState.searchQuery || ''"
+              placeholder="Search entries by title, content, tags, or setup..."
+              class="search-input"
+              @input="(e) => handleSearchChange(e.target.value)"
+            >
+              <i slot="leading-icon" class="fas fa-search search-icon"></i>
+            </md-outlined-text-field>
+            
+            <!-- Enhanced Clear Search Button -->
+            <button 
+              v-if="filterState.searchQuery"
+              @click="clearSearch"
+              class="clear-search-btn"
+              title="Clear search"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
           
-          <!-- Search Results Count -->
-          <div v-if="filterState.searchQuery || hasActiveFilters" class="search-results-count"
+          <!-- Enhanced Search Results Count with better visual design -->
+          <div v-if="filterState.searchQuery || hasActiveFilters" class="search-results-indicator"
                :class="{ 'is-loading': filteringState.isFiltering, 'has-error': filteringState.hasError }">
-            <i v-if="!filteringState.isFiltering" class="fas fa-list-alt mr-1"></i>
-            <md-circular-progress v-if="filteringState.isFiltering" indeterminate class="filter-loading"></md-circular-progress>
-            <i v-if="filteringState.hasError" class="fas fa-exclamation-triangle mr-1"></i>
-            <span v-if="!filteringState.hasError">
-              {{ filteredEntriesCount }} {{ filteredEntriesCount === 1 || filteredEntriesCount === '...' ? 'entry' : 'entries' }} found
-            </span>
-            <span v-if="filteringState.hasError" class="error-text">
-              {{ filteringState.errorMessage }}
-            </span>
+            <div class="results-content">
+              <div class="results-icon">
+                <i v-if="!filteringState.isFiltering && !filteringState.hasError" class="fas fa-search"></i>
+                <md-circular-progress v-if="filteringState.isFiltering" indeterminate class="filter-loading-spinner"></md-circular-progress>
+                <i v-if="filteringState.hasError" class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="results-text">
+                <span v-if="!filteringState.hasError" class="results-count">
+                  {{ filteredEntriesCount }} {{ filteredEntriesCount === 1 || filteredEntriesCount === '...' ? 'entry' : 'entries' }}
+                </span>
+                <span v-if="filteringState.hasError" class="error-text">
+                  {{ filteringState.errorMessage }}
+                </span>
+                <span v-if="!filteringState.hasError" class="results-label">found</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Quick Filter Pills -->
-        <div class="quick-filters" v-if="!showFilters">
-          <button 
-            v-for="quickFilter in quickFilters" 
-            :key="quickFilter.id"
-            @click="applyQuickFilter(quickFilter)"
-            class="quick-filter-pill"
-            :class="{ active: isQuickFilterActive(quickFilter) }"
-          >
-            <i :class="quickFilter.icon" class="mr-1"></i>
-            {{ quickFilter.label }}
-          </button>
+        <!-- Enhanced Quick Filter Pills with better design -->
+        <div class="quick-filters-section" v-if="!showFilters">
+          <div class="quick-filters-label">
+            <i class="fas fa-bolt mr-1"></i>
+            Quick Filters:
+          </div>
+          <div class="quick-filters">
+            <button 
+              v-for="quickFilter in quickFilters" 
+              :key="quickFilter.id"
+              @click="applyQuickFilter(quickFilter)"
+              class="quick-filter-pill"
+              :class="{ active: isQuickFilterActive(quickFilter) }"
+            >
+              <div class="pill-icon-wrapper">
+                <i :class="quickFilter.icon" class="pill-icon"></i>
+              </div>
+              <span class="pill-label">{{ quickFilter.label }}</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Filter Toggle & Controls -->
+        <!-- Enhanced Filter Toggle & Controls -->
         <div class="filter-controls-header">
           <button @click="showFilters = !showFilters" class="filter-toggle-btn">
-            <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="mr-2"></i>
-            {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
-            <span v-if="hasActiveFilters && !showFilters" class="active-filters-badge">
-              {{ activeFiltersCount }}
-            </span>
+            <div class="toggle-content">
+              <div class="toggle-icon">
+                <i :class="showFilters ? 'fas fa-filter-circle-xmark' : 'fas fa-sliders-h'"></i>
+              </div>
+              <div class="toggle-text">
+                <span class="toggle-label">{{ showFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}</span>
+                <span v-if="hasActiveFilters" class="toggle-subtitle">
+                  {{ activeFiltersCount }} active filter{{ activeFiltersCount > 1 ? 's' : '' }}
+                </span>
+              </div>
+            </div>
+            <div class="toggle-chevron">
+              <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+            </div>
           </button>
 
-          <button 
-            v-if="hasActiveFilters" 
-            @click="clearAllFilters" 
-            class="clear-filters-btn"
-          >
-            <i class="fas fa-times mr-1"></i>
-            Clear All
-          </button>
+          <div class="filter-control-actions">
+            <button 
+              v-if="hasActiveFilters" 
+              @click="clearAllFilters" 
+              class="clear-filters-btn"
+            >
+              <i class="fas fa-broom mr-2"></i>
+              <span>Clear All Filters</span>
+            </button>
+            <button 
+              v-if="hasActiveFilters" 
+              @click="showSavePresetDialog = true"
+              class="save-preset-btn-header"
+            >
+              <i class="fas fa-bookmark mr-2"></i>
+              <span>Save as Preset</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Active Filter Chips -->
+      <!-- Enhanced Active Filter Chips -->
       <div v-if="hasActiveFilters" class="active-filters-chips">
+        <div class="chips-header">
+          <div class="chips-title">
+            <i class="fas fa-filter mr-1"></i>
+            Active Filters
+          </div>
+          <div class="chips-count">{{ activeFiltersCount }}</div>
+        </div>
         <div class="chips-container">
-          <span 
+          <div 
             v-for="chip in activeFilterChips" 
             :key="chip.key"
             class="filter-chip"
           >
-            {{ chip.label }}: {{ chip.value }}
-            <button @click="removeFilter(chip.key)" class="remove-chip-btn">
+            <div class="chip-content">
+              <span class="chip-label">{{ chip.label }}</span>
+              <span class="chip-separator">:</span>
+              <span class="chip-value">{{ chip.value }}</span>
+            </div>
+            <button @click="removeFilter(chip.key)" class="remove-chip-btn" :title="`Remove ${chip.label} filter`">
               <i class="fas fa-times"></i>
             </button>
-          </span>
+          </div>
         </div>
       </div>
 
@@ -178,9 +236,10 @@
           <div class="filter-group">
             <h3 class="filter-group-title">
               <i class="fas fa-cog mr-2"></i>
-              Advanced
+              Advanced Filters
             </h3>
             <div class="filter-group-controls">
+              <!-- Tags Filter Row -->
               <div class="filter-row">
                 <md-outlined-text-field
                   :value="filterState.selectedTags"
@@ -192,14 +251,143 @@
                   <i slot="leading-icon" class="fas fa-tag"></i>
                 </md-outlined-text-field>
               </div>
+
+              <!-- Equipment Filter Row -->
+              <div class="filter-row">
+                <md-outlined-select 
+                  :value="filterState.equipmentType || ''" 
+                  @change="(e) => handleFilterChange('equipment_type', e.target.value)" 
+                  class="filter-control"
+                >
+                  <span slot="label">Equipment Type</span>
+                  <md-select-option value="">All Equipment</md-select-option>
+                  <md-select-option value="bow">Bow</md-select-option>
+                  <md-select-option value="arrows">Arrows</md-select-option>
+                  <md-select-option value="sight">Sight</md-select-option>
+                  <md-select-option value="rest">Rest</md-select-option>
+                  <md-select-option value="stabilizer">Stabilizer</md-select-option>
+                  <md-select-option value="release">Release</md-select-option>
+                  <md-select-option value="quiver">Quiver</md-select-option>
+                  <md-select-option value="other">Other</md-select-option>
+                </md-outlined-select>
+
+                <md-outlined-text-field
+                  :value="filterState.equipmentName"
+                  placeholder="Equipment name or manufacturer"
+                  class="filter-control"
+                  @input="(e) => handleFilterChange('equipment_name', e.target.value)"
+                >
+                  <span slot="label">Equipment Name</span>
+                  <i slot="leading-icon" class="fas fa-wrench"></i>
+                </md-outlined-text-field>
+              </div>
+
+              <!-- Date Range Filter Row -->
+              <div class="filter-row">
+                <md-outlined-text-field
+                  :value="filterState.dateFrom"
+                  type="date"
+                  class="filter-control"
+                  @input="(e) => handleFilterChange('date_from', e.target.value)"
+                >
+                  <span slot="label">Date From</span>
+                  <i slot="leading-icon" class="fas fa-calendar-alt"></i>
+                </md-outlined-text-field>
+
+                <md-outlined-text-field
+                  :value="filterState.dateTo"
+                  type="date"
+                  class="filter-control"
+                  @input="(e) => handleFilterChange('date_to', e.target.value)"
+                >
+                  <span slot="label">Date To</span>
+                  <i slot="leading-icon" class="fas fa-calendar-alt"></i>
+                </md-outlined-text-field>
+              </div>
+
+              <!-- Privacy and Attachment Filters -->
+              <div class="filter-row">
+                <md-outlined-select 
+                  :value="filterState.privacyFilter || ''" 
+                  @change="(e) => handleFilterChange('privacy_filter', e.target.value)" 
+                  class="filter-control"
+                >
+                  <span slot="label">Privacy</span>
+                  <md-select-option value="">All Entries</md-select-option>
+                  <md-select-option value="public">Public Only</md-select-option>
+                  <md-select-option value="private">Private Only</md-select-option>
+                </md-outlined-select>
+
+                <md-outlined-select 
+                  :value="filterState.hasImages || ''" 
+                  @change="(e) => handleFilterChange('has_images', e.target.value)" 
+                  class="filter-control"
+                >
+                  <span slot="label">Images</span>
+                  <md-select-option value="">All Entries</md-select-option>
+                  <md-select-option value="true">With Images</md-select-option>
+                  <md-select-option value="false">Without Images</md-select-option>
+                </md-outlined-select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Presets Group -->
+          <div class="filter-group" v-if="filterPresets.length > 0">
+            <h3 class="filter-group-title">
+              <i class="fas fa-bookmark mr-2"></i>
+              Filter Presets
+            </h3>
+            <div class="filter-group-controls">
+              <div class="filter-presets-row">
+                <div class="preset-buttons">
+                  <button 
+                    v-for="preset in filterPresets" 
+                    :key="preset.id"
+                    @click="applyFilterPreset(preset)"
+                    class="preset-btn"
+                    :class="{ active: currentPresetId === preset.id }"
+                  >
+                    <i :class="preset.icon || 'fas fa-filter'" class="mr-1"></i>
+                    {{ preset.name }}
+                  </button>
+                </div>
+                <div class="preset-actions">
+                  <button @click="showSavePresetDialog = true" class="save-preset-btn">
+                    <i class="fas fa-plus mr-1"></i>
+                    Save Current
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Journal Entries List -->
-    <div class="entries-container">
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <div class="tab-buttons">
+        <button 
+          @click="activeTab = 'journal'"
+          :class="['tab-btn', { active: activeTab === 'journal' }]"
+        >
+          <i class="fas fa-book-open mr-2"></i>
+          Journal Entries
+          <span v-if="entries.length > 0" class="tab-count">({{ entries.length }})</span>
+        </button>
+        <button 
+          @click="activeTab = 'changelog'"
+          :class="['tab-btn', { active: activeTab === 'changelog' }]"
+        >
+          <i class="fas fa-history mr-2"></i>
+          Change Log
+        </button>
+      </div>
+    </div>
+
+    <!-- Journal Tab Content -->
+    <div v-if="activeTab === 'journal'" class="entries-container">
       <div v-if="journalApi.isLoading.value" class="loading-state">
         <md-circular-progress indeterminate></md-circular-progress>
         <p>Loading journal entries...</p>
@@ -307,6 +495,14 @@
       </div>
     </div>
 
+    <!-- Change Log Tab Content -->
+    <div v-if="activeTab === 'changelog'" class="changelog-container">
+      <JournalChangeLog 
+        :bow-setups="bowSetups"
+        @journal-create-request="handleJournalFromChangeLog"
+      />
+    </div>
+
     <!-- Create/Edit Entry Form -->
     <ClientOnly>
       <JournalEntryForm
@@ -370,6 +566,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useApi } from '@/composables/useApi'
 import { useJournalApi } from '@/composables/useJournalApi'
 import type { JournalEntry, JournalEntryCreate } from '@/composables/useJournalApi'
+import JournalChangeLog from '~/components/JournalChangeLog.vue'
 import { useGlobalNotifications } from '@/composables/useNotificationSystem'
 // Removed complex filtering composable - using direct filtering instead
 import { usePagination, createPaginationFromResponse } from '@/composables/usePagination'
@@ -440,6 +637,10 @@ const filterState = reactive({
   selectedTags: '',
   dateFrom: '',
   dateTo: '',
+  equipmentType: '',
+  equipmentName: '',
+  privacyFilter: '',
+  hasImages: '',
   sortBy: 'created_at',
   sortDirection: 'desc',
   showPrivate: true
@@ -496,7 +697,60 @@ const filteredEntries = computed(() => {
     }
   }
   
+  // Date range filters
+  if (filterState.dateFrom) {
+    const fromDate = new Date(filterState.dateFrom)
+    filtered = filtered.filter(entry => {
+      const entryDate = new Date(entry.created_at || entry.updated_at)
+      return entryDate >= fromDate
+    })
+  }
+  
+  if (filterState.dateTo) {
+    const toDate = new Date(filterState.dateTo)
+    toDate.setHours(23, 59, 59, 999) // End of day
+    filtered = filtered.filter(entry => {
+      const entryDate = new Date(entry.created_at || entry.updated_at)
+      return entryDate <= toDate
+    })
+  }
+  
+  // Equipment type filter - this would require equipment links data
+  if (filterState.equipmentType) {
+    filtered = filtered.filter(entry => 
+      entry.equipment_links?.some(link => 
+        link.equipment_type === filterState.equipmentType
+      )
+    )
+  }
+  
+  // Equipment name filter - this would require equipment links data
+  if (filterState.equipmentName) {
+    const nameQuery = filterState.equipmentName.toLowerCase().trim()
+    filtered = filtered.filter(entry => 
+      entry.equipment_links?.some(link => 
+        (link.equipment_name?.toLowerCase().includes(nameQuery)) ||
+        (link.manufacturer?.toLowerCase().includes(nameQuery)) ||
+        (link.model?.toLowerCase().includes(nameQuery))
+      )
+    )
+  }
+  
   // Privacy filter
+  if (filterState.privacyFilter === 'public') {
+    filtered = filtered.filter(entry => !entry.is_private)
+  } else if (filterState.privacyFilter === 'private') {
+    filtered = filtered.filter(entry => entry.is_private)
+  }
+  
+  // Images filter
+  if (filterState.hasImages === 'true') {
+    filtered = filtered.filter(entry => entry.images?.length > 0)
+  } else if (filterState.hasImages === 'false') {
+    filtered = filtered.filter(entry => !entry.images?.length)
+  }
+  
+  // Legacy privacy filter compatibility
   if (!filterState.showPrivate) {
     filtered = filtered.filter(entry => !entry.is_private)
   }
@@ -529,6 +783,7 @@ const sortedEntries = computed(() => {
 })
 
 // Dialog states
+const activeTab = ref('journal')
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
 const showViewDialog = ref(false)
@@ -682,6 +937,12 @@ const handleSearchChange = (query: string) => {
 // Search timeout for debouncing
 let searchTimeout = null
 
+// Clear search functionality
+const clearSearch = () => {
+  filterState.searchQuery = ''
+  pagination.resetToFirstPage()
+}
+
 const loadBowSetups = async () => {
   try {
     const response = await api.get('/bow-setups')
@@ -725,15 +986,21 @@ const editEntry = (entry: JournalEntry) => {
   showEditDialog.value = true
 }
 
-const viewEntry = async (entry: JournalEntry) => {
-  const response = await journalApi.getEntry(entry.id)
+const handleJournalFromChangeLog = (journalData) => {
+  // Switch to journal tab
+  activeTab.value = 'journal'
   
-  if (response.success && response.data) {
-    viewingEntry.value = response.data
-    showViewDialog.value = true
-  } else {
-    notifications.showError(response.error || 'Failed to load entry details')
+  // Open journal creation form with pre-filled data from change log
+  editingEntry.value = {
+    ...journalData,
+    id: null // Ensure it's a new entry
   }
+  showCreateDialog.value = true
+}
+
+const viewEntry = (entry: JournalEntry) => {
+  // Navigate to full-page journal entry viewer
+  navigateTo(`/journal/${entry.id}`)
 }
 
 const editFromViewer = () => {
@@ -839,12 +1106,36 @@ const handleFilterChange = (key: string, value: any) => {
   filteringState.hasError = false
   
   try {
-    if (key === 'bow_setup_id') {
-      filterState.selectedSetup = value
-    } else if (key === 'entry_type') {
-      filterState.selectedType = value
-    } else if (key === 'tags') {
-      filterState.selectedTags = value
+    switch (key) {
+      case 'bow_setup_id':
+        filterState.selectedSetup = value
+        break
+      case 'entry_type':
+        filterState.selectedType = value
+        break
+      case 'tags':
+        filterState.selectedTags = value
+        break
+      case 'equipment_type':
+        filterState.equipmentType = value
+        break
+      case 'equipment_name':
+        filterState.equipmentName = value
+        break
+      case 'date_from':
+        filterState.dateFrom = value
+        break
+      case 'date_to':
+        filterState.dateTo = value
+        break
+      case 'privacy_filter':
+        filterState.privacyFilter = value
+        break
+      case 'has_images':
+        filterState.hasImages = value
+        break
+      default:
+        console.warn(`Unknown filter key: ${key}`)
     }
     
     pagination.resetToFirstPage()
@@ -892,8 +1183,15 @@ const clearAllFilters = () => {
   filterState.selectedSetup = ''
   filterState.selectedType = ''
   filterState.selectedTags = ''
+  filterState.dateFrom = ''
+  filterState.dateTo = ''
+  filterState.equipmentType = ''
+  filterState.equipmentName = ''
+  filterState.privacyFilter = ''
+  filterState.hasImages = ''
   filterState.sortBy = 'created_at'
   filterState.sortDirection = 'desc'
+  currentPresetId.value = null
   pagination.resetToFirstPage()
 }
 
@@ -987,6 +1285,71 @@ const saveUserPreferences = () => {
   }
 }
 
+// Filter presets functionality
+const filterPresets = ref([])
+const currentPresetId = ref(null)
+const showSavePresetDialog = ref(false)
+
+// Load filter presets from API
+const loadFilterPresets = async () => {
+  try {
+    const response = await $fetch('/api/journal/filter-presets', {
+      headers: { Authorization: `Bearer ${token.value}` }
+    })
+    filterPresets.value = response.data || []
+  } catch (error) {
+    console.error('Failed to load filter presets:', error)
+  }
+}
+
+// Apply a filter preset
+const applyFilterPreset = (preset) => {
+  const config = JSON.parse(preset.filter_configuration)
+  
+  // Apply all filter settings from preset
+  Object.keys(config).forEach(key => {
+    if (key in filterState) {
+      filterState[key] = config[key]
+    }
+  })
+  
+  currentPresetId.value = preset.id
+}
+
+// Save current filter state as a preset
+const saveFilterPreset = async (presetName) => {
+  try {
+    const filterConfig = {
+      selectedSetup: filterState.selectedSetup,
+      selectedType: filterState.selectedType,
+      selectedTags: filterState.selectedTags,
+      dateFrom: filterState.dateFrom,
+      dateTo: filterState.dateTo,
+      equipmentType: filterState.equipmentType,
+      equipmentName: filterState.equipmentName,
+      privacyFilter: filterState.privacyFilter,
+      hasImages: filterState.hasImages,
+      sortBy: filterState.sortBy,
+      sortDirection: filterState.sortDirection
+    }
+    
+    await $fetch('/api/journal/filter-presets', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token.value}` },
+      body: {
+        name: presetName,
+        filter_configuration: JSON.stringify(filterConfig),
+        icon: 'fas fa-filter' // Default icon
+      }
+    })
+    
+    await loadFilterPresets()
+    showSavePresetDialog.value = false
+  } catch (error) {
+    console.error('Failed to save filter preset:', error)
+  }
+}
+
 // Sticky filter functionality
 const handleScroll = () => {
   if (!filterSection.value) return
@@ -1005,7 +1368,8 @@ onMounted(async () => {
   if (isAuthenticated.value) {
     await Promise.all([
       loadBowSetups(),
-      loadEntryTypes()
+      loadEntryTypes(),
+      loadFilterPresets()
     ])
     await loadEntries()
   }
@@ -1070,17 +1434,18 @@ watch([
   padding: 2rem;
 }
 
-/* Enhanced Search and Filter Interface */
+/* Enhanced Search and Filter Interface with improved visual hierarchy */
 .search-filter-section {
-  background: var(--md-sys-color-surface-container);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 24px;
+  padding: 2rem;
   margin-bottom: 2rem;
   border: 1px solid var(--md-sys-color-outline-variant);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 100;
+  backdrop-filter: blur(10px);
 }
 
 /* Sticky state */
@@ -1126,180 +1491,509 @@ watch([
   flex-wrap: wrap;
 }
 
-.search-input {
+/* Enhanced Search Input Group */
+.search-input-group {
+  position: relative;
   flex: 1;
   min-width: 300px;
 }
 
-.search-results-count {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
-  background: var(--md-sys-color-surface-container-highest);
-  padding: 0.5rem 0.75rem;
-  border-radius: 12px;
+.search-input {
+  width: 100%;
   transition: all 0.2s ease;
 }
 
-.search-results-count.is-loading {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+.search-input:focus-within {
+  --md-outlined-text-field-container-color: var(--md-sys-color-primary-container);
 }
 
-.search-results-count.has-error {
+.search-icon {
+  color: var(--md-sys-color-primary);
+  font-size: 1.1rem;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--md-sys-color-surface-container-high);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.clear-search-btn:hover {
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
+  transform: translateY(-50%) scale(1.1);
 }
 
-.filter-loading {
-  width: 16px;
-  height: 16px;
-  margin-right: 0.5rem;
+/* Enhanced Search Results Indicator */
+.search-results-indicator {
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 200px;
+}
+
+.search-results-indicator.is-loading {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
+}
+
+.search-results-indicator.has-error {
+  background: var(--md-sys-color-error-container);
+  border-color: var(--md-sys-color-error);
+  box-shadow: 0 0 0 2px var(--md-sys-color-error-container);
+}
+
+.results-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.results-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-primary);
+  font-size: 1rem;
+}
+
+.search-results-indicator.is-loading .results-icon {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.search-results-indicator.has-error .results-icon {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.results-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.results-count {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.results-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-loading-spinner {
+  width: 20px;
+  height: 20px;
 }
 
 .error-text {
-  color: var(--md-sys-color-error);
-  font-weight: 500;
+  color: var(--md-sys-color-on-error-container);
+  font-weight: 600;
 }
 
-/* Quick Filter Pills */
+/* Enhanced Quick Filter Pills */
+.quick-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quick-filters-label {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .quick-filters {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .quick-filter-pill {
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 20px;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--md-sys-color-surface-container);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 24px;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-filter-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.quick-filter-pill:hover::before {
+  transform: translateX(100%);
 }
 
 .quick-filter-pill:hover {
   background: var(--md-sys-color-surface-container-highest);
-  transform: translateY(-1px);
+  border-color: var(--md-sys-color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .quick-filter-pill.active {
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
   border-color: var(--md-sys-color-primary);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Filter Controls Header */
+.pill-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+}
+
+.quick-filter-pill.active .pill-icon-wrapper {
+  background: var(--md-sys-color-on-primary);
+}
+
+.pill-icon {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-primary);
+}
+
+.quick-filter-pill.active .pill-icon {
+  color: var(--md-sys-color-primary);
+}
+
+.pill-label {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* Enhanced Filter Controls Header */
 .filter-controls-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .filter-toggle-btn {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: 12px;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--md-sys-color-surface-container);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  min-width: 240px;
+  overflow: hidden;
+}
+
+.filter-toggle-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--md-sys-color-primary-container), var(--md-sys-color-tertiary-container));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.filter-toggle-btn:hover::before {
+  opacity: 0.1;
 }
 
 .filter-toggle-btn:hover {
-  background: var(--md-sys-color-surface-container-highest);
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.active-filters-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  font-size: 0.75rem;
+.toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.toggle-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.toggle-label {
+  font-size: 0.875rem;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.2;
+}
+
+.toggle-subtitle {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toggle-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.filter-control-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.clear-filters-btn, .save-preset-btn-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 
 .clear-filters-btn {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
-  border: none;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-color: var(--md-sys-color-error);
 }
 
 .clear-filters-btn:hover {
   background: var(--md-sys-color-error);
   color: var(--md-sys-color-on-error);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--md-sys-color-error), 0.2);
 }
 
-/* Active Filter Chips */
+.save-preset-btn-header {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-color: var(--md-sys-color-tertiary);
+}
+
+.save-preset-btn-header:hover {
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--md-sys-color-tertiary), 0.2);
+}
+
+/* Enhanced Active Filter Chips */
 .active-filters-chips {
-  padding: 1rem 0;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  margin-top: 1rem;
+  padding: 1.5rem 0;
+  border-top: 2px solid var(--md-sys-color-outline-variant);
+  margin-top: 1.5rem;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.chips-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.chips-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chips-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 8px;
 }
 
 .chips-container {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .filter-chip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
-  border-radius: 16px;
+  border-radius: 20px;
   font-size: 0.875rem;
+  font-weight: 600;
+  border: 2px solid var(--md-sys-color-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.filter-chip:hover::before {
+  opacity: 1;
+}
+
+.filter-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chip-content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chip-label {
+  font-weight: 700;
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.chip-separator {
+  opacity: 0.6;
+  margin: 0 0.25rem;
+}
+
+.chip-value {
   font-weight: 500;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  padding: 0.125rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
 }
 
 .remove-chip-btn {
-  background: none;
-  border: none;
-  color: inherit;
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  padding: 2px;
+  padding: 4px;
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .remove-chip-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-error);
+  transform: scale(1.1);
 }
 
 /* Collapsible Filter Panel */
@@ -1765,5 +2459,132 @@ watch([
   padding: 1.5rem;
   border-top: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-low);
+}
+
+/* Filter Presets Styles */
+.filter-presets-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 20px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.preset-btn:hover {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-high);
+  transform: translateY(-1px);
+}
+
+.preset-btn.active {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.save-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px dashed var(--md-sys-color-primary);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.save-preset-btn:hover {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* Tab Navigation Styles */
+.tab-navigation {
+  margin-bottom: 2rem;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-btn:hover {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.tab-btn.active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-bottom-color: var(--md-sys-color-primary);
+}
+
+.tab-count {
+  background: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-btn.active .tab-count {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Change Log Container */
+.changelog-container {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 </style>
