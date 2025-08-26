@@ -75,6 +75,7 @@ frontend/
 ├── composables/               # Vue 3 composition functions
 │   ├── useApi.ts             # API communication layer
 │   ├── useAuth.ts            # Authentication management
+│   ├── useImageUpload.ts     # Image upload system with CDN integration
 │   ├── useDarkMode.js        # Dark mode state
 │   └── useMaterialWeb.ts     # Material Web utilities
 ├── layouts/

@@ -205,6 +205,55 @@
         </div>
       </div>
 
+      <!-- Equipment Images -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+          <i class="fas fa-images mr-2 text-purple-600 dark:text-purple-400"></i>
+          Equipment Images ({{ attachedImages.length }}/5)
+        </h4>
+        
+        <!-- Current Images Display -->
+        <div v-if="attachedImages.length" class="mb-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            <div v-for="(image, index) in attachedImages" :key="index" class="relative group">
+              <img 
+                :src="image.url" 
+                :alt="image.alt || 'Equipment image'" 
+                class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+              />
+              <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                <button 
+                  @click="removeImage(index)" 
+                  class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                  type="button"
+                  title="Remove image"
+                >
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Upload Component -->
+        <div v-if="attachedImages.length < 5" class="mb-4">
+          <ImageUpload
+            :current-image-url="''"
+            alt-text="Equipment image"
+            upload-path="equipment"
+            :max-size-bytes="5242880"
+            @upload-success="handleImageUpload"
+            @upload-error="handleImageError"
+          />
+        </div>
+        
+        <!-- Upload Guidelines -->
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          <i class="fas fa-info-circle mr-2"></i>
+          Add up to 5 photos of your equipment (max 5MB each). Images will be stored using CDN for fast loading.
+        </div>
+      </div>
+
       <!-- Change Notes (for editing mode) -->
       <div v-if="isEditing" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
         <label for="changeNotes" class="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
@@ -254,7 +303,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useApi } from '~/composables/useApi'
+import { useImageUpload } from '~/composables/useImageUpload'
 import ManufacturerInput from '~/components/ManufacturerInput.vue'
+import ImageUpload from '~/components/ImageUpload.vue'
 
 const props = defineProps({
   bowSetup: {
@@ -276,11 +327,19 @@ const emit = defineEmits(['equipment-added', 'equipment-updated', 'cancel'])
 // Composables
 const api = useApi()
 
+// Image Upload Composable
+const imageUpload = useImageUpload({
+  context: 'equipment',
+  maxFiles: 5,
+  maxSize: 5
+})
+
 // State
 const loading = ref(false)
 const submitting = ref(false)
 const selectedCategory = ref('String')
 const formSchema = ref(null)
+const attachedImages = ref([])
 
 // Categories
 const categories = ref([
@@ -410,6 +469,28 @@ const handleManufacturerCreated = (event) => {
   console.log('New manufacturer will be created:', event)
 }
 
+// Image handling methods
+const handleImageUpload = (uploadResult) => {
+  console.log('Image uploaded:', uploadResult)
+  if (uploadResult && uploadResult.url) {
+    attachedImages.value.push({
+      url: uploadResult.url,
+      cdnUrl: uploadResult.cdnUrl,
+      originalName: uploadResult.originalName || 'equipment-image.jpg',
+      uploadedAt: new Date().toISOString(),
+      alt: `${formData.value.manufacturer_name} ${formData.value.model_name} - Equipment Image`
+    })
+  }
+}
+
+const handleImageError = (error) => {
+  console.error('Image upload error:', error)
+}
+
+const removeImage = (index) => {
+  attachedImages.value.splice(index, 1)
+}
+
 const getCategoryIcon = (categoryName) => {
   const iconMap = {
     'String': 'fas fa-link',
@@ -455,7 +536,13 @@ const submitForm = async () => {
       category_name: selectedCategory.value,
       description: formData.value.description,
       installation_notes: formData.value.installation_notes,
-      specifications: formData.value.specifications
+      specifications: formData.value.specifications,
+      images: attachedImages.value.map(img => ({
+        url: img.url,
+        cdnUrl: img.cdnUrl,
+        originalName: img.originalName,
+        alt: img.alt
+      }))
     }
     
     if (props.isEditing) {
@@ -479,6 +566,9 @@ const submitForm = async () => {
         change_notes: '',
         specifications: {}
       }
+      
+      // Clear attached images
+      attachedImages.value = []
       
       // Reinitialize multi-select fields
       if (formSchema.value?.fields) {
@@ -534,6 +624,17 @@ const initializeForEditing = () => {
       } catch (error) {
         console.error('Error parsing custom_specifications in initializeForEditing:', error)
       }
+    }
+    
+    // Initialize images if available
+    if (equipment.images && Array.isArray(equipment.images)) {
+      attachedImages.value = equipment.images.map(img => ({
+        url: img.url || img.cdnUrl,
+        cdnUrl: img.cdnUrl,
+        originalName: img.originalName || 'equipment-image.jpg',
+        uploadedAt: img.uploadedAt || new Date().toISOString(),
+        alt: img.alt || `${equipment.manufacturer_name || equipment.manufacturer} ${equipment.model_name} - Equipment Image`
+      }))
     }
     
   } else {

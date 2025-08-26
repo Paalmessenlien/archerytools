@@ -131,6 +131,17 @@ Intelligent manufacturer detection and linking system:
 - **Data Priority**: Measured speeds prioritized over estimated calculations
 - **Real-time Updates**: Performance recalculation when measurements change
 
+#### [Image Upload System Documentation](IMAGE_UPLOAD_SYSTEM.md) 📸
+**NEW (August 2025)** - Comprehensive image upload and CDN integration:
+- **Universal Architecture**: Multi-context system supporting equipment, bow setups, and journal images
+- **CDN Integration**: Multi-provider support (Bunny CDN, Cloudinary, AWS S3) with automatic fallback
+- **Equipment Images**: Up to 5 images per equipment item with gallery display in profiles
+- **Bow Setup Images**: Up to 3 images per bow setup with responsive gallery in setup overview
+- **Frontend Components**: Reusable ImageUpload.vue component and useImageUpload composable
+- **Database Schema**: Migration 041 with universal image tracking and upload session management
+- **Security**: JWT authentication, file validation, and rate limiting
+- **Performance**: Image compression, lazy loading, and responsive delivery
+
 #### [Enhanced Arrow Speed Calculations](ENHANCED_ARROW_SPEED_CALCULATIONS.md) ⚡
 **NEW (August 2025)** - Sophisticated arrow velocity estimation system:
 - **Calculation Hierarchy**: Chronograph data → Enhanced estimation → Basic fallback
@@ -170,6 +181,29 @@ Intelligent manufacturer detection and linking system:
 - **Responsive Design**: Mobile-first grid systems and typography scaling
 - **Development Checklist**: Quality standards and component creation guidelines
 - **Troubleshooting**: Common issues and solutions for design system integration
+
+#### [Journal Enhancement Phase 6](JOURNAL_ENHANCEMENT_PHASE6.md) 📖
+**LATEST (August 2025)** - Advanced integration & system consolidation:
+- **Critical Issues Resolved**: CDN image uploads, tag management, modal positioning
+- **Modular Architecture**: Universal composables with reusable patterns
+- **Database Migrations**: 3 new migrations (041, 042, 043) for modular systems
+- **Advanced Filtering**: Equipment-based, date range, privacy, and preset filters
+- **Full-Page Viewer**: Dedicated journal entry viewer with rich content display
+- **Change History Integration**: Complete consolidation within journal interface
+- **Navigation Cleanup**: Removed duplicate Change History menu items
+- **Universal Components**: useImageUpload and useTagManagement composables
+- **Material Design 3**: Complete compliance with professional UI standards
+
+#### [Journal Enhancement Phase 5](JOURNAL_ENHANCEMENT_PHASE5.md) 📝
+**January 2025** - Advanced features implementation:
+- **Smart Entry Templates**: Pre-built templates for common archery scenarios
+- **Rich Text Editor**: Advanced formatting with equipment mentions
+- **Change Linking System**: Connect entries to equipment and setup changes
+- **Enhanced Entry Display**: Visual chips for linked changes and favorites
+- **Favorites System**: Dedicated view for starred entries with statistics
+- **Export Functionality**: PDF, HTML, Markdown, and JSON export options
+- **Analytics Dashboard**: Comprehensive insights into journaling patterns
+- **Custom Categories**: Personal organization with colors and icons
 
 ---
 

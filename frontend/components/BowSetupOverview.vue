@@ -76,6 +76,39 @@
       </div>
     </div>
 
+    <!-- Bow Setup Images Gallery -->
+    <div v-if="setup.images && setup.images.length > 0" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <i class="fas fa-images mr-2 text-purple-600 dark:text-purple-400"></i>
+        Setup Photos ({{ setup.images.length }})
+      </h3>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div 
+          v-for="(image, index) in setup.images" 
+          :key="index" 
+          class="relative group cursor-pointer"
+          @click="openImageViewer(image.url || image.cdnUrl, setup)"
+        >
+          <img 
+            :src="image.url || image.cdnUrl" 
+            :alt="image.alt || 'Bow setup image'" 
+            class="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600 hover:opacity-90 transition-opacity"
+            @error="handleImageError"
+          />
+          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-25 transition-opacity rounded-lg flex items-center justify-center">
+            <i class="fas fa-expand-alt text-white opacity-0 group-hover:opacity-100 transition-opacity text-lg"></i>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Image count indicator for mobile -->
+      <div class="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
+        <i class="fas fa-camera mr-1"></i>
+        {{ setup.images.length }} photo{{ setup.images.length === 1 ? '' : 's' }} of your bow setup
+      </div>
+    </div>
+
     <!-- Bow Details (for compound/recurve bows) -->
     <div v-if="showBowDetails" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -289,6 +322,17 @@ const formatDate = (dateString) => {
   } catch {
     return 'Unknown'
   }
+}
+
+// Image handling methods
+const openImageViewer = (imageUrl, setup) => {
+  // Open image in a new tab for now - could be enhanced with a modal later
+  window.open(imageUrl, '_blank')
+}
+
+const handleImageError = (event) => {
+  console.error('Failed to load bow setup image:', event.target.src)
+  event.target.style.display = 'none'
 }
 </script>
 

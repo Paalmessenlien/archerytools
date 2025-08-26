@@ -371,6 +371,55 @@
           <textarea id="description" v-model="setupData.description" class="form-textarea mobile-form-field mobile-touch-enhanced"></textarea>
         </div>
 
+        <!-- Bow Setup Images -->
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <i class="fas fa-camera mr-2 text-blue-600 dark:text-purple-400"></i>
+            Bow Setup Images ({{ attachedImages.length }}/3)
+          </label>
+          
+          <!-- Current Images Display -->
+          <div v-if="attachedImages.length" class="mb-3">
+            <div class="grid grid-cols-3 gap-3">
+              <div v-for="(image, index) in attachedImages" :key="index" class="relative group">
+                <img 
+                  :src="image.url" 
+                  :alt="image.alt || 'Bow setup image'" 
+                  class="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                />
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <button 
+                    @click="removeImage(index)" 
+                    class="p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                    type="button"
+                    title="Remove image"
+                  >
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Upload Component -->
+          <div v-if="attachedImages.length < 3">
+            <ImageUpload
+              :current-image-url="''"
+              alt-text="Bow setup image"
+              upload-path="bow_setup"
+              :max-size-bytes="5242880"
+              @upload-success="handleImageUpload"
+              @upload-error="handleImageError"
+            />
+          </div>
+          
+          <!-- Upload Guidelines -->
+          <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            Add up to 3 photos of your bow setup (max 5MB each)
+          </div>
+        </div>
+
       </form>
       </div>
       
@@ -404,6 +453,8 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { useApi } from '~/composables/useApi';
+import { useImageUpload } from '~/composables/useImageUpload';
+import ImageUpload from '~/components/ImageUpload.vue';
 
 const props = defineProps({
   modelValue: Object, // Represents newSetup object
@@ -412,6 +463,16 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'save', 'close']);
+
+// Image Upload Composable
+const imageUpload = useImageUpload({
+  context: 'bow_setup',
+  maxFiles: 3,
+  maxSize: 5
+});
+
+// State for attached images
+const attachedImages = ref([]);
 
 // Create a local ref to work with the form data
 const setupData = ref({
@@ -483,6 +544,19 @@ watch(() => props.modelValue, (newValue) => {
       bow_usage: Array.isArray(newValue.bow_usage) ? newValue.bow_usage : [],
       draw_weight: newValue.draw_weight || 45, // Ensure draw weight is set
     };
+    
+    // Initialize images if available (for editing mode)
+    if (newValue.images && Array.isArray(newValue.images)) {
+      attachedImages.value = newValue.images.map(img => ({
+        url: img.url || img.cdnUrl,
+        cdnUrl: img.cdnUrl,
+        originalName: img.originalName || 'bow-setup-image.jpg',
+        uploadedAt: img.uploadedAt || new Date().toISOString(),
+        alt: img.alt || `${newValue.name || 'Bow Setup'} - Setup Image`
+      }));
+    } else {
+      attachedImages.value = [];
+    }
   }
 }, { immediate: true });
 
@@ -557,7 +631,37 @@ const saveBowSetup = () => {
   };
   
   // This will ensure nock_weight and other extraneous fields are not sent
+  // Add images to payload
+  payload.images = attachedImages.value.map(img => ({
+    url: img.url,
+    cdnUrl: img.cdnUrl,
+    originalName: img.originalName,
+    alt: img.alt
+  }));
+  
   emit('save', payload);
+};
+
+// Image handling methods
+const handleImageUpload = (uploadResult) => {
+  console.log('Bow setup image uploaded:', uploadResult);
+  if (uploadResult && uploadResult.url) {
+    attachedImages.value.push({
+      url: uploadResult.url,
+      cdnUrl: uploadResult.cdnUrl,
+      originalName: uploadResult.originalName || 'bow-setup-image.jpg',
+      uploadedAt: new Date().toISOString(),
+      alt: `${setupData.value.name || 'Bow Setup'} - Setup Image`
+    });
+  }
+};
+
+const handleImageError = (error) => {
+  console.error('Bow setup image upload error:', error);
+};
+
+const removeImage = (index) => {
+  attachedImages.value.splice(index, 1);
 };
 
 // Load manufacturers on component mount

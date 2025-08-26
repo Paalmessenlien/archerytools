@@ -80,6 +80,27 @@
                   </span>
                 </div>
 
+                <!-- Equipment Images Gallery -->
+                <div v-if="equipment.images && equipment.images.length > 0" class="mb-3">
+                  <div class="flex gap-2 overflow-x-auto pb-2">
+                    <img
+                      v-for="(image, imageIndex) in equipment.images.slice(0, 4)"
+                      :key="imageIndex"
+                      :src="image.url || image.cdnUrl"
+                      :alt="image.alt || 'Equipment image'"
+                      class="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-90 transition-opacity"
+                      @click="openImageViewer(image.url || image.cdnUrl, equipment)"
+                      @error="handleImageError"
+                    />
+                    <div
+                      v-if="equipment.images.length > 4"
+                      class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600"
+                    >
+                      +{{ equipment.images.length - 4 }}
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Specifications -->
                 <div v-if="equipment.specifications" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-3">
                   <div
@@ -261,5 +282,16 @@ const formatDate = (dateString) => {
   } catch {
     return dateString
   }
+}
+
+// Image handling methods
+const openImageViewer = (imageUrl, equipment) => {
+  // Open image in a new tab for now - could be enhanced with a modal later
+  window.open(imageUrl, '_blank')
+}
+
+const handleImageError = (event) => {
+  console.error('Failed to load equipment image:', event.target.src)
+  event.target.style.display = 'none'
 }
 </script>
