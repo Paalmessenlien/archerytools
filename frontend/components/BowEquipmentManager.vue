@@ -62,10 +62,18 @@
                   <!-- Equipment Image/Icon -->
                   <div class="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <img
-                      v-if="equipmentItem.image_url"
+                      v-if="equipmentItem.images && equipmentItem.images.length > 0"
+                      :src="equipmentItem.images[0].url || equipmentItem.images[0].cdnUrl"
+                      :alt="equipmentItem.images[0].alt || equipmentItem.model_name"
+                      class="w-full h-full object-cover rounded-lg"
+                      @error="handleImageError"
+                    />
+                    <img
+                      v-else-if="equipmentItem.image_url"
                       :src="equipmentItem.image_url"
                       :alt="equipmentItem.model_name"
                       class="w-full h-full object-cover rounded-lg"
+                      @error="handleImageError"
                     />
                     <i v-else :class="getCategoryIcon(equipmentItem.category_name)" class="text-xl text-gray-400"></i>
                   </div>
@@ -79,6 +87,27 @@
                       {{ equipmentItem.description }}
                     </p>
                     
+                    <!-- Equipment Images Gallery -->
+                    <div v-if="equipmentItem.images && equipmentItem.images.length > 1" class="mt-3">
+                      <div class="flex gap-2 overflow-x-auto pb-1">
+                        <img
+                          v-for="(image, imageIndex) in equipmentItem.images.slice(0, 4)"
+                          :key="imageIndex"
+                          :src="image.url || image.cdnUrl"
+                          :alt="image.alt || 'Equipment image'"
+                          class="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
+                          @click="openImageViewer(image.url || image.cdnUrl, equipmentItem)"
+                          @error="handleImageError"
+                        />
+                        <div
+                          v-if="equipmentItem.images.length > 4"
+                          class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 flex-shrink-0"
+                        >
+                          +{{ equipmentItem.images.length - 4 }}
+                        </div>
+                      </div>
+                    </div>
+
                     <!-- Key Specifications -->
                     <div v-if="equipmentItem.specifications" class="mt-2 flex flex-wrap gap-2">
                       <span
@@ -104,10 +133,20 @@
               <!-- Actions -->
               <div class="flex items-center space-x-2 ml-4">
                 <CustomButton
+                  @click="viewEquipmentDetails(equipmentItem)"
+                  variant="text"
+                  size="small"
+                  class="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  title="View Details"
+                >
+                  <i class="fas fa-eye"></i>
+                </CustomButton>
+                <CustomButton
                   @click="editEquipment(equipmentItem)"
                   variant="text"
                   size="small"
                   class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  title="Edit Equipment"
                 >
                   <i class="fas fa-edit"></i>
                 </CustomButton>
@@ -116,6 +155,7 @@
                   variant="text"
                   size="small"
                   class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  title="Remove Equipment"
                 >
                   <i class="fas fa-trash"></i>
                 </CustomButton>
@@ -244,6 +284,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
 
 const props = defineProps({
@@ -257,6 +298,7 @@ const emit = defineEmits(['equipment-updated', 'show-notification'])
 
 // Composables
 const api = useApi()
+const router = useRouter()
 
 // State
 const equipment = ref([])
@@ -324,6 +366,11 @@ const handleEquipmentAdded = async (addedEquipment) => {
     console.error('Error handling equipment added:', error)
     emit('show-notification', 'Failed to refresh equipment list', 'error')
   }
+}
+
+const viewEquipmentDetails = (equipmentItem) => {
+  // Navigate to equipment detail page
+  router.push(`/equipment/${equipmentItem.id}`)
 }
 
 const editEquipment = (equipmentItem) => {
@@ -459,6 +506,17 @@ const formatDate = (dateString) => {
   } catch {
     return 'Unknown'
   }
+}
+
+// Image handling methods
+const openImageViewer = (imageUrl, equipmentItem) => {
+  // Open image in a new tab for now - could be enhanced with a modal later
+  window.open(imageUrl, '_blank')
+}
+
+const handleImageError = (event) => {
+  console.error('Failed to load equipment image:', event.target.src)
+  event.target.style.display = 'none'
 }
 
 // Watchers
