@@ -6052,6 +6052,178 @@ def add_manual_change_note(current_user, setup_id):
         print(f"Error adding manual change note: {e}")
         return jsonify({'error': 'Failed to add change note'}), 500
 
+# ===== STANDALONE EQUIPMENT ENDPOINT =====
+
+@app.route('/api/equipment/<int:equipment_id>', methods=['GET'])
+@token_required
+def get_equipment_by_id(current_user, equipment_id):
+    """Get equipment details by ID (standalone endpoint for equipment detail pages)"""
+    try:
+        # Using unified database - ArrowDatabase
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get equipment with bow setup context, ensuring user owns the setup
+        cursor.execute('''
+            SELECT be.*, bs.user_id, bs.name as setup_name, bs.bow_type
+            FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.id = ? AND bs.user_id = ? AND be.is_active = 1
+        ''', (equipment_id, current_user['id']))
+        
+        equipment_data = cursor.fetchone()
+        if not equipment_data:
+            conn.close()
+            return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Convert to dict for JSON serialization
+        equipment = dict(equipment_data)
+        
+        # Parse custom specifications if they exist
+        if equipment.get('custom_specifications'):
+            try:
+                import json
+                equipment['specifications'] = json.loads(equipment['custom_specifications'])
+            except:
+                equipment['specifications'] = {}
+        else:
+            equipment['specifications'] = {}
+        
+        # Add setup context
+        equipment['setup_context'] = {
+            'id': equipment['bow_setup_id'],
+            'name': equipment['setup_name'],
+            'bow_type': equipment['bow_type']
+        }
+        
+        # Format installation date if it exists
+        if equipment.get('installation_date'):
+            equipment['installation_date'] = equipment['installation_date']
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'equipment': equipment
+        })
+        
+    except Exception as e:
+        print(f"Error getting equipment by ID: {e}")
+        if 'conn' in locals():
+            try:
+                conn.close()
+            except:
+                pass
+        return jsonify({'error': 'Failed to get equipment details'}), 500
+
+@app.route('/api/equipment/<int:equipment_id>', methods=['PATCH'])
+@token_required
+def update_equipment_by_id(current_user, equipment_id):
+    """Update equipment details by ID (standalone endpoint for equipment detail pages)"""
+    try:
+        # Using unified database - ArrowDatabase
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get equipment with bow setup context, ensuring user owns the setup
+        cursor.execute('''
+            SELECT be.*, bs.user_id, bs.name as setup_name, bs.bow_type
+            FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.id = ? AND bs.user_id = ?
+        ''', (equipment_id, current_user['id']))
+        
+        equipment_data = cursor.fetchone()
+        if not equipment_data:
+            conn.close()
+            return jsonify({'error': 'Equipment not found or access denied'}), 404
+        
+        # Get the update data from request
+        data = request.get_json()
+        if not data:
+            conn.close()
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Prepare update fields
+        update_fields = []
+        params = []
+        
+        # Handle is_active field
+        if 'is_active' in data:
+            update_fields.append('is_active = ?')
+            params.append(1 if data['is_active'] else 0)
+        
+        # Handle other updatable fields
+        updatable_fields = ['manufacturer_name', 'model_name', 'category_name', 'notes', 'image_url']
+        for field in updatable_fields:
+            if field in data:
+                update_fields.append(f'{field} = ?')
+                params.append(data[field])
+        
+        # Handle custom specifications
+        if 'specifications' in data:
+            update_fields.append('custom_specifications = ?')
+            params.append(json.dumps(data['specifications']))
+        
+        if not update_fields:
+            conn.close()
+            return jsonify({'error': 'No valid fields to update'}), 400
+        
+        # Add equipment_id to params for WHERE clause
+        params.append(equipment_id)
+        
+        # Update the equipment
+        update_query = f'''
+            UPDATE bow_equipment 
+            SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        '''
+        
+        cursor.execute(update_query, params)
+        conn.commit()
+        
+        # Get the updated equipment data
+        cursor.execute('''
+            SELECT be.*, bs.user_id, bs.name as setup_name, bs.bow_type
+            FROM bow_equipment be
+            JOIN bow_setups bs ON be.bow_setup_id = bs.id
+            WHERE be.id = ? AND bs.user_id = ?
+        ''', (equipment_id, current_user['id']))
+        
+        updated_equipment = dict(cursor.fetchone())
+        
+        # Parse custom specifications if they exist
+        if updated_equipment.get('custom_specifications'):
+            try:
+                updated_equipment['specifications'] = json.loads(updated_equipment['custom_specifications'])
+            except:
+                updated_equipment['specifications'] = {}
+        else:
+            updated_equipment['specifications'] = {}
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'is_active': updated_equipment['is_active'] == 1,
+            'equipment': updated_equipment
+        })
+        
+    except Exception as e:
+        print(f"Error updating equipment by ID: {e}")
+        if 'conn' in locals():
+            try:
+                conn.close()
+            except:
+                pass
+        return jsonify({'error': 'Failed to update equipment'}), 500
+
 # ===== GUIDE WALKTHROUGH API ENDPOINTS =====
 
 @app.route('/api/guides', methods=['GET'])
@@ -7467,13 +7639,31 @@ def upload_image(current_user):
                 if not updated_user:
                     print(f"Warning: Failed to update user profile picture URL in database")
             
-            return jsonify({
+            # Enhanced response for modular system compatibility
+            response_data = {
                 'success': True,
-                'cdn_url': result['cdn_url'],
-                'cdn_type': result['cdn_type'],
-                'upload_path': upload_path,
-                'file_size': result.get('bytes', size)
-            })
+                'data': {
+                    'cdn_url': result['cdn_url'],
+                    'image_id': f"{upload_path}_{current_user['id']}_{uuid.uuid4().hex[:8]}",
+                    'original_url': result.get('original_url', result['cdn_url']),
+                    'cdn_type': result['cdn_type'],
+                    'upload_path': upload_path,
+                    'file_size': result.get('bytes', size),
+                    'uploaded_at': datetime.utcnow().isoformat(),
+                    'metadata': {
+                        'original_filename': file.filename,
+                        'file_extension': file_extension,
+                        'context': request.form.get('context', upload_path),
+                        'entity_id': request.form.get('entityId')
+                    }
+                },
+                'message': f'Image uploaded successfully to {cdn_type.upper()} CDN'
+            }
+            
+            # Log successful upload
+            print(f"✅ Image upload successful: {result['cdn_url']} (size: {size} bytes, type: {cdn_type})")
+            
+            return jsonify(response_data)
                 
         except Exception as e:
             print(f"Image upload error: {e}")
@@ -11912,6 +12102,8 @@ def get_journal_entries(current_user):
         
         # Get query parameters for filtering
         bow_setup_id = request.args.get('bow_setup_id', type=int)
+        linked_equipment = request.args.get('linked_equipment', type=int)
+        linked_arrow = request.args.get('linked_arrow', type=int)
         entry_type = request.args.get('entry_type')
         search_query = request.args.get('search')
         tags = request.args.get('tags')  # Comma-separated tags
@@ -11928,6 +12120,26 @@ def get_journal_entries(current_user):
         if bow_setup_id:
             where_conditions.append('je.bow_setup_id = ?')
             params.append(bow_setup_id)
+        
+        if linked_equipment:
+            where_conditions.append('''
+                je.id IN (
+                    SELECT jer.journal_entry_id 
+                    FROM journal_equipment_references jer 
+                    WHERE jer.bow_equipment_id = ?
+                )
+            ''')
+            params.append(linked_equipment)
+        
+        if linked_arrow:
+            where_conditions.append('''
+                je.id IN (
+                    SELECT jer.journal_entry_id 
+                    FROM journal_equipment_references jer 
+                    WHERE jer.arrow_id = ?
+                )
+            ''')
+            params.append(linked_arrow)
         
         if entry_type:
             where_conditions.append('je.entry_type = ?')
@@ -12072,32 +12284,56 @@ def create_journal_entry(current_user):
                 cursor.execute('''
                     INSERT INTO journal_attachments 
                     (journal_entry_id, filename, original_filename, file_type, 
-                     cdn_url, description, is_primary)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                     file_path, file_size, mime_type, cdn_url, description, is_primary)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     entry_id,
                     f"journal_image_{entry_id}_{i}",
                     image.get('alt', f'Journal image {i+1}'),
                     'image',
+                    image['url'],  # Use CDN URL as file_path for now
+                    image.get('file_size', 0),  # Default to 0 if not provided
+                    image.get('mime_type', 'image/jpeg'),  # Default mime type
                     image['url'],
                     image.get('alt', ''),
                     i == 0  # First image is primary
                 ))
         
-        # Handle equipment references if provided
-        if data.get('equipment_references'):
-            for ref in data['equipment_references']:
+        # Handle equipment links if provided
+        if data.get('linked_equipment'):
+            if isinstance(data['linked_equipment'], int):
+                # Simple equipment ID linking
                 cursor.execute('''
                     INSERT INTO journal_equipment_references 
-                    (journal_entry_id, bow_equipment_id, arrow_id, reference_type, notes)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (
-                    entry_id,
-                    ref.get('bow_equipment_id'),
-                    ref.get('arrow_id'),
-                    ref.get('reference_type', 'mentioned'),
-                    ref.get('notes')
-                ))
+                    (journal_entry_id, bow_equipment_id, reference_type)
+                    VALUES (?, ?, ?)
+                ''', (entry_id, data['linked_equipment'], 'mentioned'))
+            else:
+                # Array of equipment IDs
+                for equipment_id in data['linked_equipment']:
+                    cursor.execute('''
+                        INSERT INTO journal_equipment_references 
+                        (journal_entry_id, bow_equipment_id, reference_type)
+                        VALUES (?, ?, ?)
+                    ''', (entry_id, equipment_id, 'mentioned'))
+        
+        # Handle arrow links if provided
+        if data.get('linked_arrow'):
+            if isinstance(data['linked_arrow'], int):
+                # Simple arrow ID linking
+                cursor.execute('''
+                    INSERT INTO journal_equipment_references 
+                    (journal_entry_id, arrow_id, reference_type)
+                    VALUES (?, ?, ?)
+                ''', (entry_id, data['linked_arrow'], 'mentioned'))
+            else:
+                # Array of arrow IDs
+                for arrow_id in data['linked_arrow']:
+                    cursor.execute('''
+                        INSERT INTO journal_equipment_references 
+                        (journal_entry_id, arrow_id, reference_type)
+                        VALUES (?, ?, ?)
+                    ''', (entry_id, arrow_id, 'mentioned'))
         
         # Handle change log links if provided
         if data.get('change_log_links'):
@@ -12184,7 +12420,15 @@ def get_journal_entry(current_user, entry_id):
                     'uploadedAt': attachment['created_at']
                 })
         
-        # Get equipment references
+        # Get equipment links (new schema from migration 043)
+        cursor.execute('''
+            SELECT * FROM equipment_journal_links 
+            WHERE journal_entry_id = ?
+            ORDER BY created_at ASC
+        ''', (entry_id,))
+        entry['equipment_links'] = [dict(row) for row in cursor.fetchall()]
+        
+        # Legacy equipment references (fallback for old entries)
         cursor.execute('''
             SELECT 
                 jer.*,
@@ -12195,7 +12439,8 @@ def get_journal_entry(current_user, entry_id):
             LEFT JOIN arrows a ON jer.arrow_id = a.id
             WHERE jer.journal_entry_id = ?
         ''', (entry_id,))
-        entry['equipment_references'] = [dict(row) for row in cursor.fetchall()]
+        legacy_refs = [dict(row) for row in cursor.fetchall()]
+        entry['equipment_references'] = legacy_refs
         
         # Get change log links
         cursor.execute('''
@@ -12270,13 +12515,16 @@ def update_journal_entry(current_user, entry_id):
                 cursor.execute('''
                     INSERT INTO journal_attachments 
                     (journal_entry_id, filename, original_filename, file_type, 
-                     cdn_url, description, is_primary)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                     file_path, file_size, mime_type, cdn_url, description, is_primary)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     entry_id,
                     f"journal_image_{entry_id}_{i}",
                     image.get('alt', f'Journal image {i+1}'),
                     'image',
+                    image['url'],  # Use CDN URL as file_path for now
+                    image.get('file_size', 0),  # Default to 0 if not provided
+                    image.get('mime_type', 'image/jpeg'),  # Default mime type
                     image['url'],
                     image.get('alt', ''),
                     i == 0  # First image is primary
@@ -12464,6 +12712,271 @@ def get_journal_entry_types():
     ]
     
     return jsonify({'entry_types': entry_types})
+
+@app.route('/api/journal/templates', methods=['GET'])
+@token_required
+def get_journal_templates(current_user):
+    """Get available journal templates"""
+    try:
+        db = get_unified_db()
+        cursor = db.cursor()
+        
+        # Get templates available to the current user (system templates + their own templates)
+        cursor.execute('''
+            SELECT id, name, description, category, template_data, is_system_template, 
+                   is_public, usage_count, last_used_at, created_at, updated_at
+            FROM journal_templates 
+            WHERE is_system_template = TRUE 
+               OR created_by = ?
+               OR is_public = TRUE
+            ORDER BY is_system_template DESC, usage_count DESC, created_at DESC
+        ''', (current_user['id'],))
+        
+        templates = []
+        for row in cursor.fetchall():
+            template = {
+                'id': row['id'],
+                'name': row['name'],
+                'description': row['description'],
+                'category': row['category'],
+                'template_data': row['template_data'],
+                'is_system_template': bool(row['is_system_template']),
+                'is_public': bool(row['is_public']),
+                'usage_count': row['usage_count'] or 0,
+                'last_used_at': row['last_used_at'],
+                'created_at': row['created_at'],
+                'updated_at': row['updated_at']
+            }
+            templates.append(template)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'templates': templates
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error getting journal templates: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load journal templates'
+        }), 500
+
+@app.route('/api/journal/filter-presets', methods=['GET'])
+@token_required
+def get_filter_presets(current_user):
+    """Get user's filter presets"""
+    try:
+        db = get_unified_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, filter_configuration, icon, is_default, created_at, updated_at
+            FROM journal_filter_presets 
+            WHERE user_id = ?
+            ORDER BY is_default DESC, name ASC
+        ''', (current_user['id'],))
+        
+        presets = []
+        for row in cursor.fetchall():
+            preset = {
+                'id': row['id'],
+                'name': row['name'],
+                'filter_configuration': row['filter_configuration'],
+                'icon': row['icon'] or 'fas fa-filter',
+                'is_default': bool(row['is_default']),
+                'created_at': row['created_at'],
+                'updated_at': row['updated_at']
+            }
+            presets.append(preset)
+        
+        return jsonify({
+            'success': True,
+            'data': presets
+        })
+        
+    except Exception as e:
+        print(f"Error getting filter presets: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load filter presets'
+        }), 500
+
+@app.route('/api/journal/filter-presets', methods=['POST'])
+@token_required
+def create_filter_preset(current_user):
+    """Create a new filter preset"""
+    try:
+        data = request.get_json()
+        
+        if not data.get('name') or not data.get('filter_configuration'):
+            return jsonify({'error': 'Name and filter configuration are required'}), 400
+        
+        db = get_unified_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            INSERT INTO journal_filter_presets 
+            (user_id, name, filter_configuration, icon, is_default)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            current_user['id'],
+            data['name'],
+            data['filter_configuration'],
+            data.get('icon', 'fas fa-filter'),
+            data.get('is_default', False)
+        ))
+        
+        preset_id = cursor.lastrowid
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': preset_id,
+                'message': 'Filter preset created successfully'
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating filter preset: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to create filter preset'
+        }), 500
+
+@app.route('/api/change-log', methods=['GET'])
+@token_required
+def get_change_log_entries(current_user):
+    """Get change log entries for the current user"""
+    try:
+        db = get_unified_db()
+        cursor = db.cursor()
+        
+        # Get query parameters
+        bow_setup_id = request.args.get('bow_setup_id')
+        change_type = request.args.get('change_type')
+        limit = min(int(request.args.get('limit', 50)), 100)
+        offset = int(request.args.get('offset', 0))
+        
+        # Build query
+        query = '''
+            SELECT cle.*, bs.name as bow_setup_name
+            FROM change_log_entries cle
+            LEFT JOIN bow_setups bs ON cle.bow_setup_id = bs.id
+            WHERE cle.user_id = ?
+        '''
+        params = [current_user['id']]
+        
+        if bow_setup_id:
+            query += ' AND cle.bow_setup_id = ?'
+            params.append(bow_setup_id)
+            
+        if change_type:
+            query += ' AND cle.change_type = ?'
+            params.append(change_type)
+        
+        query += ' ORDER BY cle.created_at DESC LIMIT ? OFFSET ?'
+        params.extend([limit, offset])
+        
+        cursor.execute(query, params)
+        entries = []
+        
+        for row in cursor.fetchall():
+            entry = {
+                'id': row['id'],
+                'user_id': row['user_id'],
+                'bow_setup_id': row['bow_setup_id'],
+                'bow_setup_name': row['bow_setup_name'],
+                'change_type': row['change_type'],
+                'change_category': row['change_category'],
+                'item_type': row['item_type'],
+                'item_name': row['item_name'],
+                'old_value': json.loads(row['old_value']) if row['old_value'] else None,
+                'new_value': json.loads(row['new_value']) if row['new_value'] else None,
+                'reason': row['reason'],
+                'notes': row['notes'],
+                'created_at': row['created_at']
+            }
+            entries.append(entry)
+        
+        return jsonify({
+            'success': True,
+            'data': entries,
+            'pagination': {
+                'limit': limit,
+                'offset': offset,
+                'has_more': len(entries) == limit
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error getting change log entries: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load change log entries'
+        }), 500
+
+@app.route('/api/change-log', methods=['POST'])
+@token_required
+def create_change_log_entry(current_user):
+    """Create a new change log entry"""
+    try:
+        data = request.get_json()
+        
+        # Validation
+        required_fields = ['change_type', 'change_category', 'item_type', 'item_name']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'{field} is required'}), 400
+        
+        db = get_unified_db()
+        cursor = db.cursor()
+        
+        # Validate bow setup belongs to user if provided
+        if data.get('bow_setup_id'):
+            cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?', 
+                         (data['bow_setup_id'], current_user['id']))
+            if not cursor.fetchone():
+                return jsonify({'error': 'Invalid bow setup'}), 400
+        
+        # Create change log entry
+        cursor.execute('''
+            INSERT INTO change_log_entries 
+            (user_id, bow_setup_id, change_type, change_category, item_type, 
+             item_name, old_value, new_value, reason, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            current_user['id'],
+            data.get('bow_setup_id'),
+            data['change_type'],
+            data['change_category'],
+            data['item_type'],
+            data['item_name'],
+            json.dumps(data.get('old_value')) if data.get('old_value') else None,
+            json.dumps(data.get('new_value')) if data.get('new_value') else None,
+            data.get('reason'),
+            data.get('notes')
+        ))
+        
+        change_log_id = cursor.lastrowid
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': change_log_id,
+                'message': 'Change log entry created successfully'
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating change log entry: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to create change log entry'
+        }), 500
 
 @app.route('/api/journal/entries/from-change-log', methods=['POST'])
 @token_required

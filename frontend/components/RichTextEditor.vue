@@ -106,13 +106,15 @@
         </div>
         
         <div class="mention-search">
-          <md-outlined-text-field
-            v-model="equipmentSearchQuery"
-            placeholder="Search equipment..."
-            class="mention-search-input"
-          >
-            <i slot="leading-icon" class="fas fa-search"></i>
-          </md-outlined-text-field>
+          <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input
+              v-model="equipmentSearchQuery"
+              type="text"
+              placeholder="Search equipment..."
+              class="mention-search-input"
+            />
+          </div>
         </div>
 
         <div class="mention-categories">
@@ -442,6 +444,15 @@ onMounted(() => {
   transition: border-color 0.2s ease;
 }
 
+.rich-text-editor.has-error {
+  border-color: var(--md-sys-color-error) !important;
+}
+
+.rich-text-editor.has-error .editor-content {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container) !important;
+}
+
 .rich-text-editor:focus-within {
   border-color: var(--md-sys-color-primary);
 }
@@ -501,8 +512,8 @@ onMounted(() => {
   line-height: 1.6;
   font-family: inherit;
   font-size: 1rem;
-  color: var(--md-sys-color-on-surface);
-  background: transparent;
+  color: var(--md-sys-color-on-surface) !important;
+  background: var(--md-sys-color-surface);
   cursor: text;
 }
 
@@ -510,8 +521,12 @@ onMounted(() => {
   color: var(--md-sys-color-error);
 }
 
-.editor-content.is-empty {
+.editor-content.is-empty:not(:focus) {
   color: transparent;
+}
+
+.editor-content.is-empty:focus {
+  color: var(--md-sys-color-on-surface);
 }
 
 .editor-placeholder {
@@ -644,8 +659,40 @@ onMounted(() => {
   padding: 1rem 1.5rem;
 }
 
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  z-index: 1;
+}
+
 .mention-search-input {
   width: 100%;
+  padding: 12px 16px 12px 40px;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 8px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.mention-search-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+.mention-search-input:hover {
+  border-color: var(--md-sys-color-on-surface-variant);
 }
 
 .mention-categories {

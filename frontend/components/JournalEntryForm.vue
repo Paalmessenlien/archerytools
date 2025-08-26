@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 
 const props = defineProps({
   mode: {
@@ -428,7 +428,9 @@ const handleSubmit = async () => {
         ? formData.value.tagsString.split(',').map(tag => tag.trim()).filter(Boolean)
         : [],
       is_private: formData.value.is_private,
-      images: formData.value.images || []
+      images: formData.value.images || [],
+      linked_equipment: formData.value.selectedEquipment || [],
+      linked_arrow: formData.value.selectedArrow || null
     }
 
     await emit('save', submitData)
@@ -464,7 +466,7 @@ watch(() => props.entry, (newEntry) => {
   if ((props.show || props.mode === 'inline') && newEntry) {
     populateForm(newEntry)
   }
-})
+}, { immediate: true })
 
 // Helper function to format last saved time
 const formatLastSaved = (timestamp) => {
@@ -575,20 +577,18 @@ const restoreFromDraft = (draftData) => {
   formState.lastSaved = draftData.timestamp
 }
 
-// Initialize form for inline mode
+// Initialize form on mount
 onMounted(() => {
-  if (props.mode === 'inline') {
-    if (props.entry) {
-      populateForm(props.entry)
-    } else {
-      resetForm()
-      
-      // Check for auto-saved draft for new entries
-      const draft = loadAutoSavedDraft()
-      if (draft) {
-        // Show restore option to user
-        emit('draft-found', draft)
-      }
+  if (props.entry) {
+    populateForm(props.entry)
+  } else if (props.mode === 'inline') {
+    resetForm()
+    
+    // Check for auto-saved draft for new entries
+    const draft = loadAutoSavedDraft()
+    if (draft) {
+      // Show restore option to user
+      emit('draft-found', draft)
     }
   }
 })
@@ -640,11 +640,13 @@ const onTemplateApplied = (templateData) => {
   
   // Show success message
   if (templateData.name) {
-    notifications.showSuccess(`Applied "${templateData.name}" template`)
+    console.log(`Applied "${templateData.name}" template`)
   }
   
-  // Start auto-save timer
-  startAutoSaveTimer()
+  // Trigger auto-save after template application
+  if (formState.autoSaveEnabled && !isEditing.value) {
+    scheduleAutoSave()
+  }
 }
 
 // Prevent accidental navigation with unsaved changes
@@ -726,8 +728,9 @@ if (process.client) {
   border-radius: 16px;
   max-width: 600px;
   width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--md-sys-color-outline-variant);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
@@ -765,8 +768,9 @@ if (process.client) {
 
 .modal-body {
   padding: 1.5rem;
-  max-height: 60vh;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0; /* Ensures proper flex shrinking */
 }
 
 .modal-footer {
@@ -866,6 +870,8 @@ if (process.client) {
   gap: 1rem;
   padding: 1.5rem;
   border-top: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0; /* Prevents footer from shrinking */
+  background: var(--md-sys-color-surface); /* Ensures footer is visible */
 }
 
 .footer-info {
@@ -964,6 +970,36 @@ if (process.client) {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+  
+  .modal-content {
+    max-height: calc(100vh - 4rem);
+    min-height: auto;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .modal-footer {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .footer-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .footer-actions button {
+    width: 100%;
+    min-height: 48px; /* Touch-friendly size */
+  }
+  
   .inline-form-container {
     padding: 1.5rem;
   }
@@ -974,15 +1010,12 @@ if (process.client) {
   
   .form-buttons {
     flex-direction: column;
+    gap: 0.75rem;
   }
   
-  .footer-actions {
-    flex-direction: column;
-  }
-  
-  .modal-wrapper md-dialog {
-    --md-dialog-container-max-width: 100%;
-    --md-dialog-container-margin: 1rem;
+  .form-buttons button {
+    width: 100%;
+    min-height: 48px; /* Touch-friendly size */
   }
   
   .content-progress {
@@ -993,6 +1026,35 @@ if (process.client) {
   
   .progress-text {
     align-self: center;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 0.25rem;
+    padding-top: 1rem;
+  }
+  
+  .modal-content {
+    max-height: calc(100vh - 2rem);
+    border-radius: 12px;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-body {
+    padding: 0.75rem;
+  }
+  
+  .modal-footer {
+    padding: 0.75rem;
+  }
+  
+  .modal-title {
+    font-size: 1.125rem;
   }
 }
 </style>

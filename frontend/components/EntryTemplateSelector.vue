@@ -1,428 +1,311 @@
 <template>
   <div class="entry-template-selector">
-    <div class="template-header">
-      <h3 class="template-title">
-        <i class="fas fa-magic mr-2"></i>
-        Choose a Template
-      </h3>
-      <p class="template-subtitle">Get started faster with pre-filled content</p>
+    <!-- Header -->
+    <div class="selector-header">
+      <div class="header-content">
+        <h3 class="selector-title">
+          <i class="fas fa-magic mr-2"></i>
+          Choose a Template
+        </h3>
+        <p class="selector-subtitle">
+          {{ templates?.length || 0 }} template{{ (templates?.length || 0) === 1 ? '' : 's' }} available
+          <span v-if="selectedEntryType"> for {{ getEntryTypeDisplayName(selectedEntryType) }}</span>
+        </p>
+      </div>
+      <button 
+        @click="$emit('cancel')"
+        class="close-btn"
+        type="button"
+        aria-label="Close template selector"
+      >
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="template-options">
-      <!-- No Template Option -->
-      <div 
-        class="template-option"
-        :class="{ selected: !selectedTemplate }"
-        @click="selectTemplate(null)"
-      >
-        <div class="template-icon">
-          <i class="fas fa-edit"></i>
-        </div>
-        <div class="template-content">
-          <h4>Blank Entry</h4>
-          <p>Start with a completely blank entry</p>
-        </div>
+    <!-- Template Grid -->
+    <div class="templates-container">
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading templates...</p>
       </div>
 
-      <!-- System Templates -->
-      <div 
-        v-for="template in systemTemplates" 
-        :key="`system-${template.id}`"
-        class="template-option"
-        :class="{ selected: selectedTemplate?.id === template.id }"
-        @click="selectTemplate(template)"
-      >
-        <div class="template-icon" :class="`icon-${template.entry_type}`">
-          <i :class="getEntryTypeIcon(template.entry_type)"></i>
+      <div v-else-if="error" class="error-state">
+        <div class="error-icon">
+          <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <div class="template-content">
-          <h4>{{ template.name }}</h4>
-          <p>{{ template.description }}</p>
-          <div class="template-preview">
-            <span class="preview-title">{{ template.title_template }}</span>
-          </div>
-        </div>
+        <h4>Failed to Load Templates</h4>
+        <p>{{ error }}</p>
+        <button @click="loadTemplates" class="retry-btn">
+          <i class="fas fa-redo mr-1"></i>
+          Try Again
+        </button>
       </div>
 
-      <!-- User Templates -->
-      <div 
-        v-if="userTemplates.length" 
-        class="template-divider"
-      >
-        <span>My Templates</span>
+      <div v-else-if="templates.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <h4>No Templates Found</h4>
+        <p>No templates are available yet. Start by creating your first template.</p>
+        <button @click="$emit('new-template')" class="create-template-btn">
+          <i class="fas fa-plus mr-1"></i>
+          Create New Template
+        </button>
       </div>
-      
-      <div 
-        v-for="template in userTemplates" 
-        :key="`user-${template.id}`"
-        class="template-option user-template"
-        :class="{ selected: selectedTemplate?.id === template.id }"
-        @click="selectTemplate(template)"
-      >
-        <div class="template-icon">
-          <i class="fas fa-user-edit"></i>
-        </div>
-        <div class="template-content">
-          <h4>{{ template.name }}</h4>
-          <p>{{ template.description || 'Custom template' }}</p>
-          <div class="template-preview">
-            <span class="preview-title">{{ template.title_template }}</span>
-          </div>
-        </div>
-        <div class="template-actions">
-          <button 
-            @click.stop="editTemplate(template)" 
-            class="action-btn"
-            title="Edit template"
-          >
-            <i class="fas fa-edit"></i>
-          </button>
-          <button 
-            @click.stop="deleteTemplate(template)" 
-            class="action-btn delete"
-            title="Delete template"
-          >
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Template Preview -->
-    <div v-if="selectedTemplate" class="template-preview-section">
-      <h4 class="preview-header">Template Preview</h4>
-      <div class="preview-content">
-        <div class="preview-field">
-          <label>Title:</label>
-          <span>{{ selectedTemplate.title_template }}</span>
-        </div>
-        <div class="preview-field">
-          <label>Content:</label>
-          <div class="preview-text">{{ selectedTemplate.content_template }}</div>
-        </div>
-        <div v-if="selectedTemplate.suggested_tags" class="preview-field">
-          <label>Suggested Tags:</label>
-          <div class="preview-tags">
-            <span 
-              v-for="tag in parseTags(selectedTemplate.suggested_tags)" 
-              :key="tag"
-              class="preview-tag"
+      <div v-else class="templates-grid">
+        <!-- System Templates Section -->
+        <div v-if="systemTemplates.length > 0" class="template-section">
+          <h4 class="section-heading">
+            <i class="fas fa-star mr-2"></i>
+            System Templates
+          </h4>
+          <div class="template-cards">
+            <div 
+              v-for="template in systemTemplates" 
+              :key="`system-${template.id}`"
+              class="template-card system-template"
+              @click="selectTemplate(template)"
             >
-              {{ tag }}
-            </span>
+              <div class="template-header">
+                <div class="template-icon">
+                  <i :class="getTemplateIcon(template.category)"></i>
+                </div>
+                <div class="template-meta">
+                  <span class="template-category">{{ getCategoryDisplayName(template.category) }}</span>
+                  <div class="template-stats">
+                    <span class="usage-count" v-if="template.usage_count > 0">
+                      <i class="fas fa-fire"></i>
+                      {{ template.usage_count }}
+                    </span>
+                    <span class="system-badge">
+                      <i class="fas fa-shield-alt"></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="template-content">
+                <h5 class="template-name">{{ template.name }}</h5>
+                <p class="template-description">{{ template.description }}</p>
+                
+                <!-- Template Preview -->
+                <div class="template-preview" v-if="template.parsed_data">
+                  <div class="preview-field">
+                    <strong>Title:</strong> {{ template.parsed_data.title || 'Dynamic title' }}
+                  </div>
+                  <div class="preview-field">
+                    <strong>Type:</strong> {{ getEntryTypeDisplayName(template.parsed_data.entry_type) }}
+                  </div>
+                  <div class="preview-field" v-if="template.parsed_data.suggested_tags?.length">
+                    <strong>Tags:</strong> {{ template.parsed_data.suggested_tags.join(', ') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="template-actions">
+                <button class="select-btn" @click.stop="selectTemplate(template)">
+                  <i class="fas fa-check mr-1"></i>
+                  Use Template
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Templates Section -->
+        <div v-if="userTemplates.length > 0" class="template-section">
+          <h4 class="section-heading">
+            <i class="fas fa-user mr-2"></i>
+            Your Templates
+          </h4>
+          <div class="template-cards">
+            <div 
+              v-for="template in userTemplates" 
+              :key="`user-${template.id}`"
+              class="template-card user-template"
+              @click="selectTemplate(template)"
+            >
+              <div class="template-header">
+                <div class="template-icon">
+                  <i :class="getTemplateIcon(template.category)"></i>
+                </div>
+                <div class="template-meta">
+                  <span class="template-category">{{ getCategoryDisplayName(template.category) }}</span>
+                  <div class="template-stats">
+                    <span class="usage-count" v-if="template.usage_count > 0">
+                      <i class="fas fa-fire"></i>
+                      {{ template.usage_count }}
+                    </span>
+                    <span class="created-date">
+                      {{ formatDate(template.created_at) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="template-content">
+                <h5 class="template-name">{{ template.name }}</h5>
+                <p class="template-description">{{ template.description }}</p>
+                
+                <!-- Template Preview -->
+                <div class="template-preview" v-if="template.parsed_data">
+                  <div class="preview-field">
+                    <strong>Title:</strong> {{ template.parsed_data.title || 'Dynamic title' }}
+                  </div>
+                  <div class="preview-field">
+                    <strong>Type:</strong> {{ getEntryTypeDisplayName(template.parsed_data.entry_type) }}
+                  </div>
+                  <div class="preview-field" v-if="template.parsed_data.suggested_tags?.length">
+                    <strong>Tags:</strong> {{ template.parsed_data.suggested_tags.join(', ') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="template-actions">
+                <button class="select-btn" @click.stop="selectTemplate(template)">
+                  <i class="fas fa-check mr-1"></i>
+                  Use Template
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="template-actions-footer">
-      <CustomButton @click="$emit('cancel')" variant="outlined">
-        Cancel
-      </CustomButton>
-      <CustomButton @click="createNewTemplate" variant="outlined" icon="fas fa-plus">
-        New Template
-      </CustomButton>
-      <CustomButton @click="applyTemplate" variant="primary" :disabled="!canApply">
-        {{ selectedTemplate ? 'Use Template' : 'Start Blank' }}
-      </CustomButton>
+    <!-- Footer Actions -->
+    <div class="selector-footer">
+      <div class="footer-left">
+        <button @click="$emit('new-template')" class="new-template-btn">
+          <i class="fas fa-plus mr-1"></i>
+          Create New Template
+        </button>
+      </div>
+      <div class="footer-right">
+        <button @click="$emit('cancel')" class="cancel-btn">
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useApi } from '@/composables/useApi'
-import { useGlobalNotifications } from '@/composables/useNotificationSystem'
+import { useApi } from '~/composables/useApi'
 
 const props = defineProps({
-  entryType: String,
-  show: Boolean
+  entryType: String
 })
 
 const emit = defineEmits(['template-selected', 'cancel', 'new-template'])
 
-// Composables
-const api = useApi()
-const notifications = useGlobalNotifications()
+// State
+const isLoading = ref(true)
+const error = ref(null)
+const templates = ref([])
+const selectedEntryType = ref(props.entryType || '')
 
-// Reactive data
-const selectedTemplate = ref(null)
-const systemTemplates = ref([])
-const userTemplates = ref([])
-const loading = ref(false)
+// API composable
+const { get } = useApi()
 
-// Computed
-const canApply = computed(() => true) // Always allow application, even for blank
+// Computed properties
+const systemTemplates = computed(() => {
+  return templates.value.filter(t => t.is_system_template)
+})
 
-// System template definitions
-const defaultSystemTemplates = [
-  {
-    id: 'tuning_session',
-    name: 'Tuning Session',
-    entry_type: 'tuning_session',
-    description: 'Document a detailed tuning session',
-    title_template: 'Tuning Session - [Date]',
-    content_template: `**Setup Used:** [Bow Setup Name]
-
-**Goal:** What I wanted to achieve today
-
-**Initial State:**
-- Current point of impact:
-- Paper tune result:
-- Walk-back test result:
-
-**Changes Made:**
-1. 
-2. 
-3. 
-
-**Results:**
-- New point of impact:
-- Improvement noticed:
-- Next steps:
-
-**Notes:**
-Additional observations and thoughts...`,
-    suggested_tags: '["tuning", "arrows", "sight", "rest"]'
-  },
-  {
-    id: 'equipment_change',
-    name: 'Equipment Change',
-    entry_type: 'equipment_change',
-    description: 'Log equipment installation or changes',
-    title_template: 'Installed [Equipment Name]',
-    content_template: `**Equipment Changed:** [Old Equipment] → [New Equipment]
-
-**Reason for Change:**
-Why I made this change...
-
-**Installation Notes:**
-- Installation process:
-- Any issues encountered:
-- Settings used:
-
-**First Impressions:**
-- How it feels:
-- Initial performance:
-- Comparison to previous:
-
-**Next Actions:**
-- Tuning needed:
-- Testing planned:`,
-    suggested_tags: '["equipment", "upgrade", "installation"]'
-  },
-  {
-    id: 'shooting_notes',
-    name: 'Practice Session',
-    entry_type: 'shooting_notes',
-    description: 'Record practice session details',
-    title_template: 'Practice Session - [Location/Date]',
-    content_template: `**Session Details:**
-- Location: [Range/Location]
-- Distance: [Yards/Meters]
-- Arrows shot: [Number]
-- Duration: [Time]
-
-**Weather Conditions:**
-- Temperature:
-- Wind:
-- Lighting:
-
-**Performance:**
-- Best group size:
-- Average score:
-- Consistency:
-
-**Focus Areas:**
-- What I worked on:
-- Improvements noticed:
-- Areas needing work:
-
-**Equipment Performance:**
-- How the bow felt:
-- Arrow flight:
-- Any issues:
-
-**Next Session Goals:**
-What to focus on next time...`,
-    suggested_tags: '["practice", "shooting", "performance", "scores"]'
-  },
-  {
-    id: 'maintenance',
-    name: 'Maintenance Log',
-    entry_type: 'maintenance',
-    description: 'Track maintenance and servicing',
-    title_template: 'Maintenance - [Equipment/Date]',
-    content_template: `**Equipment Serviced:** [Bow/Component]
-
-**Maintenance Performed:**
-- [ ] String/cable inspection
-- [ ] Cam timing check
-- [ ] Rest alignment
-- [ ] Sight inspection
-- [ ] Arrow inspection
-- [ ] Other: 
-
-**Issues Found:**
-List any problems discovered...
-
-**Repairs Made:**
-Detail any repairs or adjustments...
-
-**Parts Replaced:**
-- 
-- 
-
-**Next Maintenance Due:** [Date]
-
-**Notes:**
-Additional observations...`,
-    suggested_tags: '["maintenance", "service", "inspection", "repair"]'
-  },
-  {
-    id: 'competition_prep',
-    name: 'Competition Prep',
-    entry_type: 'shooting_notes',
-    description: 'Prepare for upcoming competitions',
-    title_template: 'Competition Prep - [Event Name]',
-    content_template: `**Upcoming Event:** [Competition Name]
-**Date:** [Date]
-**Location:** [Venue]
-**Distance:** [Yards/Meters]
-
-**Preparation Checklist:**
-- [ ] Equipment tuned and verified
-- [ ] Backup equipment ready
-- [ ] Arrows checked and matched
-- [ ] Practice at competition distance
-- [ ] Mental preparation
-- [ ] Physical conditioning
-
-**Equipment Setup:**
-- Bow setup confirmed: [Setup Name]
-- Sight marks verified:
-- Rest position locked:
-- String condition: Good/Needs replacement
-
-**Practice Results:**
-Recent practice scores and consistency...
-
-**Goals:**
-- Primary goal:
-- Secondary goals:
-- Process goals:
-
-**Strategy Notes:**
-Competition day strategy and mindset...`,
-    suggested_tags: '["competition", "preparation", "practice", "goals"]'
-  }
-]
+const userTemplates = computed(() => {
+  return templates.value.filter(t => !t.is_system_template)
+})
 
 // Methods
 const loadTemplates = async () => {
-  loading.value = true
-  try {
-    // Load system templates (use defaults if API not available)
-    systemTemplates.value = defaultSystemTemplates.filter(template => {
-      return !props.entryType || template.entry_type === props.entryType
-    })
+  isLoading.value = true
+  error.value = null
 
-    // Load user templates from API
-    try {
-      const response = await api.get('/journal/templates')
-      if (response.success && response.data) {
-        userTemplates.value = response.data.filter(template => {
-          return !props.entryType || template.entry_type === props.entryType
-        })
+  try {
+    const response = await get('/journal/templates')
+    templates.value = response.data.templates.map(template => {
+      // Parse the template_data JSON
+      try {
+        template.parsed_data = JSON.parse(template.template_data)
+      } catch (e) {
+        console.warn(`Failed to parse template data for template ${template.id}:`, e)
+        template.parsed_data = {}
       }
-    } catch (apiError) {
-      // API not available yet, use empty array
-      userTemplates.value = []
-    }
-  } catch (error) {
-    console.error('Error loading templates:', error)
-    notifications.showError('Failed to load templates')
+      return template
+    })
+  } catch (err) {
+    console.error('Failed to load templates:', err)
+    error.value = err.message || 'Failed to load templates'
   } finally {
-    loading.value = false
+    isLoading.value = false
   }
 }
 
 const selectTemplate = (template) => {
-  selectedTemplate.value = template
-}
-
-const applyTemplate = () => {
-  const templateData = selectedTemplate.value ? {
-    title: selectedTemplate.value.title_template || '',
-    content: selectedTemplate.value.content_template || '',
-    tags: selectedTemplate.value.suggested_tags ? parseTags(selectedTemplate.value.suggested_tags) : [],
-    entry_type: selectedTemplate.value.entry_type || props.entryType
-  } : {
-    title: '',
-    content: '',
-    tags: [],
-    entry_type: props.entryType
+  // Prepare template data for the journal form
+  const templateData = {
+    title: template.parsed_data.title || '',
+    content: template.parsed_data.content || '',
+    entry_type: template.parsed_data.entry_type || 'general',
+    tags: template.parsed_data.suggested_tags || [],
+    template_used: template.id
   }
-  
+
+  // Replace placeholders in template data
+  const currentDate = new Date().toLocaleDateString()
+  templateData.title = templateData.title.replace(/\{date\}/g, currentDate)
+  templateData.content = templateData.content.replace(/\{date\}/g, currentDate)
+
   emit('template-selected', templateData)
 }
 
-const createNewTemplate = () => {
-  emit('new-template')
-}
-
-const editTemplate = (template) => {
-  // TODO: Implement template editing
-  notifications.showInfo('Template editing coming soon')
-}
-
-const deleteTemplate = async (template) => {
-  if (!confirm(`Delete template "${template.name}"?`)) return
-  
-  try {
-    const response = await api.delete(`/journal/templates/${template.id}`)
-    if (response.success) {
-      userTemplates.value = userTemplates.value.filter(t => t.id !== template.id)
-      notifications.showSuccess('Template deleted')
-      
-      // Clear selection if deleted template was selected
-      if (selectedTemplate.value?.id === template.id) {
-        selectedTemplate.value = null
-      }
-    } else {
-      notifications.showError(response.error || 'Failed to delete template')
-    }
-  } catch (error) {
-    console.error('Error deleting template:', error)
-    notifications.showError('Failed to delete template')
+// Helper functions
+const getCategoryDisplayName = (category) => {
+  const names = {
+    general: 'General',
+    tuning: 'Tuning',
+    practice: 'Practice',
+    competition: 'Competition',
+    equipment: 'Equipment',
+    maintenance: 'Maintenance'
   }
+  return names[category] || category
 }
 
-const parseTags = (tagsString) => {
-  try {
-    return JSON.parse(tagsString || '[]')
-  } catch {
-    return tagsString ? tagsString.split(',').map(t => t.trim()) : []
+const getEntryTypeDisplayName = (type) => {
+  const names = {
+    general: 'General Entry',
+    setup_change: 'Setup Change',
+    equipment_change: 'Equipment Change',
+    arrow_change: 'Arrow Change',
+    tuning_session: 'Tuning Session',
+    shooting_notes: 'Shooting Notes',
+    maintenance: 'Maintenance',
+    upgrade: 'Upgrade'
   }
+  return names[type] || type
 }
 
-const getEntryTypeIcon = (entryType) => {
+const getTemplateIcon = (category) => {
   const icons = {
     general: 'fas fa-sticky-note',
-    setup_change: 'fas fa-tools',
-    equipment_change: 'fas fa-cog',
-    arrow_change: 'fas fa-bullseye',
-    tuning_session: 'fas fa-crosshairs',
-    shooting_notes: 'fas fa-target',
-    maintenance: 'fas fa-wrench',
-    upgrade: 'fas fa-arrow-up',
-    competition: 'fas fa-trophy'
+    tuning: 'fas fa-crosshairs',
+    practice: 'fas fa-target',
+    competition: 'fas fa-trophy',
+    equipment: 'fas fa-tools',
+    maintenance: 'fas fa-wrench'
   }
-  return icons[entryType] || 'fas fa-sticky-note'
+  return icons[category] || 'fas fa-file-alt'
 }
 
-// Lifecycle
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString()
+}
+
+// Initialize
 onMounted(() => {
   loadTemplates()
 })

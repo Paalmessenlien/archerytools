@@ -308,12 +308,20 @@
           </a>
         </div>
       </div>
+
+      <!-- Arrow Journal -->
+      <ArrowJournal
+        :arrow-id="arrowId"
+        :arrow="arrow"
+        @statistics-updated="handleJournalStatistics"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { BowConfiguration, SpineSpecification } from '~/types/arrow'
+import ArrowJournal from '~/components/ArrowJournal.vue'
 
 // API
 const api = useApi()
@@ -334,6 +342,8 @@ const isRecalculating = ref(false)
 // Bow context state
 const bowContext = ref(null)
 
+// Journal statistics
+const journalStatistics = ref({})
 
 // Get arrow ID from route
 const arrowId = computed(() => route.params.id)
@@ -503,6 +513,12 @@ Available Spines: ${arrow.value.spine_specifications?.length || 0} options`
   } catch (err) {
     console.error('Failed to copy to clipboard:', err)
   }
+}
+
+// Handle journal statistics updates
+const handleJournalStatistics = (stats) => {
+  journalStatistics.value = stats
+  console.log('Arrow journal statistics updated:', stats)
 }
 
 

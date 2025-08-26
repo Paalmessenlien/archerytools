@@ -379,6 +379,39 @@
           </div>
         </div>
 
+        <!-- Arrow Journal Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('journal')"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
+            :class="{ 'bg-yellow-50 dark:bg-yellow-900/20': expandedSections.journal }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex-shrink-0">
+                <i class="fas fa-journal-whills text-yellow-600 dark:text-yellow-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Arrow Journal</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Track performance notes and observations for this arrow</p>
+              </div>
+            </div>
+            <i 
+              :class="expandedSections.journal ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.journal" class="p-3 sm:p-6">
+            <ArrowJournal
+              :arrow-id="setupArrowData.setup_arrow.arrow_id"
+              :setup-arrow="setupArrowData.setup_arrow"
+              :bow-setup="setupArrowData.bow_setup"
+            />
+          </div>
+        </div>
+
         <!-- Quick Actions Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <!-- Section Header -->
@@ -490,6 +523,7 @@ import NotificationToast from '~/components/NotificationToast.vue'
 import PaperTuningInterface from '~/components/PaperTuningInterface.vue'
 import BareshaftTuningInterface from '~/components/BareshaftTuningInterface.vue'
 import WalkbackTuningInterface from '~/components/WalkbackTuningInterface.vue'
+import ArrowJournal from '~/components/ArrowJournal.vue'
 
 // Meta information
 definePageMeta({
@@ -516,7 +550,8 @@ const expandedSections = ref({
   performance: false,  // Performance collapsed by default
   info: false,        // Info collapsed by default  
   tuning: false,      // Tuning guides collapsed by default
-  actions: false      // Actions collapsed by default
+  actions: false,     // Actions collapsed by default
+  journal: false      // Journal collapsed by default
 })
 
 // Tuning session state

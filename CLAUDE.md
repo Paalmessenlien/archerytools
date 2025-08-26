@@ -27,6 +27,8 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 ## Recent Major Updates (2025):
+- ✅ **Journal Enhancement Phase 6**: Advanced integration & system consolidation with unified change history ([Details](docs/JOURNAL_ENHANCEMENT_PHASE6.md))
+- ✅ **Journal Enhancement Phase 5**: Complete advanced features implementation with templates, analytics, and export ([Details](docs/JOURNAL_ENHANCEMENT_PHASE5.md))
 - ✅ **Professional Archery Calculations System**: Complete overhaul with industry-accurate formulas and optimization algorithms ([Details](docs/ARCHERY_CALCULATIONS_GUIDE.md))
 - ✅ **Chronograph Data Integration**: Complete system for measured arrow speeds ([Details](docs/CHRONOGRAPH_DATA_SYSTEM.md))
 - ✅ **Enhanced Equipment Management**: 8 equipment categories with auto-learning manufacturer detection ([Details](docs/ENHANCED_EQUIPMENT_MANAGEMENT.md))
@@ -131,10 +133,13 @@ The Archery Tools platform provides:
 4. **Comprehensive database search** with filtering by manufacturer, spine, diameter, and GPI
 5. **Visual arrow comparison** with detailed specification analysis
 6. **Multiple concurrent tuning sessions** with pause/resume functionality and progress tracking
-7. **Modern web interface** with Material Design 3 components and dark mode
-8. **API endpoints** for integration with other archery tools
-9. **Complete admin system** with automatic privilege assignment and user management
-10. **Enhanced equipment management** with 8 equipment categories and auto-learning capabilities
+7. **Advanced journal system** with templates, rich text editing, equipment linking, and change history integration
+8. **Unified change history** tracking all equipment, setup, and arrow modifications with statistics
+9. **Professional content creation** with CDN image uploads, universal tag management, and advanced filtering
+10. **Modern web interface** with Material Design 3 components and dark mode
+11. **API endpoints** for integration with other archery tools
+12. **Complete admin system** with automatic privilege assignment and user management
+13. **Enhanced equipment management** with 8 equipment categories and auto-learning capabilities
 
 ## Development & Troubleshooting
 
@@ -142,6 +147,7 @@ For detailed information on:
 - **Environment Setup**: See [Development Guide](docs/DEVELOPMENT_GUIDE.md)
 - **Database Operations**: See [Database Schema](docs/DATABASE_SCHEMA.md) and [Migration Guide](docs/DATABASE_MIGRATIONS.md)
 - **API Usage**: See [API Endpoints Documentation](docs/API_ENDPOINTS.md)
+- **Journal System**: See [Phase 6 Enhancements](docs/JOURNAL_ENHANCEMENT_PHASE6.md) and [Phase 5 Features](docs/JOURNAL_ENHANCEMENT_PHASE5.md)
 - **Production Deployment**: See [CI/CD Deployment Guide](docs/CICD_DEPLOYMENT_GUIDE.md)
 - **Troubleshooting**: See individual documentation files for specific issues
 - **Mobile Development**: See [Mobile UX Documentation](docs/MOBILE_UX_PHASE3_COMPLETION.md)

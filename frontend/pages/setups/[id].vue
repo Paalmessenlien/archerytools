@@ -174,46 +174,46 @@
           </div>
         </div>
 
-        <!-- Change History Section -->
-        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="history">
+        <!-- Journal & History Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="journal">
           <!-- Section Header -->
           <button
-            @click="toggleSection('history')"
+            @click="toggleSection('journal')"
             class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
             :class="{ 
-              'bg-orange-50 dark:bg-orange-900/20': expandedSections.history,
-              'expanded': expandedSections.history 
+              'bg-indigo-50 dark:bg-indigo-900/20': expandedSections.journal,
+              'expanded': expandedSections.journal 
             }"
           >
             <div class="flex items-center">
-              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
-                <i class="fas fa-history text-orange-600 dark:text-orange-400 text-lg"></i>
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex-shrink-0">
+                <i class="fas fa-journal-whills text-indigo-600 dark:text-indigo-400 text-lg"></i>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Setup History</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Track all changes made to your bow setup</p>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Journal & History</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Track your setup changes and shooting notes</p>
               </div>
             </div>
             <div class="flex items-center space-x-3">
-              <!-- Change Count Badge -->
-              <div v-if="statistics.total_changes" class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
-                {{ statistics.total_changes }} changes
+              <!-- Activity Count Badge -->
+              <div v-if="statistics.total_activity" class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium">
+                {{ statistics.total_activity }} items
               </div>
               <!-- Expand/Collapse Icon -->
               <i 
-                :class="expandedSections.history ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+                :class="expandedSections.journal ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
                 class="text-gray-400 transition-transform duration-200"
               ></i>
             </div>
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.history" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <EnhancedChangeLogViewer
-              ref="changeLogComponent"
-              :bow-setup-id="setup.id"
-              :show-header="false"
-              @error="(message) => showNotification(message, 'error')"
+          <div v-if="expandedSections.journal" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <SetupJournal
+              ref="setupJournalComponent"
+              :bow-setup="setup"
+              @statistics-updated="handleJournalStatisticsUpdate"
+              @notification="showNotification"
             />
           </div>
         </div>
@@ -303,7 +303,7 @@ import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import BowSetupOverview from '~/components/BowSetupOverview.vue'
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue'
 import BowEquipmentManager from '~/components/BowEquipmentManager.vue'
-import EnhancedChangeLogViewer from '~/components/EnhancedChangeLogViewer.vue'
+import SetupJournal from '~/components/SetupJournal.vue'
 import BowSetupSettings from '~/components/BowSetupSettings.vue'
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue'
 import EditArrowModal from '~/components/EditArrowModal.vue'
@@ -331,13 +331,13 @@ const expandedSections = ref({
   overview: true,       // Overview always starts expanded
   arrows: false,       // Arrows collapsed by default
   equipment: false,    // Equipment collapsed by default
-  history: false,      // History collapsed by default
+  journal: false,      // Journal & History collapsed by default
   settings: false      // Settings collapsed by default
 })
 const showEditModal = ref(false)
 const isSaving = ref(false)
 const editError = ref('')
-const changeLogComponent = ref(null)
+const setupJournalComponent = ref(null)
 const showArrowEditModal = ref(false)
 const editingArrowSetup = ref(null)
 const arrowsList = ref(null)
@@ -365,9 +365,9 @@ const loadSetup = async () => {
     // Load additional statistics
     await loadStatistics()
     
-    // Refresh change log if it exists
-    if (changeLogComponent.value) {
-      changeLogComponent.value.refresh()
+    // Refresh journal component if it exists
+    if (setupJournalComponent.value) {
+      setupJournalComponent.value.refresh()
     }
     
   } catch (err) {
@@ -395,11 +395,22 @@ const loadStatistics = async () => {
     statistics.value = {
       arrow_count: arrowCount,
       equipment_count: equipmentCount,
-      total_changes: totalChanges
+      total_changes: totalChanges,
+      total_activity: totalChanges // Initially same as total_changes, will be updated by journal component
     }
     
   } catch (err) {
     console.error('Error loading statistics:', err)
+  }
+}
+
+// Handle journal statistics updates
+const handleJournalStatisticsUpdate = (journalStats) => {
+  statistics.value = {
+    ...statistics.value,
+    journal_entries: journalStats.journal_entries || 0,
+    change_history: journalStats.change_history || 0,
+    total_activity: journalStats.total_activity || 0
   }
 }
 
@@ -683,14 +694,14 @@ onMounted(() => {
   border-color: rgb(168 85 247 / 0.3);
 }
 
-.accordion-section[data-section="history"] button.expanded {
-  background-color: rgb(255 247 237);
-  border-color: rgb(254 215 170);
+.accordion-section[data-section="journal"] button.expanded {
+  background-color: rgb(238 242 255);
+  border-color: rgb(199 210 254);
 }
 
-.dark .accordion-section[data-section="history"] button.expanded {
-  background-color: rgb(154 52 18 / 0.2);
-  border-color: rgb(249 115 22 / 0.3);
+.dark .accordion-section[data-section="journal"] button.expanded {
+  background-color: rgb(67 56 202 / 0.2);
+  border-color: rgb(129 140 248 / 0.3);
 }
 
 .accordion-section[data-section="settings"] button.expanded {

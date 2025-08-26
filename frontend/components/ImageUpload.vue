@@ -71,6 +71,12 @@
         <i class="fas fa-exclamation-circle mr-1"></i>
         {{ errorMessage }}
       </div>
+      
+      <!-- General State Error -->
+      <div v-if="imageUpload.state.error && !errorMessage" class="text-sm text-red-600">
+        <i class="fas fa-exclamation-circle mr-1"></i>
+        {{ imageUpload.state.error }}
+      </div>
     </div>
 
     <!-- Upload Guidelines -->
@@ -82,12 +88,16 @@
 </template>
 
 <script setup lang="ts">
+// Import the universal image upload composable
+import { useImageUpload } from '~/composables/useImageUpload'
+
 interface Props {
   currentImageUrl?: string
   altText?: string
   uploadPath?: string // e.g., 'profile', 'arrow', 'bow'
   maxSizeBytes?: number
   allowedTypes?: string[]
+  entityId?: string | number // For linking images to specific entities
 }
 
 interface Emits {
@@ -105,13 +115,27 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-// Composables
-const api = useApi()
+// Use universal image upload composable
+const imageUpload = useImageUpload({
+  context: props.uploadPath as 'journal' | 'equipment' | 'profile' | 'setup' | 'arrow',
+  maxFiles: 1, // Single image upload for this component
+  maxSize: Math.round(props.maxSizeBytes / (1024 * 1024)), // Convert bytes to MB
+  allowedTypes: props.allowedTypes,
+  entityId: props.entityId ? Number(props.entityId) : undefined
+})
 
 // Reactive state
-const isUploading = ref(false)
-const errorMessage = ref('')
 const fileInput = ref<HTMLInputElement>()
+
+// Computed properties
+const isUploading = computed(() => imageUpload.uploadingImages.value.length > 0)
+const errorMessage = computed(() => {
+  const errorImages = imageUpload.failedImages.value
+  if (errorImages.length > 0) {
+    return errorImages[0].error || 'Upload failed'
+  }
+  return imageUpload.state.error || ''
+})
 
 // Methods
 const triggerFileSelect = () => {
@@ -122,102 +146,43 @@ const triggerFileSelect = () => {
 
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
+  const files = target.files
   
-  if (!file) return
-  
-  // Validate file
-  const validation = validateFile(file)
-  if (!validation.valid) {
-    errorMessage.value = validation.error
-    return
-  }
-  
-  // Clear any previous errors
-  errorMessage.value = ''
-  
-  // Upload file
-  await uploadImage(file)
-  
-  // Clear the input so the same file can be selected again
-  target.value = ''
-}
-
-const validateFile = (file: File): { valid: boolean; error: string } => {
-  // Check file type
-  if (!props.allowedTypes.includes(file.type)) {
-    return {
-      valid: false, 
-      error: `File type not supported. Please use: ${props.allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ')}`
-    }
-  }
-  
-  // Check file size
-  if (file.size > props.maxSizeBytes) {
-    const maxSizeMB = Math.round(props.maxSizeBytes / (1024 * 1024))
-    return {
-      valid: false,
-      error: `File too large. Maximum size: ${maxSizeMB}MB`
-    }
-  }
-  
-  return { valid: true, error: '' }
-}
-
-const uploadImage = async (file: File) => {
-  isUploading.value = true
+  if (!files?.length) return
   
   try {
-    // Create FormData for file upload
-    const formData = new FormData()
-    formData.append('image', file)
-    formData.append('upload_path', props.uploadPath)
+    // Clear any previous images since this is a single image component
+    imageUpload.clearImages()
     
-    // Generate unique filename
-    const timestamp = Date.now()
-    const randomStr = Math.random().toString(36).substring(2, 8)
-    const extension = file.name.split('.').pop()
-    const filename = `${props.uploadPath}_${timestamp}_${randomStr}.${extension}`
-    formData.append('filename', filename)
+    // Upload the new image
+    const result = await imageUpload.uploadSingleImage(files[0])
     
-    // Upload to API
-    const response = await api.post('/upload/image', formData)
-    
-    if (response.data && response.data.cdn_url) {
-      emit('upload-success', response.data.cdn_url)
+    if (result.status === 'success') {
+      emit('upload-success', result.cdnUrl || result.url)
     } else {
-      throw new Error('No CDN URL returned from server')
+      emit('upload-error', result.error || 'Upload failed')
     }
     
   } catch (error: any) {
     console.error('Upload error:', error)
-    
-    let errorMsg = 'Upload failed. Please try again.'
-    if (error.response?.data?.error) {
-      errorMsg = error.response.data.error
-    } else if (error.message) {
-      errorMsg = error.message
-    }
-    
-    errorMessage.value = errorMsg
+    const errorMsg = error.message || 'Upload failed. Please try again.'
     emit('upload-error', errorMsg)
-    
   } finally {
-    isUploading.value = false
+    // Clear the input so the same file can be selected again
+    target.value = ''
   }
 }
 
 const removeImage = () => {
+  imageUpload.clearImages()
   emit('image-removed')
 }
 
-// Clear error when component unmounts or image changes
+// Clear errors when image changes
 watch(() => props.currentImageUrl, () => {
-  errorMessage.value = ''
-})
-
-onUnmounted(() => {
-  errorMessage.value = ''
+  if (props.currentImageUrl) {
+    imageUpload.clearImages()
+  }
 })
 </script>
 

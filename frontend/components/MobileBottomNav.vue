@@ -115,15 +115,6 @@
           Interactive Tuning
         </NuxtLink>
         
-        <NuxtLink 
-          to="/change-history" 
-          @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
-          :class="{ 'bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200': $route.path === '/change-history' }"
-        >
-          <i class="fas fa-history w-6 mr-3 text-gray-500"></i>
-          Change History
-        </NuxtLink>
         
         <NuxtLink 
           to="/journal" 
