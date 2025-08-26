@@ -10,6 +10,14 @@
       </div>
       
       <div class="entry-actions">
+        <md-icon-button 
+          @click.stop="toggleFavorite" 
+          :aria-label="entry.is_favorite ? 'Remove from favorites' : 'Add to favorites'"
+          class="favorite-btn"
+          :class="{ 'is-favorite': entry.is_favorite }"
+        >
+          <md-icon>{{ entry.is_favorite ? 'star' : 'star_border' }}</md-icon>
+        </md-icon-button>
         <md-icon-button @click.stop="$emit('edit', entry)" aria-label="Edit entry">
           <md-icon>edit</md-icon>
         </md-icon-button>
@@ -20,7 +28,10 @@
     </div>
 
     <div class="entry-content">
-      <h3 class="entry-title">{{ entry.title }}</h3>
+      <h3 class="entry-title">
+        <span class="title-text">{{ entry.title }}</span>
+        <md-icon v-if="entry.is_favorite" class="title-favorite-indicator">star</md-icon>
+      </h3>
       
       <div class="entry-setup" v-if="entry.setup_name">
         <md-icon class="setup-icon">sports</md-icon>
@@ -63,6 +74,36 @@
         </span>
       </div>
 
+      <!-- Linked Changes Display -->
+      <div v-if="entry.linked_changes && entry.linked_changes.length > 0" class="linked-changes">
+        <div class="linked-changes-header">
+          <md-icon class="changes-icon">link</md-icon>
+          <span class="changes-label">Linked Changes</span>
+          <span class="changes-count">({{ entry.linked_changes.length }})</span>
+        </div>
+        <div class="linked-changes-list">
+          <div 
+            v-for="change in displayedLinkedChanges" 
+            :key="`${change.type}-${change.id}`"
+            class="linked-change-chip"
+            :class="`change-${change.type}`"
+            @click.stop="viewChange(change)"
+          >
+            <md-icon class="change-icon">{{ getChangeIcon(change.type) }}</md-icon>
+            <span class="change-title">{{ truncateChangeTitle(change.title) }}</span>
+            <span class="change-date">{{ formatShortDate(change.created_at) }}</span>
+          </div>
+          <div 
+            v-if="entry.linked_changes.length > maxDisplayedChanges"
+            class="more-changes-chip"
+            @click.stop="showAllChanges"
+          >
+            <md-icon>more_horiz</md-icon>
+            <span>+{{ entry.linked_changes.length - maxDisplayedChanges }} more</span>
+          </div>
+        </div>
+      </div>
+
       <div class="entry-attachments" v-if="entry.attachment_count > 0">
         <md-icon class="attachment-icon">attach_file</md-icon>
         {{ entry.attachment_count }} attachment{{ entry.attachment_count === 1 ? '' : 's' }}
@@ -90,13 +131,20 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['view', 'edit', 'delete'])
+const emit = defineEmits(['view', 'edit', 'delete', 'view-change', 'show-all-changes', 'toggle-favorite'])
 
 // Image display configuration
 const maxDisplayImages = computed(() => props.viewMode === 'grid' ? 2 : 4)
 const displayImages = computed(() => {
   if (!props.entry.images || props.entry.images.length === 0) return []
   return props.entry.images.slice(0, maxDisplayImages.value)
+})
+
+// Linked changes display configuration
+const maxDisplayedChanges = computed(() => props.viewMode === 'grid' ? 2 : 3)
+const displayedLinkedChanges = computed(() => {
+  if (!props.entry.linked_changes || props.entry.linked_changes.length === 0) return []
+  return props.entry.linked_changes.slice(0, maxDisplayedChanges.value)
 })
 
 // Image modal/gallery functions
@@ -146,6 +194,48 @@ const getContentPreview = (content) => {
   return cleanContent.length > 150 
     ? cleanContent.substring(0, 150) + '...' 
     : cleanContent
+}
+
+// Linked changes functions
+const viewChange = (change) => {
+  emit('view-change', change)
+}
+
+const showAllChanges = () => {
+  emit('show-all-changes', props.entry)
+}
+
+const getChangeIcon = (changeType) => {
+  const icons = {
+    equipment_change: 'build',
+    setup_change: 'settings',
+    arrow_change: 'arrow_forward'
+  }
+  return icons[changeType] || 'change_history'
+}
+
+const truncateChangeTitle = (title) => {
+  if (!title) return ''
+  return title.length > 25 ? title.substring(0, 25) + '...' : title
+}
+
+const formatShortDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+  
+  if (diffInDays === 0) return 'Today'
+  if (diffInDays === 1) return 'Yesterday'
+  if (diffInDays < 7) return `${diffInDays}d ago`
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Favorites functionality
+const toggleFavorite = () => {
+  emit('toggle-favorite', props.entry)
 }
 </script>
 
@@ -305,6 +395,31 @@ const getContentPreview = (content) => {
   opacity: 1;
 }
 
+.favorite-btn {
+  transition: all 0.3s ease;
+}
+
+.favorite-btn md-icon {
+  transition: all 0.3s ease;
+}
+
+.favorite-btn.is-favorite {
+  color: var(--md-sys-color-primary);
+}
+
+.favorite-btn.is-favorite md-icon {
+  color: var(--md-sys-color-primary);
+  transform: scale(1.1);
+}
+
+.favorite-btn:hover {
+  transform: scale(1.05);
+}
+
+.favorite-btn.is-favorite:hover md-icon {
+  color: var(--md-sys-color-secondary);
+}
+
 .entry-content {
   grid-column: 1;
 }
@@ -314,6 +429,20 @@ const getContentPreview = (content) => {
   color: var(--md-sys-color-on-surface);
   font-size: 1.125rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.title-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.title-favorite-indicator {
+  color: var(--md-sys-color-primary);
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .entry-setup {
@@ -436,6 +565,140 @@ const getContentPreview = (content) => {
   font-weight: 600;
 }
 
+/* Linked Changes Styles */
+.linked-changes {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.linked-changes-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.changes-icon {
+  font-size: 1rem;
+  color: var(--md-sys-color-primary);
+}
+
+.changes-label {
+  flex: 1;
+}
+
+.changes-count {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.linked-changes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.linked-change-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  max-width: 200px;
+}
+
+.linked-change-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.linked-change-chip.change-equipment_change {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-secondary);
+}
+
+.linked-change-chip.change-equipment_change:hover {
+  background: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary);
+}
+
+.linked-change-chip.change-setup_change {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-color: var(--md-sys-color-tertiary);
+}
+
+.linked-change-chip.change-setup_change:hover {
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+}
+
+.linked-change-chip.change-arrow_change {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-error);
+}
+
+.linked-change-chip.change-arrow_change:hover {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.change-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.change-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-date {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.more-changes-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px dashed var(--md-sys-color-outline);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.more-changes-chip:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+}
+
+.more-changes-chip md-icon {
+  font-size: 0.9rem;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .journal-entry-card {
@@ -475,6 +738,28 @@ const getContentPreview = (content) => {
   
   .more-images-indicator {
     min-height: 100px;
+  }
+  
+  .linked-changes {
+    padding: 0.5rem;
+  }
+  
+  .linked-changes-list {
+    gap: 0.375rem;
+  }
+  
+  .linked-change-chip {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    max-width: 150px;
+  }
+  
+  .change-title {
+    max-width: 80px;
+  }
+  
+  .change-date {
+    display: none; /* Hide date on mobile for space */
   }
 }
 </style>

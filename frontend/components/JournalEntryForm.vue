@@ -51,10 +51,12 @@
             :limits="limits"
             :show-validation="formState.showValidation"
             :attached-images="attachedImages"
+            :is-new-entry="!isEditing"
             @update:form-data="updateFormData"
             @image-uploaded="handleImageUploaded"
             @image-removed="handleImageRemoved"
             @image-error="handleImageError"
+            @template-applied="onTemplateApplied"
           />
         </form>
       </div>
@@ -121,10 +123,12 @@
           :limits="limits"
           :show-validation="formState.showValidation"
           :attached-images="attachedImages"
+          :is-new-entry="!isEditing"
           @update:form-data="updateFormData"
           @image-uploaded="handleImageUploaded"
           @image-removed="handleImageRemoved"
           @image-error="handleImageError"
+          @template-applied="onTemplateApplied"
         />
         
         <div class="form-actions">
@@ -624,6 +628,23 @@ const handleImageError = (error) => {
       delete formState.errors.image
     }
   }, 5000)
+}
+
+// Template handler
+const onTemplateApplied = (templateData) => {
+  // Mark form as having changes when template is applied
+  formState.hasChanges = true
+  
+  // Clear validation errors since template provides valid content
+  formState.showValidation = false
+  
+  // Show success message
+  if (templateData.name) {
+    notifications.showSuccess(`Applied "${templateData.name}" template`)
+  }
+  
+  // Start auto-save timer
+  startAutoSaveTimer()
 }
 
 // Prevent accidental navigation with unsaved changes

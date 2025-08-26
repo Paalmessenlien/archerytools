@@ -1,5 +1,51 @@
 <template>
   <div class="journal-form-fields">
+    <!-- Template Selection Section -->
+    <div v-if="showTemplateSelector" class="form-group template-section">
+      <div class="template-header">
+        <h3 class="section-title">
+          <i class="fas fa-magic mr-2"></i>
+          Start with a Template
+        </h3>
+        <button 
+          @click="showTemplateSelector = false"
+          class="skip-template-btn"
+          type="button"
+        >
+          <i class="fas fa-times mr-1"></i>
+          Skip
+        </button>
+      </div>
+      
+      <!-- Quick Template Options -->
+      <div class="quick-templates">
+        <div 
+          v-for="template in quickTemplates" 
+          :key="template.id"
+          class="quick-template-card"
+          @click="applyQuickTemplate(template)"
+        >
+          <div class="template-icon" :class="`icon-${template.entry_type}`">
+            <i :class="getEntryTypeIcon(template.entry_type)"></i>
+          </div>
+          <div class="template-info">
+            <h4>{{ template.name }}</h4>
+            <p>{{ template.description }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="template-actions">
+        <CustomButton 
+          @click="showFullTemplateSelector = true" 
+          variant="outlined" 
+          icon="fas fa-th"
+        >
+          Browse All Templates
+        </CustomButton>
+      </div>
+    </div>
+
     <!-- Title Field -->
     <div class="form-group">
       <div class="form-label-section">
@@ -76,11 +122,44 @@
     <div class="form-group">
       <div class="form-label-section">
         <label class="form-label">Content *</label>
-        <div class="character-count" :class="{ 'over-limit': characterCounts?.content > limits?.content?.max }">
-          {{ characterCounts?.content || 0 }} / {{ limits?.content?.max || 5000 }}
+        <div class="editor-mode-toggle">
+          <button 
+            @click="useRichEditor = true"
+            :class="['mode-btn', { active: useRichEditor }]"
+            type="button"
+          >
+            <i class="fas fa-palette mr-1"></i>
+            Rich
+          </button>
+          <button 
+            @click="useRichEditor = false"
+            :class="['mode-btn', { active: !useRichEditor }]"
+            type="button"
+          >
+            <i class="fas fa-code mr-1"></i>
+            Plain
+          </button>
         </div>
       </div>
+      
+      <!-- Rich Text Editor -->
+      <RichTextEditor
+        v-if="useRichEditor"
+        :model-value="formData.content"
+        @update:model-value="(content) => $emit('update:form-data', 'content', content)"
+        placeholder="Write your journal entry with rich formatting..."
+        :max-length="limits?.content?.max || 5000"
+        :equipment="availableEquipment"
+        :bow-setups="bowSetups"
+        :class="{ 
+          'has-error': showValidation && validationResults?.content && !validationResults.content.isValid,
+          'has-success': showValidation && validationResults?.content && validationResults.content.isValid && formData.content
+        }"
+      />
+      
+      <!-- Plain Text Editor (Fallback) -->
       <md-outlined-text-field
+        v-else
         :value="formData.content"
         @input="(e) => $emit('update:form-data', 'content', e.target.value)"
         placeholder="Write your journal entry..."
@@ -93,6 +172,7 @@
           'has-success': showValidation && validationResults?.content && validationResults.content.isValid && formData.content
         }"
       />
+      
       <div v-if="showValidation && validationResults?.content && !validationResults.content.isValid" class="field-error">
         <i class="fas fa-exclamation-circle"></i>
         {{ validationResults.content.message }}
@@ -182,10 +262,26 @@
         Private entry (only visible to you)
       </md-checkbox>
     </div>
+
+    <!-- Full Template Selector Modal -->
+    <div v-if="showFullTemplateSelector" class="template-modal-overlay" @click="showFullTemplateSelector = false">
+      <div class="template-modal" @click.stop>
+        <EntryTemplateSelector
+          :entry-type="formData.entry_type"
+          @template-selected="onTemplateSelected"
+          @cancel="showFullTemplateSelector = false"
+          @new-template="onNewTemplate"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import EntryTemplateSelector from './EntryTemplateSelector.vue'
+import RichTextEditor from './RichTextEditor.vue'
+
 const props = defineProps({
   formData: Object,
   bowSetups: Array,
@@ -194,10 +290,49 @@ const props = defineProps({
   characterCounts: Object,
   limits: Object,
   showValidation: Boolean,
-  attachedImages: Array
+  attachedImages: Array,
+  isNewEntry: Boolean
 })
 
-const emit = defineEmits(['update:form-data', 'image-uploaded', 'image-removed', 'image-error'])
+const emit = defineEmits([
+  'update:form-data', 
+  'image-uploaded', 
+  'image-removed', 
+  'image-error',
+  'template-applied'
+])
+
+// Template state
+const showTemplateSelector = ref(false)
+const showFullTemplateSelector = ref(false)
+
+// Quick templates for popular entry types
+const quickTemplates = ref([
+  {
+    id: 'tuning_quick',
+    name: 'Quick Tuning Note',
+    entry_type: 'tuning_session',
+    description: 'Fast note about tuning adjustments',
+    title_template: 'Tuning Notes - {{date}}',
+    content_template: 'Made adjustments to:\n\n• \n• \n\nResults:\n\n'
+  },
+  {
+    id: 'practice_quick',
+    name: 'Practice Session',
+    entry_type: 'shooting_notes', 
+    description: 'Record practice results',
+    title_template: 'Practice - {{date}}',
+    content_template: 'Distance: \nArrows: \nBest group: \nNotes:\n\n'
+  },
+  {
+    id: 'equipment_quick',
+    name: 'Equipment Change',
+    entry_type: 'equipment_change',
+    description: 'Log equipment modifications',
+    title_template: 'Changed: {{equipment}}',
+    content_template: 'What changed:\n\nWhy:\n\nFirst impression:\n\n'
+  }
+])
 
 // Handle image upload success
 const handleImageUpload = (imageUrl) => {
@@ -260,6 +395,86 @@ const getEntryTypeDescription = (typeValue) => {
   }
   return descriptions[typeValue] || 'Document your archery journey'
 }
+
+// Rich text editor state
+const useRichEditor = ref(true)
+
+// Available equipment for mentions (computed from props)
+const availableEquipment = computed(() => {
+  const equipment = []
+  
+  // Add bow setups as equipment items
+  if (props.bowSetups?.length) {
+    equipment.push(...props.bowSetups.map(setup => ({
+      id: `setup_${setup.id}`,
+      name: setup.name,
+      manufacturer: setup.bow_type,
+      category: 'bow_setup',
+      type: 'bow_setup'
+    })))
+  }
+  
+  // Add any other equipment from props if available
+  // This would be populated from actual equipment data in a real implementation
+  
+  return equipment
+})
+
+// Template methods
+const applyQuickTemplate = (template) => {
+  const templateData = {
+    title: template.title_template.replace('{{date}}', new Date().toLocaleDateString()).replace('{{equipment}}', ''),
+    content: template.content_template,
+    entry_type: template.entry_type
+  }
+  
+  // Apply template data to form
+  Object.keys(templateData).forEach(key => {
+    if (templateData[key]) {
+      emit('update:form-data', key, templateData[key])
+    }
+  })
+  
+  // Hide template selector
+  showTemplateSelector.value = false
+  
+  // Notify parent that template was applied
+  emit('template-applied', template)
+}
+
+const onTemplateSelected = (templateData) => {
+  // Apply template data to form
+  Object.keys(templateData).forEach(key => {
+    if (templateData[key] !== undefined) {
+      if (key === 'tags' && Array.isArray(templateData[key])) {
+        // Convert tags array to string
+        emit('update:form-data', 'tagsString', templateData[key].join(', '))
+      } else {
+        emit('update:form-data', key, templateData[key])
+      }
+    }
+  })
+  
+  // Close template selector
+  showFullTemplateSelector.value = false
+  showTemplateSelector.value = false
+  
+  // Notify parent
+  emit('template-applied', templateData)
+}
+
+const onNewTemplate = () => {
+  // TODO: Implement new template creation
+  showFullTemplateSelector.value = false
+}
+
+// Initialize template selector for new entries
+onMounted(() => {
+  // Show template selector for new entries if form is empty
+  if (props.isNewEntry && !props.formData.title && !props.formData.content) {
+    showTemplateSelector.value = true
+  }
+})
 </script>
 
 <style scoped>
@@ -488,6 +703,220 @@ const getEntryTypeDescription = (typeValue) => {
   
   .upload-area {
     padding: 0.75rem;
+  }
+}
+
+/* Template Section Styles */
+.template-section {
+  background: var(--md-sys-color-primary-container);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.skip-template-btn {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skip-template-btn:hover {
+  background: var(--md-sys-color-surface-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+.quick-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.quick-template-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--md-sys-color-surface);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-template-card:hover {
+  border-color: var(--md-sys-color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.template-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.template-icon.icon-tuning_session {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.template-icon.icon-equipment_change {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.template-icon.icon-shooting_notes {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.template-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.template-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.3;
+}
+
+.template-actions {
+  text-align: center;
+}
+
+/* Template Modal Styles */
+.template-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.template-modal {
+  background: var(--md-sys-color-surface);
+  border-radius: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Rich Text Editor Mode Toggle */
+.editor-mode-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  background: var(--md-sys-color-surface-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+.mode-btn.active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.mode-btn i {
+  font-size: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .quick-templates {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .quick-template-card {
+    padding: 0.75rem;
+  }
+  
+  .template-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  
+  .template-info h4 {
+    font-size: 0.85rem;
+  }
+  
+  .template-info p {
+    font-size: 0.75rem;
+  }
+  
+  .template-modal {
+    padding: 1rem;
+  }
+  
+  .editor-mode-toggle {
+    gap: 0.125rem;
+  }
+  
+  .mode-btn {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.7rem;
   }
 }
 </style>
