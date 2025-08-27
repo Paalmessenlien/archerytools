@@ -1,9 +1,9 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl shadow-lg max-h-screen overflow-y-auto">
+  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100] p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-xl lg:max-w-2xl shadow-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
       <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Edit Archer Profile</h3>
       <form @submit.prevent="saveProfile">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Basic Information -->
             <div class="mb-4">
               <label for="editedName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -101,12 +101,12 @@
             ></textarea>
           </div>
 
-          <div class="flex justify-end space-x-3">
+          <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
             <CustomButton
               type="button"
               @click="closeModal"
               variant="outlined"
-              class="text-gray-700 dark:text-gray-200"
+              class="w-full sm:w-auto text-gray-700 dark:text-gray-200 h-12 sm:h-10"
             >
               Cancel
             </CustomButton>
@@ -114,7 +114,7 @@
               type="submit"
               variant="filled"
               :disabled="isSaving"
-              class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+              class="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 h-12 sm:h-10"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Changes</span>

@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div class="modal-overlay modal-open fixed inset-0 z-[800] bg-white dark:bg-gray-900 md:bg-black md:bg-opacity-50 md:flex md:items-center md:justify-center md:p-4">
-      <div class="modal-container relative z-[850] bg-white dark:bg-gray-800 md:shadow-lg md:rounded-xl md:max-w-2xl md:max-h-[90vh] md:w-full flex flex-col">
+    <div class="modal-overlay modal-open fixed inset-0 z-[1100] bg-white dark:bg-gray-900 md:bg-black md:bg-opacity-50 md:flex md:items-center md:justify-center md:p-4">
+      <div class="modal-container relative z-[1150] bg-white dark:bg-gray-800 md:shadow-lg md:rounded-xl md:max-w-2xl md:max-h-[90vh] md:w-full flex flex-col">
       <!-- Mobile-first responsive modal -->
       <div class="modal-mobile-header md:px-6 md:py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
