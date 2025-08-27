@@ -90,7 +90,7 @@
             @click="logout"
             variant="outlined"
             size="small"
-            class="flex-1 text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900"
+            class="flex-1 text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900 lg:hidden"
           >
             <i class="fas fa-sign-out-alt mr-2"></i>
             Logout
@@ -155,38 +155,6 @@
           </div>
         </div>
 
-        <!-- Quick Stats - Enhanced Mobile Responsive -->
-        <div v-if="bowSetups.length > 0" class="hidden sm-mobile:grid grid-cols-2 md-mobile:grid-cols-3 sm:grid-cols-3 gap-3 md-mobile:gap-4 mb-6">
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-            <div class="flex items-center">
-              <i class="fas fa-bow-arrow text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
-              <div>
-                <p class="text-2xl font-bold text-blue-900 dark:text-blue-200">{{ bowSetups.length }}</p>
-                <p class="text-sm text-blue-700 dark:text-blue-300">Bow {{ bowSetups.length === 1 ? 'Setup' : 'Setups' }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-            <div class="flex items-center">
-              <i class="fas fa-location-arrow text-2xl text-green-600 dark:text-green-400 mr-3"></i>
-              <div>
-                <p class="text-2xl font-bold text-green-900 dark:text-green-200">{{ totalArrows }}</p>
-                <p class="text-sm text-green-700 dark:text-green-300">Selected Arrows</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-            <div class="flex items-center">
-              <i class="fas fa-calculator text-2xl text-purple-600 dark:text-purple-400 mr-3"></i>
-              <div>
-                <p class="text-2xl font-bold text-purple-900 dark:text-purple-200">{{ averageDrawWeight }}</p>
-                <p class="text-sm text-purple-700 dark:text-purple-300">Avg. Draw Weight</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
           <div v-if="isLoadingSetups" class="text-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-purple-400 mx-auto mb-3"></div>
@@ -205,25 +173,17 @@
                 Add New Setup
               </CustomButton>
             </div>
-            <!-- Mobile Card Stack Implementation -->
-            <MobileCardStack
+            <!-- Bow Setup Cards - Responsive Grid -->
+            <div
               v-if="bowSetups.length > 0"
-              :items="bowSetups"
-              :loading="false"
-              layout="responsive"
-              :expandable="true"
-              :show-actions="true"
-              spacing="normal"
-              empty-title="No Bow Setups"
-              empty-message="Create your first bow setup to get started with arrow recommendations."
-              @click="handleBowSetupClick"
-              @edit="handleBowSetupEdit"
-              @delete="handleBowSetupDelete"
-              @expand="handleBowSetupExpand"
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              <!-- Custom Card Content for Bow Setups -->
-              <template #card="{ item: setup, index, isExpanded, toggleExpansion }">
-                <div class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div
+                v-for="(setup, index) in bowSetups"
+                :key="setup.id"
+                class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                @click="handleBowSetupClick(setup, index)"
+              >
                     <!-- Card Header -->
                     <div class="mb-4">
                       <!-- Setup Name and Type -->
@@ -285,22 +245,36 @@
                         </span>
                       </div>
                       
-                      <!-- Equipment Count Badges -->
-                      <div class="flex items-center gap-3">
-                        <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                          <i class="fas fa-location-arrow text-xs text-green-600 dark:text-green-400"></i>
-                          <span class="text-xs font-medium text-green-800 dark:text-green-300">{{ setup.arrows.length }} arrow{{ setup.arrows.length === 1 ? '' : 's' }}</span>
+                      <!-- Equipment Count Badges and Expand Button -->
+                      <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                          <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                            <i class="fas fa-location-arrow text-xs text-green-600 dark:text-green-400"></i>
+                            <span class="text-xs font-medium text-green-800 dark:text-green-300">{{ setup.arrows.length }} arrow{{ setup.arrows.length === 1 ? '' : 's' }}</span>
+                          </div>
+                          <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
+                            <i class="fas fa-cogs text-xs text-purple-600 dark:text-purple-400"></i>
+                            <span class="text-xs font-medium text-purple-800 dark:text-purple-300">{{ setup.equipment.length }} item{{ setup.equipment.length === 1 ? '' : 's' }}</span>
+                          </div>
                         </div>
-                        <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
-                          <i class="fas fa-cogs text-xs text-purple-600 dark:text-purple-400"></i>
-                          <span class="text-xs font-medium text-purple-800 dark:text-purple-300">{{ setup.equipment.length }} item{{ setup.equipment.length === 1 ? '' : 's' }}</span>
-                        </div>
+                        
+                        <!-- Expand/Collapse Toggle -->
+                        <button
+                          @click.stop="toggleCardExpansion(setup.id)"
+                          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          :title="expandedCards[setup.id] ? 'Show less' : 'Show more'"
+                        >
+                          <i 
+                            class="fas text-gray-500 dark:text-gray-400 transition-transform duration-200"
+                            :class="expandedCards[setup.id] ? 'fa-chevron-up' : 'fa-chevron-down'"
+                          ></i>
+                        </button>
                       </div>
                     </div>
                     
                     <!-- Phase 3: Expanded Information Panel -->
                     <div 
-                      v-if="isExpanded" 
+                      v-if="expandedCards[setup.id]" 
                       class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fadeIn"
                     >
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -374,63 +348,12 @@
                             <i class="fas fa-edit mr-1"></i>
                             Edit Setup
                           </CustomButton>
-                          <CustomButton
-                            v-if="setup.arrows && setup.arrows.length > 0"
-                            @click="navigateToBowDetail(setup.id)"
-                            variant="outlined"
-                            size="small"
-                            class="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 text-xs"
-                          >
-                            <i class="fas fa-chart-line mr-1"></i>
-                            Performance
-                          </CustomButton>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </template>
-
-                <!-- Custom Left Actions for Bow Setups -->
-                <template #actions-left="{ item: setup, closeActions }">
-                  <CustomButton
-                    @click.stop="navigateToBowDetail(setup.id); closeActions()"
-                    variant="secondary"
-                    size="small"
-                    class="action-button action-edit !min-h-0"
-                    :title="'Edit Setup'"
-                    icon="fas fa-edit"
-                  />
-                  <CustomButton
-                    @click.stop="() => { selectedSetupForActions = setup; showBowActionSheet = true; closeActions(); }"
-                    variant="secondary"
-                    size="small"
-                    class="action-button action-menu !min-h-0"
-                    :title="'More Actions'"
-                    icon="fas fa-ellipsis-h"
-                  />
-                </template>
-
-                <!-- Custom Right Actions for Bow Setups -->
-                <template #actions-right="{ item: setup, closeActions }">
-                  <CustomButton
-                    @click.stop="navigateToCalculatorWithSetup(setup.id); closeActions()"
-                    variant="primary"
-                    size="small"
-                    class="action-button action-search !min-h-0"
-                    :title="'Find Arrows'"
-                    icon="fas fa-search"
-                  />
-                  <CustomButton
-                    @click.stop="confirmDeleteSetup(setup.id); closeActions()"
-                    variant="danger"
-                    size="small"
-                    class="action-button action-delete !min-h-0"
-                    :title="'Delete Setup'"
-                    icon="fas fa-trash"
-                  />
-                </template>
-              </MobileCardStack>
+            </div>
             
             <!-- Empty State -->
             <div v-else class="text-center py-12">
@@ -569,7 +492,6 @@ import AddBowSetupModal from '~/components/AddBowSetupModal.vue';
 import EditArcherProfileModal from '~/components/EditArcherProfileModal.vue';
 import EditArrowModal from '~/components/EditArrowModal.vue';
 import ImageUpload from '~/components/ImageUpload.vue';
-import MobileCardStack from '~/components/MobileCardStack.vue';
 import MobileActionSheet from '~/components/MobileActionSheet.vue';
 
 const { user, logout, loginWithGoogle, updateUserProfile, fetchUser, fetchBowSetups, addBowSetup, updateBowSetup, deleteBowSetup, addArrowToSetup, fetchSetupArrows, deleteArrowFromSetup, updateArrowInSetup } = useAuth();
@@ -586,6 +508,7 @@ const isAddingSetup = ref(false);
 
 // Phase 3: Expandable card state
 const expandedCard = ref(null);
+const expandedCards = ref({});
 
 // Phase 3: Inline editing state
 const editingSetupName = ref(null);
@@ -699,6 +622,15 @@ const openEditModal = () => {
 
 const closeEditModal = () => {
   isEditing.value = false;
+};
+
+// Toggle card expansion
+const toggleCardExpansion = (setupId) => {
+  if (expandedCards.value[setupId]) {
+    delete expandedCards.value[setupId];
+  } else {
+    expandedCards.value[setupId] = true;
+  }
 };
 
 const saveProfile = async (profileData) => {
@@ -1075,14 +1007,6 @@ const getCategoryIcon = (categoryName) => {
   return iconMap[categoryName] || 'fas fa-cog';
 };
 
-// Phase 3: Card expansion toggle method
-const toggleCardExpansion = (setupId) => {
-  if (expandedCard.value === setupId) {
-    expandedCard.value = null; // Collapse if already expanded
-  } else {
-    expandedCard.value = setupId; // Expand the clicked card
-  }
-};
 
 // Phase 3: Inline editing methods
 const startEditSetupName = (setupId, currentName) => {

@@ -32,11 +32,8 @@
       </div>
     </div>
     
-    <!-- Spacer to push content to bottom -->
-    <div class="flex-grow"></div>
-    
     <!-- Menu Content at Very Bottom -->
-    <div class="px-4 pb-4 pt-6 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-800 dark:via-gray-800 dark:to-transparent" style="padding-bottom: calc(env(safe-area-inset-bottom) + 100px);">
+    <div class="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent" style="padding-bottom: calc(env(safe-area-inset-bottom) + 24px);">
       
       <!-- Primary Actions (Most Used) -->
       <div class="space-y-2 mb-6">

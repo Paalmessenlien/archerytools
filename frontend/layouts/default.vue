@@ -30,8 +30,11 @@
           </div>
           
           <div class="flex items-center space-x-4">
-            <!-- Desktop Navigation -->
-            <div class="items-center hidden space-x-4 md:flex">
+            <!-- Desktop Horizontal Navigation (Large screens) -->
+            <DesktopNavigation @login="handleLogin" />
+            
+            <!-- Tablet/Medium Screen Navigation (Menu dropdown) -->
+            <div class="items-center hidden md:flex lg:hidden">
                   <!-- Mega Menu -->
                   <div class="relative">
                     <button
@@ -210,14 +213,14 @@
                     </div>
                   </div>
                   
-                  <!-- User Actions -->
+                  <!-- User Actions for Tablet only (lg+ handled by DesktopNavigation) -->
                   <!-- Show placeholder during initialization to prevent hydration mismatch -->
-                  <div v-if="!isInitialized" class="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                  <div v-if="!isInitialized" class="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse lg:hidden"></div>
                   <CustomButton
                     v-else-if="isLoggedIn && user"
                     @click="logout"
                     variant="outlined"
-                    class="text-gray-700 dark:text-gray-200"
+                    class="text-gray-700 dark:text-gray-200 lg:hidden"
                   >
                     Logout
                   </CustomButton>
@@ -225,7 +228,7 @@
                     v-else
                     @click="handleLogin"
                     variant="filled"
-                    class="text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                    class="text-white bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 lg:hidden"
                   >
                     Login with Google
                   </CustomButton>
