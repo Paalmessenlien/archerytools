@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sticky top-0 sticky-header">
-      <div class="px-4 mx-auto max-w-6xl sm:px-6 lg:px-6">
+      <div class="px-3 mx-auto max-w-6xl sm:px-6 lg:px-6">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-3">
             <!-- Logo -->
@@ -244,7 +244,7 @@
 
     <!-- Main Content -->
     <main 
-      class="px-1 py-4 mx-auto max-w-6xl sm:px-6 lg:px-6"
+      class="px-3 py-4 mx-auto max-w-6xl sm:px-6 lg:px-6"
       :class="isInitialized && isLoggedIn && user ? 'min-h-[calc(100vh-107px)]' : 'min-h-[calc(100vh-65px)]'"
     >
       <slot />
@@ -252,7 +252,7 @@
     
     <!-- Footer -->
     <footer class="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12 mb-20 md:mb-0">
-      <div class="px-4 py-8 mx-auto max-w-6xl sm:px-6 lg:px-6">
+      <div class="px-3 py-8 mx-auto max-w-6xl sm:px-6 lg:px-6">
         <div class="text-center space-y-4">
           <!-- Beta Warning -->
           <div class="inline-flex items-center px-4 py-2 bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 rounded-lg text-sm font-medium">

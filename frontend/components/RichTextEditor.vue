@@ -460,20 +460,34 @@ onMounted(() => {
 .editor-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 0.25rem;
+  padding: 0.5rem;
   background: var(--md-sys-color-surface-container-lowest);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
+/* Mobile-first responsive toolbar */
+@media (min-width: 640px) {
+  .editor-toolbar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+}
+
 .toolbar-group {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.125rem;
+}
+
+@media (min-width: 640px) {
+  .toolbar-group {
+    gap: 0.25rem;
+  }
 }
 
 .toolbar-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -482,8 +496,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   transition: all 0.2s ease;
+}
+
+/* Larger buttons for desktop */
+@media (min-width: 640px) {
+  .toolbar-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
 }
 
 .toolbar-btn:hover {

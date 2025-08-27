@@ -1431,21 +1431,49 @@ watch([
 .journal-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .journal-page {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .journal-page {
+    padding: 2rem;
+  }
 }
 
 /* Enhanced Search and Filter Interface with improved visual hierarchy */
 .search-filter-section {
   background: var(--md-sys-color-surface-container-lowest);
-  border-radius: 24px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1rem;
   border: 1px solid var(--md-sys-color-outline-variant);
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 100;
   backdrop-filter: blur(10px);
+}
+
+@media (min-width: 640px) {
+  .search-filter-section {
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .search-filter-section {
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
 }
 
 /* Sticky state */

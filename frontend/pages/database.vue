@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Beta Notice Banner -->
-    <div class="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+    <div class="mb-4 sm:mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4">
       <div class="flex items-center">
         <i class="fas fa-flask text-orange-600 dark:text-orange-400 mr-3"></i>
         <div>
@@ -19,7 +19,7 @@
       <p class="mobile-body-medium md:text-base text-gray-600 dark:text-gray-300 mobile-emphasis-medium">Browse and search arrow specifications from leading manufacturers</p>
     </div>
       <!-- Database Stats -->
-      <div v-if="stats" class="grid grid-cols-2 md-mobile:grid-cols-4 md:grid-cols-4 gap-3 mb-6">
+      <div v-if="stats" class="grid grid-cols-2 md-mobile:grid-cols-4 md:grid-cols-4 gap-2 sm:gap-3 mb-6">
         <md-elevated-card class="text-center light-surface light-elevation">
         <div class="p-3 sm-mobile:p-4 sm:p-6">
           <div class="mobile-heading-3 sm:text-2xl font-bold text-indigo-600 mb-1 sm:mb-2">
