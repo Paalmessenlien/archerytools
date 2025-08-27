@@ -1,9 +1,12 @@
 <template>
   <!-- Mobile Menu Overlay -->
-  <div v-if="menuOpen" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay transition-opacity duration-300 z-[1100]" @click="closeMenu"></div>
+  <div v-if="menuOpen" class="fixed left-0 right-0 bg-black bg-opacity-50 modal-overlay transition-opacity duration-300 z-[1100]" @click="closeMenu"
+       :style="{ top: '0', bottom: 'calc(56px + env(safe-area-inset-bottom))' }"></div>
   
   <!-- Mobile Menu with Enhanced UX -->
-  <div v-if="menuOpen" class="fixed inset-0 bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-500 ease-out backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 z-[1200] flex flex-col" :class="menuOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'">
+  <div v-if="menuOpen" class="fixed left-0 right-0 bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-500 ease-out backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 z-[1200] flex flex-col" 
+       :class="menuOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'"
+       :style="{ top: '0', bottom: 'calc(56px + env(safe-area-inset-bottom))' }">
     <!-- Quick Actions Header -->
     <div class="absolute top-4 left-4 right-4 flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -32,8 +35,8 @@
       </div>
     </div>
     
-    <!-- Menu Content at Very Bottom -->
-    <div class="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent" style="padding-bottom: calc(env(safe-area-inset-bottom) + 24px);">
+    <!-- Menu Content at Bottom (above toolbar) -->
+    <div class="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent">
       
       <!-- Primary Actions (Most Used) -->
       <div class="space-y-2 mb-6">
