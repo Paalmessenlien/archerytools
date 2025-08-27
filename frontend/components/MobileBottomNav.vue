@@ -8,22 +8,22 @@
        :class="menuOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'"
        :style="{ top: '0', bottom: 'calc(56px + env(safe-area-inset-bottom))' }">
     <!-- Quick Actions Header -->
-    <div class="absolute top-4 left-4 right-4 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
+    <div class="absolute top-2 left-3 right-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
         <!-- Brand/Context -->
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-400">
-          ArcheryTool Menu
+        <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+          Menu
         </div>
       </div>
       <!-- Enhanced Close Options -->
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1">
         <DarkModeToggle />
         <button
           @click="closeMenu"
-          class="p-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200 hover:scale-105"
+          class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200"
           aria-label="Close menu"
         >
-          <i class="fas fa-times text-xl"></i>
+          <i class="fas fa-times text-lg"></i>
         </button>
       </div>
     </div>
@@ -36,82 +36,82 @@
     </div>
     
     <!-- Menu Content at Bottom (above toolbar) -->
-    <div class="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent">
+    <div class="absolute bottom-0 left-0 right-0 px-3 pb-4 pt-6 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent">
       
       <!-- Primary Actions (Most Used) -->
-      <div class="space-y-2 mb-6">
-        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4 mb-3">
+      <div class="space-y-1 mb-4">
+        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-3 mb-2">
           Main Navigation
         </div>
         
         <NuxtLink 
           :to="user ? '/my-setup' : '/'" 
           @click="closeMenu"
-          class="flex items-center px-5 py-4 text-lg font-semibold transition-all duration-200 rounded-2xl hover:scale-[1.02] active:scale-[0.98]"
+          class="flex items-center px-4 py-3 text-base font-semibold transition-all duration-200 rounded-xl hover:scale-[1.01] active:scale-[0.99]"
           :class="{ 
             'bg-blue-500 text-white shadow-lg shadow-blue-500/25': (user && $route.path === '/my-setup') || (!user && $route.path === '/'),
             'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700': !((user && $route.path === '/my-setup') || (!user && $route.path === '/'))
           }"
         >
-          <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-4">
-            <i class="fas fa-home text-blue-600 dark:text-blue-400"></i>
+          <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
+            <i class="fas fa-home text-blue-600 dark:text-blue-400 text-sm"></i>
           </div>
           <div>
-            <div class="text-lg font-semibold">{{ user ? 'Dashboard' : 'Home' }}</div>
-            <div class="text-sm opacity-70">{{ user ? 'Your bow setups' : 'Get started' }}</div>
+            <div class="text-base font-semibold">{{ user ? 'Dashboard' : 'Home' }}</div>
+            <div class="text-xs opacity-70">{{ user ? 'Your bow setups' : 'Get started' }}</div>
           </div>
         </NuxtLink>
         
         <NuxtLink 
           to="/calculator" 
           @click="closeMenu"
-          class="flex items-center px-5 py-4 text-lg font-semibold transition-all duration-200 rounded-2xl hover:scale-[1.02] active:scale-[0.98]"
+          class="flex items-center px-4 py-3 text-base font-semibold transition-all duration-200 rounded-xl hover:scale-[1.01] active:scale-[0.99]"
           :class="{ 
             'bg-green-500 text-white shadow-lg shadow-green-500/25': $route.path === '/calculator',
             'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700': $route.path !== '/calculator'
           }"
         >
-          <div class="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900 flex items-center justify-center mr-4">
-            <i class="fas fa-calculator text-green-600 dark:text-green-400"></i>
+          <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3">
+            <i class="fas fa-calculator text-green-600 dark:text-green-400 text-sm"></i>
           </div>
           <div>
-            <div class="text-lg font-semibold">Spine Calculator</div>
-            <div class="text-sm opacity-70">Find your perfect arrow</div>
+            <div class="text-base font-semibold">Spine Calculator</div>
+            <div class="text-xs opacity-70">Find your perfect arrow</div>
           </div>
         </NuxtLink>
         
         <NuxtLink 
           to="/database" 
           @click="closeMenu"
-          class="flex items-center px-5 py-4 text-lg font-semibold transition-all duration-200 rounded-2xl hover:scale-[1.02] active:scale-[0.98]"
+          class="flex items-center px-4 py-3 text-base font-semibold transition-all duration-200 rounded-xl hover:scale-[1.01] active:scale-[0.99]"
           :class="{ 
             'bg-purple-500 text-white shadow-lg shadow-purple-500/25': $route.path === '/database',
             'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700': $route.path !== '/database'
           }"
         >
-          <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900 flex items-center justify-center mr-4">
-            <i class="fas fa-database text-purple-600 dark:text-purple-400"></i>
+          <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center mr-3">
+            <i class="fas fa-database text-purple-600 dark:text-purple-400 text-sm"></i>
           </div>
           <div>
-            <div class="text-lg font-semibold">Arrow Database</div>
-            <div class="text-sm opacity-70">Browse arrow specs</div>
+            <div class="text-base font-semibold">Arrow Database</div>
+            <div class="text-xs opacity-70">Browse arrow specs</div>
           </div>
         </NuxtLink>
       </div>
       
       <!-- Secondary Actions (Compact) -->
-      <div class="space-y-1 mb-6">
-        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4 mb-2">
+      <div class="space-y-1 mb-4">
+        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-3 mb-1">
           Tools & Guides
         </div>
         
         <NuxtLink 
           to="/tuning" 
           @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           :class="{ 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400': $route.path === '/tuning' }"
         >
-          <i class="fas fa-bullseye w-6 mr-3 text-orange-500"></i>
+          <i class="fas fa-bullseye w-4 mr-2 text-orange-500 text-sm"></i>
           Interactive Tuning
         </NuxtLink>
         
@@ -119,37 +119,37 @@
         <NuxtLink 
           to="/journal" 
           @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           :class="{ 'bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200': $route.path === '/journal' }"
         >
-          <i class="fas fa-book w-6 mr-3 text-orange-500"></i>
+          <i class="fas fa-book w-4 mr-2 text-orange-500 text-sm"></i>
           Journal
         </NuxtLink>
         
         <NuxtLink 
           to="/info" 
           @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           :class="{ 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400': $route.path.startsWith('/info') }"
         >
-          <i class="fas fa-info-circle w-6 mr-3 text-blue-500"></i>
+          <i class="fas fa-info-circle w-4 mr-2 text-blue-500 text-sm"></i>
           Information Center
         </NuxtLink>
         
         <NuxtLink 
           to="/about" 
           @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           :class="{ 'bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200': $route.path === '/about' }"
         >
-          <i class="fas fa-question-circle w-6 mr-3 text-gray-500"></i>
+          <i class="fas fa-question-circle w-4 mr-2 text-gray-500 text-sm"></i>
           About
         </NuxtLink>
       </div>
       
       <!-- User Actions -->
-      <div v-if="user" class="space-y-2">
-        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4 mb-2">
+      <div v-if="user" class="space-y-1">
+        <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-3 mb-1">
           Account
         </div>
         
@@ -157,17 +157,17 @@
           v-if="user && isAdmin"
           to="/admin"
           @click="closeMenu"
-          class="flex items-center px-4 py-3 text-base font-medium text-red-700 dark:text-red-400 transition-all duration-200 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:scale-[1.01]"
+          class="flex items-center px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400 transition-all duration-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
         >
-          <i class="fas fa-shield-alt w-6 mr-3"></i>
+          <i class="fas fa-shield-alt w-4 mr-2 text-sm"></i>
           Admin Panel
         </NuxtLink>
         
         <button
           @click="handleLogout"
-          class="flex items-center w-full px-4 py-3 text-base font-medium text-gray-600 dark:text-gray-400 transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-[1.01]"
+          class="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-all duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
-          <i class="fas fa-sign-out-alt w-6 mr-3"></i>
+          <i class="fas fa-sign-out-alt w-4 mr-2 text-sm"></i>
           Logout
         </button>
       </div>
@@ -175,9 +175,9 @@
       <div v-else class="space-y-2">
         <button
           @click="handleLogin"
-          class="flex items-center justify-center w-full px-6 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+          class="flex items-center justify-center w-full px-4 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
         >
-          <i class="fab fa-google mr-3 text-xl"></i>
+          <i class="fab fa-google mr-2 text-lg"></i>
           Sign in with Google
         </button>
       </div>
