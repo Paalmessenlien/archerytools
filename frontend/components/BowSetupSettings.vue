@@ -402,6 +402,55 @@
           <textarea id="description" v-model="formData.description" class="form-textarea"></textarea>
         </div>
 
+        <!-- Bow Setup Images -->
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <i class="fas fa-camera mr-2 text-blue-600 dark:text-purple-400"></i>
+            Bow Setup Images ({{ attachedImages.length }}/3)
+          </label>
+          
+          <!-- Current Images Display -->
+          <div v-if="attachedImages.length" class="mb-3">
+            <div class="grid grid-cols-3 gap-3">
+              <div v-for="(image, index) in attachedImages" :key="index" class="relative group">
+                <img 
+                  :src="image.url" 
+                  :alt="image.alt || 'Bow setup image'" 
+                  class="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                />
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <button 
+                    @click="removeImage(index)" 
+                    class="p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                    type="button"
+                    title="Remove image"
+                  >
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Upload Component -->
+          <div v-if="attachedImages.length < 3">
+            <ImageUpload
+              :current-image-url="''"
+              alt-text="Bow setup image"
+              upload-path="bow_setup"
+              :max-size-bytes="5242880"
+              @upload-success="handleImageUpload"
+              @upload-error="handleImageError"
+            />
+          </div>
+          
+          <!-- Upload Guidelines -->
+          <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            Add up to 3 photos of your bow setup (max 5MB each)
+          </div>
+        </div>
+
         <!-- Change Reason -->
         <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
           <label for="change_reason" class="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
@@ -548,8 +597,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
+import { useImageUpload } from '~/composables/useImageUpload'
 import CustomButton from './CustomButton.vue'
 import ManufacturerInput from './ManufacturerInput.vue'
+import ImageUpload from '~/components/ImageUpload.vue'
 
 const props = defineProps({
   setup: {
@@ -571,6 +622,16 @@ const saving = ref(false)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
 
+// Image Upload Composable
+const imageUpload = useImageUpload({
+  context: 'bow_setup',
+  maxFiles: 3,
+  maxSize: 5
+})
+
+// State for attached images
+const attachedImages = ref([])
+
 // Manufacturer data for dropdowns (similar to AddBowSetupModal)
 const manufacturerData = ref({
   compound_bows: [],
@@ -586,7 +647,9 @@ const usageOptions = ['Target', 'Field', '3D', 'Hunting']
 
 // Computed
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(originalData.value)
+  const formChanged = JSON.stringify(formData.value) !== JSON.stringify(originalData.value)
+  const imagesChanged = JSON.stringify(attachedImages.value) !== JSON.stringify(originalData.value.images || [])
+  return formChanged || imagesChanged
 })
 
 // Methods
@@ -629,11 +692,29 @@ const initializeForm = () => {
   
   formData.value = { ...setupData }
   originalData.value = { ...setupData }
+  
+  // Initialize images if available (for editing mode)
+  if (props.setup.images && Array.isArray(props.setup.images)) {
+    attachedImages.value = props.setup.images.map(img => ({
+      url: img.url || img.cdnUrl,
+      cdnUrl: img.cdnUrl,
+      originalName: img.originalName || 'bow-setup-image.jpg',
+      uploadedAt: img.uploadedAt || new Date().toISOString(),
+      alt: img.alt || `${props.setup.name || 'Bow Setup'} - Setup Image`
+    }))
+    // Store original images for comparison
+    originalData.value.images = [...attachedImages.value]
+  } else {
+    attachedImages.value = []
+    originalData.value.images = []
+  }
 }
 
 const resetForm = () => {
   formData.value = { ...originalData.value }
   formData.value.change_reason = ''
+  // Reset images to original state
+  attachedImages.value = originalData.value.images ? [...originalData.value.images] : []
 }
 
 // Usage toggle methods (from AddBowSetupModal)
@@ -722,6 +803,14 @@ const handleSave = async () => {
       user_note: change_reason || 'Setup configuration updated'
     }
     
+    // Add images to payload
+    payload.images = attachedImages.value.map(img => ({
+      url: img.url,
+      cdnUrl: img.cdnUrl,
+      originalName: img.originalName,
+      alt: img.alt
+    }))
+    
     await api.put(`/bow-setups/${props.setup.id}`, payload)
     
     emit('show-notification', 'Setup configuration saved successfully', 'success')
@@ -729,6 +818,7 @@ const handleSave = async () => {
     
     // Update original data to reflect saved state
     originalData.value = { ...formData.value }
+    originalData.value.images = [...attachedImages.value]
     formData.value.change_reason = ''
     
   } catch (error) {
@@ -803,6 +893,29 @@ const handleDelete = async () => {
     deleting.value = false
     showDeleteConfirm.value = false
   }
+}
+
+// Image handling methods
+const handleImageUpload = (uploadResult) => {
+  console.log('Bow setup image uploaded:', uploadResult)
+  if (uploadResult && uploadResult.url) {
+    attachedImages.value.push({
+      url: uploadResult.url,
+      cdnUrl: uploadResult.cdnUrl,
+      originalName: uploadResult.originalName || 'bow-setup-image.jpg',
+      uploadedAt: new Date().toISOString(),
+      alt: `${formData.value.name || 'Bow Setup'} - Setup Image`
+    })
+  }
+}
+
+const handleImageError = (error) => {
+  console.error('Bow setup image upload error:', error)
+  emit('show-notification', 'Failed to upload image', 'error')
+}
+
+const removeImage = (index) => {
+  attachedImages.value.splice(index, 1)
 }
 
 // Watchers
