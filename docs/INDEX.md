@@ -137,6 +137,14 @@ Intelligent manufacturer detection and linking system:
 - **Public vs Protected Routes**: Only `/about` page accessible without authentication
 - **Global Middleware**: Unified authentication protection across all pages
 - **Page-Level Security**: Individual middleware protection for 30+ pages
+
+#### [User Approval System](USER_APPROVAL_SYSTEM.md) 🚦
+**NEW (August 28, 2025):** Admin-controlled user activation system for true invitation-only access:
+- **Database Migration**: Added user status column with proper migration (044)
+- **Authentication Flow**: New users require admin approval before platform access
+- **Admin Controls**: Professional approval interface with status management
+- **User Experience**: Dedicated pending approval page with clear communication
+- **Security Features**: Admin protection, existing user grandfathering, comprehensive access control
 - **Testing & Validation**: Comprehensive authentication flow testing
 - **User Experience**: Seamless redirects and authentication flows
 
