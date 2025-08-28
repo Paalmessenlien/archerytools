@@ -40,9 +40,12 @@ def token_required(f):
             if not current_user:
                 return jsonify({"message": "User not found!"}), 401
             
-            # Check if user status is active
-            user_status = current_user.get('status', 'pending')
-            if user_status != 'active':
+            # Check if user status is active (backwards compatible)
+            user_status = current_user.get('status')
+            
+            # Only block access for explicitly pending or suspended users
+            # Allow access if status is None (pre-migration) or 'active'
+            if user_status in ['pending', 'suspended']:
                 return jsonify({"message": f"Account is {user_status}. Please contact an administrator."}), 403
                 
         except Exception as e:
@@ -116,10 +119,15 @@ def get_user_from_google_token(authorization_code):
                 user['status'] = 'active'
                 print(f"✅ Automatically granted admin access to {email}")
             else:
-                # Regular new users need approval
-                db.update_user_status(user['id'], 'pending')
-                user['status'] = 'pending'
-                print(f"⏳ New user {email} created with pending status - requires admin approval")
+                # Regular new users need approval (if status column exists)
+                try:
+                    db.update_user_status(user['id'], 'pending')
+                    user['status'] = 'pending'
+                    print(f"⏳ New user {email} created with pending status - requires admin approval")
+                except Exception as e:
+                    # If status column doesn't exist yet, allow user through (backwards compatibility)
+                    print(f"⚠️ Could not set pending status for new user {email} (pre-migration): {e}")
+                    user['status'] = 'active'  # Allow access until migration is applied
         else:
             # Existing user login
             if email == "messenlien@gmail.com" and not user.get('is_admin'):
@@ -127,18 +135,33 @@ def get_user_from_google_token(authorization_code):
                 user['is_admin'] = True
                 print(f"✅ Restored admin access to {email}")
             
-            # Ensure admin is always active
+            # Ensure admin is always active (if status column exists)
             if email == "messenlien@gmail.com":
-                if user.get('status') != 'active':
-                    db.update_user_status(user['id'], 'active')
+                try:
+                    if user.get('status') != 'active':
+                        db.update_user_status(user['id'], 'active')
+                        user['status'] = 'active'
+                        print(f"✅ Ensured admin {email} has active status")
+                except Exception as e:
+                    # If status column doesn't exist yet, just continue (backwards compatibility)
+                    print(f"⚠️ Could not ensure admin status (pre-migration): {e}")
                     user['status'] = 'active'
-                    print(f"✅ Ensured admin {email} has active status")
         
-        # Check if user is approved for access
-        user_status = user.get('status', 'pending')
-        if user_status != 'active':
+        # Check if user is approved for access (backwards compatible)
+        user_status = user.get('status')
+        
+        # If status column doesn't exist (pre-migration), allow access for existing users
+        if user_status is None:
+            print(f"⚠️ User {email} has no status (pre-migration) - allowing access")
+            user_status = 'active'  # Treat as active for backwards compatibility
+        
+        # Only block access for explicitly pending or suspended users
+        if user_status in ['pending', 'suspended']:
             print(f"⛔ User {email} attempted login but status is '{user_status}' - access denied")
             return None, False  # Deny access for non-active users
+        
+        # Allow access for 'active' or None/undefined status (backwards compatibility)
+        user['status'] = user_status
         
         needs_profile_completion = is_new_user and not user.get('name')
 
