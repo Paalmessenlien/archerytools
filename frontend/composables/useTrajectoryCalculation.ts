@@ -399,7 +399,26 @@ export const useTrajectoryCalculation = () => {
     let estimatedSpeed = performanceData?.performance_summary?.estimated_speed_fps
     let speedSource = performanceData?.performance_summary?.speed_source || 'estimated'
     
-    if (setupArrow.setup_id && setupArrow.arrow_id) {
+    // If no performance data provided, try to get enhanced speed calculation directly
+    if (!estimatedSpeed && setupArrow.setup_id && setupArrow.arrow_id) {
+      try {
+        const enhancedSpeedResponse = await getChronographSpeed(setupArrow.setup_id, setupArrow.arrow_id)
+        if (enhancedSpeedResponse) {
+          estimatedSpeed = enhancedSpeedResponse
+          speedSource = 'chronograph'
+          console.log('🎯 Using chronograph/enhanced speed:', {
+            speed: enhancedSpeedResponse,
+            setupId: setupArrow.setup_id,
+            arrowId: setupArrow.arrow_id
+          })
+        }
+      } catch (error) {
+        console.warn('Failed to get enhanced speed, will use fallback:', error)
+      }
+    }
+    
+    // Legacy chronograph check (keep for backward compatibility)
+    if (setupArrow.setup_id && setupArrow.arrow_id && !estimatedSpeed) {
       const chronographSpeed = await getChronographSpeed(setupArrow.setup_id, setupArrow.arrow_id)
       if (chronographSpeed) {
         estimatedSpeed = chronographSpeed

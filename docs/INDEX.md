@@ -62,6 +62,15 @@ Professional archery physics calculations and algorithms:
 - **API Performance**: Enhanced error handling and trajectory calculation improvements
 - **Professional Validation**: Cross-validated against industry software and real-world measurements
 
+#### [FOC Calculation Fix Documentation](FOC_CALCULATION_FIX.md) ✨ NEW
+Comprehensive documentation of the Front of Center (FOC) calculation fixes:
+- **Issue Resolution**: Fixed broken frontend FOC formula with physics-based calculation
+- **Data Consistency**: Resolved inconsistencies between frontend display and backend performance
+- **Trajectory Integration**: Fixed speed calculation mismatch in trajectory system
+- **Technical Implementation**: Detailed before/after comparison with code examples
+- **Validation Results**: Testing verification for all arrow configurations
+- **Impact Assessment**: User experience and system reliability improvements
+
 #### [Database Migrations Documentation](DATABASE_MIGRATIONS.md)
 Complete guide to the database migration system:
 - **Migration Architecture**: Versioned migrations with dependency management

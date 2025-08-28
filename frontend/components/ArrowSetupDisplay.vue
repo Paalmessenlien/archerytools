@@ -256,20 +256,36 @@ const calculateTotalWeight = () => {
 }
 
 const calculateFOC = () => {
-  const totalWeight = calculateTotalWeight()
   const arrowLength = props.setupArrow.arrow_length || 32
   const pointWeight = props.setupArrow.point_weight || 0
   const insertWeight = props.setupArrow.insert_weight || 0
+  const nockWeight = props.setupArrow.nock_weight || 10
+  const fletchingWeight = props.setupArrow.fletching_weight || 15
+  const shaftWeight = calculateShaftWeight()
   
+  const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + fletchingWeight
   if (totalWeight === 0) return 0
   
-  // Simplified FOC calculation
-  const balancePoint = arrowLength / 2
-  const frontWeight = pointWeight + insertWeight
-  const foc = ((balancePoint - (arrowLength / 2)) / arrowLength) * 100 + 
-              (frontWeight / totalWeight) * 10
+  // Physics-based FOC calculation using component positions and moments
+  // Component positions (from nock end in inches)
+  const pointPosition = arrowLength  // Point at arrow tip
+  const insertPosition = arrowLength - 0.5  // Insert ~0.5" from tip
+  const shaftCenter = arrowLength / 2  // Shaft center
+  const nockFletchingPosition = 0  // Nock and fletching at back
   
-  return Math.round(foc * 10) / 10
+  // Calculate balance point using weighted moments
+  const totalMoment = (pointWeight * pointPosition) + 
+                     (insertWeight * insertPosition) +
+                     (shaftWeight * shaftCenter) +
+                     (nockWeight * nockFletchingPosition) +
+                     (fletchingWeight * nockFletchingPosition)
+  
+  const balancePoint = totalMoment / totalWeight
+  const physicalCenter = arrowLength / 2
+  const focDistance = balancePoint - physicalCenter
+  const focPercentage = (focDistance / arrowLength) * 100
+  
+  return Math.round(focPercentage * 10) / 10
 }
 
 const calculateWallThickness = () => {
