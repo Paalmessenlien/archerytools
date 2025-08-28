@@ -11,9 +11,12 @@ def get_migration_info():
     """Return migration metadata"""
     return {
         'version': 44,
-        'description': 'User approval system - new users require admin activation',
+        'description': 'User approval system - add status column to users table',
         'author': 'System', 
-        'created_at': '2025-08-28'
+        'created_at': '2025-08-28',
+        'target_database': 'arrow',  # Unified database - all data in arrow_database.db
+        'dependencies': ['023'],  # Depends on unified database architecture
+        'environments': ['all']
     }
 
 def migrate_up(cursor):
@@ -71,16 +74,18 @@ def migrate_down(cursor):
         return False
 
 if __name__ == "__main__":
-    # Direct execution for testing
+    # Test standalone - matches recommended format from documentation
+    db_path = os.path.join(os.path.dirname(__file__), '..', 'databases', 'arrow_database.db')
+    
+    # For testing, use a temporary database
     if len(sys.argv) > 1 and sys.argv[1] == "test":
         db_path = "test_migration_044.db"
         if os.path.exists(db_path):
             os.remove(db_path)
-        
+            
+        # Create test database with users table
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
-        # Create a basic users table for testing
         cursor.execute("""
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,28 +94,28 @@ if __name__ == "__main__":
                 is_admin BOOLEAN DEFAULT 0
             )
         """)
-        
-        # Insert test user
         cursor.execute("INSERT INTO users (email, name) VALUES ('test@example.com', 'Test User')")
         cursor.execute("INSERT INTO users (email, name) VALUES ('messenlien@gmail.com', 'Admin User')")
         conn.commit()
+    else:
+        # Use actual database for standalone execution
+        conn = sqlite3.connect(db_path)
+    
+    try:
+        success = migrate_up(conn.cursor())
+        print("✅ Migration test completed successfully" if success else "❌ Migration test failed")
         
-        print("Running migration test...")
-        success = migrate_up(cursor)
-        
-        if success:
-            # Verify the migration
+        if success and len(sys.argv) > 1 and sys.argv[1] == "test":
+            # Verify test results
+            cursor = conn.cursor()
             cursor.execute("PRAGMA table_info(users)")
             columns = [column[1] for column in cursor.fetchall()]
             if 'status' in columns:
-                print("✅ Migration test passed!")
-                
-                # Check user statuses
                 cursor.execute("SELECT email, status FROM users")
                 for row in cursor.fetchall():
                     print(f"  User: {row[0]} -> Status: {row[1]}")
-            else:
-                print("❌ Migration test failed!")
-        
+                    
+    finally:
         conn.close()
-        os.remove(db_path)
+        if len(sys.argv) > 1 and sys.argv[1] == "test" and os.path.exists("test_migration_044.db"):
+            os.remove("test_migration_044.db")
