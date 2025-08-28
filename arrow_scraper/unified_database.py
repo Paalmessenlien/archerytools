@@ -75,7 +75,7 @@ class UnifiedDatabase:
             cursor.execute('''
                 INSERT INTO users (google_id, email, name, profile_picture_url, status)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (google_id, email, name, profile_picture_url, 'pending'))
+            ''', (google_id, email, name, profile_picture_url, 'active'))
             user_id = cursor.lastrowid
             
             # Return the created user
