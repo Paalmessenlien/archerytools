@@ -69,27 +69,53 @@ class UnifiedDatabase:
     
     def create_user(self, google_id: str, email: str, name: str = None, 
                    profile_picture_url: str = None) -> Dict[str, Any]:
-        """Create a new user and return user dict"""
+        """Create a new user and return user dict (backwards compatible)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO users (google_id, email, name, profile_picture_url, status)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (google_id, email, name, profile_picture_url, 'active'))
+            
+            # Check if status column exists (backwards compatibility)
+            cursor.execute('PRAGMA table_info(users)')
+            columns = [col[1] for col in cursor.fetchall()]
+            
+            if 'status' in columns:
+                # New schema with status column
+                cursor.execute('''
+                    INSERT INTO users (google_id, email, name, profile_picture_url, status)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (google_id, email, name, profile_picture_url, 'active'))
+            else:
+                # Legacy schema without status column
+                cursor.execute('''
+                    INSERT INTO users (google_id, email, name, profile_picture_url)
+                    VALUES (?, ?, ?, ?)
+                ''', (google_id, email, name, profile_picture_url))
+            
             user_id = cursor.lastrowid
             
             # Return the created user
             cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            user_dict = dict(row) if row else None
+            
+            # Add status field if it doesn't exist in database
+            if user_dict and 'status' not in user_dict:
+                user_dict['status'] = 'active'  # Default for backwards compatibility
+                
+            return user_dict
     
     def get_user_by_google_id(self, google_id: str) -> Optional[Dict[str, Any]]:
-        """Get user by Google ID"""
+        """Get user by Google ID (backwards compatible)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE google_id = ?', (google_id,))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if row:
+                user_dict = dict(row)
+                # Add status field if it doesn't exist in database (backwards compatibility)
+                if 'status' not in user_dict:
+                    user_dict['status'] = 'active'  # Default for existing users
+                return user_dict
+            return None
     
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """Get user by email"""
@@ -113,12 +139,18 @@ class UnifiedDatabase:
             return cursor.rowcount > 0
     
     def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Get user by ID"""
+        """Get user by ID (backwards compatible)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if row:
+                user_dict = dict(row)
+                # Add status field if it doesn't exist in database (backwards compatibility)
+                if 'status' not in user_dict:
+                    user_dict['status'] = 'active'  # Default for existing users
+                return user_dict
+            return None
     
     def set_admin_status(self, user_id: int, is_admin: bool = True) -> bool:
         """Set user admin status"""
@@ -129,8 +161,16 @@ class UnifiedDatabase:
         return self.set_admin_status(user_id, is_admin)
     
     def update_user_status(self, user_id: int, status: str) -> bool:
-        """Update user status (active, pending, suspended)"""
-        return self.update_user(user_id, status=status)
+        """Update user status (active, pending, suspended) - backwards compatible"""
+        try:
+            return self.update_user(user_id, status=status)
+        except Exception as e:
+            # If status column doesn't exist, just return True (backwards compatibility)
+            if "no such column" in str(e).lower() and "status" in str(e).lower():
+                print(f"⚠️ Status column doesn't exist, ignoring status update: {e}")
+                return True
+            else:
+                raise e
     
     def get_all_users(self) -> List[Dict[str, Any]]:
         """Get all users"""
