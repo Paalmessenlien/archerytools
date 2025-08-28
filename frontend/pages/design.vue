@@ -217,6 +217,11 @@ const sections = [
   { id: 'icons', name: 'Icons', icon: 'fas fa-icons' },
   { id: 'animations', name: 'Animations', icon: 'fas fa-play' }
 ]
+
+// Page metadata
+definePageMeta({
+  middleware: ['auth-check']
+})
 </script>
 
 <style>

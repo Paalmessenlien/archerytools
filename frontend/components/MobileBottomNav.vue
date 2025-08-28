@@ -163,6 +163,16 @@
           Admin Panel
         </NuxtLink>
         
+        <NuxtLink
+          v-if="user && isAdmin"
+          to="/design"
+          @click="closeMenu"
+          class="flex items-center px-3 py-2 text-sm font-medium text-purple-700 dark:text-purple-400 transition-all duration-200 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+        >
+          <i class="fas fa-palette w-4 mr-2 text-sm"></i>
+          Design System
+        </NuxtLink>
+        
         <button
           @click="handleLogout"
           class="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-all duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
