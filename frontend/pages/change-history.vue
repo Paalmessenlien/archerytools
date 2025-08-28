@@ -268,7 +268,8 @@ import GlobalChangeLogViewer from '@/components/GlobalChangeLogViewer.vue'
 
 // Meta information
 definePageMeta({
-  title: 'Change History'
+  title: 'Change History',
+  middleware: ['auth-check']
 })
 
 // Composables

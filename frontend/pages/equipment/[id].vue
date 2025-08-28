@@ -312,7 +312,8 @@ import CustomEquipmentForm from '~/components/CustomEquipmentForm.vue'
 
 // Meta information
 definePageMeta({
-  title: 'Equipment Details'
+  title: 'Equipment Details',
+  middleware: ['auth-check']
 })
 
 // Composables

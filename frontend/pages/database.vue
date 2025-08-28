@@ -722,8 +722,8 @@ useHead({
   ]
 })
 
-// Database page should be publicly accessible for browsing
+// Authentication required for database access
 definePageMeta({
-  // No authentication required - public browsing
+  middleware: ['auth-check']
 })
 </script>

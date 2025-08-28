@@ -411,6 +411,7 @@ import { ref } from 'vue'
 
 // Page metadata
 definePageMeta({
+  middleware: ['auth-check'],
   layout: 'default'
 })
 

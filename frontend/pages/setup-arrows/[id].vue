@@ -527,7 +527,8 @@ import ArrowJournal from '~/components/ArrowJournal.vue'
 
 // Meta information
 definePageMeta({
-  title: 'Arrow Setup Details'
+  title: 'Arrow Setup Details',
+  middleware: ['auth-check']
 })
 
 // Composables
@@ -661,6 +662,16 @@ const getCompatibilityClass = (score) => {
   } else {
     return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
   }
+}
+
+const canAutoRecalculatePerformance = () => {
+  if (!setupArrowData.value) return false
+  
+  const setup = setupArrowData.value.setup_arrow
+  const bow = setupArrowData.value.bow_setup
+  
+  // Only auto-recalculate if we have the necessary data
+  return setup.arrow_length && setup.point_weight && bow.draw_weight
 }
 
 // Event handlers
@@ -923,16 +934,39 @@ const exitTuningSession = () => {
 // All interaction is now handled by the toggleSection method above
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   if (setupArrowId.value) {
-    loadSetupArrowDetails()
+    await loadSetupArrowDetails()
+    // Auto-recalculate performance to ensure fresh calculations with current formulas
+    // This prevents old cached performance data from being displayed
+    if (setupArrowData.value && canAutoRecalculatePerformance()) {
+      setTimeout(async () => {
+        try {
+          await calculatePerformance()
+          console.log('Auto-recalculated performance on page load')
+        } catch (error) {
+          console.warn('Failed to auto-recalculate performance on load:', error)
+        }
+      }, 100) // Small delay to ensure UI is ready
+    }
   }
 })
 
 // Watch for route changes
-watch(() => setupArrowId.value, (newId) => {
+watch(() => setupArrowId.value, async (newId) => {
   if (newId) {
-    loadSetupArrowDetails()
+    await loadSetupArrowDetails()
+    // Auto-recalculate performance for route changes too
+    if (setupArrowData.value && canAutoRecalculatePerformance()) {
+      setTimeout(async () => {
+        try {
+          await calculatePerformance()
+          console.log('Auto-recalculated performance on route change')
+        } catch (error) {
+          console.warn('Failed to auto-recalculate performance on route change:', error)
+        }
+      }, 100)
+    }
   }
 })
 

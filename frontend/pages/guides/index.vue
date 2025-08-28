@@ -297,8 +297,8 @@ useHead({
   ]
 })
 
-// Guides should be publicly accessible
+// Authentication required for guides
 definePageMeta({
-  // No authentication required - public guides
+  middleware: ['auth-check']
 })
 </script>

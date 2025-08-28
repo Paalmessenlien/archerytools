@@ -1462,9 +1462,9 @@ useHead({
   ]
 })
 
-// No authentication required for calculator - publicly accessible
+// Authentication required for calculator
 definePageMeta({
-  // No middleware needed - public page
+  middleware: ['auth-check']
 })
 </script>
 

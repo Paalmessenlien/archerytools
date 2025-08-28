@@ -574,7 +574,7 @@ import { debounce } from '~/utils/debounce'
 
 // Page metadata
 definePageMeta({
-  // middleware: 'auth-check', // Temporarily disabled for testing
+  middleware: ['auth-check'],
   layout: 'default'
 })
 

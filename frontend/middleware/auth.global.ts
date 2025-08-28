@@ -16,7 +16,19 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     await fetchUser();
   }
 
-  if (to.path.startsWith('/setups') && !token.value) {
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/about',
+    '/login',
+    '/login/index'
+  ];
+
+  // Check if the current route is public
+  const isPublicRoute = publicRoutes.includes(to.path);
+
+  // If not a public route and user is not authenticated, redirect to login
+  if (!isPublicRoute && !token.value) {
     return navigateTo('/login');
   }
 });

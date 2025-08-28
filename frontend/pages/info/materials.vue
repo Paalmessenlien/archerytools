@@ -304,6 +304,7 @@ import { useApi } from '~/composables/useApi'
 
 // Page metadata
 definePageMeta({
+  middleware: ['auth-check'],
   layout: 'default'
 })
 

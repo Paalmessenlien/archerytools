@@ -280,7 +280,7 @@ import { useApi } from '~/composables/useApi'
 // Set page meta
 definePageMeta({
   title: 'Journal Entry',
-  requiresAuth: true
+  middleware: ['auth-check']
 })
 
 // Composables

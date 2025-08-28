@@ -567,4 +567,9 @@ watchEffect(() => {
     })
   }
 })
+
+// Page metadata
+definePageMeta({
+  middleware: ['auth-check']
+})
 </script>

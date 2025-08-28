@@ -524,6 +524,7 @@
 <script setup lang="ts">
 // Page metadata
 definePageMeta({
+  middleware: ['auth-check'],
   layout: 'default'
 })
 
