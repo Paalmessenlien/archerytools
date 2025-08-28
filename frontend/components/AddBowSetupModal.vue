@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div class="modal-overlay modal-open fixed inset-0 z-[1100] bg-white dark:bg-gray-900 md:bg-black md:bg-opacity-50 md:flex md:items-center md:justify-center md:p-4">
-      <div class="modal-container relative z-[1150] bg-white dark:bg-gray-800 md:shadow-lg md:rounded-xl md:max-w-2xl md:max-h-[90vh] md:w-full flex flex-col">
+    <div class="modal-overlay modal-open fixed inset-0 z-[1100] bg-white dark:bg-gray-900 md:bg-black md:bg-opacity-50 md:flex md:items-center md:justify-center md:p-4 mobile-modal-overlay">
+      <div class="modal-container relative z-[1150] bg-white dark:bg-gray-800 md:shadow-lg md:rounded-xl md:max-w-2xl md:max-h-[90vh] md:w-full flex flex-col mobile-modal-container">
       <!-- Mobile-first responsive modal -->
       <div class="modal-mobile-header md:px-6 md:py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -102,18 +102,17 @@
               </div>
             </div>
 
-            <!-- Draw Length Module for Compound Bows -->
+            <!-- Draw Length for Compound Bows -->
             <div class="mt-4">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Draw Length Module: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length_module || 28 }}"</span>
-                <span class="text-gray-500 text-xs ml-1">(Compound bow cam specification)</span>
+                Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length || 28 }}"</span>
               </label>
               <md-slider
                 min="24"
                 max="34"
                 step="0.5"
-                :value="setupData.draw_length_module || 28"
-                @input="setupData.draw_length_module = parseFloat($event.target.value)"
+                :value="setupData.draw_length || 28"
+                @input="setupData.draw_length = parseFloat($event.target.value)"
                 labeled
                 ticks
                 class="w-full mobile-slider-safe"
@@ -123,7 +122,7 @@
                 <span>34"</span>
               </div>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                This is the physical cam module specification of your compound bow, not your personal draw length.
+                Module-based draw length setting for compound bows
               </p>
             </div>
           </div>
@@ -425,7 +424,7 @@
       </div>
       
       <!-- Mobile Actions Footer -->
-      <div class="modal-mobile-actions md:px-6 md:pb-6 bg-white dark:bg-gray-800 flex justify-end space-x-3">
+      <div class="modal-mobile-actions md:px-6 md:pb-6 bg-white dark:bg-gray-800 flex justify-end space-x-3 pb-safe">
         <CustomButton
           type="button"
           @click="$emit('close')"
@@ -480,6 +479,7 @@ const setupData = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
+  draw_length: 28, // Unified draw length field
   description: '',
   riser_brand: '',
   riser_model: '',
@@ -605,6 +605,7 @@ const saveBowSetup = () => {
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
+    draw_length: Number(setupData.value.draw_length) || 28, // Unified draw length field
     description: setupData.value.description || '',
     bow_usage: JSON.stringify(setupData.value.bow_usage || []),
     
@@ -739,5 +740,30 @@ onMounted(() => {
 
 .dark .slider::-moz-range-thumb {
   background: #8b5cf6;
+}
+
+/* Mobile-safe modal positioning */
+.pb-safe {
+  @apply pb-6 md:pb-6;
+}
+
+/* Mobile-specific modal positioning to avoid bottom navigation */
+@media (max-width: 768px) {
+  .modal-overlay {
+    bottom: 0 !important;
+  }
+  
+  .modal-container {
+    max-height: calc(100vh - 64px) !important; /* Account for mobile nav height */
+    margin-bottom: 0 !important;
+  }
+  
+  .modal-mobile-actions.pb-safe {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; /* Bottom nav + safe area */
+  }
+  
+  .modal-mobile-content {
+    max-height: calc(100vh - 180px) !important; /* Account for header + footer + nav */
+  }
 }
 </style>

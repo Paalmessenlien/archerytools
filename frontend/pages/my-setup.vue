@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="py-4 mx-auto max-w-7xl pb-24 md:pb-8"
+    class="py-4 mx-auto max-w-7xl pb-24 md:pb-8 mobile-safe-content"
     @touchstart="handlePullStart"
     @touchmove="handlePullMove"
     @touchend="handlePullEnd"
@@ -167,7 +167,7 @@
               <CustomButton
                 @click="openAddSetupModal"
                 variant="filled"
-                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 w-full md:w-auto touch-target"
+                class="bg-blue-600 text-white hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 w-full md:w-auto touch-target mobile-safe-button"
               >
                 <i class="fas fa-plus mr-2"></i>
                 Add New Setup
@@ -607,8 +607,7 @@ const newSetup = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
-  draw_length: null,
-  draw_length_module: null,  // For compound bow cam specification
+  draw_length: 28, // Unified draw length field
   arrow_length: null,
   point_weight: 100,
   description: '',
@@ -689,7 +688,7 @@ const openAddSetupModal = () => {
     name: '',
     bow_type: '',
     draw_weight: 45,
-    draw_length_module: null,
+    draw_length: 28, // Unified draw length field
     description: '',
     bow_usage: [],
   };
@@ -719,7 +718,7 @@ const openEditBowSetupModal = (setup) => {
     compound_brand: setup.compound_brand || '',
     compound_model: setup.compound_model || '',
     ibo_speed: setup.ibo_speed || '',
-    draw_length_module: setup.draw_length_module || null,
+    draw_length: setup.draw_length || 28, // Unified draw length field
     riser_brand: setup.riser_brand || '',
     riser_model: setup.riser_model || '',
     riser_length: setup.riser_length || '',
@@ -1381,5 +1380,26 @@ definePageMeta({
 }
 .form-textarea {
   @apply w-full h-24 resize-y;
+}
+
+/* Mobile-safe content positioning to avoid bottom navigation overlap */
+.mobile-safe-content {
+  @apply pb-24 md:pb-8; /* Extra padding on mobile for bottom nav */
+}
+
+/* Mobile-safe button positioning */
+.mobile-safe-button {
+  @apply mb-6 md:mb-4; /* Extra margin on mobile */
+}
+
+/* Ensure content doesn't get hidden behind mobile navigation */
+@media (max-width: 768px) {
+  .mobile-safe-content {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important; /* Bottom nav height + safe area */
+  }
+  
+  .mobile-safe-button {
+    margin-bottom: 2rem !important; /* Extra spacing for buttons on mobile */
+  }
 }
 </style>

@@ -143,10 +143,10 @@ def get_fallback_ata_speed(bow_type, bow_ibo_speed=None, bow_draw_weight=None):
     # Traditional bows significantly slower than compounds
     bow_type_ata_speeds = {
         'compound': 320,      # Modern compound bows (IBO standard)
-        'recurve': 140,       # Traditional recurve (realistic AMO standard - reduced from 180) 
-        'longbow': 120,       # Traditional longbow (realistic - reduced from 140)
-        'traditional': 130,   # General traditional bow (realistic - reduced from 130)
-        'barebow': 150        # Barebow recurve (reduced from 170)
+        'recurve': 175,       # Olympic recurve bows typically 170-190 fps
+        'longbow': 155,       # Traditional longbows 150-165 fps
+        'traditional': 160,   # General traditional bows 155-170 fps
+        'barebow': 175        # Barebow recurves typically 165-185 fps
     }
     
     return bow_type_ata_speeds.get(bow_type.lower(), 320)
@@ -203,8 +203,8 @@ def validate_bow_setup_data(bow_type, bow_draw_weight, bow_draw_length, bow_ibo_
                 realistic_max_ibo = min(220, bow_draw_weight * 3.5)
                 if bow_ibo_speed > realistic_max_ibo:
                     warnings.append(f"Traditional bow IBO speed {bow_ibo_speed} fps is too high for {bow_draw_weight}# (realistic max: ~{realistic_max_ibo:.0f} fps)")
-                elif bow_ibo_speed < 120:
-                    warnings.append(f"Traditional bow IBO speed {bow_ibo_speed} fps is very low (typical range: 140-200 fps)")
+                elif bow_ibo_speed < 150:
+                    warnings.append(f"Traditional bow IBO speed {bow_ibo_speed} fps is very low (typical range: 155-200 fps)")
         
         # Check for unrealistic combinations
         if bow_type_lower in ['compound'] and bow_draw_weight < 40 and bow_ibo_speed and bow_ibo_speed > 320:
@@ -382,7 +382,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
             if bow_type.lower() in ['compound']:
                 min_speed, max_speed = 180, 450  # Compound bow bounds
             else:
-                min_speed, max_speed = 120, 350  # Traditional bow bounds (lower minimum)
+                min_speed, max_speed = 150, 350  # Traditional bow bounds (realistic minimum)
             
             # Apply bounds and validate result
             bounded_speed = max(min_speed, min(max_speed, estimated_speed))
@@ -413,7 +413,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
                 basic_speed = max(180, min(350, basic_speed))
             else:
                 basic_speed = (bow_draw_weight * 8) - (arrow_weight_grains - 350) * 0.08
-                basic_speed = max(120, min(300, basic_speed))
+                basic_speed = max(150, min(300, basic_speed))
             
             print(f"🔄 Fallback speed: {basic_speed:.1f} fps")
             return {"speed": basic_speed, "source": "fallback_estimated", "confidence": 60, "error": str(e)}
@@ -421,7 +421,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         except Exception as fallback_error:
             print(f"❌ Fallback calculation also failed: {fallback_error}")
             # Last resort - return reasonable default based on bow type
-            default_speed = 280 if bow_type == 'compound' else 160
+            default_speed = 280 if bow_type == 'compound' else 175
             print(f"🆘 Using emergency default: {default_speed} fps")
             return {"speed": default_speed, "source": "default", "confidence": 30, "error": f"All calculations failed: {str(e)}"}
 
@@ -579,11 +579,12 @@ def get_unified_database():
 
 def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=28.0):
     """
-    Get effective draw length using correct hierarchy:
-    1. PRIMARY: bow_setups.draw_length (equipment-specific, used for all calculations)
-    2. FALLBACK: bow_setups.draw_length_module (compound bows only)
-    3. FALLBACK: users.user_draw_length (personal measurement fallback)
-    4. FALLBACK: system default (28.0")
+    Get effective draw length using unified system (Migration 045+):
+    - PRIMARY: bow_setups.draw_length (mandatory per setup, single source of truth)
+    - FALLBACK: system default (28.0") only for data integrity issues
+    
+    All bow setups must have draw_length after Migration 045.
+    No more user-level or compound-specific draw length columns.
     
     Returns tuple: (draw_length, source_description)
     """
@@ -595,18 +596,15 @@ def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=2
         # Extract bow type and draw length data
         bow_type = None
         bow_draw_length = None
-        bow_draw_length_module = None
         bow_setup_id = None
         
         if bow_config:
             bow_type = bow_config.get('bow_type', '').lower()
             bow_draw_length = bow_config.get('draw_length')
-            bow_draw_length_module = bow_config.get('draw_length_module')
             bow_setup_id = bow_config.get('id') or bow_config.get('bow_setup_id')
         elif bow_data:
             bow_type = bow_data.get('bow_type', '').lower()
             bow_draw_length = bow_data.get('draw_length')
-            bow_draw_length_module = bow_data.get('draw_length_module')
             bow_setup_id = bow_data.get('id') or bow_data.get('bow_setup_id')
         
         # PRIMARY SOURCE: Use bow setup draw_length if available (this is correct for all calculations)
@@ -614,22 +612,11 @@ def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=2
             bow_type_display = bow_type.title() if bow_type else "Bow"
             return float(bow_draw_length), f"{bow_type_display} setup draw length ({bow_draw_length}\")"
         
-        # FALLBACK 1: For compound bows, use draw_length_module if no draw_length
-        if bow_type == 'compound' and bow_draw_length_module and bow_draw_length_module != 0:
-            return float(bow_draw_length_module), f"Compound module setting ({bow_draw_length_module}\")"
+        # Note: Unified system - no more complex fallbacks needed
+        # bow_setups.draw_length is now mandatory and single source of truth
         
-        # FALLBACK 2: Use user's personal draw length as final fallback
-        user = db.get_user_by_id(user_id)
-        if user and user.get('user_draw_length') and user.get('user_draw_length') != 0:
-            user_draw = float(user['user_draw_length'])
-            bow_type_display = bow_type.title() if bow_type else "Personal"
-            return user_draw, f"{bow_type_display} personal measurement ({user_draw}\")"
-        
-        # FALLBACK 3: Check legacy user.draw_length column
-        if user and user.get('draw_length') and user.get('draw_length') != 0:
-            user_draw = float(user['draw_length'])
-            bow_type_display = bow_type.title() if bow_type else "Personal"
-            return user_draw, f"{bow_type_display} legacy measurement ({user_draw}\")"
+        # If bow setup has no draw_length, this indicates a data integrity issue
+        # All bow setups should have draw_length after Migration 045
         
         # FINAL FALLBACK: System default
         bow_type_display = bow_type.title() if bow_type else "System"
@@ -2137,6 +2124,7 @@ def update_bow_setup(current_user, setup_id):
             'name': 'Setup name',
             'bow_type': 'Bow type', 
             'draw_weight': 'Draw weight',
+            'draw_length': 'Draw length',  # Added unified draw length tracking
             'bow_usage': 'Bow usage',
             'ibo_speed': 'IBO speed',
             'insert_weight': 'Insert weight',
@@ -3486,11 +3474,9 @@ def get_setup_arrow_details(setup_arrow_id):
             cursor.execute('''
                 SELECT sa.*, 
                        bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
-                       bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
-                       COALESCE(u.user_draw_length, 28.0) as draw_length
+                       bs.draw_weight, bs.ibo_speed, bs.draw_length
                 FROM setup_arrows sa
                 JOIN bow_setups bs ON sa.setup_id = bs.id
-                LEFT JOIN users u ON bs.user_id = u.id
                 WHERE sa.id = ? AND bs.user_id = ?
             ''', (setup_arrow_id, current_user['id']))
         else:
@@ -3498,8 +3484,7 @@ def get_setup_arrow_details(setup_arrow_id):
             cursor.execute('''
                 SELECT sa.*, 
                        bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
-                       bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
-                       28.0 as draw_length
+                       bs.draw_weight, bs.ibo_speed, bs.draw_length
                 FROM setup_arrows sa
                 JOIN bow_setups bs ON sa.setup_id = bs.id
                 WHERE sa.id = ?

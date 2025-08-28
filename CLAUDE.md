@@ -27,6 +27,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 ## Recent Major Updates (2025):
+- ✅ **Draw Length Unification & Speed System Fix**: Comprehensive fix for draw length management confusion and speed calculation issues ([Details](docs/DRAW_LENGTH_UNIFICATION_FIX.md))
 - ✅ **Journal Enhancement Phase 6**: Advanced integration & system consolidation with unified change history ([Details](docs/JOURNAL_ENHANCEMENT_PHASE6.md))
 - ✅ **Journal Enhancement Phase 5**: Complete advanced features implementation with templates, analytics, and export ([Details](docs/JOURNAL_ENHANCEMENT_PHASE5.md))
 - ✅ **Professional Archery Calculations System**: Complete overhaul with industry-accurate formulas and optimization algorithms ([Details](docs/ARCHERY_CALCULATIONS_GUIDE.md))

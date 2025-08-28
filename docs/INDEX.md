@@ -148,6 +148,16 @@ Intelligent manufacturer detection and linking system:
 - **Testing & Validation**: Comprehensive authentication flow testing
 - **User Experience**: Seamless redirects and authentication flows
 
+#### [Draw Length Unification & Speed System Fix](DRAW_LENGTH_UNIFICATION_FIX.md) ⚡
+**NEW (August 28, 2025):** Comprehensive fix for draw length management and speed calculation issues:
+- **Draw Length Unification**: Single source of truth per bow setup eliminating complex hierarchies
+- **Migration 045**: Database schema changes removing obsolete fields and unifying architecture
+- **Speed System Overhaul**: Realistic speed defaults and proper calculation hierarchy
+- **Frontend Fixes**: Updated Vue components to use unified draw_length field
+- **Mobile UX Improvements**: Fixed modal positioning issues preventing mobile users from saving setups
+- **API Integration**: Updated SQL queries and change tracking for unified system
+- **Production Testing**: Comprehensive verification of all fixes across mobile and desktop
+
 #### [Chronograph Data System Documentation](CHRONOGRAPH_DATA_SYSTEM.md) ⚡
 **NEW (August 2025)** - Comprehensive measured arrow speed integration:
 - **Database Schema**: Complete chronograph_data table with measurement tracking

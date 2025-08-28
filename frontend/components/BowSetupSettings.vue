@@ -354,17 +354,17 @@
           </div>
         </div>
 
-        <!-- Draw Length Module Slider for Compound Bows -->
+        <!-- Draw Length Slider for Compound Bows -->
         <div v-if="formData.bow_type === 'compound'">
           <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Draw Length Setting: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ formData.draw_length_module || 28 }}"</span>
+            Draw Length Setting: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ formData.draw_length || 28 }}"</span>
           </label>
           <input 
             type="range" 
             min="24" 
             max="34" 
             step="0.5" 
-            v-model.number="formData.draw_length_module"
+            v-model.number="formData.draw_length"
             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider mobile-slider-safe"
           />
           <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
