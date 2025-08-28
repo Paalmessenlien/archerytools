@@ -199,10 +199,7 @@ useHead({
 })
 
 // Authentication
-const { user } = useAuth()
-const isAdmin = computed(() => {
-  return user.value?.email === 'messenlien@gmail.com'
-})
+const { user, isAdmin } = useAuth()
 
 // Navigation
 const activeSection = ref('overview')

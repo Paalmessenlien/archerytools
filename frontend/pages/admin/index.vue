@@ -44,7 +44,7 @@
     </div>
 
     <!-- Admin Navigation Tabs -->
-    <div v-if="isAdmin" class="mb-6">
+    <div v-if="hasServerAdminAccess" class="mb-6">
       <nav class="flex space-x-8 border-b border-gray-200 dark:border-gray-700">
         <button
           @click="activeTab = 'users'"
@@ -153,7 +153,7 @@
     </div>
 
     <!-- Admin Dashboard -->
-    <div v-else-if="!isCheckingAdmin && isAdmin" class="space-y-6">
+    <div v-else-if="!isCheckingAdmin && hasServerAdminAccess" class="space-y-6">
       <!-- Users Tab -->
       <div v-if="activeTab === 'users'">
         <!-- User Statistics -->
@@ -2021,7 +2021,7 @@
     </div>
 
     <!-- Access Denied -->
-    <div v-else-if="!isCheckingAdmin && !isAdmin" class="text-center py-12">
+    <div v-else-if="!isCheckingAdmin && !hasServerAdminAccess" class="text-center py-12">
       <i class="fas fa-shield-alt text-6xl text-red-500 mb-4"></i>
       <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Access Denied</h2>
       <p class="text-gray-600 dark:text-gray-400 mb-4">You do not have permission to access the admin panel.</p>
@@ -2183,10 +2183,10 @@ import { useAuth } from '~/composables/useAuth'
 import SpineChartLibrary from '~/components/admin/SpineChartLibrary.vue'
 
 // Authentication check
-const { user, token, checkAdminStatus, getAllUsers, setUserAdminStatus } = useAuth()
+const { user, token, isAdmin, checkAdminStatus, getAllUsers, setUserAdminStatus } = useAuth()
 
-// Check if user is admin
-const isAdmin = ref(false)
+// Server-side admin verification
+const hasServerAdminAccess = ref(false)
 const isCheckingAdmin = ref(true) // Loading state for admin check
 
 // State
@@ -2349,7 +2349,7 @@ const api = useApi()
 
 // Load admin data
 const loadUsers = async () => {
-  if (!isAdmin.value) return
+  if (!hasServerAdminAccess.value) return
   
   try {
     loading.value = true
@@ -2623,7 +2623,7 @@ const deleteArrow = async () => {
 
 // System information functions
 const loadSystemInfo = async () => {
-  if (!isAdmin.value) return
+  if (!hasServerAdminAccess.value) return
   
   try {
     isLoadingSystemInfo.value = true
@@ -2643,7 +2643,7 @@ const loadSystemInfo = async () => {
 
 // Backup management functions
 const loadBackups = async () => {
-  if (!isAdmin.value) return
+  if (!hasServerAdminAccess.value) return
   
   try {
     isLoadingBackups.value = true
@@ -2890,7 +2890,7 @@ const checkAndLoadAdminData = async () => {
       console.log('Admin status result:', adminStatus)
       
       // Set admin status BEFORE setting loading to false
-      isAdmin.value = adminStatus
+      hasServerAdminAccess.value = adminStatus
       
       if (adminStatus) {
         console.log('User is admin, loading users and arrow stats...')
@@ -2905,11 +2905,11 @@ const checkAndLoadAdminData = async () => {
       }
     } else {
       console.log('No user found')
-      isAdmin.value = false
+      hasServerAdminAccess.value = false
     }
   } catch (error) {
     console.error('Error checking admin status:', error)
-    isAdmin.value = false
+    hasServerAdminAccess.value = false
   } finally {
     // Ensure isCheckingAdmin is only set to false after isAdmin is properly set
     isCheckingAdmin.value = false
@@ -3263,20 +3263,20 @@ watch(user, () => {
   if (user.value) {
     checkAndLoadAdminData()
   } else {
-    isAdmin.value = false
+    hasServerAdminAccess.value = false
     isCheckingAdmin.value = false
   }
 })
 
 // Watch for tab changes to load data as needed
 watch(activeTab, async (newTab) => {
-  if (newTab === 'backups' && isAdmin.value && backups.value.length === 0) {
+  if (newTab === 'backups' && hasServerAdminAccess.value && backups.value.length === 0) {
     await loadBackups()
   }
-  if (newTab === 'system' && isAdmin.value && !systemInfo.value) {
+  if (newTab === 'system' && hasServerAdminAccess.value && !systemInfo.value) {
     await loadSystemInfo()
   }
-  if (newTab === 'datatools' && isAdmin.value && manufacturers.value.length === 0) {
+  if (newTab === 'datatools' && hasServerAdminAccess.value && manufacturers.value.length === 0) {
     await loadManufacturersList()
   }
   if (newTab === 'maintenance' && isAdmin.value) {

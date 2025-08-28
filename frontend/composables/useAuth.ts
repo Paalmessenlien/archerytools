@@ -1,5 +1,5 @@
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 // Global state - shared across all useAuth() calls
 // Initialize as null to avoid hydration mismatches, load from localStorage on client only
@@ -439,11 +439,17 @@ export const useAuth = () => {
     }
   };
 
+  // Computed property for admin status
+  const isAdmin = computed(() => {
+    return user.value?.email === 'messenlien@gmail.com'
+  })
+
   return {
     token,
     user,
     isLoggedIn,
     isInitialized,
+    isAdmin,
     initializeClientAuth,
     initializeGoogleAuth,
     loginWithGoogle,
