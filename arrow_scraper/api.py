@@ -45,6 +45,27 @@ from change_log_service import ChangeLogService
 import jwt
 from auth import token_required, get_user_from_google_token
 
+def get_current_user_optional():
+    """
+    Get current user from JWT token if present, return None if no valid token
+    This allows endpoints to work with both authenticated and anonymous users
+    """
+    try:
+        token = None
+        if "Authorization" in request.headers:
+            token = request.headers["Authorization"].split(" ")[1]
+        
+        if not token:
+            return None
+        
+        data = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=["HS256"])
+        db = UnifiedDatabase()
+        current_user = db.get_user_by_id(data["user_id"])
+        return current_user
+    except Exception as e:
+        print(f"Optional auth failed (this is OK for public endpoints): {e}")
+        return None
+
 # Create Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'arrow-tuning-secret-key-change-in-production')
@@ -92,33 +113,164 @@ def get_tuning_system():
             tuning_system = None
     return tuning_system
 
-def get_fallback_ata_speed(bow_type, bow_ibo_speed=None):
+def get_fallback_ata_speed(bow_type, bow_ibo_speed=None, bow_draw_weight=None):
     """Get appropriate fallback ATA speed based on bow type"""
-    # If we have a valid IBO speed, use it
+    # If we have a valid IBO speed, use it - but validate it's realistic for the bow type
     if bow_ibo_speed and bow_ibo_speed > 0:
-        return bow_ibo_speed
+        # Validate IBO speed against bow type to catch unrealistic values
+        bow_type_lower = bow_type.lower()
+        if bow_type_lower in ['recurve', 'longbow', 'traditional', 'barebow']:
+            # Traditional bows shouldn't exceed ~200 fps IBO, but also need realistic minimums
+            # IBO speeds are typically tested at higher draw weights (40-50#)
+            # For very light bows, the stored IBO might be inappropriate
+            if bow_draw_weight:
+                max_realistic_ibo = min(200, bow_draw_weight * 3.5)  # Roughly 3.5 fps per pound max
+                if bow_ibo_speed > max_realistic_ibo:
+                    print(f"⚠️  Warning: IBO speed {bow_ibo_speed} fps too high for {bow_type} at {bow_draw_weight}#, using fallback")
+                else:
+                    return bow_ibo_speed
+            else:
+                # No draw weight available, use basic validation
+                if bow_ibo_speed > 200:
+                    print(f"⚠️  Warning: IBO speed {bow_ibo_speed} fps too high for {bow_type}, using fallback")
+                else:
+                    return bow_ibo_speed
+        else:
+            # Compound bows - accept the provided IBO speed
+            return bow_ibo_speed
     
-    # Fallback ATA speeds based on typical bow performance
+    # Fallback ATA speeds based on realistic bow performance
+    # Traditional bows significantly slower than compounds
     bow_type_ata_speeds = {
         'compound': 320,      # Modern compound bows (IBO standard)
-        'recurve': 210,       # Traditional recurve (AMO standard) 
-        'longbow': 190,       # Traditional longbow
-        'traditional': 180,   # General traditional bow
-        'barebow': 200        # Barebow recurve
+        'recurve': 140,       # Traditional recurve (realistic AMO standard - reduced from 180) 
+        'longbow': 120,       # Traditional longbow (realistic - reduced from 140)
+        'traditional': 130,   # General traditional bow (realistic - reduced from 130)
+        'barebow': 150        # Barebow recurve (reduced from 170)
     }
     
     return bow_type_ata_speeds.get(bow_type.lower(), 320)
 
+def validate_bow_setup_data(bow_type, bow_draw_weight, bow_draw_length, bow_ibo_speed=None):
+    """
+    Validate bow setup data for realistic values and warn about potential issues
+    
+    Args:
+        bow_type: Type of bow (compound, recurve, longbow, traditional, barebow)
+        bow_draw_weight: Draw weight in pounds
+        bow_draw_length: Draw length in inches  
+        bow_ibo_speed: Optional IBO speed rating in fps
+        
+    Returns:
+        dict with validation results and warnings
+    """
+    warnings = []
+    errors = []
+    bow_type_lower = str(bow_type).lower()
+    
+    try:
+        # Validate draw weight ranges
+        if bow_type_lower in ['compound']:
+            if bow_draw_weight < 20 or bow_draw_weight > 100:
+                if bow_draw_weight < 20:
+                    errors.append(f"Compound bow draw weight {bow_draw_weight}# is too low (minimum 20#)")
+                else:
+                    warnings.append(f"Compound bow draw weight {bow_draw_weight}# is very high (typical range: 40-80#)")
+        else:  # Traditional bows
+            if bow_draw_weight < 15 or bow_draw_weight > 80:
+                if bow_draw_weight < 15:
+                    errors.append(f"Traditional bow draw weight {bow_draw_weight}# is too low (minimum 15#)")
+                else:
+                    warnings.append(f"Traditional bow draw weight {bow_draw_weight}# is very high (typical range: 20-60#)")
+        
+        # Validate draw length ranges
+        if bow_draw_length < 24 or bow_draw_length > 34:
+            if bow_draw_length < 24:
+                warnings.append(f"Draw length {bow_draw_length}\" is very short (typical range: 26-32\")")
+            else:
+                warnings.append(f"Draw length {bow_draw_length}\" is very long (typical range: 26-32\")")
+        
+        # Validate IBO speed if provided
+        if bow_ibo_speed and bow_ibo_speed > 0:
+            if bow_type_lower in ['compound']:
+                if bow_ibo_speed < 250 or bow_ibo_speed > 370:
+                    if bow_ibo_speed < 250:
+                        warnings.append(f"Compound bow IBO speed {bow_ibo_speed} fps is low (typical range: 300-360 fps)")
+                    else:
+                        warnings.append(f"Compound bow IBO speed {bow_ibo_speed} fps is extremely high (typical range: 300-360 fps)")
+            else:  # Traditional bows
+                # Calculate realistic maximum based on draw weight
+                realistic_max_ibo = min(220, bow_draw_weight * 3.5)
+                if bow_ibo_speed > realistic_max_ibo:
+                    warnings.append(f"Traditional bow IBO speed {bow_ibo_speed} fps is too high for {bow_draw_weight}# (realistic max: ~{realistic_max_ibo:.0f} fps)")
+                elif bow_ibo_speed < 120:
+                    warnings.append(f"Traditional bow IBO speed {bow_ibo_speed} fps is very low (typical range: 140-200 fps)")
+        
+        # Check for unrealistic combinations
+        if bow_type_lower in ['compound'] and bow_draw_weight < 40 and bow_ibo_speed and bow_ibo_speed > 320:
+            warnings.append(f"High IBO speed ({bow_ibo_speed} fps) with low draw weight ({bow_draw_weight}#) is unusual for compound bows")
+        
+        return {
+            'valid': len(errors) == 0,
+            'warnings': warnings,
+            'errors': errors,
+            'bow_type': bow_type,
+            'summary': f"Validated {bow_type} bow: {bow_draw_weight}# @ {bow_draw_length}\"" + (f", {bow_ibo_speed} fps IBO" if bow_ibo_speed else "")
+        }
+        
+    except Exception as e:
+        return {
+            'valid': False,
+            'warnings': [],
+            'errors': [f"Validation error: {str(e)}"],
+            'bow_type': bow_type,
+            'summary': f"Validation failed for {bow_type} bow setup"
+        }
+
 def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_draw_length, bow_type, arrow_weight_grains, string_material='dacron', setup_id=None, arrow_id=None):
     """Internal helper for enhanced arrow speed calculation with chronograph data and string materials"""
+    
+    # Input validation and logging
     try:
+        # Validate inputs
+        if not all([bow_draw_weight, bow_draw_length, bow_type, arrow_weight_grains]):
+            print(f"❌ Missing required inputs for speed calculation: weight={bow_draw_weight}, length={bow_draw_length}, type={bow_type}, arrow_weight={arrow_weight_grains}")
+            return {"speed": None, "source": "error", "error": "Missing required inputs"}
+        
+        # Validate numeric inputs
+        try:
+            bow_ibo_speed = float(bow_ibo_speed) if bow_ibo_speed else 0
+            bow_draw_weight = float(bow_draw_weight)
+            bow_draw_length = float(bow_draw_length)
+            arrow_weight_grains = float(arrow_weight_grains)
+        except (ValueError, TypeError) as e:
+            print(f"❌ Invalid numeric inputs: {e}")
+            return {"speed": None, "source": "error", "error": "Invalid numeric inputs"}
+        
+        # Validate ranges
+        if not (10 <= bow_draw_weight <= 200):
+            print(f"❌ Bow draw weight out of range: {bow_draw_weight}#")
+            return {"speed": None, "source": "error", "error": f"Draw weight {bow_draw_weight}# out of range (10-200#)"}
+        
+        if not (20 <= bow_draw_length <= 35):
+            print(f"❌ Bow draw length out of range: {bow_draw_length}\"")
+            return {"speed": None, "source": "error", "error": f"Draw length {bow_draw_length}\" out of range (20-35\")"}
+        
+        if not (100 <= arrow_weight_grains <= 1500):
+            print(f"❌ Arrow weight out of range: {arrow_weight_grains} grains")
+            return {"speed": None, "source": "error", "error": f"Arrow weight {arrow_weight_grains} grains out of range (100-1500 grains)"}
+        
+        print(f"🔧 Enhanced speed calculation inputs: bow_type={bow_type}, draw_weight={bow_draw_weight}#, draw_length={bow_draw_length}\", ibo_speed={bow_ibo_speed}, arrow_weight={arrow_weight_grains}gr, string={string_material}")
+        
         # Check for chronograph data first (most accurate)
         chronograph_result = None
         if setup_id and arrow_id:
             try:
+                print(f"🔍 Checking chronograph data for setup_id={setup_id}, arrow_id={arrow_id}")
                 user_db = get_database()
                 if not user_db:
-                    return {"speed": None, "source": "error"}
+                    print(f"❌ Database not available for chronograph lookup")
+                    return {"speed": None, "source": "error", "error": "Database not available"}
                 cursor = user_db.get_connection().cursor()
                 
                 cursor.execute('''
@@ -133,6 +285,7 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
                 
                 if chronograph_data:
                     measured_speed, measured_weight, std_dev, shot_count = chronograph_data
+                    print(f"📊 Found chronograph data: {measured_speed} fps, {shot_count} shots, std_dev={std_dev}")
                     
                     # Use measured speed directly - chronograph data represents this exact arrow configuration
                     adjusted_speed = measured_speed
@@ -146,8 +299,12 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
                         'shot_count': shot_count,
                         'std_deviation': std_dev
                     }
+                    print(f"✅ Using chronograph speed: {adjusted_speed} fps (confidence: {confidence}%)")
+                else:
+                    print(f"📊 No chronograph data found for setup_id={setup_id}, arrow_id={arrow_id}")
             except Exception as chrono_error:
-                print(f"Warning: Could not retrieve chronograph data: {chrono_error}")
+                print(f"⚠️  Error retrieving chronograph data: {chrono_error}")
+                # Don't return error here, continue with calculation
         
         # If chronograph data available, use it
         if chronograph_result:
@@ -178,52 +335,95 @@ def calculate_enhanced_arrow_speed_internal(bow_ibo_speed, bow_draw_weight, bow_
         bow_efficiency = bow_type_factors.get(bow_type.lower(), 0.95)
         
         # Use proper ATA speed with fallback based on bow type
-        effective_ata_speed = get_fallback_ata_speed(bow_type, bow_ibo_speed)
+        try:
+            effective_ata_speed = get_fallback_ata_speed(bow_type, bow_ibo_speed, bow_draw_weight)
+            print(f"📏 Effective ATA speed: {effective_ata_speed} fps (input: {bow_ibo_speed}, bow_type: {bow_type})")
+        except Exception as ata_error:
+            print(f"⚠️  Error getting ATA speed: {ata_error}, using default")
+            effective_ata_speed = 320 if bow_type.lower() == 'compound' else 140
         
         # Enhanced IBO-based speed calculation with bow-type specific reference parameters
-        if bow_type.lower() in ['compound']:
-            # IBO standard for compounds: 350gr arrow, 30" draw, 70lb bow
-            reference_weight = 350.0
-            reference_draw_weight = 70.0
-            reference_draw_length = 30.0
-        else:
-            # AMO standard for traditional bows: typically tested at lower weights and lengths
-            reference_weight = 350.0  # Keep same arrow weight standard
-            reference_draw_weight = 50.0  # More realistic for traditional bows
-            reference_draw_length = 28.0  # More common traditional draw length
-        
-        # Adjust for draw weight difference (approximately 2.5 fps per pound - more realistic)
-        weight_adjustment = (bow_draw_weight - reference_draw_weight) * 2.5
-        
-        # Adjust for draw length difference (approximately 10 fps per inch)  
-        length_adjustment = (bow_draw_length - reference_draw_length) * 10
-        
-        # Adjust for arrow weight difference using kinetic energy conservation
-        # Heavier arrows = slower speed, lighter arrows = faster speed
-        weight_ratio = (reference_weight / arrow_weight_grains) ** 0.5
-        
-        # Calculate base speed with adjustments using effective ATA speed
-        adjusted_ibo = effective_ata_speed + weight_adjustment + length_adjustment
-        estimated_speed = adjusted_ibo * weight_ratio * string_modifier * bow_efficiency
-        
-        # Apply reasonable bounds based on bow type
-        if bow_type.lower() in ['compound']:
-            min_speed, max_speed = 180, 450  # Compound bow bounds
-        else:
-            min_speed, max_speed = 120, 350  # Traditional bow bounds (lower minimum)
-        
-        estimated_speed = max(min_speed, min(max_speed, estimated_speed))
-        
-        return {"speed": estimated_speed, "source": "enhanced_estimated"}
+        try:
+            if bow_type.lower() in ['compound']:
+                # IBO standard for compounds: 350gr arrow, 30" draw, 70lb bow
+                reference_weight = 350.0
+                reference_draw_weight = 70.0
+                reference_draw_length = 30.0
+            else:
+                # AMO standard for traditional bows: typically tested at lower weights and lengths
+                reference_weight = 350.0  # Keep same arrow weight standard
+                reference_draw_weight = 50.0  # More realistic for traditional bows
+                reference_draw_length = 28.0  # More common traditional draw length
+            
+            # Validate calculations won't cause division by zero or overflow
+            if arrow_weight_grains <= 0:
+                print(f"❌ Invalid arrow weight for calculation: {arrow_weight_grains}")
+                raise ValueError(f"Invalid arrow weight: {arrow_weight_grains}")
+            
+            # Adjust for draw weight difference (approximately 2.5 fps per pound - more realistic)
+            weight_adjustment = (bow_draw_weight - reference_draw_weight) * 2.5
+            
+            # Adjust for draw length difference (approximately 10 fps per inch)  
+            length_adjustment = (bow_draw_length - reference_draw_length) * 10
+            
+            # Adjust for arrow weight difference using kinetic energy conservation
+            # Heavier arrows = slower speed, lighter arrows = faster speed
+            weight_ratio = (reference_weight / arrow_weight_grains) ** 0.5
+            
+            print(f"🧮 Calculation factors: weight_adj={weight_adjustment:.1f}, length_adj={length_adjustment:.1f}, weight_ratio={weight_ratio:.3f}, string_mod={string_modifier:.3f}, bow_eff={bow_efficiency:.3f}")
+            
+            # Calculate base speed with adjustments using effective ATA speed
+            adjusted_ibo = effective_ata_speed + weight_adjustment + length_adjustment
+            estimated_speed = adjusted_ibo * weight_ratio * string_modifier * bow_efficiency
+            
+            print(f"🎯 Pre-bounds speed calculation: {estimated_speed:.1f} fps")
+            
+            # Apply reasonable bounds based on bow type
+            if bow_type.lower() in ['compound']:
+                min_speed, max_speed = 180, 450  # Compound bow bounds
+            else:
+                min_speed, max_speed = 120, 350  # Traditional bow bounds (lower minimum)
+            
+            # Apply bounds and validate result
+            bounded_speed = max(min_speed, min(max_speed, estimated_speed))
+            
+            if bounded_speed != estimated_speed:
+                print(f"⚠️  Speed bounded from {estimated_speed:.1f} to {bounded_speed:.1f} fps (bounds: {min_speed}-{max_speed})")
+            
+            print(f"✅ Final enhanced speed: {bounded_speed:.1f} fps")
+            return {"speed": bounded_speed, "source": "enhanced_estimated", "confidence": 85}
+            
+        except Exception as calc_error:
+            print(f"❌ Enhanced calculation failed: {calc_error}")
+            raise calc_error  # Re-raise to trigger fallback
         
     except Exception as e:
-        print(f"Enhanced speed calculation error: {e}, falling back to basic calculation")
-        # Fallback to basic calculation
-        if bow_type.lower() == 'compound':
-            basic_speed = (bow_draw_weight * 10) - (arrow_weight_grains - 350) * 0.1
-        else:
-            basic_speed = (bow_draw_weight * 8) - (arrow_weight_grains - 350) * 0.08
-        return {"speed": max(180, min(350, basic_speed)), "source": "estimated"}
+        print(f"❌ Enhanced speed calculation error: {e}")
+        print(f"🔄 Falling back to basic calculation")
+        
+        # Enhanced fallback calculation with validation
+        try:
+            # Validate inputs for fallback
+            bow_draw_weight = float(bow_draw_weight) if bow_draw_weight else 50.0
+            arrow_weight_grains = float(arrow_weight_grains) if arrow_weight_grains else 400.0
+            bow_type = str(bow_type).lower() if bow_type else 'compound'
+            
+            if bow_type == 'compound':
+                basic_speed = (bow_draw_weight * 10) - (arrow_weight_grains - 350) * 0.1
+                basic_speed = max(180, min(350, basic_speed))
+            else:
+                basic_speed = (bow_draw_weight * 8) - (arrow_weight_grains - 350) * 0.08
+                basic_speed = max(120, min(300, basic_speed))
+            
+            print(f"🔄 Fallback speed: {basic_speed:.1f} fps")
+            return {"speed": basic_speed, "source": "fallback_estimated", "confidence": 60, "error": str(e)}
+            
+        except Exception as fallback_error:
+            print(f"❌ Fallback calculation also failed: {fallback_error}")
+            # Last resort - return reasonable default based on bow type
+            default_speed = 280 if bow_type == 'compound' else 160
+            print(f"🆘 Using emergency default: {default_speed} fps")
+            return {"speed": default_speed, "source": "default", "confidence": 30, "error": f"All calculations failed: {str(e)}"}
 
 def calculate_arrow_performance(archer_profile, arrow_rec, estimated_speed=None):
     """Calculate comprehensive performance metrics for a specific arrow recommendation"""
@@ -379,46 +579,61 @@ def get_unified_database():
 
 def get_effective_draw_length(user_id, bow_config=None, bow_data=None, default=28.0):
     """
-    Get effective draw length based on bow type:
-    - Compound bows: Use bow's mechanical draw length (from bow setup)
-    - Recurve/Traditional: Use user's physical draw length
-    - Default to 28" if no draw length is configured
+    Get effective draw length using correct hierarchy:
+    1. PRIMARY: bow_setups.draw_length (equipment-specific, used for all calculations)
+    2. FALLBACK: bow_setups.draw_length_module (compound bows only)
+    3. FALLBACK: users.user_draw_length (personal measurement fallback)
+    4. FALLBACK: system default (28.0")
     
     Returns tuple: (draw_length, source_description)
     """
     try:
         db = get_database()
         if not db:
-            return default, "System default (28\")"
+            return default, "System default (no database)"
         
-        # Determine bow type
+        # Extract bow type and draw length data
         bow_type = None
         bow_draw_length = None
+        bow_draw_length_module = None
+        bow_setup_id = None
         
         if bow_config:
             bow_type = bow_config.get('bow_type', '').lower()
             bow_draw_length = bow_config.get('draw_length')
+            bow_draw_length_module = bow_config.get('draw_length_module')
+            bow_setup_id = bow_config.get('id') or bow_config.get('bow_setup_id')
         elif bow_data:
             bow_type = bow_data.get('bow_type', '').lower()
             bow_draw_length = bow_data.get('draw_length')
+            bow_draw_length_module = bow_data.get('draw_length_module')
+            bow_setup_id = bow_data.get('id') or bow_data.get('bow_setup_id')
         
-        # For compound bows, use bow's mechanical draw length
-        if bow_type == 'compound':
-            if bow_draw_length:
-                return float(bow_draw_length), f"Bow mechanical setting ({bow_draw_length}\")"
-            else:
-                return default, f"Bow default (compound, {default}\")"
+        # PRIMARY SOURCE: Use bow setup draw_length if available (this is correct for all calculations)
+        if bow_draw_length and bow_draw_length != 0:
+            bow_type_display = bow_type.title() if bow_type else "Bow"
+            return float(bow_draw_length), f"{bow_type_display} setup draw length ({bow_draw_length}\")"
         
-        # For recurve and traditional, use user's physical draw length
+        # FALLBACK 1: For compound bows, use draw_length_module if no draw_length
+        if bow_type == 'compound' and bow_draw_length_module and bow_draw_length_module != 0:
+            return float(bow_draw_length_module), f"Compound module setting ({bow_draw_length_module}\")"
+        
+        # FALLBACK 2: Use user's personal draw length as final fallback
         user = db.get_user_by_id(user_id)
-        if user and user.get('user_draw_length'):
+        if user and user.get('user_draw_length') and user.get('user_draw_length') != 0:
             user_draw = float(user['user_draw_length'])
-            bow_type_display = bow_type.title() if bow_type else "Non-compound"
-            return user_draw, f"Archer draw length ({bow_type_display}, {user_draw}\")"
+            bow_type_display = bow_type.title() if bow_type else "Personal"
+            return user_draw, f"{bow_type_display} personal measurement ({user_draw}\")"
         
-        # Fallback to default
-        bow_type_display = bow_type.title() if bow_type else "Unknown bow type"
-        return default, f"Default ({bow_type_display}, {default}\")"
+        # FALLBACK 3: Check legacy user.draw_length column
+        if user and user.get('draw_length') and user.get('draw_length') != 0:
+            user_draw = float(user['draw_length'])
+            bow_type_display = bow_type.title() if bow_type else "Personal"
+            return user_draw, f"{bow_type_display} legacy measurement ({user_draw}\")"
+        
+        # FINAL FALLBACK: System default
+        bow_type_display = bow_type.title() if bow_type else "System"
+        return default, f"{bow_type_display} default ({default}\")"
         
     except Exception as e:
         print(f"Error getting effective draw length for user {user_id}: {e}")
@@ -1235,6 +1450,15 @@ def calculate_spine():
         
         print(f"Received spine calculation request: {data}")  # Debug logging
         
+        # Get effective draw length using proper hierarchy
+        current_user = get_current_user_optional()
+        user_id = current_user['id'] if current_user else None
+        effective_draw_length, draw_length_source = get_effective_draw_length(
+            user_id, bow_config=data
+        )
+        
+        print(f"🎯 Spine calculation using draw length: {effective_draw_length}\" from {draw_length_source}")
+        
         # Use the unified spine calculation service
         from spine_service import calculate_unified_spine
         
@@ -1243,6 +1467,7 @@ def calculate_spine():
             arrow_length=float(data.get('arrow_length', 29.0)),
             point_weight=float(data.get('point_weight', 125.0)),
             bow_type=data.get('bow_type', 'compound'),
+            draw_length=effective_draw_length,  # Use corrected draw length
             nock_weight=float(data.get('nock_weight', 10.0)),
             fletching_weight=float(data.get('fletching_weight', 15.0)),
             material_preference=data.get('arrow_material')
@@ -1279,9 +1504,18 @@ def get_arrow_recommendations():
             if bow_type_str == 'longbow':
                 bow_type_str = 'traditional'
             
+            # Get effective draw length using proper hierarchy (bow setup > user fallback)
+            current_user = get_current_user_optional()
+            user_id = current_user['id'] if current_user else None
+            effective_draw_length, draw_length_source = get_effective_draw_length(
+                user_id, bow_config=data
+            )
+            
+            print(f"🎯 Using draw length: {effective_draw_length}\" from {draw_length_source}")
+            
             bow_config = BowConfiguration(
                 draw_weight=float(data['draw_weight']),
-                draw_length=float(data['draw_length']),
+                draw_length=effective_draw_length,  # Use corrected draw length
                 bow_type=BowType(bow_type_str),
                 cam_type=data.get('cam_type', 'medium'),
                 arrow_rest_type=data.get('arrow_rest_type', 'drop_away')
@@ -2781,14 +3015,20 @@ def calculate_setup_arrows_performance(current_user, setup_id):
         return jsonify({'error': 'Failed to calculate performance'}), 500
 
 @app.route('/api/setup-arrows/<int:setup_arrow_id>/calculate-performance', methods=['POST'])
-@token_required
-def calculate_individual_arrow_performance(current_user, setup_arrow_id):
+def calculate_individual_arrow_performance(setup_arrow_id):
     """Calculate performance metrics for a single arrow in a bow setup"""
     conn = None
     try:
+        # Get current user (optional authentication)
+        current_user = get_current_user_optional()
+        
         # Parse request data for bow configuration
         data = request.get_json() or {}
         bow_config = data.get('bow_config', {})
+        
+        # Debug: Log what the frontend is sending
+        print(f"🔍 Frontend bow_config received: {bow_config}")
+        print(f"🔍 Current user: {current_user['email'] if current_user else 'Anonymous'}")
         
         # Get unified database connection
         db = get_database()
@@ -2811,8 +3051,12 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
         if not setup_arrow:
             return jsonify({'error': 'Arrow setup not found'}), 404
             
-        if setup_arrow['user_id'] != current_user['id']:
+        # Only check ownership if user is authenticated
+        if current_user and setup_arrow['user_id'] != current_user['id']:
             return jsonify({'error': 'Access denied'}), 403
+        # Allow anonymous access for public arrow setups or when not authenticated
+        elif not current_user:
+            print(f"🔍 Anonymous access to arrow setup {setup_arrow_id}")
         
         if not setup_arrow['manufacturer']:
             return jsonify({'error': 'Arrow not found in unified database'}), 404
@@ -2890,10 +3134,11 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                 # Get user's draw length for proper calculation
                 user_draw_length = 29  # Default fallback
                 try:
-                    cursor.execute('SELECT user_draw_length FROM users WHERE id = ?', (current_user['id'],))
-                    user_result = cursor.fetchone()
-                    if user_result and user_result['user_draw_length']:
-                        user_draw_length = user_result['user_draw_length']
+                    if current_user:
+                        cursor.execute('SELECT user_draw_length FROM users WHERE id = ?', (current_user['id'],))
+                        user_result = cursor.fetchone()
+                        if user_result and user_result['user_draw_length']:
+                            user_draw_length = user_result['user_draw_length']
                 except:
                     pass  # Use default
                 
@@ -2917,6 +3162,29 @@ def calculate_individual_arrow_performance(current_user, setup_arrow_id):
                 print(f"   string_material: {speed_request_data['string_material']}")
                 print(f"   setup_id: {speed_request_data['setup_id']}")
                 print(f"   arrow_id: {speed_request_data['arrow_id']}")
+                
+                # Validate bow setup data for realistic values
+                try:
+                    validation_result = validate_bow_setup_data(
+                        bow_type=speed_request_data['bow_type'],
+                        bow_draw_weight=speed_request_data['bow_draw_weight'], 
+                        bow_draw_length=speed_request_data['bow_draw_length'],
+                        bow_ibo_speed=speed_request_data['bow_ibo_speed']
+                    )
+                    
+                    print(f"🔍 Bow Setup Validation: {validation_result['summary']}")
+                    
+                    for warning in validation_result['warnings']:
+                        print(f"⚠️  Bow Setup Warning: {warning}")
+                    
+                    for error in validation_result['errors']:
+                        print(f"❌ Bow Setup Error: {error}")
+                    
+                    if not validation_result['valid']:
+                        print(f"⚠️  Proceeding with calculations despite validation errors")
+                        
+                except Exception as validation_error:
+                    print(f"⚠️  Bow setup validation failed: {validation_error}")
                 
                 # Get string equipment data for speed calculation
                 try:
@@ -3197,11 +3465,13 @@ def update_arrow_in_setup(current_user, arrow_setup_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/setup-arrows/<int:setup_arrow_id>/details', methods=['GET'])
-@token_required
-def get_setup_arrow_details(current_user, setup_arrow_id):
+def get_setup_arrow_details(setup_arrow_id):
     """Get comprehensive details for a specific arrow setup including arrow data, setup configuration, and performance"""
     conn = None
     try:
+        # Get current user (optional authentication)
+        current_user = get_current_user_optional()
+        
         # Get user database connection
         # Using unified database - ArrowDatabase
         db = get_database()
@@ -3211,21 +3481,34 @@ def get_setup_arrow_details(current_user, setup_arrow_id):
         cursor = conn.cursor()
         
         # Get the arrow setup with bow setup context
-        cursor.execute('''
-            SELECT sa.*, 
-                   bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
-                   bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
-                   COALESCE(u.user_draw_length, 28.0) as draw_length
-            FROM setup_arrows sa
-            JOIN bow_setups bs ON sa.setup_id = bs.id
-            LEFT JOIN users u ON bs.user_id = u.id
-            WHERE sa.id = ? AND bs.user_id = ?
-        ''', (setup_arrow_id, current_user['id']))
+        # Only check ownership if user is authenticated
+        if current_user:
+            cursor.execute('''
+                SELECT sa.*, 
+                       bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
+                       bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
+                       COALESCE(u.user_draw_length, 28.0) as draw_length
+                FROM setup_arrows sa
+                JOIN bow_setups bs ON sa.setup_id = bs.id
+                LEFT JOIN users u ON bs.user_id = u.id
+                WHERE sa.id = ? AND bs.user_id = ?
+            ''', (setup_arrow_id, current_user['id']))
+        else:
+            # Anonymous access - don't filter by user_id
+            cursor.execute('''
+                SELECT sa.*, 
+                       bs.id as bow_setup_id, bs.name as bow_setup_name, bs.bow_type, 
+                       bs.draw_weight, bs.ibo_speed, bs.draw_length_module,
+                       28.0 as draw_length
+                FROM setup_arrows sa
+                JOIN bow_setups bs ON sa.setup_id = bs.id
+                WHERE sa.id = ?
+            ''', (setup_arrow_id,))
         
         setup_arrow = cursor.fetchone()
         
         if not setup_arrow:
-            return jsonify({'error': 'Arrow setup not found or access denied'}), 404
+            return jsonify({'error': 'Arrow setup not found'}), 404
         
         # Convert to dict for easier access
         setup_dict = dict(setup_arrow)
@@ -3918,6 +4201,73 @@ def set_user_admin_status(current_user, user_id):
             })
         else:
             return jsonify({'error': 'Failed to update admin status'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>/status', methods=['PUT'])
+@token_required
+@admin_required
+def update_user_status(current_user, user_id):
+    """Update user status (suspend/activate) - admin only"""
+    try:
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        
+        data = request.get_json()
+        status = data.get('status', 'active')
+        
+        # Validate status values
+        if status not in ['active', 'suspended']:
+            return jsonify({'error': 'Invalid status. Must be "active" or "suspended"'}), 400
+        
+        # Update user status
+        success = db.update_user_status(user_id, status)
+        
+        if success:
+            return jsonify({
+                'message': f'User {user_id} status updated to {status}',
+                'user_id': user_id,
+                'status': status
+            })
+        else:
+            return jsonify({'error': 'Failed to update user status'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_user(current_user, user_id):
+    """Delete a non-admin user - admin only"""
+    try:
+        from arrow_database import ArrowDatabase
+        db = ArrowDatabase()
+        
+        # Check if the user exists and get their details
+        user_to_delete = db.get_user_by_id(user_id)
+        if not user_to_delete:
+            return jsonify({'error': 'User not found'}), 404
+            
+        # Prevent deletion of admin users
+        if user_to_delete.get('is_admin', False):
+            return jsonify({'error': 'Cannot delete admin users'}), 403
+        
+        # Prevent deletion of current user
+        if user_id == current_user.get('id'):
+            return jsonify({'error': 'Cannot delete yourself'}), 403
+        
+        # Delete the user and all related data
+        success = db.delete_user(user_id)
+        
+        if success:
+            return jsonify({
+                'message': f'User {user_to_delete.get("name", user_to_delete.get("email", user_id))} deleted successfully',
+                'user_id': user_id
+            })
+        else:
+            return jsonify({'error': 'Failed to delete user'}), 500
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -11615,8 +11965,9 @@ def estimate_arrow_speed():
         bow_type_map = {
             'compound': BowType.COMPOUND,
             'recurve': BowType.RECURVE,
-            'longbow': BowType.LONGBOW,
-            'traditional': BowType.TRADITIONAL
+            'longbow': BowType.TRADITIONAL,  # Map longbow to traditional
+            'traditional': BowType.TRADITIONAL,
+            'barebow': BowType.RECURVE  # Map barebow to recurve
         }
         bow_type_enum = bow_type_map.get(bow_type.lower(), BowType.COMPOUND)
         
@@ -11666,8 +12017,10 @@ def estimate_arrow_speed():
         })
         
     except Exception as e:
+        import traceback
         print(f"Error estimating arrow speed: {e}")
-        return jsonify({'error': 'Failed to estimate arrow speed'}), 500
+        print(f"Full traceback:\n{traceback.format_exc()}")
+        return jsonify({'error': f'Failed to estimate arrow speed: {str(e)}'}), 500
 
 @app.route('/api/calculator/comprehensive-performance', methods=['POST'])
 def calculate_comprehensive_performance():
@@ -13157,11 +13510,38 @@ def create_journal_entry_from_change_log(current_user):
         return jsonify({'error': 'Failed to create journal entry from change log'}), 500
 
 # Run the app
+def clear_performance_cache():
+    """Clear all cached performance data on server startup for fresh calculations"""
+    try:
+        db = get_database()
+        if db:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Clear performance_data cache for all setup_arrows
+            cursor.execute('UPDATE setup_arrows SET performance_data = NULL WHERE performance_data IS NOT NULL')
+            rows_cleared = cursor.rowcount
+            conn.commit()
+            conn.close()
+            
+            if rows_cleared > 0:
+                print(f"🧹 Cleared cached performance data for {rows_cleared} arrow setups")
+            else:
+                print("🧹 No cached performance data found to clear")
+        else:
+            print("⚠️ Could not clear performance cache - database not available")
+    except Exception as e:
+        print(f"⚠️ Error clearing performance cache: {e}")
+
 if __name__ == '__main__':
     port = int(os.environ.get('API_PORT', 5000))
     print(f"🚀 Starting ArrowTuner API on port {port}")
     print(f"🎯 Environment: {os.environ.get('NODE_ENV', 'development')}")
     print(f"📊 Arrow Database: {os.environ.get('ARROW_DATABASE_PATH', '/app/arrow_database.db')}")
     print(f"👤 User Database: {os.environ.get('USER_DATABASE_PATH', '/app/user_data/user_data.db')}")
+    
+    # Clear performance cache on startup for fresh calculations
+    clear_performance_cache()
+    
     app.run(host='0.0.0.0', port=port, debug=False)
 

@@ -909,6 +909,25 @@ class ArrowDatabase:
         """Set user admin status"""
         return self.update_user(user_id, is_admin=is_admin)
     
+    def update_user_status(self, user_id: int, status: str) -> bool:
+        """Update user status (active/suspended)"""
+        return self.update_user(user_id, status=status)
+    
+    def delete_user(self, user_id: int) -> bool:
+        """Delete user and all related data"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # Delete user (CASCADE will handle related data)
+            cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
+            conn.commit()
+            
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error deleting user {user_id}: {e}")
+            return False
+    
     def get_all_users(self) -> List[Dict[str, Any]]:
         """Get all users"""
         conn = self.get_connection()

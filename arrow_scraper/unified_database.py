@@ -73,9 +73,9 @@ class UnifiedDatabase:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO users (google_id, email, name, profile_picture_url)
-                VALUES (?, ?, ?, ?)
-            ''', (google_id, email, name, profile_picture_url))
+                INSERT INTO users (google_id, email, name, profile_picture_url, status)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (google_id, email, name, profile_picture_url, 'pending'))
             user_id = cursor.lastrowid
             
             # Return the created user
@@ -127,6 +127,10 @@ class UnifiedDatabase:
     def set_user_admin(self, user_id: int, is_admin: bool = True) -> bool:
         """Set user admin status (alias for backwards compatibility)"""
         return self.set_admin_status(user_id, is_admin)
+    
+    def update_user_status(self, user_id: int, status: str) -> bool:
+        """Update user status (active, pending, suspended)"""
+        return self.update_user(user_id, status=status)
     
     def get_all_users(self) -> List[Dict[str, Any]]:
         """Get all users"""

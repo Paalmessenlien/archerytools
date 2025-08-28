@@ -30,6 +30,7 @@ class UnifiedSpineService:
         arrow_length: float,
         point_weight: float = 125.0,
         bow_type: str = 'compound',
+        draw_length: float = 28.0,
         nock_weight: float = 10.0,
         fletching_weight: float = 15.0,
         material_preference: Optional[str] = None
@@ -42,6 +43,7 @@ class UnifiedSpineService:
             arrow_length: Physical arrow length in inches
             point_weight: Point weight in grains (default 125)
             bow_type: 'compound', 'recurve', 'traditional', or 'longbow'
+            draw_length: Bow's actual draw length in inches (important for calculations!)
             nock_weight: Nock weight in grains (default 10)
             fletching_weight: Fletching weight in grains (default 15)
             material_preference: Optional arrow material preference
@@ -63,7 +65,7 @@ class UnifiedSpineService:
             # Create BowConfiguration for advanced calculation
             bow_config = BowConfiguration(
                 draw_weight=draw_weight,
-                draw_length=28,  # Standard reference draw length (not used in spine calc)
+                draw_length=draw_length,  # Use actual bow draw length for calculations
                 bow_type=BowType(bow_type.lower()),
                 cam_type='medium',
                 arrow_rest_type='drop_away'
@@ -181,11 +183,21 @@ class UnifiedSpineService:
             Calculated spine value as integer, or None if calculation fails
         """
         try:
+            # Get effective draw length from bow setup data (primary) or fallback
+            from api import get_effective_draw_length
+            user_id = bow_setup_data.get('user_id')
+            effective_draw_length, draw_length_source = get_effective_draw_length(
+                user_id, bow_data=bow_setup_data
+            )
+            
+            print(f"🏹 Bow setup spine calculation using draw length: {effective_draw_length}\" from {draw_length_source}")
+            
             result = self.calculate_spine(
                 draw_weight=bow_setup_data['draw_weight'],
                 arrow_length=arrow_data.get('arrow_length', 29.0),
                 point_weight=arrow_data.get('point_weight', 125.0),
                 bow_type=bow_setup_data.get('bow_type', 'compound'),
+                draw_length=effective_draw_length,  # Use bow-specific draw length
                 nock_weight=arrow_data.get('nock_weight', 10.0),
                 fletching_weight=arrow_data.get('fletching_weight', 15.0)
             )
@@ -474,6 +486,7 @@ def calculate_unified_spine(
     arrow_length: float, 
     point_weight: float = 125.0,
     bow_type: str = 'compound',
+    draw_length: float = 28.0,
     **kwargs
 ) -> Dict[str, Any]:
     """
@@ -487,6 +500,7 @@ def calculate_unified_spine(
         arrow_length=arrow_length,
         point_weight=point_weight,
         bow_type=bow_type,
+        draw_length=draw_length,
         **kwargs
     )
 

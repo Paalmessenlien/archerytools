@@ -880,22 +880,34 @@ class SpineCalculator:
         # Total arrow weight
         total_weight = point_weight + shaft_weight + nock_weight + fletching_weight + insert_weight
         
-        # Front half weight (point + half of shaft + insert)
-        front_weight = point_weight + insert_weight + (shaft_weight / 2.0)
-        
-        # Back half weight (nock + fletching + half of shaft)
-        back_weight = nock_weight + fletching_weight + (shaft_weight / 2.0)
-        
         # Physical center (arrow length / 2)
         physical_center = arrow_length / 2.0
         
-        # Balance point calculation
-        # Simplified: assume shaft weight is evenly distributed
-        balance_point = physical_center + ((front_weight - back_weight) / total_weight) * physical_center
+        # Calculate balance point using actual component positions
+        # Assume: point at 0", insert at 0.5", shaft center at arrow_length/2, 
+        # nock and fletching at arrow_length
+        point_position = 0.0
+        insert_position = 0.5  # Insert is typically 0.5" from front
+        shaft_position = physical_center  # Shaft weight concentrated at center
+        nock_fletching_position = arrow_length  # Nock and fletching at back
+        
+        # Balance point calculation using moments
+        total_moment = (point_weight * point_position + 
+                       insert_weight * insert_position +
+                       shaft_weight * shaft_position + 
+                       nock_weight * nock_fletching_position + 
+                       fletching_weight * nock_fletching_position)
+        
+        balance_point = total_moment / total_weight
         
         # FOC percentage
         foc_distance = balance_point - physical_center
         foc_percentage = (foc_distance / arrow_length) * 100
+        
+        # Calculate front vs back weight distribution for backward compatibility
+        # Front weight = components in front half of arrow
+        front_weight = point_weight + insert_weight + (shaft_weight / 2)
+        back_weight = nock_weight + fletching_weight + (shaft_weight / 2)
         
         return {
             "foc_percentage": round(foc_percentage, 2),

@@ -246,12 +246,33 @@
                       {{ user.is_admin ? 'Remove Admin' : 'Make Admin' }}
                     </CustomButton>
                     <CustomButton
+                      v-if="user.status === 'pending'"
+                      @click="approveUser(user)"
+                      variant="outlined"
+                      size="small"
+                      class="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    >
+                      <i class="fas fa-check mr-1"></i>
+                      Approve
+                    </CustomButton>
+                    <CustomButton
+                      v-if="user.status !== 'pending'"
                       @click="toggleUserStatus(user)"
                       variant="outlined"
                       size="small"
                       :class="user.status === 'active' ? 'text-red-600 border-red-600' : 'text-green-600 border-green-600'"
                     >
                       {{ user.status === 'active' ? 'Suspend' : 'Activate' }}
+                    </CustomButton>
+                    <CustomButton
+                      v-if="!user.is_admin"
+                      @click="deleteUserHandler(user)"
+                      variant="outlined"
+                      size="small"
+                      class="text-red-700 border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <i class="fas fa-trash-alt mr-1"></i>
+                      Delete
                     </CustomButton>
                   </td>
                 </tr>
@@ -2183,7 +2204,7 @@ import { useAuth } from '~/composables/useAuth'
 import SpineChartLibrary from '~/components/admin/SpineChartLibrary.vue'
 
 // Authentication check
-const { user, token, isAdmin, checkAdminStatus, getAllUsers, setUserAdminStatus } = useAuth()
+const { user, token, isAdmin, checkAdminStatus, getAllUsers, setUserAdminStatus, updateUserStatus, deleteUser } = useAuth()
 
 // Server-side admin verification
 const hasServerAdminAccess = ref(false)
@@ -2443,38 +2464,51 @@ const toggleAdminStatus = async (user) => {
 const toggleUserStatus = async (user) => {
   try {
     const newStatus = user.status === 'active' ? 'suspended' : 'active'
-    // TODO: Implement API call for user status (suspend/activate)
-    // await api.updateUserStatus(user.id, newStatus)
+    await updateUserStatus(user.id, newStatus)
     
     user.status = newStatus
     updateStats()
+    showNotification(`User ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`, 'success')
   } catch (error) {
     console.error('Error updating user status:', error)
+    showNotification('Failed to update user status: ' + error.message, 'error')
   }
 }
 
-const deleteUser = async (user) => {
+const approveUser = async (user) => {
+  try {
+    await updateUserStatus(user.id, 'active')
+    
+    user.status = 'active'
+    updateStats()
+    showNotification(`Successfully approved ${user.name || user.email}`, 'success')
+  } catch (error) {
+    console.error('Error approving user:', error)
+    showNotification('Failed to approve user: ' + error.message, 'error')
+  }
+}
+
+const deleteUserHandler = async (user) => {
   showConfirmation(
     `Are you sure you want to delete ${user.name || user.email}?`,
     async () => {
       try {
-        // TODO: Implement API call
-        // await api.deleteUser(user.id)
+        await deleteUser(user.id)
         
-          const index = users.value.findIndex(u => u.id === user.id)
-          if (index !== -1) {
-            users.value.splice(index, 1)
-          }
-          updateStats()
-          showNotification(`Successfully deleted ${user.name || user.email}`)
-          hideConfirmation()
-        } catch (error) {
-          console.error('Error deleting user:', error)
-          showNotification('Failed to delete user: ' + error.message, 'error')
-          hideConfirmation()
+        const index = users.value.findIndex(u => u.id === user.id)
+        if (index !== -1) {
+          users.value.splice(index, 1)
         }
+        updateStats()
+        showNotification(`Successfully deleted ${user.name || user.email}`, 'success')
+        hideConfirmation()
+      } catch (error) {
+        console.error('Error deleting user:', error)
+        showNotification('Failed to delete user: ' + error.message, 'error')
+        hideConfirmation()
       }
-    )
+    }
+  )
 }
 
 const sendInvite = async () => {

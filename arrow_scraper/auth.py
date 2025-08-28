@@ -39,6 +39,12 @@ def token_required(f):
             current_user = db.get_user_by_id(data["user_id"])
             if not current_user:
                 return jsonify({"message": "User not found!"}), 401
+            
+            # Check if user status is active
+            user_status = current_user.get('status', 'pending')
+            if user_status != 'active':
+                return jsonify({"message": f"Account is {user_status}. Please contact an administrator."}), 403
+                
         except Exception as e:
             return jsonify({"message": "Token is invalid!", "error": str(e)}), 401
 
@@ -100,15 +106,39 @@ def get_user_from_google_token(authorization_code):
         if not user:
             user = db.create_user(google_id, email, name, profile_picture_url)
             is_new_user = True
+            
+            # Set new user status based on email
             if email == "messenlien@gmail.com":
+                # Admin user is always active
                 db.set_admin_status(user['id'], True)
+                db.update_user_status(user['id'], 'active')
                 user['is_admin'] = True
+                user['status'] = 'active'
                 print(f"✅ Automatically granted admin access to {email}")
+            else:
+                # Regular new users need approval
+                db.update_user_status(user['id'], 'pending')
+                user['status'] = 'pending'
+                print(f"⏳ New user {email} created with pending status - requires admin approval")
         else:
+            # Existing user login
             if email == "messenlien@gmail.com" and not user.get('is_admin'):
                 db.set_admin_status(user['id'], True)
                 user['is_admin'] = True
                 print(f"✅ Restored admin access to {email}")
+            
+            # Ensure admin is always active
+            if email == "messenlien@gmail.com":
+                if user.get('status') != 'active':
+                    db.update_user_status(user['id'], 'active')
+                    user['status'] = 'active'
+                    print(f"✅ Ensured admin {email} has active status")
+        
+        # Check if user is approved for access
+        user_status = user.get('status', 'pending')
+        if user_status != 'active':
+            print(f"⛔ User {email} attempted login but status is '{user_status}' - access denied")
+            return None, False  # Deny access for non-active users
         
         needs_profile_completion = is_new_user and not user.get('name')
 

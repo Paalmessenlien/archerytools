@@ -52,6 +52,16 @@ export const useAuth = () => {
                 if (!res.ok) {
                   const errorData = await res.json();
                   console.error('Google auth API call failed:', errorData.error || `API error: ${res.status}`);
+                  
+                  // Handle user approval cases
+                  if (res.status === 401 && errorData.error && errorData.error.includes('pending')) {
+                    // Show pending approval message
+                    const router = useRouter();
+                    router.push('/pending-approval');
+                  } else {
+                    // Show generic error
+                    alert('Authentication failed: ' + (errorData.error || 'Unknown error'));
+                  }
                   return;
                 }
 
@@ -439,6 +449,54 @@ export const useAuth = () => {
     }
   };
 
+  const updateUserStatus = async (userId, status) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/admin/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      throw err;
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    if (!token.value) throw new Error('No authentication token found.');
+
+    try {
+      const res = await fetch(`${config.public.apiBase}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `API error: ${res.status}`);
+      }
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      throw err;
+    }
+  };
+
   // Computed property for admin status
   const isAdmin = computed(() => {
     return user.value?.email === 'messenlien@gmail.com'
@@ -467,5 +525,7 @@ export const useAuth = () => {
     checkAdminStatus,
     getAllUsers,
     setUserAdminStatus,
+    updateUserStatus,
+    deleteUser,
   };
 };
