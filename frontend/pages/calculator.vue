@@ -936,7 +936,7 @@ const { updateBowConfig } = bowConfigStore
 // Create local reactive values that sync with readonly store values
 // This prevents Material Web components from trying to modify readonly refs
 const localDrawWeight = computed({
-  get: () => bowConfig.draw_weight,
+  get: () => bowConfig.value.draw_weight,
   set: (value) => updateBowConfig({ draw_weight: value })
 })
 
