@@ -88,8 +88,8 @@
 
         <!-- Manual Configuration (shown when no bow setup selected or for overrides) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Bow Type (hidden when bow setup is selected) -->
-          <div v-if="!selectedBowSetup">
+          <!-- Bow Type (hidden when bow setup is selected, shown in manual mode) -->
+          <div v-if="!selectedBowSetup || selectedBowSetupId === ''">
             <md-filled-select
               ref="bowTypeSelect"
               label="Bow Type"
@@ -112,8 +112,8 @@
             </md-filled-select>
           </div>
 
-          <!-- Draw Weight (hidden when bow setup is selected) -->
-          <div v-if="!selectedBowSetup">
+          <!-- Draw Weight (hidden when bow setup is selected, shown in manual mode) -->
+          <div v-if="!selectedBowSetup || selectedBowSetupId === ''">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Draw Weight: <span class="font-semibold text-primary">{{ bowConfig.draw_weight }} lbs</span>
             </label>
