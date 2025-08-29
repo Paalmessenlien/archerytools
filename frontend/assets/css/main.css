@@ -17,7 +17,7 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900 leading-relaxed transition-colors duration-300;
+    @apply bg-gray-50 text-gray-900 leading-relaxed transition-colors duration-300;
     overflow-x: hidden; /* Prevent horizontal scroll on mobile */
   }
   
@@ -562,7 +562,7 @@
   }
   
   .card {
-    @apply bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/30;
+    @apply bg-white rounded-2xl p-6 shadow-lg border border-gray-200;
   }
   
   /* Dark mode card styling */
@@ -579,7 +579,7 @@
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+    @apply w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white shadow-sm;
   }
   
   /* Dark mode input field styling */
@@ -652,6 +652,23 @@
     @apply bg-gray-800 text-gray-100;
   }
   
+  /* Enhanced form control styling for better visibility */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    @apply px-3 py-2 border border-gray-400 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+  }
+  
+  .dark .form-input,
+  .dark .form-select,
+  .dark .form-textarea {
+    @apply bg-gray-700 border-gray-600 text-gray-100;
+  }
+  
+  .form-textarea {
+    @apply w-full h-24 resize-y;
+  }
+  
   .slider-range {
     @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500;
   }
@@ -661,7 +678,7 @@
   }
   
   .nav-tab {
-    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 whitespace-nowrap border-none cursor-pointer bg-transparent text-gray-600 hover:bg-gray-100;
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 whitespace-nowrap border-none cursor-pointer bg-transparent text-gray-700 hover:bg-gray-100;
   }
   
   /* Dark mode nav-tab styling */
@@ -682,7 +699,7 @@
   }
   
   .badge-success {
-    @apply badge bg-green-100 text-green-800;
+    @apply badge bg-green-200 text-green-900;
   }
   
   .dark .badge-success {
@@ -690,7 +707,7 @@
   }
   
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-800;
+    @apply badge bg-yellow-200 text-yellow-900;
   }
   
   .dark .badge-warning {
@@ -698,7 +715,7 @@
   }
   
   .badge-error {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-red-200 text-red-900;
   }
   
   .dark .badge-error {
@@ -728,6 +745,33 @@
   .dark .compatibility-poor {
     @apply text-red-400;
   }
+  
+  /* Light mode text contrast improvements - non-circular utility classes */
+  .text-secondary {
+    @apply text-gray-600;
+  }
+  
+  .text-muted {
+    @apply text-gray-500;
+  }
+  
+  .text-subtle {
+    @apply text-gray-700;
+  }
+  
+  /* Dark mode overrides */
+  .dark .text-secondary {
+    @apply text-gray-400;
+  }
+  
+  .dark .text-muted {
+    @apply text-gray-500;
+  }
+  
+  .dark .text-subtle {
+    @apply text-gray-300;
+  }
+  
 }
 
 /* Custom slider styles with mobile touch optimization */
@@ -1060,70 +1104,70 @@ md-outlined-text-field {
   @apply bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
-/* Fix Material Web button with light gray background and black text - LIGHT MODE ONLY */
+/* Fix Material Web button with proper contrast - LIGHT MODE ONLY */
 :not(.dark) md-filled-button {
-  --md-filled-button-container-color: #f3f4f6 !important;
-  --md-filled-button-label-text-color: #000000 !important;
-  --md-filled-button-hover-label-text-color: #000000 !important;
-  --md-filled-button-focus-label-text-color: #000000 !important;
-  --md-filled-button-pressed-label-text-color: #000000 !important;
-  --md-filled-button-icon-color: #000000 !important;
-  --md-filled-button-hover-icon-color: #000000 !important;
-  --md-filled-button-focus-icon-color: #000000 !important;
-  --md-filled-button-pressed-icon-color: #000000 !important;
-  --md-filled-button-hover-container-color: #e5e7eb !important;
-  --md-filled-button-focus-container-color: #e5e7eb !important;
-  --md-filled-button-pressed-container-color: #d1d5db !important;
-  color: #000000 !important;
-  background-color: #f3f4f6 !important;
+  --md-filled-button-container-color: #3b82f6 !important;
+  --md-filled-button-label-text-color: #ffffff !important;
+  --md-filled-button-hover-label-text-color: #ffffff !important;
+  --md-filled-button-focus-label-text-color: #ffffff !important;
+  --md-filled-button-pressed-label-text-color: #ffffff !important;
+  --md-filled-button-icon-color: #ffffff !important;
+  --md-filled-button-hover-icon-color: #ffffff !important;
+  --md-filled-button-focus-icon-color: #ffffff !important;
+  --md-filled-button-pressed-icon-color: #ffffff !important;
+  --md-filled-button-hover-container-color: #2563eb !important;
+  --md-filled-button-focus-container-color: #2563eb !important;
+  --md-filled-button-pressed-container-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  background-color: #3b82f6 !important;
 }
 
-/* Stronger button text overrides with black color - LIGHT MODE ONLY */
+/* Stronger button text overrides with white color - LIGHT MODE ONLY */
 :not(.dark) md-filled-button,
 :not(.dark) md-filled-button *,
 :not(.dark) md-filled-button .md3-button__label,
 :not(.dark) md-filled-button .md3-button__content,
 :not(.dark) md-filled-button span,
 :not(.dark) md-filled-button i {
-  color: #000000 !important;
-  fill: #000000 !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 
-/* Ensure icon colors are black - LIGHT MODE ONLY */
+/* Ensure icon colors are white - LIGHT MODE ONLY */
 :not(.dark) md-filled-button i.fas,
 :not(.dark) md-filled-button i.far,
 :not(.dark) md-filled-button i.fab {
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* Ultimate button text fix with black color - LIGHT MODE ONLY */
+/* Ultimate button text fix with white color - LIGHT MODE ONLY */
 :not(.dark) md-filled-button::part(button),
 :not(.dark) md-filled-button::part(label),
 :not(.dark) md-filled-button::part(icon) {
-  color: #000000 !important;
-  background-color: #f3f4f6 !important;
+  color: #ffffff !important;
+  background-color: #3b82f6 !important;
 }
 
-/* Force all Material Web button text to be black - LIGHT MODE ONLY */
+/* Force all Material Web button text to be white - LIGHT MODE ONLY */
 :not(.dark) md-filled-button[slot] *,
 :not(.dark) md-filled-button[role] *,
 :not(.dark) md-filled-button[type] * {
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* CSS injection for Material Web shadow DOM with light gray - LIGHT MODE ONLY */
+/* CSS injection for Material Web shadow DOM with blue theme - LIGHT MODE ONLY */
 :not(.dark) md-filled-button {
-  --_label-text-color: #000000 !important;
-  --_with-icon-icon-color: #000000 !important;
-  --_container-color: #f3f4f6 !important;
+  --_label-text-color: #ffffff !important;
+  --_with-icon-icon-color: #ffffff !important;
+  --_container-color: #3b82f6 !important;
 }
 
 /* Final fallback using CSS custom properties - LIGHT MODE ONLY */
 :not(.dark) md-filled-button:not([disabled]) {
-  color: #000000 !important;
-  background-color: #f3f4f6 !important;
-  --md-sys-color-on-primary: #000000 !important;
-  --md-sys-color-primary: #f3f4f6 !important;
+  color: #ffffff !important;
+  background-color: #3b82f6 !important;
+  --md-sys-color-on-primary: #ffffff !important;
+  --md-sys-color-primary: #3b82f6 !important;
 }
 
 /* Dark mode button styles */
@@ -1177,9 +1221,9 @@ md-text-button {
 
 /* Simplified Material Web button fixes to avoid hydration issues */
 md-filled-button {
-  --md-filled-button-container-color: #f3f4f6;
-  --md-filled-button-label-text-color: #000000;
-  --md-filled-button-icon-color: #000000;
+  --md-filled-button-container-color: #3b82f6;
+  --md-filled-button-label-text-color: #ffffff;
+  --md-filled-button-icon-color: #ffffff;
   font-size: 14px;
   min-height: 40px;
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -1187,8 +1231,8 @@ md-filled-button {
 
 /* Basic styling without hydration conflicts */
 md-filled-button {
-  background-color: #f3f4f6;
-  color: #000000;
+  background-color: #3b82f6;
+  color: #ffffff;
   border-radius: 8px;
   padding: 8px 16px;
   font-weight: 500;
@@ -1197,7 +1241,7 @@ md-filled-button {
 
 /* Ensure text and icons are visible */
 md-filled-button * {
-  color: #000000;
+  color: #ffffff;
   font-size: 14px;
 }
 
@@ -1222,7 +1266,7 @@ md-filled-button i {
 /* Fallback for completely broken Material Web buttons - replace with regular buttons */
 md-filled-button:empty::before {
   content: "Click" !important;
-  color: #000000 !important;
+  color: #ffffff !important;
   font-size: 14px !important;
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   display: inline-block !important;
@@ -1250,7 +1294,7 @@ md-filled-button * {
 /* Alternative approach - use pseudo-elements if content is not showing */
 md-filled-button[aria-label]::after {
   content: attr(aria-label) !important;
-  color: #000000 !important;
+  color: #ffffff !important;
   font-size: 14px !important;
   display: inline-block !important;
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
