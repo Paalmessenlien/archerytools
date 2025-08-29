@@ -12,15 +12,48 @@ let googleAuthClient = null; // Singleton for the Google Auth client
 export const useAuth = () => {
   const config = useRuntimeConfig();
 
+  // Validate token format and expiration
+  const isTokenValid = (tokenString: string): boolean => {
+    if (!tokenString) return false;
+    
+    try {
+      // Basic JWT format check (3 parts separated by dots)
+      const parts = tokenString.split('.');
+      if (parts.length !== 3) return false;
+      
+      // Decode payload to check expiration
+      const payload = JSON.parse(atob(parts[1]));
+      
+      // Check if token has expired (with 5 minute buffer)
+      if (payload.exp) {
+        const now = Math.floor(Date.now() / 1000);
+        const bufferTime = 5 * 60; // 5 minutes
+        if (payload.exp < (now + bufferTime)) {
+          console.warn('🔑 Token is expired or about to expire');
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (e) {
+      console.warn('🔑 Token validation failed:', e);
+      return false;
+    }
+  };
+
   // Initialize token from localStorage only on client, avoid SSR hydration issues
   const initializeClientAuth = () => {
     if (process.client && !isInitialized.value) {
       const storedToken = localStorage.getItem('token');
-      if (storedToken) {
+      if (storedToken && isTokenValid(storedToken)) {
         token.value = storedToken;
         isLoggedIn.value = true;
         // Fetch user data on initialization if token exists
         fetchUser();
+      } else if (storedToken) {
+        // Token exists but is invalid, clear it
+        console.warn('🔑 Stored token is invalid, clearing...');
+        localStorage.removeItem('token');
       }
       isInitialized.value = true;
     }
@@ -139,9 +172,12 @@ export const useAuth = () => {
         user.value = await res.json();
         isLoggedIn.value = true;
       } else {
+        // Token is invalid, clear everything
+        console.warn('🔑 Token validation failed during user fetch, logging out...');
         logout();
       }
     } catch (err) {
+      console.warn('🔑 Error fetching user, logging out:', err);
       logout();
     }
   };

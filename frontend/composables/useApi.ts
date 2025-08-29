@@ -59,6 +59,29 @@ export const useApi = () => {
     
     if (!response.ok) {
       const errorData = await response.text();
+      
+      // Handle authentication errors specifically
+      if (response.status === 401 && token) {
+        console.warn('🔑 Invalid token detected, clearing authentication...');
+        
+        // Clear invalid token from localStorage
+        if (process.client) {
+          localStorage.removeItem('token');
+          
+          // Also clear user state if useAuth is available
+          try {
+            const { logout } = await import('~/composables/useAuth');
+            logout();
+            console.log('🔄 User logged out due to invalid token');
+          } catch (e) {
+            console.warn('Could not auto-logout:', e);
+          }
+        }
+        
+        // Throw a more user-friendly error
+        throw new Error('Authentication expired. Please log in again.');
+      }
+      
       // Log errors for debugging but don't spam console for successful requests
       if (response.status >= 400) {
         console.error(`API Error ${response.status}:`, errorData);

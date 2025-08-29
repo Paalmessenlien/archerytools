@@ -38,7 +38,7 @@ def token_required(f):
             db = UnifiedDatabase()
             current_user = db.get_user_by_id(data["user_id"])
             if not current_user:
-                return jsonify({"message": "User not found!"}), 401
+                return jsonify({"message": "User not found!", "hint": "Please log in again."}), 401
             
             # Only block suspended users - allow all others to access
             user_status = current_user.get('status')
@@ -47,8 +47,12 @@ def token_required(f):
             if user_status == 'suspended':
                 return jsonify({"message": "Account is suspended. Please contact an administrator."}), 403
                 
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token has expired!", "hint": "Please log in again.", "error_type": "token_expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Token is invalid!", "hint": "Please log in again.", "error_type": "token_invalid"}), 401
         except Exception as e:
-            return jsonify({"message": "Token is invalid!", "error": str(e)}), 401
+            return jsonify({"message": "Token validation failed!", "hint": "Please log in again.", "error": str(e)}), 401
 
         return f(current_user, *args, **kwargs)
 
