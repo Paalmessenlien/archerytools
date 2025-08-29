@@ -19,351 +19,7 @@
         </template>
       </PageHeader>
 
-    <!-- Enhanced Search and Filter Interface -->
-    <div :class="['search-filter-section', { 'is-sticky': isFilterSticky }]" ref="filterSection">
-      <!-- Main Search Bar -->
-      <div class="search-bar-container">
-        <div class="search-input-wrapper">
-          <!-- Enhanced Search Input with clearer visual hierarchy -->
-          <div class="search-input-group">
-            <md-outlined-text-field
-              :value="filterState.searchQuery || ''"
-              placeholder="Search entries by title, content, tags, or setup..."
-              class="search-input"
-              @input="(e) => handleSearchChange(e.target.value)"
-            >
-              <i slot="leading-icon" class="fas fa-search search-icon"></i>
-            </md-outlined-text-field>
-            
-            <!-- Enhanced Clear Search Button -->
-            <button 
-              v-if="filterState.searchQuery"
-              @click="clearSearch"
-              class="clear-search-btn"
-              title="Clear search"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <!-- Enhanced Search Results Count with better visual design -->
-          <div v-if="filterState.searchQuery || hasActiveFilters" class="search-results-indicator"
-               :class="{ 'is-loading': filteringState.isFiltering, 'has-error': filteringState.hasError }">
-            <div class="results-content">
-              <div class="results-icon">
-                <i v-if="!filteringState.isFiltering && !filteringState.hasError" class="fas fa-search"></i>
-                <md-circular-progress v-if="filteringState.isFiltering" indeterminate class="filter-loading-spinner"></md-circular-progress>
-                <i v-if="filteringState.hasError" class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="results-text">
-                <span v-if="!filteringState.hasError" class="results-count">
-                  {{ filteredEntriesCount }} {{ filteredEntriesCount === 1 || filteredEntriesCount === '...' ? 'entry' : 'entries' }}
-                </span>
-                <span v-if="filteringState.hasError" class="error-text">
-                  {{ filteringState.errorMessage }}
-                </span>
-                <span v-if="!filteringState.hasError" class="results-label">found</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Enhanced Quick Filter Pills with better design -->
-        <div class="quick-filters-section" v-if="!showFilters">
-          <div class="quick-filters-label">
-            <i class="fas fa-bolt mr-1"></i>
-            Quick Filters:
-          </div>
-          <div class="quick-filters">
-            <button 
-              v-for="quickFilter in quickFilters" 
-              :key="quickFilter.id"
-              @click="applyQuickFilter(quickFilter)"
-              class="quick-filter-pill"
-              :class="{ active: isQuickFilterActive(quickFilter) }"
-            >
-              <div class="pill-icon-wrapper">
-                <i :class="quickFilter.icon" class="pill-icon"></i>
-              </div>
-              <span class="pill-label">{{ quickFilter.label }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Enhanced Filter Toggle & Controls -->
-        <div class="filter-controls-header">
-          <button @click="showFilters = !showFilters" class="filter-toggle-btn">
-            <div class="toggle-content">
-              <div class="toggle-icon">
-                <i :class="showFilters ? 'fas fa-filter-circle-xmark' : 'fas fa-sliders-h'"></i>
-              </div>
-              <div class="toggle-text">
-                <span class="toggle-label">{{ showFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}</span>
-                <span v-if="hasActiveFilters" class="toggle-subtitle">
-                  {{ activeFiltersCount }} active filter{{ activeFiltersCount > 1 ? 's' : '' }}
-                </span>
-              </div>
-            </div>
-            <div class="toggle-chevron">
-              <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-            </div>
-          </button>
-
-          <div class="filter-control-actions">
-            <button 
-              v-if="hasActiveFilters" 
-              @click="clearAllFilters" 
-              class="clear-filters-btn"
-            >
-              <i class="fas fa-broom mr-2"></i>
-              <span>Clear All Filters</span>
-            </button>
-            <button 
-              v-if="hasActiveFilters" 
-              @click="showSavePresetDialog = true"
-              class="save-preset-btn-header"
-            >
-              <i class="fas fa-bookmark mr-2"></i>
-              <span>Save as Preset</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Enhanced Active Filter Chips -->
-      <div v-if="hasActiveFilters" class="active-filters-chips">
-        <div class="chips-header">
-          <div class="chips-title">
-            <i class="fas fa-filter mr-1"></i>
-            Active Filters
-          </div>
-          <div class="chips-count">{{ activeFiltersCount }}</div>
-        </div>
-        <div class="chips-container">
-          <div 
-            v-for="chip in activeFilterChips" 
-            :key="chip.key"
-            class="filter-chip"
-          >
-            <div class="chip-content">
-              <span class="chip-label">{{ chip.label }}</span>
-              <span class="chip-separator">:</span>
-              <span class="chip-value">{{ chip.value }}</span>
-            </div>
-            <button @click="removeFilter(chip.key)" class="remove-chip-btn" :title="`Remove ${chip.label} filter`">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collapsible Filter Panel -->
-      <div v-if="showFilters" class="filters-panel">
-        <div class="filter-groups">
-          <!-- Basic Filters Group -->
-          <div class="filter-group">
-            <h3 class="filter-group-title">
-              <i class="fas fa-filter mr-2"></i>
-              Basic Filters
-            </h3>
-            <div class="filter-group-controls">
-              <div class="filter-row">
-                <md-outlined-select 
-                  :value="filterState.selectedSetup" 
-                  @change="(e) => handleFilterChange('bow_setup_id', e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Bow Setup</span>
-                  <md-select-option value="">All Setups</md-select-option>
-                  <md-select-option v-for="setup in bowSetups" :key="setup.id" :value="setup.id.toString()">
-                    {{ setup.name }} ({{ setup.bow_type }})
-                  </md-select-option>
-                </md-outlined-select>
-
-                <md-outlined-select 
-                  :value="filterState.selectedType" 
-                  @change="(e) => handleFilterChange('entry_type', e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Entry Type</span>
-                  <md-select-option value="">All Types</md-select-option>
-                  <md-select-option v-for="type in entryTypes" :key="type.value" :value="type.value">
-                    {{ type.label }}
-                  </md-select-option>
-                </md-outlined-select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sorting Group -->
-          <div class="filter-group">
-            <h3 class="filter-group-title">
-              <i class="fas fa-sort mr-2"></i>
-              Sort Options
-            </h3>
-            <div class="filter-group-controls">
-              <div class="filter-row">
-                <md-outlined-select 
-                  :value="filterState.sortBy || ''" 
-                  @change="(e) => handleSortChange(e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Sort By</span>
-                  <md-select-option value="created_at">Date Created</md-select-option>
-                  <md-select-option value="updated_at">Date Modified</md-select-option>
-                  <md-select-option value="title">Title</md-select-option>
-                  <md-select-option value="entry_type">Entry Type</md-select-option>
-                </md-outlined-select>
-
-                <md-outlined-select 
-                  :value="filterState.sortDirection || 'desc'" 
-                  @change="(e) => handleSortDirectionChange(e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Direction</span>
-                  <md-select-option value="asc">
-                    <i class="fas fa-sort-up mr-2"></i>Ascending
-                  </md-select-option>
-                  <md-select-option value="desc">
-                    <i class="fas fa-sort-down mr-2"></i>Descending
-                  </md-select-option>
-                </md-outlined-select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Advanced Filters Group -->
-          <div class="filter-group">
-            <h3 class="filter-group-title">
-              <i class="fas fa-cog mr-2"></i>
-              Advanced Filters
-            </h3>
-            <div class="filter-group-controls">
-              <!-- Tags Filter Row -->
-              <div class="filter-row">
-                <md-outlined-text-field
-                  :value="filterState.selectedTags"
-                  placeholder="Filter by tags (comma-separated)"
-                  class="filter-control full-width"
-                  @input="(e) => handleFilterChange('tags', e.target.value)"
-                >
-                  <span slot="label">Tags</span>
-                  <i slot="leading-icon" class="fas fa-tag"></i>
-                </md-outlined-text-field>
-              </div>
-
-              <!-- Equipment Filter Row -->
-              <div class="filter-row">
-                <md-outlined-select 
-                  :value="filterState.equipmentType || ''" 
-                  @change="(e) => handleFilterChange('equipment_type', e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Equipment Type</span>
-                  <md-select-option value="">All Equipment</md-select-option>
-                  <md-select-option value="bow">Bow</md-select-option>
-                  <md-select-option value="arrows">Arrows</md-select-option>
-                  <md-select-option value="sight">Sight</md-select-option>
-                  <md-select-option value="rest">Rest</md-select-option>
-                  <md-select-option value="stabilizer">Stabilizer</md-select-option>
-                  <md-select-option value="release">Release</md-select-option>
-                  <md-select-option value="quiver">Quiver</md-select-option>
-                  <md-select-option value="other">Other</md-select-option>
-                </md-outlined-select>
-
-                <md-outlined-text-field
-                  :value="filterState.equipmentName"
-                  placeholder="Equipment name or manufacturer"
-                  class="filter-control"
-                  @input="(e) => handleFilterChange('equipment_name', e.target.value)"
-                >
-                  <span slot="label">Equipment Name</span>
-                  <i slot="leading-icon" class="fas fa-wrench"></i>
-                </md-outlined-text-field>
-              </div>
-
-              <!-- Date Range Filter Row -->
-              <div class="filter-row">
-                <md-outlined-text-field
-                  :value="filterState.dateFrom"
-                  type="date"
-                  class="filter-control"
-                  @input="(e) => handleFilterChange('date_from', e.target.value)"
-                >
-                  <span slot="label">Date From</span>
-                  <i slot="leading-icon" class="fas fa-calendar-alt"></i>
-                </md-outlined-text-field>
-
-                <md-outlined-text-field
-                  :value="filterState.dateTo"
-                  type="date"
-                  class="filter-control"
-                  @input="(e) => handleFilterChange('date_to', e.target.value)"
-                >
-                  <span slot="label">Date To</span>
-                  <i slot="leading-icon" class="fas fa-calendar-alt"></i>
-                </md-outlined-text-field>
-              </div>
-
-              <!-- Privacy and Attachment Filters -->
-              <div class="filter-row">
-                <md-outlined-select 
-                  :value="filterState.privacyFilter || ''" 
-                  @change="(e) => handleFilterChange('privacy_filter', e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Privacy</span>
-                  <md-select-option value="">All Entries</md-select-option>
-                  <md-select-option value="public">Public Only</md-select-option>
-                  <md-select-option value="private">Private Only</md-select-option>
-                </md-outlined-select>
-
-                <md-outlined-select 
-                  :value="filterState.hasImages || ''" 
-                  @change="(e) => handleFilterChange('has_images', e.target.value)" 
-                  class="filter-control"
-                >
-                  <span slot="label">Images</span>
-                  <md-select-option value="">All Entries</md-select-option>
-                  <md-select-option value="true">With Images</md-select-option>
-                  <md-select-option value="false">Without Images</md-select-option>
-                </md-outlined-select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filter Presets Group -->
-          <div class="filter-group" v-if="filterPresets.length > 0">
-            <h3 class="filter-group-title">
-              <i class="fas fa-bookmark mr-2"></i>
-              Filter Presets
-            </h3>
-            <div class="filter-group-controls">
-              <div class="filter-presets-row">
-                <div class="preset-buttons">
-                  <button 
-                    v-for="preset in filterPresets" 
-                    :key="preset.id"
-                    @click="applyFilterPreset(preset)"
-                    class="preset-btn"
-                    :class="{ active: currentPresetId === preset.id }"
-                  >
-                    <i :class="preset.icon || 'fas fa-filter'" class="mr-1"></i>
-                    {{ preset.name }}
-                  </button>
-                </div>
-                <div class="preset-actions">
-                  <button @click="showSavePresetDialog = true" class="save-preset-btn">
-                    <i class="fas fa-plus mr-1"></i>
-                    Save Current
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Mobile-First Unified Journal Interface -->
 
     <!-- Tab Navigation -->
     <div class="tab-navigation">
@@ -386,114 +42,29 @@
       </div>
     </div>
 
-    <!-- Journal Tab Content -->
-    <div v-if="activeTab === 'journal'" class="entries-container">
-      <div v-if="journalApi.isLoading.value" class="loading-state">
-        <md-circular-progress indeterminate></md-circular-progress>
-        <p>Loading journal entries...</p>
-      </div>
-
-      <div v-else-if="entries.length === 0" class="empty-state">
-        <div class="empty-icon-container">
-          <i class="fas fa-book empty-icon"></i>
-        </div>
-        <div class="empty-content">
-          <h3 class="empty-title">No Journal Entries Found</h3>
-          <p class="empty-description">
-            {{ filterState.searchQuery || filterState.selectedSetup || filterState.selectedType || filterState.selectedTags 
-              ? 'No entries match your current filters. Try adjusting your search criteria.' 
-              : 'Start documenting your archery journey by creating your first entry.' }}
-          </p>
-          <CustomButton @click="showCreateDialog = true" variant="primary" icon="fas fa-plus" class="empty-action">
-            {{ entries.length === 0 && !filterState.searchQuery ? 'Create First Entry' : 'New Entry' }}
-          </CustomButton>
-        </div>
-      </div>
-
-      <div v-else class="entries-section">
-        <div class="entries-header">
-          <div class="entries-header-content">
-            <div class="entries-title-section">
-              <h2 class="entries-title">
-                <i class="fas fa-book-open mr-2"></i>
-                Journal Entries
-                <span class="entries-count">({{ entries.length }})</span>
-              </h2>
-              <p class="entries-subtitle">Your archery journey documented</p>
-            </div>
-            
-            <!-- View Mode Toggle -->
-            <div class="view-mode-controls">
-              <div class="view-toggle-group">
-                <button 
-                  @click="viewMode = 'list'"
-                  :class="['view-toggle-btn', { active: viewMode === 'list' }]"
-                  aria-label="List view"
-                >
-                  <i class="fas fa-list"></i>
-                </button>
-                <button 
-                  @click="viewMode = 'grid'"
-                  :class="['view-toggle-btn', { active: viewMode === 'grid' }]"
-                  aria-label="Grid view"
-                >
-                  <i class="fas fa-th"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div :class="['entries-list', `entries-${viewMode}`]">
-          <JournalEntryCard
-            v-for="entry in entries"
-            :key="entry.id"
-            :entry="entry"
-            :view-mode="viewMode"
-            @edit="editEntry"
-            @delete="deleteEntry"
-            @view="viewEntry"
-          />
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="pagination.state.pages > 1" class="pagination">
-        <CustomButton 
-          @click="pagination.goToPrevPage()"
-          :disabled="!pagination.meta.hasPrevPage"
-          variant="outlined"
-          icon="fas fa-chevron-left"
-        >
-          Previous
-        </CustomButton>
-        
-        <div class="pagination-pages">
-          <CustomButton
-            v-for="page in pagination.meta.visiblePages"
-            :key="page"
-            @click="pagination.setPage(page)"
-            :variant="page === pagination.state.page ? 'primary' : 'text'"
-            size="small"
-          >
-            {{ page }}
-          </CustomButton>
-        </div>
-        
-        <span class="page-info">
-          {{ pagination.pageInfo }}
-        </span>
-        
-        <CustomButton 
-          @click="pagination.goToNextPage()"
-          :disabled="!pagination.meta.hasNextPage"
-          variant="outlined"
-          icon="fas fa-chevron-right"
-        >
-          Next
-        </CustomButton>
-      </div>
-    </div>
+    <!-- Mobile-First Journal Interface -->
+    <BaseJournalView
+      v-if="activeTab === 'journal'"
+      :context="'general'"
+      :title="'Journal'"
+      :subtitle="'Your archery journey documented'"
+      :entries="sortedEntries"
+      :bow-setups="bowSetups"
+      :entry-types="entryTypes"
+      :stats="journalStats"
+      :loading="journalApi.isLoading.value"
+      :has-more-entries="hasMoreEntriesFromPagination"
+      :initial-filters="mobileFriendlyFilters"
+      @entry:view="viewEntry"
+      @entry:edit="editEntry"
+      @entry:delete="deleteEntry"
+      @entry:create="handleCreateEntry"
+      @entry:favorite="handleToggleFavorite"
+      @filters:update="handleMobileFiltersUpdate"
+      @load-more="handleLoadMore"
+      @refresh="handleRefresh"
+      class="mobile-journal-container"
+    />
 
     <!-- Change Log Tab Content -->
     <div v-if="activeTab === 'changelog'" class="changelog-container">
@@ -567,6 +138,7 @@ import { useApi } from '@/composables/useApi'
 import { useJournalApi } from '@/composables/useJournalApi'
 import type { JournalEntry, JournalEntryCreate } from '@/composables/useJournalApi'
 import JournalChangeLog from '~/components/JournalChangeLog.vue'
+import BaseJournalView from '~/components/journal/BaseJournalView.vue'
 import { useGlobalNotifications } from '@/composables/useNotificationSystem'
 // Removed complex filtering composable - using direct filtering instead
 import { usePagination, createPaginationFromResponse } from '@/composables/usePagination'
@@ -795,6 +367,46 @@ const foundDraft = ref(null)
 // Computed properties
 const entries = computed(() => pagination.sliceData(sortedEntries.value || []))
 const entryTypes = computed(() => journalApi.defaultEntryTypes?.value || [])
+
+// Mobile-first computed properties
+const journalStats = computed(() => {
+  const totalEntries = journalApi.entries?.value?.length || 0
+  const recentEntries = (journalApi.entries?.value || []).filter(entry => {
+    const entryDate = new Date(entry.created_at)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    return entryDate >= weekAgo
+  }).length
+  
+  const favoriteEntries = (journalApi.entries?.value || []).filter(entry => entry.is_favorite).length
+  const entriesWithChanges = (journalApi.entries?.value || []).filter(entry => 
+    entry.linked_changes && entry.linked_changes.length > 0
+  ).length
+
+  return {
+    total: { value: totalEntries, label: 'Total' },
+    recent: { value: recentEntries, label: 'This Week' },
+    favorites: { value: favoriteEntries, label: 'Favorites' },
+    changes: { value: entriesWithChanges, label: 'With Changes' }
+  }
+})
+
+const mobileFriendlyFilters = computed(() => {
+  return {
+    search: filterState.searchQuery || '',
+    entryTypes: filterState.selectedType ? [filterState.selectedType] : [],
+    dateRange: 'all',
+    customDateStart: filterState.dateFrom || null,
+    customDateEnd: filterState.dateTo || null,
+    favoritesOnly: false,
+    hasImages: filterState.hasImages === 'true',
+    hasLinkedChanges: false,
+    tags: filterState.selectedTags ? filterState.selectedTags.split(',').map(t => t.trim()).filter(Boolean) : []
+  }
+})
+
+const hasMoreEntriesFromPagination = computed(() => {
+  return pagination.meta.hasNextPage
+})
 
 // Enhanced UX computed properties with loading state
 const filteredEntriesCount = computed(() => {
@@ -1063,6 +675,55 @@ const saveEntry = async (entryData: JournalEntryCreate) => {
   
   closeDialogs()
   await loadEntries()
+}
+
+// Mobile-first event handlers
+const handleCreateEntry = (entryData) => {
+  editingEntry.value = entryData
+  showCreateDialog.value = true
+}
+
+const handleToggleFavorite = async (entry) => {
+  try {
+    const response = await journalApi.toggleFavorite(entry)
+    if (response.success) {
+      await loadEntries() // Refresh entries to show updated favorite status
+      notifications.showSuccess(`Entry ${entry.is_favorite ? 'removed from' : 'added to'} favorites`)
+    } else {
+      notifications.showError('Failed to update favorite status')
+    }
+  } catch (error) {
+    console.error('Failed to toggle favorite:', error)
+    notifications.showError('Failed to update favorite status')
+  }
+}
+
+const handleMobileFiltersUpdate = (filters) => {
+  // Update legacy filter state from mobile filters
+  filterState.searchQuery = filters.search || ''
+  filterState.selectedType = filters.entryTypes?.length ? filters.entryTypes[0] : ''
+  filterState.selectedTags = filters.tags?.join(', ') || ''
+  filterState.dateFrom = filters.customDateStart || ''
+  filterState.dateTo = filters.customDateEnd || ''
+  filterState.hasImages = filters.hasImages ? 'true' : ''
+  
+  // Reset pagination when filters change
+  pagination.resetToFirstPage()
+}
+
+const handleLoadMore = ({ currentCount, totalCount }) => {
+  // Load more entries if using client-side pagination
+  console.log('Load more requested:', currentCount, 'of', totalCount)
+}
+
+const handleRefresh = async () => {
+  try {
+    await loadEntries()
+    notifications.showSuccess('Journal refreshed')
+  } catch (error) {
+    console.error('Failed to refresh:', error)
+    notifications.showError('Failed to refresh journal')
+  }
 }
 
 // Auto-save handler
@@ -1428,6 +1089,7 @@ watch([
 </script>
 
 <style scoped>
+/* Mobile-First Journal Page Styles */
 .journal-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -1446,976 +1108,72 @@ watch([
   }
 }
 
-/* Enhanced Search and Filter Interface with improved visual hierarchy */
-.search-filter-section {
-  background: var(--md-sys-color-surface-container-lowest);
-  border-radius: 16px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-}
-
-@media (min-width: 640px) {
-  .search-filter-section {
-    border-radius: 20px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .search-filter-section {
-    border-radius: 24px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-  }
-}
-
-/* Sticky state */
-.search-filter-section.is-sticky {
-  position: sticky;
-  top: 80px;
-  border-radius: 0;
-  margin-bottom: 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  background: var(--md-sys-color-surface-container);
-  backdrop-filter: blur(20px);
-  border-left: none;
-  border-right: none;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  border-bottom: 2px solid var(--md-sys-color-primary);
-}
-
-/* Condensed sticky view */
-.search-filter-section.is-sticky .search-bar-container {
-  padding: 0.5rem 0;
-}
-
-.search-filter-section.is-sticky .quick-filters {
-  display: none; /* Hide quick filters in sticky mode for space */
-}
-
-.search-filter-section.is-sticky .search-results-count {
-  font-size: 0.8rem;
-  padding: 0.375rem 0.5rem;
-}
-
-/* Search Bar Container */
-.search-bar-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.search-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-/* Enhanced Search Input Group */
-.search-input-group {
-  position: relative;
-  flex: 1;
-  min-width: 300px;
-}
-
-.search-input {
-  width: 100%;
-  transition: all 0.2s ease;
-}
-
-.search-input:focus-within {
-  --md-outlined-text-field-container-color: var(--md-sys-color-primary-container);
-}
-
-.search-icon {
-  color: var(--md-sys-color-primary);
-  font-size: 1.1rem;
-}
-
-.clear-search-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--md-sys-color-surface-container-high);
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--md-sys-color-on-surface-variant);
-  transition: all 0.2s ease;
-  z-index: 10;
-}
-
-.clear-search-btn:hover {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-  transform: translateY(-50%) scale(1.1);
-}
-
-/* Enhanced Search Results Indicator */
-.search-results-indicator {
-  background: var(--md-sys-color-surface-container-highest);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 200px;
-}
-
-.search-results-indicator.is-loading {
-  background: var(--md-sys-color-primary-container);
-  border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
-}
-
-.search-results-indicator.has-error {
-  background: var(--md-sys-color-error-container);
-  border-color: var(--md-sys-color-error);
-  box-shadow: 0 0 0 2px var(--md-sys-color-error-container);
-}
-
-.results-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.results-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--md-sys-color-surface-container);
-  color: var(--md-sys-color-primary);
-  font-size: 1rem;
-}
-
-.search-results-indicator.is-loading .results-icon {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-}
-
-.search-results-indicator.has-error .results-icon {
-  background: var(--md-sys-color-error);
-  color: var(--md-sys-color-on-error);
-}
-
-.results-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.results-count {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface);
-}
-
-.results-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.filter-loading-spinner {
-  width: 20px;
-  height: 20px;
-}
-
-.error-text {
-  color: var(--md-sys-color-on-error-container);
-  font-weight: 600;
-}
-
-/* Enhanced Quick Filter Pills */
-.quick-filters-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.quick-filters-label {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.quick-filters {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.quick-filter-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: var(--md-sys-color-surface-container);
-  border: 2px solid var(--md-sys-color-outline-variant);
-  border-radius: 24px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  position: relative;
+/* Mobile Journal Container */
+.mobile-journal-container {
+  background: var(--md-sys-color-surface);
+  border-radius: 1rem;
   overflow: hidden;
-}
-
-.quick-filter-pill::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
-}
-
-.quick-filter-pill:hover::before {
-  transform: translateX(100%);
-}
-
-.quick-filter-pill:hover {
-  background: var(--md-sys-color-surface-container-highest);
-  border-color: var(--md-sys-color-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.quick-filter-pill.active {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  border-color: var(--md-sys-color-primary);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.pill-icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--md-sys-color-primary-container);
-}
-
-.quick-filter-pill.active .pill-icon-wrapper {
-  background: var(--md-sys-color-on-primary);
-}
-
-.pill-icon {
-  font-size: 0.875rem;
-  color: var(--md-sys-color-primary);
-}
-
-.quick-filter-pill.active .pill-icon {
-  color: var(--md-sys-color-primary);
-}
-
-.pill-label {
-  font-weight: 600;
-  letter-spacing: 0.025em;
-}
-
-/* Enhanced Filter Controls Header */
-.filter-controls-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.filter-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--md-sys-color-surface-container);
-  border: 2px solid var(--md-sys-color-outline-variant);
-  border-radius: 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  min-width: 240px;
-  overflow: hidden;
-}
-
-.filter-toggle-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--md-sys-color-primary-container), var(--md-sys-color-tertiary-container));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.filter-toggle-btn:hover::before {
-  opacity: 0.1;
-}
-
-.filter-toggle-btn:hover {
-  background: var(--md-sys-color-surface-container-high);
-  border-color: var(--md-sys-color-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.toggle-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  position: relative;
-  z-index: 1;
-}
-
-.toggle-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.toggle-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
-}
-
-.toggle-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  line-height: 1.2;
-}
-
-.toggle-subtitle {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--md-sys-color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.toggle-chevron {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
-  transition: transform 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.filter-control-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.clear-filters-btn, .save-preset-btn-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 2px solid;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-}
-
-.clear-filters-btn {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-  border-color: var(--md-sys-color-error);
-}
-
-.clear-filters-btn:hover {
-  background: var(--md-sys-color-error);
-  color: var(--md-sys-color-on-error);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--md-sys-color-error), 0.2);
-}
-
-.save-preset-btn-header {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
-  border-color: var(--md-sys-color-tertiary);
-}
-
-.save-preset-btn-header:hover {
-  background: var(--md-sys-color-tertiary);
-  color: var(--md-sys-color-on-tertiary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--md-sys-color-tertiary), 0.2);
-}
-
-/* Enhanced Active Filter Chips */
-.active-filters-chips {
-  padding: 1.5rem 0;
-  border-top: 2px solid var(--md-sys-color-outline-variant);
-  margin-top: 1.5rem;
-  background: var(--md-sys-color-surface-container-low);
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-
-.chips-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 1rem;
 }
 
-.chips-title {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.chips-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0 8px;
-}
-
-.chips-container {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.filter-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border: 2px solid var(--md-sys-color-secondary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.filter-chip::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.filter-chip:hover::before {
-  opacity: 1;
-}
-
-.filter-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.chip-content {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.chip-label {
-  font-weight: 700;
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.chip-separator {
-  opacity: 0.6;
-  margin: 0 0.25rem;
-}
-
-.chip-value {
-  font-weight: 500;
-  background: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
-  padding: 0.125rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
-}
-
-.remove-chip-btn {
-  background: var(--md-sys-color-surface-container);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.remove-chip-btn:hover {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-  border-color: var(--md-sys-color-error);
-  transform: scale(1.1);
-}
-
-/* Collapsible Filter Panel */
-.filters-panel {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.filter-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.filter-group {
-  background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-
-.filter-group-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-}
-
-.filter-group-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.filter-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-control {
-  flex: 1;
-  min-width: 200px;
-}
-
-.filter-control.full-width {
-  width: 100%;
-  min-width: unset;
-}
-
-/* Entries Container Styling */
-.entries-container {
-  min-height: 400px;
-}
-
-.entries-section {
-  background: var(--md-sys-color-surface);
-  border-radius: 16px;
-  padding: 2rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.entries-header {
+/* Tab Navigation Styles */
+.tab-navigation {
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.entries-header-content {
+.tab-buttons {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  padding-bottom: 0;
 }
 
-.entries-title-section {
-  flex: 1;
-}
-
-.entries-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  margin-bottom: 0.5rem;
+.tab-btn {
   display: flex;
   align-items: center;
-}
-
-.entries-count {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--md-sys-color-primary);
-  margin-left: 0.5rem;
-}
-
-.entries-subtitle {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-/* View Mode Controls */
-.view-mode-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.view-toggle-group {
-  display: flex;
-  background: var(--md-sys-color-surface-container);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 12px;
-  padding: 4px;
-}
-
-.view-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
   border: none;
+  border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
-  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: 40px;
-  height: 40px;
-  font-size: 1rem;
+  white-space: nowrap;
+  border-radius: 8px 8px 0 0;
+  touch-action: manipulation;
+  min-height: var(--mobile-touch-target-min, 44px);
 }
 
-.view-toggle-btn:hover {
-  background: var(--md-sys-color-surface-container-highest);
+.tab-btn:hover {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
 }
 
-.view-toggle-btn.active {
+.tab-btn:active {
+  transform: scale(0.98);
+}
+
+.tab-btn.active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-bottom-color: var(--md-sys-color-primary);
+}
+
+.tab-count {
+  background: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-btn.active .tab-count {
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Entries List Layouts */
-.entries-list {
-  display: flex;
-  gap: 1.5rem;
-}
-
-/* List View (default) */
-.entries-list.entries-list {
-  flex-direction: column;
-}
-
-/* Grid View */
-.entries-list.entries-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-}
-
-/* Loading and Empty States */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  text-align: center;
-  background: var(--md-sys-color-surface);
-  border-radius: 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  text-align: center;
-  background: var(--md-sys-color-surface);
-  border-radius: 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.empty-icon-container {
-  background: var(--md-sys-color-surface-container-highest);
-  border-radius: 50%;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.empty-icon {
-  font-size: 3rem;
-  color: var(--md-sys-color-primary);
-}
-
-.empty-content {
-  max-width: 500px;
-}
-
-.empty-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  margin-bottom: 1rem;
-}
-
-.empty-description {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 1rem;
-  line-height: 1.5;
-  margin-bottom: 2rem;
-}
-
-.empty-action {
-  margin-top: 1rem;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: var(--md-sys-color-surface-container);
-  border-radius: 12px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.pagination-pages {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.page-info {
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .journal-page {
-    padding: 1rem;
-  }
-
-  .filters-section {
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .filters-title {
-    font-size: 1.125rem;
-  }
-
-  .search-input {
-    max-width: none;
-  }
-
-  .filter-controls {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  /* Enhanced mobile responsiveness for new interface */
-  .search-filter-section {
-    padding: 1rem;
-  }
-  
-  .search-input-wrapper {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-  
-  .search-input {
-    min-width: unset;
-    width: 100%;
-  }
-  
-  .search-results-count {
-    order: 1;
-    align-self: center;
-  }
-  
-  .quick-filters {
-    justify-content: center;
-  }
-  
-  .quick-filter-pill {
-    flex: 1;
-    justify-content: center;
-    min-width: 0;
-    font-size: 0.8rem;
-    padding: 0.4rem 0.6rem;
-  }
-  
-  .filter-controls-header {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .filter-toggle-btn,
-  .clear-filters-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 1rem;
-  }
-  
-  .filter-group {
-    padding: 1rem;
-  }
-  
-  .filter-row {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .filter-control {
-    min-width: unset;
-    width: 100%;
-  }
-  
-  .chips-container {
-    justify-content: center;
-    gap: 0.4rem;
-  }
-  
-  .filter-chip {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.6rem;
-  }
-
-  .entries-section {
-    padding: 1.5rem;
-  }
-  
-  .entries-header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .view-mode-controls {
-    align-self: center;
-  }
-
-  .entries-title {
-    font-size: 1.25rem;
-  }
-
-  .entries-list {
-    gap: 1.25rem;
-  }
-  
-  /* Grid view adjustments for mobile */
-  .entries-list.entries-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-
-  .empty-state {
-    padding: 3rem 2rem;
-  }
-
-  .empty-icon-container {
-    padding: 1.5rem;
-  }
-
-  .empty-title {
-    font-size: 1.25rem;
-  }
 }
 
 /* Draft Restore Dialog Styling */
@@ -2489,130 +1247,125 @@ watch([
   background: var(--md-sys-color-surface-container-low);
 }
 
-/* Filter Presets Styles */
-.filter-presets-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.preset-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.preset-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 20px;
-  background: var(--md-sys-color-surface-container);
-  color: var(--md-sys-color-on-surface);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.preset-btn:hover {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-surface-container-high);
-  transform: translateY(-1px);
-}
-
-.preset-btn.active {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.save-preset-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px dashed var(--md-sys-color-primary);
-  border-radius: 20px;
-  background: transparent;
-  color: var(--md-sys-color-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.save-preset-btn:hover {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-/* Tab Navigation Styles */
-.tab-navigation {
-  margin-bottom: 2rem;
-}
-
-.tab-buttons {
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 2px solid var(--md-sys-color-outline-variant);
-  padding-bottom: 0;
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  border-radius: 8px 8px 0 0;
-}
-
-.tab-btn:hover {
-  background: var(--md-sys-color-surface-container);
-  color: var(--md-sys-color-on-surface);
-}
-
-.tab-btn.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  border-bottom-color: var(--md-sys-color-primary);
-}
-
-.tab-count {
-  background: var(--md-sys-color-outline);
-  color: var(--md-sys-color-on-surface);
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.tab-btn.active .tab-count {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-}
-
 /* Change Log Container */
 .changelog-container {
   background: var(--md-sys-color-surface-container-lowest);
   border-radius: 16px;
   padding: 2rem;
   border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--md-sys-color-surface-container);
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.page-info {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .journal-page {
+    padding: 0.75rem;
+  }
+  
+  .mobile-journal-container {
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tab-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .changelog-container {
+    padding: 1.5rem;
+  }
+  
+  .draft-restore-modal {
+    width: 95%;
+  }
+  
+  .draft-restore-header {
+    padding: 1rem;
+  }
+  
+  .draft-restore-content {
+    padding: 1rem;
+  }
+  
+  .draft-restore-actions {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .journal-page {
+    padding: 0.5rem;
+  }
+  
+  .mobile-journal-container {
+    border-radius: 0.25rem;
+  }
+  
+  .tab-buttons {
+    gap: 0.25rem;
+  }
+  
+  .tab-btn {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.75rem;
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .mobile-journal-container,
+  .draft-restore-modal,
+  .changelog-container {
+    border-width: 2px;
+  }
+  
+  .tab-buttons {
+    border-bottom-width: 3px;
+  }
+  
+  .tab-btn.active {
+    border-bottom-width: 3px;
+  }
 }
 </style>

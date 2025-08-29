@@ -403,11 +403,29 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.journal" class="p-3 sm:p-6">
-            <ArrowJournal
-              :arrow-id="setupArrowData.setup_arrow.arrow_id"
-              :setup-arrow="setupArrowData.setup_arrow"
-              :bow-setup="setupArrowData.bow_setup"
+          <div v-if="expandedSections.journal" class="p-0">
+            <BaseJournalView
+              ref="baseJournalComponent"
+              :context="'arrow'"
+              :title="'Arrow Journal'"
+              :subtitle="'Track performance notes and observations for this arrow'"
+              :entries="journalEntries"
+              :bow-setups="setupArrowData?.bow_setup ? [setupArrowData.bow_setup] : []"
+              :entry-types="journalEntryTypes"
+              :stats="journalStats"
+              :loading="journalLoading"
+              :has-more-entries="journalHasMoreEntries"
+              :pull-to-refresh="true"
+              :initial-filters="{ arrow_id: setupArrowData?.setup_arrow?.arrow_id }"
+              @entry:view="handleJournalEntryView"
+              @entry:edit="handleJournalEntryEdit"
+              @entry:delete="handleJournalEntryDelete"
+              @entry:create="handleJournalEntryCreate"
+              @entry:favorite="handleJournalEntryFavorite"
+              @filters:update="handleJournalFiltersUpdate"
+              @load-more="handleJournalLoadMore"
+              @refresh="handleJournalRefresh"
+              class="mobile-journal-container"
             />
           </div>
         </div>
@@ -510,6 +528,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, useHead, onBeforeRouteLeave } from '#imports'
 import { useApi } from '~/composables/useApi'
+import { useJournalApi } from '~/composables/useJournalApi'
 import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import SetupContextBreadcrumb from '~/components/SetupContextBreadcrumb.vue'
 import ArrowSetupEditor from '~/components/ArrowSetupEditor.vue'
@@ -523,7 +542,7 @@ import NotificationToast from '~/components/NotificationToast.vue'
 import PaperTuningInterface from '~/components/PaperTuningInterface.vue'
 import BareshaftTuningInterface from '~/components/BareshaftTuningInterface.vue'
 import WalkbackTuningInterface from '~/components/WalkbackTuningInterface.vue'
-import ArrowJournal from '~/components/ArrowJournal.vue'
+import BaseJournalView from '~/components/journal/BaseJournalView.vue'
 
 // Meta information
 definePageMeta({
@@ -535,6 +554,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const journalApi = useJournalApi()
 const bowSetupPickerStore = useBowSetupPickerStore()
 
 // State
@@ -545,6 +565,19 @@ const error = ref('')
 const editMode = ref(false)
 const hasUnsavedChanges = ref(false)
 const calculatingPerformance = ref(false)
+
+// Journal state
+const journalEntries = ref([])
+const journalLoading = ref(false)
+const journalHasMoreEntries = ref(false)
+const journalEntryTypes = ref([
+  { value: 'arrow_tuning', label: 'Arrow Tuning', icon: 'fas fa-crosshairs' },
+  { value: 'performance_test', label: 'Performance Test', icon: 'fas fa-tachometer-alt' },
+  { value: 'shooting_notes', label: 'Shooting Notes', icon: 'fas fa-target' },
+  { value: 'chronograph_data', label: 'Chronograph Data', icon: 'fas fa-stopwatch' },
+  { value: 'maintenance', label: 'Maintenance', icon: 'fas fa-wrench' },
+  { value: 'general', label: 'General Note', icon: 'fas fa-sticky-note' }
+])
 // Accordion state - config expanded by default for primary workflow
 const expandedSections = ref({
   config: true,        // Configuration always starts expanded 
@@ -592,6 +625,9 @@ const loadSetupArrowDetails = async () => {
     
     const response = await api.get(`/setup-arrows/${setupArrowId.value}/details`)
     setupArrowData.value = response
+    
+    // Load journal entries
+    await loadJournalEntries()
     
     // Update page title
     const arrowName = getArrowDisplayName()
@@ -868,6 +904,137 @@ const hideNotification = () => {
   notification.value.show = false
 }
 
+// Journal management methods
+const loadJournalEntries = async () => {
+  if (!setupArrowData.value?.setup_arrow?.arrow_id) return
+  
+  try {
+    journalLoading.value = true
+    
+    const response = await journalApi.getEntries({
+      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      page: 1,
+      limit: 50
+    })
+    
+    if (response.success) {
+      journalEntries.value = response.data || []
+      journalHasMoreEntries.value = response.hasMore || false
+    } else {
+      journalEntries.value = []
+      journalHasMoreEntries.value = false
+    }
+    
+  } catch (error) {
+    console.error('Error loading journal entries:', error)
+    journalEntries.value = []
+    journalHasMoreEntries.value = false
+  } finally {
+    journalLoading.value = false
+  }
+}
+
+const journalStats = computed(() => {
+  return {
+    total: {
+      value: journalEntries.value.length,
+      label: 'Entries'
+    },
+    recent: {
+      value: journalEntries.value.filter(entry => {
+        const entryDate = new Date(entry.created_at)
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        return entryDate >= weekAgo
+      }).length,
+      label: 'This Week'
+    },
+    favorites: {
+      value: journalEntries.value.filter(entry => entry.is_favorite).length,
+      label: 'Favorites'
+    },
+    tests: {
+      value: journalEntries.value.filter(entry => 
+        ['arrow_tuning', 'performance_test', 'chronograph_data'].includes(entry.entry_type)
+      ).length,
+      label: 'Tests'
+    }
+  }
+})
+
+// Journal event handlers
+const handleJournalEntryView = (entry) => {
+  console.log('Viewing journal entry:', entry)
+  // Navigate to entry detail or open modal
+}
+
+const handleJournalEntryEdit = (entry) => {
+  console.log('Editing journal entry:', entry)
+  // Open edit modal or navigate to edit page
+}
+
+const handleJournalEntryDelete = async (entry) => {
+  try {
+    await journalApi.deleteEntry(entry.id)
+    showNotification('Journal entry deleted successfully', 'success')
+    await loadJournalEntries()
+  } catch (error) {
+    console.error('Error deleting journal entry:', error)
+    showNotification(error.message || 'Failed to delete journal entry', 'error')
+  }
+}
+
+const handleJournalEntryCreate = async (entryData) => {
+  try {
+    const submitData = {
+      ...entryData,
+      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      bow_setup_id: setupArrowData.value.bow_setup.id
+    }
+    
+    const response = await journalApi.createEntry(submitData)
+    if (response.success) {
+      showNotification('Journal entry created successfully', 'success')
+      await loadJournalEntries()
+    } else {
+      throw new Error(response.error || 'Failed to create entry')
+    }
+  } catch (error) {
+    console.error('Error creating journal entry:', error)
+    showNotification(error.message || 'Failed to create journal entry', 'error')
+  }
+}
+
+const handleJournalEntryFavorite = async (entry) => {
+  try {
+    await journalApi.toggleFavorite(entry.id, !entry.is_favorite)
+    showNotification(`Entry ${entry.is_favorite ? 'removed from' : 'added to'} favorites`, 'success')
+    await loadJournalEntries()
+  } catch (error) {
+    console.error('Error updating favorite status:', error)
+    showNotification(error.message || 'Failed to update favorite status', 'error')
+  }
+}
+
+const handleJournalFiltersUpdate = (filters) => {
+  console.log('Journal filters updated:', filters)
+  // Handle filter changes if needed
+}
+
+const handleJournalLoadMore = async () => {
+  try {
+    // Implement pagination loading here if needed
+    console.log('Loading more journal entries...')
+  } catch (error) {
+    console.error('Error loading more entries:', error)
+    showNotification('Failed to load more entries', 'error')
+  }
+}
+
+const handleJournalRefresh = async () => {
+  await loadJournalEntries()
+  showNotification('Journal refreshed', 'success')
+}
+
 // Tuning session methods
 const startTuningGuide = async (guideType) => {
   try {
@@ -1088,5 +1255,38 @@ onBeforeRouteLeave((to, from, next) => {
 
 .accordion-header:hover .section-icon {
   transform: scale(1.05);
+}
+
+/* Mobile Journal Container Integration */
+.mobile-journal-container {
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-journal-container .base-journal-view {
+  background: transparent;
+  min-height: auto;
+}
+
+/* Remove duplicate headers in journal accordion */
+.mobile-journal-container .journal-header {
+  display: none;
+}
+
+/* Adjust journal content spacing within accordion */
+.mobile-journal-container .entries-container {
+  padding: 0;
+  min-height: auto;
+}
+
+.mobile-journal-container .filter-section {
+  position: static;
+  top: auto;
+  z-index: auto;
+  background: transparent;
+  border: none;
+  padding: 1rem 0 0.5rem;
 }
 </style>

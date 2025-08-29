@@ -1,5 +1,30 @@
 <template>
-  <div :class="['journal-entry-card', `card-${viewMode}`]" @click="$emit('view', entry)">
+  <div 
+    :class="['journal-entry-card', `card-${viewMode}`, { 'mobile-mode': isMobile, 'swiping': isSwipeActive }]" 
+    @click="handleCardClick"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
+    :style="{ transform: swipeTransform }"
+  >
+    <!-- Mobile Swipe Actions Background -->
+    <div v-if="isMobile" class="swipe-actions-left" :class="{ 'visible': swipeDirection === 'left' }">
+      <div class="swipe-action favorite-action" :class="{ 'active': entry.is_favorite }">
+        <md-icon>{{ entry.is_favorite ? 'star' : 'star_border' }}</md-icon>
+        <span>{{ entry.is_favorite ? 'Unfavorite' : 'Favorite' }}</span>
+      </div>
+    </div>
+    
+    <div v-if="isMobile" class="swipe-actions-right" :class="{ 'visible': swipeDirection === 'right' }">
+      <div class="swipe-action edit-action">
+        <md-icon>edit</md-icon>
+        <span>Edit</span>
+      </div>
+      <div class="swipe-action delete-action">
+        <md-icon>delete</md-icon>
+        <span>Delete</span>
+      </div>
+    </div>
     <div class="entry-header">
       <div class="entry-meta">
         <div class="entry-type-badge" :class="`type-${entry.entry_type}`">
@@ -117,7 +142,7 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps } from 'vue'
+import { defineEmits, defineProps, ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   entry: {
@@ -127,11 +152,27 @@ const props = defineProps({
   viewMode: {
     type: String,
     default: 'list',
-    validator: (value) => ['list', 'grid'].includes(value)
+    validator: (value) => ['list', 'grid', 'mobile'].includes(value)
+  },
+  context: {
+    type: String,
+    default: 'general'
   }
 })
 
 const emit = defineEmits(['view', 'edit', 'delete', 'view-change', 'show-all-changes', 'toggle-favorite'])
+
+// Mobile detection and swipe state
+const isMobile = ref(false)
+const isSwipeActive = ref(false)
+const swipeDirection = ref(null)
+const swipeTransform = ref('')
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const touchCurrentX = ref(0)
+const touchCurrentY = ref(0)
+const swipeThreshold = 80
+const swipeVelocityThreshold = 0.3
 
 // Image display configuration
 const maxDisplayImages = computed(() => props.viewMode === 'grid' ? 2 : 4)
@@ -237,6 +278,119 @@ const formatShortDate = (dateString) => {
 const toggleFavorite = () => {
   emit('toggle-favorite', props.entry)
 }
+
+// Mobile swipe functionality
+const handleCardClick = (event) => {
+  if (!isSwipeActive.value) {
+    emit('view', props.entry)
+  }
+}
+
+const handleTouchStart = (event) => {
+  if (!isMobile.value) return
+  
+  const touch = event.touches[0]
+  touchStartX.value = touch.clientX
+  touchStartY.value = touch.clientY
+  touchCurrentX.value = touch.clientX
+  touchCurrentY.value = touch.clientY
+  isSwipeActive.value = false
+  swipeDirection.value = null
+}
+
+const handleTouchMove = (event) => {
+  if (!isMobile.value) return
+  
+  event.preventDefault()
+  const touch = event.touches[0]
+  touchCurrentX.value = touch.clientX
+  touchCurrentY.value = touch.clientY
+  
+  const deltaX = touchCurrentX.value - touchStartX.value
+  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
+  
+  // Only proceed if horizontal movement is dominant
+  if (Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 20) {
+    isSwipeActive.value = true
+    
+    if (deltaX > 0) {
+      swipeDirection.value = 'left' // Swiping right reveals left actions
+      const progress = Math.min(deltaX / swipeThreshold, 1)
+      swipeTransform.value = `translateX(${deltaX * 0.5}px)`
+    } else {
+      swipeDirection.value = 'right' // Swiping left reveals right actions  
+      const progress = Math.min(Math.abs(deltaX) / swipeThreshold, 1)
+      swipeTransform.value = `translateX(${deltaX * 0.5}px)`
+    }
+  }
+}
+
+const handleTouchEnd = (event) => {
+  if (!isMobile.value) return
+  
+  const deltaX = touchCurrentX.value - touchStartX.value
+  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
+  const swipeDistance = Math.abs(deltaX)
+  
+  // Check if it's a valid swipe (horizontal and sufficient distance)
+  if (swipeDistance > swipeThreshold && Math.abs(deltaX) > deltaY) {
+    // Execute swipe action
+    if (deltaX > 0) {
+      // Swiped right - favorite action
+      handleSwipeAction('favorite')
+    } else {
+      // Swiped left - show edit/delete options or execute primary action
+      if (swipeDistance > swipeThreshold * 1.5) {
+        handleSwipeAction('edit')
+      }
+    }
+    
+    // Haptic feedback if supported
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+  }
+  
+  // Reset swipe state
+  resetSwipeState()
+}
+
+const handleSwipeAction = (action) => {
+  switch (action) {
+    case 'favorite':
+      toggleFavorite()
+      break
+    case 'edit':
+      emit('edit', props.entry)
+      break
+    case 'delete':
+      emit('delete', props.entry)
+      break
+  }
+}
+
+const resetSwipeState = () => {
+  setTimeout(() => {
+    swipeTransform.value = ''
+    isSwipeActive.value = false
+    swipeDirection.value = null
+  }, 200)
+}
+
+// Mobile responsiveness detection
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768 || props.viewMode === 'mobile'
+}
+
+// Lifecycle
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped>
@@ -699,11 +853,127 @@ const toggleFavorite = () => {
   font-size: 0.9rem;
 }
 
+/* Mobile Swipe Actions */
+.journal-entry-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.journal-entry-card.mobile-mode {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.journal-entry-card.swiping {
+  transition: none;
+}
+
+.swipe-actions-left,
+.swipe-actions-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+.swipe-actions-left {
+  left: 0;
+  background: linear-gradient(90deg, var(--md-sys-color-primary-container), transparent);
+  padding-left: 1rem;
+  padding-right: 2rem;
+}
+
+.swipe-actions-right {
+  right: 0;
+  background: linear-gradient(-90deg, var(--md-sys-color-error-container), var(--md-sys-color-secondary-container));
+  padding-right: 1rem;
+  padding-left: 2rem;
+  gap: 1rem;
+}
+
+.swipe-actions-left.visible,
+.swipe-actions-right.visible {
+  opacity: 1;
+}
+
+.swipe-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  min-height: 3rem;
+  border-radius: 1rem;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.swipe-action md-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.swipe-action span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+}
+
+.favorite-action {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.favorite-action.active {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.edit-action {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.delete-action {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* Enhanced Mobile Touch Targets */
+.mobile-mode .entry-actions {
+  display: none; /* Hide desktop actions in mobile mode */
+}
+
+.mobile-mode .entry-header {
+  min-height: 4rem; /* Ensure adequate touch target */
+}
+
+.mobile-mode .gallery-image {
+  min-height: 140px; /* Larger touch targets for images */
+}
+
+.mobile-mode .linked-change-chip {
+  min-height: 2.75rem; /* Larger touch targets for chips */
+  padding: 0.5rem 0.75rem;
+}
+
+.mobile-mode .tag-chip {
+  min-height: 2.5rem; /* Larger touch targets for tags */
+  padding: 0.5rem 0.75rem;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .journal-entry-card {
     grid-template-columns: 1fr;
     padding: 1rem;
+    touch-action: pan-y;
   }
 
   .entry-image {
@@ -760,6 +1030,100 @@ const toggleFavorite = () => {
   
   .change-date {
     display: none; /* Hide date on mobile for space */
+  }
+  
+  /* Enhanced mobile touch feedback */
+  .journal-entry-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .swipe-action:active {
+    transform: scale(0.9);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Mobile-specific view mode */
+.journal-entry-card.card-mobile {
+  padding: 1.25rem 1rem;
+  border-radius: 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.journal-entry-card.card-mobile:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.journal-entry-card.card-mobile .entry-title {
+  font-size: 1.1875rem;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.journal-entry-card.card-mobile .entry-preview {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+/* Accessibility improvements for touch */
+@media (hover: none) and (pointer: coarse) {
+  .journal-entry-card {
+    min-height: 5rem; /* Ensure adequate touch target size */
+  }
+  
+  .entry-header {
+    padding: 0.75rem 0;
+  }
+  
+  .entry-type-badge {
+    padding: 0.375rem 0.875rem;
+    min-height: 2rem;
+    font-size: 0.8125rem;
+  }
+  
+  .linked-change-chip {
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+  }
+  
+  .gallery-image {
+    min-height: 120px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .journal-entry-card,
+  .swipe-actions-left,
+  .swipe-actions-right,
+  .swipe-action {
+    transition: none !important;
+  }
+  
+  .journal-entry-card.swiping {
+    transform: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .swipe-actions-left {
+    background: var(--md-sys-color-primary-container);
+    border-right: 2px solid var(--md-sys-color-outline);
+  }
+  
+  .swipe-actions-right {
+    background: var(--md-sys-color-error-container);
+    border-left: 2px solid var(--md-sys-color-outline);
+  }
+  
+  .swipe-action {
+    border: 2px solid var(--md-sys-color-outline);
   }
 }
 </style>

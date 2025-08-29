@@ -56,6 +56,25 @@
             </div>
           </div>
           
+          <!-- Universal Draw Length Slider (for all bow types) -->
+          <div>
+            <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length || 28 }}"</span>
+            </label>
+            <input 
+              type="range" 
+              min="24" 
+              max="34" 
+              step="0.25" 
+              v-model.number="setupData.draw_length"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider mobile-slider-safe"
+            />
+            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>24"</span>
+              <span>34"</span>
+            </div>
+          </div>
+          
         </div>
         
         <!-- Bow Type Specific Configuration -->

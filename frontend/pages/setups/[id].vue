@@ -208,12 +208,29 @@
           </button>
 
           <!-- Section Content -->
-          <div v-if="expandedSections.journal" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <SetupJournal
-              ref="setupJournalComponent"
-              :bow-setup="setup"
-              @statistics-updated="handleJournalStatisticsUpdate"
-              @notification="showNotification"
+          <div v-if="expandedSections.journal" class="accordion-content p-0">
+            <BaseJournalView
+              ref="baseJournalComponent"
+              :context="'setup'"
+              :title="'Setup Journal'"
+              :subtitle="'Track your setup changes and shooting notes'"
+              :entries="journalEntries"
+              :bow-setups="setup ? [setup] : []"
+              :entry-types="journalEntryTypes"
+              :stats="journalStats"
+              :loading="journalLoading"
+              :has-more-entries="journalHasMoreEntries"
+              :pull-to-refresh="true"
+              :initial-filters="{ bow_setup_id: setup?.id }"
+              @entry:view="handleJournalEntryView"
+              @entry:edit="handleJournalEntryEdit"
+              @entry:delete="handleJournalEntryDelete"
+              @entry:create="handleJournalEntryCreate"
+              @entry:favorite="handleJournalEntryFavorite"
+              @filters:update="handleJournalFiltersUpdate"
+              @load-more="handleJournalLoadMore"
+              @refresh="handleJournalRefresh"
+              class="mobile-journal-container"
             />
           </div>
         </div>
@@ -299,11 +316,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
+import { useJournalApi } from '~/composables/useJournalApi'
 import { useBowSetupPickerStore } from '~/stores/bowSetupPicker'
 import BowSetupOverview from '~/components/BowSetupOverview.vue'
 import BowSetupArrowsList from '~/components/BowSetupArrowsList.vue'
 import BowEquipmentManager from '~/components/BowEquipmentManager.vue'
-import SetupJournal from '~/components/SetupJournal.vue'
+import BaseJournalView from '~/components/journal/BaseJournalView.vue'
 import BowSetupSettings from '~/components/BowSetupSettings.vue'
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue'
 import EditArrowModal from '~/components/EditArrowModal.vue'
@@ -318,6 +336,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const journalApi = useJournalApi()
 const bowSetupPickerStore = useBowSetupPickerStore()
 
 // State
@@ -325,6 +344,18 @@ const setup = ref(null)
 const loading = ref(true)
 const error = ref('')
 const statistics = ref({})
+
+// Journal state
+const journalEntries = ref([])
+const journalLoading = ref(false)
+const journalHasMoreEntries = ref(false)
+const journalEntryTypes = ref([
+  { value: 'setup_change', label: 'Setup Change', icon: 'fas fa-crosshairs' },
+  { value: 'tuning_session', label: 'Tuning Session', icon: 'fas fa-adjust' },
+  { value: 'shooting_notes', label: 'Shooting Notes', icon: 'fas fa-target' },
+  { value: 'maintenance', label: 'Maintenance', icon: 'fas fa-wrench' },
+  { value: 'general', label: 'General Note', icon: 'fas fa-sticky-note' }
+])
 
 // Accordion state - overview expanded by default for primary workflow
 const expandedSections = ref({
@@ -337,7 +368,7 @@ const expandedSections = ref({
 const showEditModal = ref(false)
 const isSaving = ref(false)
 const editError = ref('')
-const setupJournalComponent = ref(null)
+const baseJournalComponent = ref(null)
 const showArrowEditModal = ref(false)
 const editingArrowSetup = ref(null)
 const arrowsList = ref(null)
@@ -365,9 +396,12 @@ const loadSetup = async () => {
     // Load additional statistics
     await loadStatistics()
     
+    // Load journal entries
+    await loadJournalEntries()
+    
     // Refresh journal component if it exists
-    if (setupJournalComponent.value) {
-      setupJournalComponent.value.refresh()
+    if (baseJournalComponent.value) {
+      await loadJournalEntries()
     }
     
   } catch (err) {
@@ -404,7 +438,69 @@ const loadStatistics = async () => {
   }
 }
 
-// Handle journal statistics updates
+// Journal management methods
+const loadJournalEntries = async () => {
+  if (!setup.value?.id) return
+  
+  try {
+    journalLoading.value = true
+    
+    const response = await journalApi.getEntries({
+      bow_setup_id: setup.value.id,
+      page: 1,
+      limit: 50
+    })
+    
+    if (response.success) {
+      journalEntries.value = response.data || []
+      journalHasMoreEntries.value = response.hasMore || false
+    } else {
+      journalEntries.value = []
+      journalHasMoreEntries.value = false
+    }
+    
+    // Update statistics
+    statistics.value = {
+      ...statistics.value,
+      journal_entries: journalEntries.value.length,
+      total_activity: (statistics.value.total_changes || 0) + journalEntries.value.length
+    }
+    
+  } catch (error) {
+    console.error('Error loading journal entries:', error)
+    journalEntries.value = []
+    journalHasMoreEntries.value = false
+  } finally {
+    journalLoading.value = false
+  }
+}
+
+const journalStats = computed(() => {
+  return {
+    total: {
+      value: journalEntries.value.length,
+      label: 'Entries'
+    },
+    recent: {
+      value: journalEntries.value.filter(entry => {
+        const entryDate = new Date(entry.created_at)
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        return entryDate >= weekAgo
+      }).length,
+      label: 'This Week'
+    },
+    favorites: {
+      value: journalEntries.value.filter(entry => entry.is_favorite).length,
+      label: 'Favorites'
+    },
+    changes: {
+      value: statistics.value.total_changes || 0,
+      label: 'Changes'
+    }
+  }
+})
+
+// Handle journal statistics updates (legacy method for compatibility)
 const handleJournalStatisticsUpdate = (journalStats) => {
   statistics.value = {
     ...statistics.value,
@@ -542,6 +638,79 @@ const getNotificationIcon = (type) => {
   }
 }
 
+// Journal event handlers
+const handleJournalEntryView = (entry) => {
+  console.log('Viewing journal entry:', entry)
+  // Navigate to entry detail or open modal
+}
+
+const handleJournalEntryEdit = (entry) => {
+  console.log('Editing journal entry:', entry)
+  // Open edit modal or navigate to edit page
+}
+
+const handleJournalEntryDelete = async (entry) => {
+  try {
+    await journalApi.deleteEntry(entry.id)
+    showNotification('Journal entry deleted successfully', 'success')
+    await loadJournalEntries()
+  } catch (error) {
+    console.error('Error deleting journal entry:', error)
+    showNotification(error.message || 'Failed to delete journal entry', 'error')
+  }
+}
+
+const handleJournalEntryCreate = async (entryData) => {
+  try {
+    const submitData = {
+      ...entryData,
+      bow_setup_id: setup.value.id
+    }
+    
+    const response = await journalApi.createEntry(submitData)
+    if (response.success) {
+      showNotification('Journal entry created successfully', 'success')
+      await loadJournalEntries()
+    } else {
+      throw new Error(response.error || 'Failed to create entry')
+    }
+  } catch (error) {
+    console.error('Error creating journal entry:', error)
+    showNotification(error.message || 'Failed to create journal entry', 'error')
+  }
+}
+
+const handleJournalEntryFavorite = async (entry) => {
+  try {
+    await journalApi.toggleFavorite(entry.id, !entry.is_favorite)
+    showNotification(`Entry ${entry.is_favorite ? 'removed from' : 'added to'} favorites`, 'success')
+    await loadJournalEntries()
+  } catch (error) {
+    console.error('Error updating favorite status:', error)
+    showNotification(error.message || 'Failed to update favorite status', 'error')
+  }
+}
+
+const handleJournalFiltersUpdate = (filters) => {
+  console.log('Journal filters updated:', filters)
+  // Handle filter changes if needed
+}
+
+const handleJournalLoadMore = async () => {
+  try {
+    // Implement pagination loading here if needed
+    console.log('Loading more journal entries...')
+  } catch (error) {
+    console.error('Error loading more entries:', error)
+    showNotification('Failed to load more entries', 'error')
+  }
+}
+
+const handleJournalRefresh = async () => {
+  await loadJournalEntries()
+  showNotification('Journal refreshed', 'success')
+}
+
 // Performance calculation function
 const calculatePerformanceForAllArrows = async () => {
   calculatingPerformance.value = true
@@ -661,6 +830,39 @@ onMounted(() => {
 /* Badge styling for counts */
 .accordion-badge {
   transition: all 0.2s ease;
+}
+
+/* Mobile Journal Container Integration */
+.mobile-journal-container {
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-journal-container .base-journal-view {
+  background: transparent;
+  min-height: auto;
+}
+
+/* Remove duplicate headers in journal accordion */
+.mobile-journal-container .journal-header {
+  display: none;
+}
+
+/* Adjust journal content spacing within accordion */
+.mobile-journal-container .entries-container {
+  padding: 0;
+  min-height: auto;
+}
+
+.mobile-journal-container .filter-section {
+  position: static;
+  top: auto;
+  z-index: auto;
+  background: transparent;
+  border: none;
+  padding: 1rem 0 0.5rem;
 }
 
 /* Section-specific color themes */

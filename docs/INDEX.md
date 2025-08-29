@@ -218,8 +218,19 @@ Intelligent manufacturer detection and linking system:
 - **Development Checklist**: Quality standards and component creation guidelines
 - **Troubleshooting**: Common issues and solutions for design system integration
 
+#### [Mobile Journal Optimization](MOBILE_JOURNAL_OPTIMIZATION.md) 📱
+**NEW (August 29, 2025)** - Comprehensive mobile-first journal system optimization:
+- **Unified Component Architecture**: BaseJournalView.vue replacing context-specific components
+- **Mobile-First Design**: Touch-optimized interface with swipe gestures and pull-to-refresh
+- **Bottom Sheet Filtering**: Modern mobile filter patterns with Material Design 3
+- **Context Unification**: Consistent experience across main, setup, and arrow journals
+- **Enhanced UX Patterns**: Native mobile app interactions with haptic feedback
+- **Draw Length Consistency**: Universal draw length field in both creation and editing flows
+- **Production Testing**: Comprehensive validation with authentication and real journal data
+- **Component Consolidation**: Reduced code duplication while improving mobile usability
+
 #### [Journal Enhancement Phase 6](JOURNAL_ENHANCEMENT_PHASE6.md) 📖
-**LATEST (August 2025)** - Advanced integration & system consolidation:
+**August 2025** - Advanced integration & system consolidation:
 - **Critical Issues Resolved**: CDN image uploads, tag management, modal positioning
 - **Modular Architecture**: Universal composables with reusable patterns
 - **Database Migrations**: 3 new migrations (041, 042, 043) for modular systems
@@ -371,6 +382,8 @@ curl http://localhost/health         # Production mode health check
 - ✅ **Documentation Consolidation**: Streamlined documentation with comprehensive INDEX.md
 
 ### Latest UI/UX Improvements (August 2025)
+- ✅ **Mobile Journal Optimization (August 29)**: Complete mobile-first journal system with unified components and modern UX patterns
+- ✅ **Draw Length Field Unification (August 29)**: Added universal draw length field to "Add New Setup" modal for consistency with editing flow
 - ✅ **Phase 3 Mobile UX Enhancement Complete**: Advanced mobile gesture system with native-style interactions
 - ✅ **Mobile Components Implementation**: MobileActionSheet, MobileCardStack, and MobileComponentsDemo components
 - ✅ **Touch Gesture System**: Comprehensive swipe actions, pull-to-refresh, and touch-optimized interface
