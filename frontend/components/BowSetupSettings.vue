@@ -53,6 +53,47 @@
               <span>80 lbs</span>
             </div>
           </div>
+
+          <!-- Draw Length Configuration -->
+          <div v-if="formData.bow_type === 'compound'">
+            <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Draw Length Setting: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ formData.draw_length || 28 }}"</span>
+            </label>
+            <input 
+              type="range" 
+              min="24" 
+              max="34" 
+              step="0.5" 
+              v-model.number="formData.draw_length"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider mobile-slider-safe"
+            />
+            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>24"</span>
+              <span>34"</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Module-based draw length setting for compound bows
+            </p>
+          </div>
+          
+          <div v-else-if="formData.bow_type">
+            <label for="draw_length" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Measured Draw Length (inches)
+            </label>
+            <input
+              id="draw_length"
+              v-model.number="formData.draw_length"
+              type="number"
+              min="20"
+              max="34"
+              step="0.5"
+              class="w-full form-input"
+              placeholder="e.g., 28.5"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Physical measurement from nock point to pivot point plus 1.75"
+            </p>
+          </div>
         </div>
         
         <!-- Bow Type Specific Configuration -->
@@ -438,7 +479,7 @@
               :current-image-url="''"
               alt-text="Bow setup image"
               upload-path="bow_setup"
-              :max-size-bytes="5242880"
+              :max-size-bytes="52428800"
               @upload-success="handleImageUpload"
               @upload-error="handleImageError"
             />
@@ -447,7 +488,7 @@
           <!-- Upload Guidelines -->
           <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
             <i class="fas fa-info-circle mr-1"></i>
-            Add up to 3 photos of your bow setup (max 5MB each)
+            Add up to 3 photos of your bow setup (max 50MB each)
           </div>
         </div>
 
@@ -626,7 +667,7 @@ const deleting = ref(false)
 const imageUpload = useImageUpload({
   context: 'bow_setup',
   maxFiles: 3,
-  maxSize: 5
+  maxSize: 50
 })
 
 // State for attached images

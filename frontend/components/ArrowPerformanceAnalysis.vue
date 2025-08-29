@@ -18,7 +18,7 @@
           </span>
           <PerformanceTooltip 
             :title="'Overall Performance Score'"
-            :content="'Composite score based on speed, kinetic energy, FOC, and arrow efficiency. Higher scores (80+) indicate excellent performance for hunting and target shooting.'"
+            :content="'Composite score based on speed, kinetic energy, FOC, and arrow efficiency.\n\nCalculation Formula:\nScore = (Penetration_Score × 0.4) + (KE_Score × 0.3) + (FOC_Score × 0.3)\n\nWhere:\n• KE_Score = min(100, (KE_40yd ÷ 80) × 100)\n• FOC_Score = max(0, 100 - |FOC - 12| × 5)\n• Penetration_Score = Based on kinetic energy and momentum\n\nHigher scores (80+) indicate excellent performance for hunting and target shooting.'"
           />
         </div>
         
@@ -214,8 +214,8 @@ const calculatePerformance = async () => {
       bow_config: {
         draw_weight: props.bowConfig.draw_weight,
         draw_length: props.bowConfig.draw_length,
-        bow_type: props.bowConfig.bow_type || 'compound',
-        ibo_speed: props.bowConfig.ibo_speed || 320
+        bow_type: props.bowConfig.bow_type || 'compound'
+        // Don't send ibo_speed - let backend use bow-type-specific ATA fallbacks (140 fps for longbow)
       }
     })
     

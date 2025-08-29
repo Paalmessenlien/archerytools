@@ -366,6 +366,39 @@
             </div>
           </div>
         </div>
+        
+        <!-- Draw Length Configuration (All Bow Types) -->
+        <div v-if="setupData.bow_type" class="mb-4 p-4 border border-gray-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+          <h4 class="flex items-center mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <i class="mr-2 text-blue-600 fas fa-ruler-horizontal"></i>
+            Draw Length Configuration (Used for All Calculations)
+          </h4>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Draw Length at Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length || 28.0 }}"</span>
+            </label>
+            <md-slider
+              min="24"
+              max="34"
+              step="0.25"
+              :value="setupData.draw_length || 28.0"
+              @input="setupData.draw_length = parseFloat($event.target.value)"
+              labeled
+              ticks
+              class="w-full mobile-slider-safe"
+            ></md-slider>
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span>24"</span>
+              <span>34"</span>
+            </div>
+            <div class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+              <i class="fas fa-info-circle mr-1"></i>
+              <span class="font-medium">Critical:</span> This is your measured draw length at this bow's draw weight. All spine calculations and arrow recommendations will use this value.
+            </div>
+          </div>
+        </div>
+
         <div class="mb-4">
           <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Usage</label>
           <div class="flex flex-wrap gap-2">
@@ -426,7 +459,7 @@
               :current-image-url="''"
               alt-text="Bow setup image"
               upload-path="bow_setup"
-              :max-size-bytes="5242880"
+              :max-size-bytes="52428800"
               @upload-success="handleImageUpload"
               @upload-error="handleImageError"
             />
@@ -435,7 +468,7 @@
           <!-- Upload Guidelines -->
           <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
             <i class="fas fa-info-circle mr-1"></i>
-            Add up to 3 photos of your bow setup (max 5MB each)
+            Add up to 3 photos of your bow setup (max 50MB each)
           </div>
         </div>
 
@@ -443,7 +476,7 @@
       </div>
       
       <!-- Mobile Actions Footer -->
-      <div class="modal-mobile-actions md:px-6 md:pb-6 bg-white dark:bg-gray-800 flex justify-end space-x-3 pb-safe">
+      <div class="modal-mobile-actions md:px-6 md:pb-6 bg-white dark:bg-gray-800 flex justify-end space-x-3 pb-safe px-4 py-4">
         <CustomButton
           type="button"
           @click="$emit('close')"
@@ -487,7 +520,7 @@ const emit = defineEmits(['update:modelValue', 'save', 'close']);
 const imageUpload = useImageUpload({
   context: 'bow_setup',
   maxFiles: 3,
-  maxSize: 5
+  maxSize: 50
 });
 
 // State for attached images
@@ -498,7 +531,7 @@ const setupData = ref({
   name: '',
   bow_type: '',
   draw_weight: 45,
-  draw_length: 28, // Unified draw length field
+  draw_length: 28.0,  // Add draw length field with default
   description: '',
   riser_brand: '',
   riser_model: '',
@@ -624,7 +657,7 @@ const saveBowSetup = () => {
     name: setupData.value.name,
     bow_type: setupData.value.bow_type,
     draw_weight: Number(setupData.value.draw_weight),
-    draw_length: Number(setupData.value.draw_length) || 28, // Unified draw length field
+    draw_length: Number(setupData.value.draw_length || 28.0), // Include draw length
     description: setupData.value.description || '',
     bow_usage: JSON.stringify(setupData.value.bow_usage || []),
     
@@ -778,11 +811,16 @@ onMounted(() => {
   }
   
   .modal-mobile-actions.pb-safe {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; /* Bottom nav + safe area */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important; /* Bottom nav + safe area + extra space */
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 1200 !important;
   }
   
   .modal-mobile-content {
-    max-height: calc(100vh - 180px) !important; /* Account for header + footer + nav */
+    max-height: calc(100vh - 200px) !important; /* Account for header + footer + nav */
+    overflow-y: auto !important;
+    padding-bottom: 2rem !important; /* Extra space before buttons */
   }
 }
 </style>

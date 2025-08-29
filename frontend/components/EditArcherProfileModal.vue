@@ -1,6 +1,6 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100] p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-xl lg:max-w-2xl shadow-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-xl lg:max-w-2xl shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto pb-safe-modal">
       <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Edit Archer Profile</h3>
       <form @submit.prevent="saveProfile">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -33,7 +33,7 @@
             <!-- Draw Length -->
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Draw Length: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editedDrawLength }}"</span>
+                Personal Draw Length (Fallback Only): <span class="font-semibold text-blue-600 dark:text-purple-400">{{ editedDrawLength }}"</span>
               </label>
               <md-slider
                 min="20"
@@ -48,6 +48,10 @@
               <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>20"</span>
                 <span>36"</span>
+              </div>
+              <div class="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                <span class="font-medium">Note:</span> This is only used as a default when creating new bow setups. All calculations use the draw length specified in your bow setup, not this personal measurement.
               </div>
             </div>
 
@@ -101,7 +105,7 @@
             ></textarea>
           </div>
 
-          <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+          <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6 mb-4">
             <CustomButton
               type="button"
               @click="closeModal"
@@ -222,5 +226,33 @@ const saveProfile = async () => {
 }
 .form-textarea {
   @apply w-full h-24 resize-y;
+}
+
+/* Mobile-safe modal positioning */
+@media (max-width: 768px) {
+  .pb-safe-modal {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+    margin-bottom: 0 !important;
+    max-height: calc(100vh - 100px) !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Ensure buttons stay visible with solid background */
+  .pb-safe-modal form > div:last-child {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    margin-top: 1rem !important;
+    z-index: 10 !important;
+    border-top: 1px solid #e5e7eb !important;
+  }
+  
+  /* Dark mode button area background */
+  .dark .pb-safe-modal form > div:last-child {
+    background: rgb(31 41 55) !important; /* dark:bg-gray-800 */
+    border-top-color: rgb(75 85 99) !important; /* dark:border-gray-600 */
+  }
 }
 </style>

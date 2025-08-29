@@ -246,23 +246,12 @@
                       {{ user.is_admin ? 'Remove Admin' : 'Make Admin' }}
                     </CustomButton>
                     <CustomButton
-                      v-if="user.status === 'pending'"
-                      @click="approveUser(user)"
-                      variant="outlined"
-                      size="small"
-                      class="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                    >
-                      <i class="fas fa-check mr-1"></i>
-                      Approve
-                    </CustomButton>
-                    <CustomButton
-                      v-if="user.status !== 'pending'"
                       @click="toggleUserStatus(user)"
                       variant="outlined"
                       size="small"
-                      :class="user.status === 'active' ? 'text-red-600 border-red-600' : 'text-green-600 border-green-600'"
+                      :class="user.status === 'suspended' ? 'text-green-600 border-green-600' : 'text-red-600 border-red-600'"
                     >
-                      {{ user.status === 'active' ? 'Suspend' : 'Activate' }}
+                      {{ user.status === 'suspended' ? 'Reactivate' : 'Suspend' }}
                     </CustomButton>
                     <CustomButton
                       v-if="!user.is_admin"
@@ -2463,30 +2452,18 @@ const toggleAdminStatus = async (user) => {
 
 const toggleUserStatus = async (user) => {
   try {
-    const newStatus = user.status === 'active' ? 'suspended' : 'active'
+    const newStatus = user.status === 'suspended' ? 'active' : 'suspended'
     await updateUserStatus(user.id, newStatus)
     
     user.status = newStatus
     updateStats()
-    showNotification(`User ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`, 'success')
+    showNotification(`User ${newStatus === 'active' ? 'reactivated' : 'suspended'} successfully`, 'success')
   } catch (error) {
     console.error('Error updating user status:', error)
     showNotification('Failed to update user status: ' + error.message, 'error')
   }
 }
 
-const approveUser = async (user) => {
-  try {
-    await updateUserStatus(user.id, 'active')
-    
-    user.status = 'active'
-    updateStats()
-    showNotification(`Successfully approved ${user.name || user.email}`, 'success')
-  } catch (error) {
-    console.error('Error approving user:', error)
-    showNotification('Failed to approve user: ' + error.message, 'error')
-  }
-}
 
 const deleteUserHandler = async (user) => {
   showConfirmation(
@@ -2536,7 +2513,7 @@ const sendInvite = async () => {
 const getStatusBadgeClass = (status) => {
   const classes = {
     'active': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    'pending': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', // Change pending to blue (no approval needed)
     'suspended': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
   }
   return classes[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'

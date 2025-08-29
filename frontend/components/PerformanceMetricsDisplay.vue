@@ -10,7 +10,7 @@
           </div>
           <PerformanceTooltip 
             :title="'Arrow Speed'"
-            :content="'Estimated arrow velocity in feet per second. Faster arrows have flatter trajectory and less wind drift. Typical hunting speeds: 250-350 fps.'"
+            :content="'Estimated arrow velocity in feet per second.\n\nCalculation Formula:\nSpeed = (IBO_Speed + Draw_Weight_Adj + Draw_Length_Adj) × √(350/Arrow_Weight) × String_Modifier × Bow_Efficiency\n\nWhere:\n• Draw_Weight_Adj = (Draw_Weight - Ref_Weight) × 2.5\n• Draw_Length_Adj = (Draw_Length - Ref_Length) × 10\n• Bow_Efficiency: Compound(95%), Recurve(90%), Longbow(88%)\n\nTypical hunting speeds: 250-350 fps.'"
           />
         </div>
         <div class="text-sm text-blue-800 dark:text-blue-200 font-medium">Speed</div>
@@ -39,7 +39,7 @@
           </div>
           <PerformanceTooltip 
             :title="'Kinetic Energy at 40 Yards'"
-            :content="'Energy remaining after 40 yards of flight. Determines penetration power. Standards: 25+ ft·lbs (small game), 40+ ft·lbs (deer), 65+ ft·lbs (elk).'"
+            :content="'Energy remaining after 40 yards of flight. Determines penetration power.\n\nCalculation Formula:\nKE = 0.5 × Mass × Velocity²\nKE_40yd = KE_Initial × Retention_Factor\n\nWhere:\n• Mass = Arrow_Weight ÷ 7000 (grains to pounds)\n• Velocity = Arrow_Speed (fps)\n• Retention_Factor ≈ 0.77 (typical energy retention at 40 yards)\n\nStandards:\n• 25+ ft·lbs (small game)\n• 40+ ft·lbs (deer)\n• 65+ ft·lbs (elk)'"
           />
         </div>
         <div class="text-sm text-green-800 dark:text-green-200 font-medium">KE @40yd</div>
@@ -56,7 +56,7 @@
           </div>
           <PerformanceTooltip 
             :title="'Front of Center (FOC)'"
-            :content="'How much weight is forward of the arrow center. Higher FOC improves stability and penetration. Recommended: 10-15% (target), 15-20% (hunting).'"
+            :content="'How much weight is forward of the arrow center. Higher FOC improves stability and penetration.\n\nCalculation Formula:\nFOC = ((Balance_Point - Arrow_Center) ÷ Arrow_Length) × 100\n\nWhere:\n• Balance_Point = Center of mass location from nock\n• Arrow_Center = Arrow_Length ÷ 2\n• Influenced by point weight, insert weight, and shaft distribution\n\nRecommended ranges:\n• 10-15% (target shooting)\n• 15-20% (hunting)'"
           />
         </div>
         <div class="text-sm text-purple-800 dark:text-purple-200 font-medium">FOC</div>
@@ -79,7 +79,7 @@
           </div>
           <PerformanceTooltip 
             :title="metrics.performanceScore ? 'Performance Score' : 'Penetration Rating'"
-            :content="metrics.performanceScore ? 'Overall performance score based on speed, kinetic energy, and FOC. Higher scores indicate better performance.' : 'Overall penetration capability based on kinetic energy and arrow design.'"
+            :content="metrics.performanceScore ? 'Overall performance score based on speed, kinetic energy, and FOC.\n\nCalculation Formula:\nScore = (Penetration_Score × 0.4) + (KE_Score × 0.3) + (FOC_Score × 0.3)\n\nWhere:\n• KE_Score = min(100, (KE_40yd ÷ 80) × 100)\n• FOC_Score = max(0, 100 - |FOC - 12| × 5)\n• Penetration_Score = Based on momentum and arrow design\n\nHigher scores indicate better overall performance.' : 'Overall penetration capability based on kinetic energy and arrow design.\n\nCalculation Factors:\n• Kinetic Energy at impact\n• Momentum (Mass × Velocity)\n• Arrow diameter and design\n• Point weight and sharpness\n\nCategories: Poor < Fair < Good < Excellent'"
           />
         </div>
         <div class="text-sm text-orange-800 dark:text-orange-200 font-medium">

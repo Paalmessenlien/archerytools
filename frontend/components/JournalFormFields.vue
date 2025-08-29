@@ -342,7 +342,7 @@
             :current-image-url="''"
             alt-text="Journal image"
             upload-path="journal"
-            :max-size-bytes="5242880"
+            :max-size-bytes="52428800"
             @upload-success="handleImageUpload"
             @upload-error="handleImageError"
           />
@@ -352,7 +352,7 @@
         <div class="upload-guidelines">
           <p class="guideline-text">
             <i class="fas fa-info-circle"></i>
-            Add up to 10 photos to document your archery journey (max 5MB each)
+            Add up to 10 photos to document your archery journey (max 50MB each)
           </p>
         </div>
       </div>

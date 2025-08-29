@@ -81,7 +81,7 @@
 
     <!-- Upload Guidelines -->
     <div class="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-      <p>Recommended: Square image, max 5MB</p>
+      <p>Recommended: Square image, max 50MB</p>
       <p>Supported formats: JPG, PNG, GIF, WebP</p>
     </div>
   </div>
@@ -109,7 +109,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   altText: 'Uploaded image',
   uploadPath: 'profile',
-  maxSizeBytes: 5 * 1024 * 1024, // 5MB default
+  maxSizeBytes: 50 * 1024 * 1024, // 50MB default
   allowedTypes: () => ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
 })
 

@@ -53,15 +53,8 @@ export const useAuth = () => {
                   const errorData = await res.json();
                   console.error('Google auth API call failed:', errorData.error || `API error: ${res.status}`);
                   
-                  // Handle user approval cases
-                  if (res.status === 401 && errorData.error && errorData.error.includes('pending')) {
-                    // Show pending approval message
-                    const router = useRouter();
-                    router.push('/pending-approval');
-                  } else {
-                    // Show generic error
-                    alert('Authentication failed: ' + (errorData.error || 'Unknown error'));
-                  }
+                  // Show generic error (all users should be able to login now)
+                  alert('Authentication failed: ' + (errorData.error || 'Unknown error'));
                   return;
                 }
 

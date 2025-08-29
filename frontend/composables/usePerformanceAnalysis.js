@@ -28,12 +28,15 @@ export const usePerformanceAnalysis = () => {
     
     isCalculating.value = true
     try {
+      // Ensure we use the bow setup draw length (primary) or fallback properly
+      const effectiveDrawLength = bowConfig.draw_length || bowConfig.user_draw_length || 28.0
+      
       const response = await api.post(`/setup-arrows/${setupArrowId}/calculate-performance`, {
         bow_config: {
           draw_weight: bowConfig.draw_weight,
-          draw_length: bowConfig.draw_length,
-          bow_type: bowConfig.bow_type || 'compound',
-          ibo_speed: bowConfig.ibo_speed || 320
+          draw_length: effectiveDrawLength,  // Use bow setup draw length with proper fallback
+          bow_type: bowConfig.bow_type || 'compound'
+          // Don't send ibo_speed - let backend use bow-type-specific ATA fallbacks (140 fps for longbow)
         }
       })
       
@@ -125,7 +128,8 @@ export const usePerformanceAnalysis = () => {
   const estimateArrowSpeed = (bowConfig, arrowWeight) => {
     const bowType = bowConfig.bow_type || 'compound'
     const drawWeight = bowConfig.draw_weight || 50
-    const drawLength = bowConfig.draw_length || 28
+    // Use bow setup draw length with proper fallback hierarchy
+    const drawLength = bowConfig.draw_length || bowConfig.user_draw_length || 28
     const iboSpeed = bowConfig.ibo_speed || getDefaultATA(bowType)
     
     // Reference parameters based on bow type
@@ -165,12 +169,13 @@ export const usePerformanceAnalysis = () => {
    * Get default ATA speed for bow type
    */
   const getDefaultATA = (bowType) => {
+    // Realistic ATA speeds for accurate traditional archery calculations
     const ataSpeeeds = {
       compound: 320,
-      recurve: 210,
-      longbow: 190,
-      traditional: 180,
-      barebow: 200
+      recurve: 180,      // Reduced from 210 for realism
+      longbow: 140,      // Reduced from 190 for realism
+      traditional: 130,  // Reduced from 180 for realism
+      barebow: 170       // Reduced from 200 for realism
     }
     return ataSpeeeds[bowType.toLowerCase()] || 320
   }

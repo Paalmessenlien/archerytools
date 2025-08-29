@@ -40,7 +40,7 @@ export interface ImageUploadState {
 
 const defaultConfig: Partial<ImageUploadConfig> = {
   maxFiles: 10,
-  maxSize: 5, // 5MB
+  maxSize: 50, // 50MB
   allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
   compressionQuality: 0.8
 }

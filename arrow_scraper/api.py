@@ -7904,14 +7904,14 @@ def upload_image(current_user):
         if file_extension not in allowed_extensions:
             return jsonify({'error': f'File type not supported. Use: {", ".join(allowed_extensions.upper())}'}), 400
         
-        # Validate file size (5MB max)
-        max_size = 5 * 1024 * 1024  # 5MB
+        # Validate file size (50MB max)
+        max_size = 50 * 1024 * 1024  # 50MB
         file.seek(0, 2)  # Seek to end
         size = file.tell()
         file.seek(0)  # Reset to beginning
         
         if size > max_size:
-            return jsonify({'error': 'File too large. Maximum size: 5MB'}), 400
+            return jsonify({'error': 'File too large. Maximum size: 50MB'}), 400
         
         # Import CDN uploader
         from cdn_uploader import CDNUploader

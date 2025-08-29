@@ -241,7 +241,7 @@
             :current-image-url="''"
             alt-text="Equipment image"
             upload-path="equipment"
-            :max-size-bytes="5242880"
+            :max-size-bytes="52428800"
             @upload-success="handleImageUpload"
             @upload-error="handleImageError"
           />
@@ -250,7 +250,7 @@
         <!-- Upload Guidelines -->
         <div class="text-sm text-gray-600 dark:text-gray-400">
           <i class="fas fa-info-circle mr-2"></i>
-          Add up to 5 photos of your equipment (max 5MB each). Images will be stored using CDN for fast loading.
+          Add up to 5 photos of your equipment (max 50MB each). Images will be stored using CDN for fast loading.
         </div>
       </div>
 
@@ -331,7 +331,7 @@ const api = useApi()
 const imageUpload = useImageUpload({
   context: 'equipment',
   maxFiles: 5,
-  maxSize: 5
+  maxSize: 50
 })
 
 // State
