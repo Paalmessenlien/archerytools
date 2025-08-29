@@ -1,5 +1,21 @@
 export const useDarkMode = () => {
-  const isDarkMode = ref(true) // Default to dark mode
+  // Initialize with saved theme or default to dark mode
+  const isDarkMode = ref(true)
+
+  // Initialize theme immediately on client
+  if (process.client) {
+    const savedTheme = localStorage.getItem('theme')
+    isDarkMode.value = savedTheme ? savedTheme === 'dark' : true
+    
+    // Apply theme immediately
+    if (isDarkMode.value) {
+      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.add('light')
+      document.documentElement.classList.remove('dark')
+    }
+  }
 
   // Check for saved theme preference or default to dark mode
   const initializeTheme = () => {
@@ -11,6 +27,8 @@ export const useDarkMode = () => {
       } else {
         // Default to dark mode for new users
         isDarkMode.value = true
+        // Save the default preference
+        localStorage.setItem('theme', 'dark')
       }
       
       applyTheme()

@@ -67,10 +67,7 @@ export default defineNuxtConfig({
         // Chart.js from CDN to avoid build issues
         { src: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js', defer: true }
       ],
-      // Set default dark mode class on HTML element for SSR
-      htmlAttrs: {
-        class: 'dark'
-      }
+      // Theme class will be set by useDarkMode composable
     }
   },
 
