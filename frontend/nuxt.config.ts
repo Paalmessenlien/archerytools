@@ -49,7 +49,12 @@ export default defineNuxtConfig({
         { name: 'keywords', content: 'archery, arrows, tuning, spine calculator, bow setup' },
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+        // Cache busting meta tags
+        { 'http-equiv': 'Cache-Control', content: 'no-cache, no-store, must-revalidate' },
+        { 'http-equiv': 'Pragma', content: 'no-cache' },
+        { 'http-equiv': 'Expires', content: '0' },
+        { name: 'app-version', content: `v${Date.now()}` }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -69,9 +74,21 @@ export default defineNuxtConfig({
     }
   },
 
-  // Build Configuration
+  // Build Configuration with cache busting
   build: {
-    transpile: ['@headlessui/vue']
+    transpile: ['@headlessui/vue'],
+    // Enable asset versioning for cache busting
+    analyze: false,
+    extractCSS: true,
+    optimizeCSS: true,
+    filenames: {
+      app: ({ isDev }) => isDev ? '[name].js' : '[name].[contenthash].js',
+      chunk: ({ isDev }) => isDev ? '[name].js' : '[name].[contenthash].js',
+      css: ({ isDev }) => isDev ? '[name].css' : '[name].[contenthash].css',
+      img: ({ isDev }) => isDev ? '[path][name].[ext]' : 'img/[name].[contenthash].[ext]',
+      font: ({ isDev }) => isDev ? '[path][name].[ext]' : 'fonts/[name].[contenthash].[ext]',
+      video: ({ isDev }) => isDev ? '[path][name].[ext]' : 'videos/[name].[contenthash].[ext]'
+    }
   },
   
   // Vue Configuration for Material Web Components
@@ -94,6 +111,31 @@ export default defineNuxtConfig({
     headers: {
       'Cross-Origin-Opener-Policy': 'unsafe-none',
       'Content-Security-Policy': "default-src 'self'; connect-src 'self' http://localhost http://localhost:5000 https://archerytool.online https://accounts.google.com https://apis.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"
+    },
+    // Cache control for production
+    routeRules: {
+      // Static assets with long cache but versioned filenames
+      '/_nuxt/**': { 
+        headers: { 
+          'Cache-Control': 'public, max-age=31536000, immutable' 
+        } 
+      },
+      // API routes should not be cached
+      '/api/**': { 
+        headers: { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        } 
+      },
+      // HTML pages should have short cache
+      '/**': { 
+        headers: { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        } 
+      }
     },
     // Fix for internal paths resolution
     experimental: {

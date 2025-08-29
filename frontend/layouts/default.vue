@@ -295,6 +295,9 @@
     
     <!-- Global Notifications -->
     <NotificationContainer />
+    
+    <!-- Update Notification -->
+    <UpdateNotification />
   </div>
 </template>
 
@@ -306,6 +309,7 @@ const bowConfigStore = useBowConfigStore()
 const isLoading = computed(() => bowConfigStore.isLoading)
 
 const { user, logout, loginWithGoogle, fetchUser, initializeGoogleAuth, isInitialized, isLoggedIn, initializeClientAuth } = useAuth()
+const { checkForUpdates } = useAppVersion()
 const router = useRouter()
 
 // Desktop menu state
@@ -350,6 +354,11 @@ onMounted(() => {
   initializeClientAuth()
   fetchUser()
   initializeGoogleAuth()
+  
+  // Check for app updates
+  setTimeout(() => {
+    checkForUpdates()
+  }, 2000) // Delay to avoid blocking initial load
   
   // Add click outside listener
   document.addEventListener('click', handleClickOutside)
