@@ -195,9 +195,16 @@ def run_migration():
         if 'draw_length' in user_columns or 'user_draw_length' in user_columns:
             print("   Removing draw_length related columns from users table...")
             
+            # Disable foreign key constraints temporarily
+            cursor.execute("PRAGMA foreign_keys=OFF")
+            
             # Get current users table structure to preserve all columns except draw_length related ones
             cursor.execute("PRAGMA table_info(users)")
             user_columns_info = cursor.fetchall()
+            
+            # Get existing triggers for users table
+            cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='trigger' AND tbl_name='users'")
+            user_triggers = cursor.fetchall()
             
             # Create column definitions and names excluding draw_length columns
             columns_to_keep = []
@@ -251,9 +258,23 @@ def run_migration():
                 FROM users
             """)
             
-            # Replace old table
+            # Drop old table (this drops associated triggers automatically)
             cursor.execute("DROP TABLE users")
+            
+            # Rename new table
             cursor.execute("ALTER TABLE users_new RENAME TO users")
+            
+            # Recreate triggers if any existed
+            for trigger_name, trigger_sql in user_triggers:
+                if trigger_sql:  # Only recreate if SQL exists
+                    try:
+                        cursor.execute(trigger_sql)
+                        print(f"   ✅ Recreated trigger: {trigger_name}")
+                    except Exception as te:
+                        print(f"   ⚠️  Could not recreate trigger {trigger_name}: {te}")
+            
+            # Re-enable foreign key constraints
+            cursor.execute("PRAGMA foreign_keys=ON")
             
             print("   ✅ Removed draw_length related columns from users table")
         else:
@@ -266,6 +287,10 @@ def run_migration():
             # Get current bow_setups structure to preserve all columns except draw_length_module
             cursor.execute("PRAGMA table_info(bow_setups)")
             bow_columns_info = cursor.fetchall()
+            
+            # Get existing triggers for bow_setups table
+            cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='trigger' AND tbl_name='bow_setups'")
+            bow_triggers = cursor.fetchall()
             
             # Create column definitions and names excluding draw_length_module
             columns_to_keep = []
@@ -312,9 +337,23 @@ def run_migration():
                 FROM bow_setups
             """)
             
-            # Replace old table
+            # Drop old table (this drops associated triggers automatically)
             cursor.execute("DROP TABLE bow_setups")
+            
+            # Rename new table
             cursor.execute("ALTER TABLE bow_setups_new RENAME TO bow_setups")
+            
+            # Recreate triggers if any existed
+            for trigger_name, trigger_sql in bow_triggers:
+                if trigger_sql:  # Only recreate if SQL exists
+                    try:
+                        cursor.execute(trigger_sql)
+                        print(f"   ✅ Recreated trigger: {trigger_name}")
+                    except Exception as te:
+                        print(f"   ⚠️  Could not recreate trigger {trigger_name}: {te}")
+            
+            # Re-enable foreign key constraints
+            cursor.execute("PRAGMA foreign_keys=ON")
             
             print("   ✅ Removed draw_length_module from bow_setups table")
         else:
