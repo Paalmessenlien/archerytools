@@ -610,6 +610,24 @@ rm databases/user_data.db
 python api.py  # Will recreate database
 ```
 
+**Manufacturer Approval System Issues:**
+If new manufacturers created through bow setup forms don't appear in admin pending approval:
+```bash
+# Check if manufacturer approval tables exist
+sqlite3 databases/arrow_database.db ".tables" | grep pending
+# Should show: user_pending_manufacturers
+
+# If tables are missing, run migration 046
+cd arrow_scraper && python migrations/046_create_manufacturer_approval_system.py
+
+# Verify tables were created
+sqlite3 databases/arrow_database.db ".schema pending_manufacturers"
+
+# Check for pending manufacturers
+sqlite3 databases/arrow_database.db "SELECT * FROM pending_manufacturers WHERE status = 'pending'"
+```
+This issue was resolved in August 2025 - migration 046 creates the required manufacturer approval workflow tables.
+
 **Docker Issues:**
 ```bash
 # Clean up orphan containers
