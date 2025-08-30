@@ -845,6 +845,58 @@ def get_database_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Git Commits API
+@app.route('/api/git/commits', methods=['GET'])
+@token_required
+def get_git_commits(current_user):
+    """Get recent git commits for authenticated users"""
+    try:
+        import subprocess
+        import os
+        
+        # Get the project root directory
+        project_root = Path(__file__).parent.parent
+        
+        # Execute git log command
+        result = subprocess.run([
+            'git', 'log', '--oneline', '-20', 
+            '--pretty=format:%h|%s|%an|%ad|%cr', 
+            '--date=iso'
+        ], 
+        cwd=project_root,
+        capture_output=True, 
+        text=True, 
+        timeout=10
+        )
+        
+        if result.returncode != 0:
+            return jsonify({'error': 'Failed to fetch git commits'}), 500
+        
+        commits = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                parts = line.split('|')
+                if len(parts) >= 5:
+                    commits.append({
+                        'hash': parts[0].strip(),
+                        'message': parts[1].strip(),
+                        'author': parts[2].strip(),
+                        'date': parts[3].strip(),
+                        'relative_time': parts[4].strip()
+                    })
+        
+        return jsonify({
+            'commits': commits,
+            'total_count': len(commits),
+            'generated_at': datetime.now(timezone.utc).isoformat()
+        })
+        
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Git command timed out'}), 500
+    except Exception as e:
+        print(f"Git commits error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # Arrow Database API
 @app.route('/api/arrows', methods=['GET'])
 def get_arrows():
@@ -4141,6 +4193,101 @@ def admin_required(f):
         return f(current_user, *args, **kwargs)
     
     return decorated_function
+
+@app.route('/api/admin/statistics', methods=['GET'])
+@token_required
+@admin_required
+def get_admin_statistics(current_user):
+    """Get comprehensive usage statistics for admin dashboard"""
+    try:
+        db = get_unified_database()
+        conn = sqlite3.connect(db.db_path)
+        cursor = conn.cursor()
+        
+        # Basic counts
+        cursor.execute("SELECT COUNT(*) FROM users")
+        total_users = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM users WHERE status = 'approved'")
+        approved_users = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM users WHERE last_login > date('now', '-30 days')")
+        active_users_30d = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM bow_setups")
+        total_bow_setups = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM bow_equipment")
+        total_equipment = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM arrows")
+        total_arrows = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT name) FROM manufacturers WHERE is_active = 1")
+        active_manufacturers = cursor.fetchone()[0]
+        
+        # Journal entries if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+        journal_table_exists = cursor.fetchone()
+        journal_entries = 0
+        if journal_table_exists:
+            cursor.execute("SELECT COUNT(*) FROM journal_entries")
+            journal_entries = cursor.fetchone()[0]
+        
+        # Arrows by manufacturer
+        cursor.execute("""
+            SELECT m.name, COUNT(a.id) as arrow_count 
+            FROM manufacturers m 
+            LEFT JOIN arrows a ON m.name = a.manufacturer 
+            WHERE m.is_active = 1
+            GROUP BY m.name 
+            ORDER BY arrow_count DESC
+        """)
+        arrows_by_manufacturer = [{"manufacturer": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        # Recent activity (last 7 days)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE created_at > date('now', '-7 days')")
+        new_users_7d = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM bow_setups WHERE created_at > date('now', '-7 days')")
+        new_setups_7d = cursor.fetchone()[0]
+        
+        # Equipment categories
+        cursor.execute("""
+            SELECT category, COUNT(*) as count 
+            FROM bow_equipment 
+            GROUP BY category 
+            ORDER BY count DESC
+        """)
+        equipment_by_category = [{"category": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            'overview': {
+                'total_users': total_users,
+                'approved_users': approved_users,
+                'active_users_30d': active_users_30d,
+                'total_bow_setups': total_bow_setups,
+                'total_equipment': total_equipment,
+                'total_arrows': total_arrows,
+                'active_manufacturers': active_manufacturers,
+                'journal_entries': journal_entries
+            },
+            'recent_activity': {
+                'new_users_7d': new_users_7d,
+                'new_setups_7d': new_setups_7d
+            },
+            'breakdowns': {
+                'arrows_by_manufacturer': arrows_by_manufacturer,
+                'equipment_by_category': equipment_by_category
+            },
+            'generated_at': datetime.now(timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Statistics error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/admin/users', methods=['GET'])
 @token_required
