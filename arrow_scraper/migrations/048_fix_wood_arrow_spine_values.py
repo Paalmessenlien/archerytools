@@ -82,9 +82,95 @@ def migrate_up(cursor):
                     spine_groups[clean_spine] = []
                 spine_groups[clean_spine].append(spec)
             
-            # Process each spine group
+            # Check for existing clean spine values for this arrow to avoid conflicts
+            cursor.execute("""
+                SELECT spine, id FROM spine_specifications 
+                WHERE arrow_id = ? AND spine NOT LIKE '%@%'
+            """, (arrow_id,))
+            existing_clean_rows = cursor.fetchall()
+            
+            # Create mapping that handles both string and numeric spine values
+            existing_clean_spines = {}
+            for spine_val, spec_id in existing_clean_rows:
+                # Normalize to float for comparison
+                try:
+                    normalized_spine = str(float(spine_val))
+                    existing_clean_spines[normalized_spine] = spec_id
+                except (ValueError, TypeError):
+                    existing_clean_spines[str(spine_val)] = spec_id
+            
+            # Process each spine group - handle conflicts with existing clean values
             for clean_spine, spine_specs in spine_groups.items():
-                if len(spine_specs) == 1:
+                
+                # Normalize clean_spine for comparison with existing values
+                try:
+                    normalized_clean_spine = str(float(clean_spine))
+                except (ValueError, TypeError):
+                    normalized_clean_spine = clean_spine
+                
+                # Check if a clean spine value already exists for this arrow
+                if normalized_clean_spine in existing_clean_spines:
+                    # Delete all contaminated specs with this spine value (keep existing clean one)
+                    existing_id = existing_clean_spines[normalized_clean_spine]
+                    print(f"     🔄 Clean spine '{clean_spine}' already exists (ID: {existing_id}) - removing contaminated duplicates...")
+                    for spec in spine_specs:
+                        rollback_data.append({
+                            'id': spec['id'],
+                            'original_spine': spec['spine'],
+                            'outer_diameter': spec['outer_diameter'],
+                            'gpi_weight': spec['gpi_weight'],
+                            'notes': spec['notes'],
+                            'arrow_id': arrow_id,
+                            'action': 'delete'
+                        })
+                        
+                        cursor.execute("DELETE FROM spine_specifications WHERE id = ?", (spec['id'],))
+                        print(f"     🗑️  Deleted contaminated: '{spec['spine']}' (ID: {spec['id']}) - clean version exists")
+                    continue
+                
+                if len(spine_specs) > 1:
+                    # Duplicate spine values - delete duplicates FIRST before any updates
+                    print(f"     ⚠️  Found {len(spine_specs)} specs with spine '{clean_spine}' - consolidating...")
+                    
+                    # Keep the first spec (usually the one with smallest diameter)
+                    spine_specs.sort(key=lambda x: x['outer_diameter'] or 0)
+                    keep_spec = spine_specs[0]
+                    delete_specs = spine_specs[1:]
+                    
+                    # Delete duplicate specs FIRST
+                    for delete_spec in delete_specs:
+                        rollback_data.append({
+                            'id': delete_spec['id'],
+                            'original_spine': delete_spec['spine'],
+                            'outer_diameter': delete_spec['outer_diameter'],
+                            'gpi_weight': delete_spec['gpi_weight'],
+                            'notes': delete_spec['notes'],
+                            'arrow_id': arrow_id,
+                            'action': 'delete'
+                        })
+                        
+                        cursor.execute("DELETE FROM spine_specifications WHERE id = ?", (delete_spec['id'],))
+                        print(f"     🗑️  Deleted duplicate: '{delete_spec['spine']}' (ID: {delete_spec['id']})")
+                    
+                    # Now update the kept spec (no constraint conflict now)
+                    rollback_data.append({
+                        'id': keep_spec['id'],
+                        'original_spine': keep_spec['spine'],
+                        'action': 'update'
+                    })
+                    
+                    cursor.execute("""
+                        UPDATE spine_specifications 
+                        SET spine = ?, 
+                            notes = ? 
+                        WHERE id = ?
+                    """, (clean_spine, 
+                          keep_spec['notes'] + f" [Consolidated from {len(spine_specs)} diameter options]",
+                          keep_spec['id']))
+                    
+                    processed_count += 1
+                
+                else:
                     # Simple case: only one spec with this spine value
                     spec = spine_specs[0]
                     rollback_data.append({
@@ -101,48 +187,6 @@ def migrate_up(cursor):
                     
                     processed_count += 1
                     print(f"     ✅ Updated: '{spec['spine']}' -> '{clean_spine}' (ID: {spec['id']})")
-                
-                else:
-                    # Duplicate spine values - keep the first one, delete the others
-                    print(f"     ⚠️  Found {len(spine_specs)} specs with spine '{clean_spine}' - consolidating...")
-                    
-                    # Keep the first spec (usually the one with smallest diameter)
-                    spine_specs.sort(key=lambda x: x['outer_diameter'] or 0)
-                    keep_spec = spine_specs[0]
-                    delete_specs = spine_specs[1:]
-                    
-                    # Update the kept spec
-                    rollback_data.append({
-                        'id': keep_spec['id'],
-                        'original_spine': keep_spec['spine'],
-                        'action': 'update'
-                    })
-                    
-                    cursor.execute("""
-                        UPDATE spine_specifications 
-                        SET spine = ?, 
-                            notes = ? 
-                        WHERE id = ?
-                    """, (clean_spine, 
-                          keep_spec['notes'] + f" [Consolidated from {len(spine_specs)} diameter options]",
-                          keep_spec['id']))
-                    
-                    # Delete duplicate specs
-                    for delete_spec in delete_specs:
-                        rollback_data.append({
-                            'id': delete_spec['id'],
-                            'original_spine': delete_spec['spine'],
-                            'outer_diameter': delete_spec['outer_diameter'],
-                            'gpi_weight': delete_spec['gpi_weight'],
-                            'notes': delete_spec['notes'],
-                            'arrow_id': arrow_id,
-                            'action': 'delete'
-                        })
-                        
-                        cursor.execute("DELETE FROM spine_specifications WHERE id = ?", (delete_spec['id'],))
-                        print(f"     🗑️  Deleted duplicate: '{delete_spec['spine']}' (ID: {delete_spec['id']})")
-                    
-                    processed_count += 1
         
         # Store rollback data
         cursor.execute("""
