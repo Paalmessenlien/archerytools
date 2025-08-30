@@ -111,6 +111,190 @@
           </div>
         </div>
 
+        <!-- Traditional Wood Arrows -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <i class="fas fa-tree text-amber-600 dark:text-amber-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Traditional Wood Arrows</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Professional analysis and selection</p>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Comprehensive technical analysis of wooden arrow species, material science, and professional selection methodology.
+            </p>
+            
+            <div class="space-y-2 mb-6">
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                6 wood species analyzed
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Technical specifications
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Dynamic spine theory
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Professional methodology
+              </div>
+            </div>
+            
+            <NuxtLink
+              to="/info/wood-arrows"
+              class="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Wood Arrow Guide
+              <i class="fas fa-arrow-right ml-2"></i>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Arrow Selection Guide -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <i class="fas fa-search text-orange-600 dark:text-orange-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Arrow Selection Guide</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Choose arrows based on your setup</p>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Professional methodology for selecting the perfect arrows based on your bow specifications, including basic spine calculator and setup requirements.
+            </p>
+            
+            <div class="space-y-2 mb-6">
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Basic spine calculator formulas
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Setup specifications guide
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Professional methodology
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Common mistakes and solutions
+              </div>
+            </div>
+            
+            <NuxtLink
+              to="/info/arrow-selection"
+              class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Selection Guide
+              <i class="fas fa-arrow-right ml-2"></i>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Traditional Archery -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <i class="fas fa-bow-arrow text-purple-600 dark:text-purple-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Traditional Archery</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Archer's paradox and center shot mastery</p>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Master traditional archery with comprehensive coverage of archer's paradox, center shot considerations, and scientific foundations dating back to Hickman's 1930s research.
+            </p>
+            
+            <div class="space-y-2 mb-6">
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Archer's paradox explained
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Center shot impact on spine
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Traditional tuning methods
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Wood arrow characteristics
+              </div>
+            </div>
+            
+            <NuxtLink
+              to="/info/traditional-archery"
+              class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Traditional Guide
+              <i class="fas fa-arrow-right ml-2"></i>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Barebow Archery -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <i class="fas fa-archery text-orange-600 dark:text-orange-400 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Barebow Archery</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">String walking and gap shooting mastery</p>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Complete barebow archery guide covering equipment regulations, aiming techniques, arrow selection, and competition strategies for this challenging discipline.
+            </p>
+            
+            <div class="space-y-2 mb-6">
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                String walking technique
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Gap shooting methods
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Equipment regulations
+              </div>
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check text-green-500 mr-2"></i>
+                Competition strategies
+              </div>
+            </div>
+            
+            <NuxtLink
+              to="/info/barebow"
+              class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Barebow Guide
+              <i class="fas fa-arrow-right ml-2"></i>
+            </NuxtLink>
+          </div>
+        </div>
+
         <!-- Tuning Methodologies (Expanded) -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden col-span-full">
           <div class="p-6">

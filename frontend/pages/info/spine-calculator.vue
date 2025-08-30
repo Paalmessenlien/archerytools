@@ -482,7 +482,7 @@
               </div>
               <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-1">Fine-Tune</h4>
               <p class="text-sm text-blue-700 dark:text-blue-400">
-                Use our interactive tuning guides to optimize your arrow flight.
+                Use your bow setup configurations to track and optimize arrow flight performance.
               </p>
             </div>
             
@@ -506,11 +506,11 @@
               Start Calculating
             </NuxtLink>
             <NuxtLink
-              to="/tuning"
+              to="/my-setup"
               class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
             >
-              <i class="fas fa-play mr-2"></i>
-              Interactive Tuning
+              <i class="fas fa-archive mr-2"></i>
+              My Bow Setups
             </NuxtLink>
           </div>
         </div>

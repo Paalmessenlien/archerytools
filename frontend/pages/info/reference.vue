@@ -281,6 +281,179 @@
           </div>
         </div>
 
+        <!-- Professional Archery Formulas -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 print-section">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-calculator text-purple-600 dark:text-purple-400 mr-3"></i>
+            Professional Archery Formulas
+          </h2>
+          
+          <div class="grid gap-6 lg:grid-cols-2">
+            
+            <!-- Kinetic Energy and FOC -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Performance Calculations
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-purple-800 dark:text-purple-300 mb-2">Kinetic Energy (KE)</h4>
+                  <div class="bg-white dark:bg-gray-700 rounded p-3 text-center mb-2">
+                    <code class="text-sm font-mono">KE = (Arrow Weight × Velocity²) ÷ 450,240</code>
+                  </div>
+                  <p class="text-xs text-purple-700 dark:text-purple-400">
+                    Result in foot-pounds. Minimum 25 ft-lbs for deer, 65+ ft-lbs for elk.
+                  </p>
+                </div>
+                
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-2">Front of Center (FOC)</h4>
+                  <div class="bg-white dark:bg-gray-700 rounded p-3 text-center mb-2">
+                    <code class="text-sm font-mono">FOC = ((Balance Point - Shaft Center) ÷ Shaft Length) × 100</code>
+                  </div>
+                  <p class="text-xs text-blue-700 dark:text-blue-400">
+                    Target: 7-15%, Hunting: 10-20%, Extreme FOC: 25%+
+                  </p>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-green-800 dark:text-green-300 mb-2">Momentum</h4>
+                  <div class="bg-white dark:bg-gray-700 rounded p-3 text-center mb-2">
+                    <code class="text-sm font-mono">Momentum = (Arrow Weight × Velocity) ÷ 225,218</code>
+                  </div>
+                  <p class="text-xs text-green-700 dark:text-green-400">
+                    Result in slug-ft/sec. Higher momentum = better penetration.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Distance and Trajectory -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Trajectory References
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-orange-800 dark:text-orange-300 mb-3">Pin Gap Estimation</h4>
+                  <div class="text-sm text-orange-700 dark:text-orange-400 space-y-1">
+                    <p><strong>20-30 yards:</strong> ~0.5" pin gap</p>
+                    <p><strong>30-40 yards:</strong> ~0.7" pin gap</p>
+                    <p><strong>40-50 yards:</strong> ~0.9" pin gap</p>
+                    <p><strong>50-60 yards:</strong> ~1.2" pin gap</p>
+                  </div>
+                  <p class="text-xs text-orange-600 dark:text-orange-500 mt-2 italic">
+                    Varies by bow speed and arrow weight
+                  </p>
+                </div>
+                
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-red-800 dark:text-red-300 mb-3">Drop Compensation</h4>
+                  <div class="text-sm text-red-700 dark:text-red-400 space-y-1">
+                    <p><strong>250 fps:</strong> ~12" drop at 40 yards</p>
+                    <p><strong>280 fps:</strong> ~9" drop at 40 yards</p>
+                    <p><strong>310 fps:</strong> ~7" drop at 40 yards</p>
+                  </div>
+                  <p class="text-xs text-red-600 dark:text-red-500 mt-2 italic">
+                    From 20-yard zero point
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field Reference Tables -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 print-section">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-table text-indigo-600 dark:text-indigo-400 mr-3"></i>
+            Professional Field References
+          </h2>
+          
+          <div class="grid gap-6 lg:grid-cols-2">
+            
+            <!-- Arrow Speed Classifications -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Arrow Speed Classifications (IBO)
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse border border-gray-300 dark:border-gray-600">
+                  <thead>
+                    <tr class="bg-gray-100 dark:bg-gray-700">
+                      <th class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">Speed Category</th>
+                      <th class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">FPS Range</th>
+                      <th class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">Typical Use</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Speed</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">330+ fps</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">3D, Target</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Performance</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">300-330 fps</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">Hunting, 3D</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Hunting</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">280-300 fps</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">Big Game</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Traditional</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">150-220 fps</td>
+                      <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-center">Recurve, Longbow</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Professional Standards -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Professional Standards
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-indigo-800 dark:text-indigo-300 mb-3">Tournament Specifications</h4>
+                  <div class="text-sm text-indigo-700 dark:text-indigo-400 space-y-1">
+                    <p><strong>Indoor Target:</strong> 40cm face at 18m</p>
+                    <p><strong>Outdoor Target:</strong> 122cm face at 70m</p>
+                    <p><strong>Field Archery:</strong> Various faces, 5-80m</p>
+                    <p><strong>3D Archery:</strong> Lifelike targets, unknown distance</p>
+                  </div>
+                </div>
+                
+                <div class="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-teal-800 dark:text-teal-300 mb-3">Hunting Minimums</h4>
+                  <div class="text-sm text-teal-700 dark:text-teal-400 space-y-1">
+                    <p><strong>Small Game:</strong> 15+ ft-lbs KE</p>
+                    <p><strong>Whitetail Deer:</strong> 25+ ft-lbs KE</p>
+                    <p><strong>Elk/Moose:</strong> 65+ ft-lbs KE</p>
+                    <p><strong>Cape Buffalo:</strong> 80+ ft-lbs KE</p>
+                  </div>
+                </div>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-yellow-800 dark:text-yellow-300 mb-3">Arrow Weight Guidelines</h4>
+                  <div class="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                    <p><strong>Target:</strong> 5-6 grains per pound</p>
+                    <p><strong>Hunting:</strong> 6-8 grains per pound</p>
+                    <p><strong>Traditional:</strong> 8-10+ grains per pound</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Safety Guidelines -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 print-section">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">

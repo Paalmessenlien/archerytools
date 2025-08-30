@@ -385,21 +385,40 @@
           </div>
         </div>
 
-        <!-- Interactive Tuning Link -->
-        <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6 text-center">
-          <h3 class="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-2">
-            Need Interactive Guidance?
+        <!-- Professional Tuning Resources -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
+          <h3 class="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-4">
+            <i class="fas fa-tools mr-2"></i>
+            Apply These Solutions
           </h3>
-          <p class="text-blue-700 dark:text-blue-300 mb-4">
-            Use our interactive tuning guides for step-by-step assistance with your specific setup.
-          </p>
-          <NuxtLink
-            to="/tuning"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-          >
-            <i class="fas fa-play mr-2"></i>
-            Start Interactive Tuning
-          </NuxtLink>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <h4 class="font-medium text-blue-700 dark:text-blue-300 mb-2">Use Your Bow Setup</h4>
+              <p class="text-sm text-blue-600 dark:text-blue-400 mb-3">
+                Configure your bow setup in the calculator to track tuning changes and arrow performance over time.
+              </p>
+              <NuxtLink
+                to="/calculator"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <i class="fas fa-calculator mr-2"></i>
+                Open Calculator
+              </NuxtLink>
+            </div>
+            <div>
+              <h4 class="font-medium text-purple-700 dark:text-purple-300 mb-2">Track Your Progress</h4>
+              <p class="text-sm text-purple-600 dark:text-purple-400 mb-3">
+                Save multiple arrow configurations to compare performance and document your tuning journey.
+              </p>
+              <NuxtLink
+                to="/my-setup"
+                class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <i class="fas fa-archive mr-2"></i>
+                My Setups
+              </NuxtLink>
+            </div>
+          </div>
         </div>
       </div>
     </div>

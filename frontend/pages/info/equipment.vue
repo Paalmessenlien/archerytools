@@ -410,6 +410,155 @@
           </div>
         </div>
 
+        <!-- Center Shot Measurement & Adjustment -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-crosshairs text-purple-600 dark:text-purple-400 mr-3"></i>
+            Center Shot Measurement & Adjustment
+          </h2>
+          
+          <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+            <h3 class="font-medium text-purple-800 dark:text-purple-300 mb-2">
+              <i class="fas fa-info-circle mr-2"></i>
+              Why Center Shot Matters
+            </h3>
+            <p class="text-sm text-purple-700 dark:text-purple-400">
+              Center shot position is the primary factor determining arrow spine requirements. Understanding and measuring your bow's center shot allows you to make accurate spine calculations and achieve optimal arrow flight.
+            </p>
+          </div>
+          
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Measurement Techniques</h3>
+              
+              <div class="space-y-4">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-2">
+                    <i class="fas fa-ruler mr-2"></i>
+                    Basic Measurement Method
+                  </h4>
+                  <ol class="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                    <li>1. <strong>Nock arrow</strong> at normal nocking point</li>
+                    <li>2. <strong>Draw to anchor</strong> (or have someone else draw)</li>
+                    <li>3. <strong>View from above</strong> looking down the bow</li>
+                    <li>4. <strong>Measure distance</strong> from arrow shaft to bow centerline</li>
+                    <li>5. <strong>Record measurement</strong> for spine calculations</li>
+                  </ol>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-green-800 dark:text-green-300 mb-2">
+                    <i class="fas fa-tools mr-2"></i>
+                    Professional Tools
+                  </h4>
+                  <div class="text-sm text-green-700 dark:text-green-400 space-y-1">
+                    <p><strong>Center Shot Gauge:</strong> Precise measurement tool</p>
+                    <p><strong>Arrow Square:</strong> Ensures perpendicular measurement</p>
+                    <p><strong>Bow Square:</strong> Multi-purpose alignment tool</p>
+                    <p><strong>Digital Calipers:</strong> Precise distance measurement</p>
+                  </div>
+                </div>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Typical Measurements</h4>
+                  <div class="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                    <p><strong>English Longbows:</strong> 1/4" to 3/8" off-center</p>
+                    <p><strong>American Longbows:</strong> 1/8" to 1/4" off-center</p>
+                    <p><strong>Traditional Recurves:</strong> 0" to 1/8" past center</p>
+                    <p><strong>Modern Recurves:</strong> 1/8" to 1/4" past center</p>
+                    <p><strong>Compound Bows:</strong> True center shot (0")</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Adjustment Methods</h3>
+              
+              <div class="space-y-4">
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-red-800 dark:text-red-300 mb-2">
+                    <i class="fas fa-hammer mr-2"></i>
+                    Strike Plate Modification
+                  </h4>
+                  <div class="text-sm text-red-700 dark:text-red-400 space-y-1">
+                    <p><strong>Purpose:</strong> Move arrow closer to center shot</p>
+                    <p><strong>Materials:</strong> Leather, rug rest, velcro layers</p>
+                    <p><strong>Effect:</strong> 3/8" buildup = ~10# stiffer spine usable</p>
+                    <p><strong>Installation:</strong> Start thin, add layers gradually</p>
+                  </div>
+                </div>
+                
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-orange-800 dark:text-orange-300 mb-2">
+                    <i class="fas fa-arrows-alt-h mr-2"></i>
+                    Arrow Rest Positioning
+                  </h4>
+                  <div class="text-sm text-orange-700 dark:text-orange-400 space-y-1">
+                    <p><strong>Horizontal:</strong> Fine-tune center shot position</p>
+                    <p><strong>Vertical:</strong> Adjust nocking point height</p>
+                    <p><strong>Micro-adjustments:</strong> Move in 1/32" increments</p>
+                    <p><strong>Test after each:</strong> Verify with paper/bare shaft</p>
+                  </div>
+                </div>
+                
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-purple-800 dark:text-purple-300 mb-2">
+                    <i class="fas fa-cog mr-2"></i>
+                    Equipment Solutions
+                  </h4>
+                  <div class="text-sm text-purple-700 dark:text-purple-400 space-y-1">
+                    <p><strong>Adjustable Rests:</strong> Easy center shot changes</p>
+                    <p><strong>Cushion Plungers:</strong> Fine-tune pressure/position</p>
+                    <p><strong>Elevated Rests:</strong> Compound bow precision</p>
+                    <p><strong>Magnetic Rests:</strong> Quick setup changes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Center Shot Impact on Spine -->
+          <div class="mt-6 bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-purple-900/30 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <i class="fas fa-calculator mr-2"></i>
+              Center Shot Impact on Spine Selection
+            </h3>
+            
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Off-Center Shot</h4>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p><strong>Position:</strong> 1/8" to 3/8" off-center</p>
+                  <p><strong>Spine Effect:</strong> Need 5-15# weaker arrows</p>
+                  <p><strong>Common in:</strong> Traditional longbows</p>
+                  <p><strong>Example:</strong> 50# bow → 35-45# spine</p>
+                </div>
+              </div>
+              
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Center Shot</h4>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p><strong>Position:</strong> True center alignment</p>
+                  <p><strong>Spine Effect:</strong> Close to bow weight</p>
+                  <p><strong>Common in:</strong> Modern compound bows</p>
+                  <p><strong>Example:</strong> 50# bow → 45-55# spine</p>
+                </div>
+              </div>
+              
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Past Center</h4>
+                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p><strong>Position:</strong> Cut past centerline</p>
+                  <p><strong>Spine Effect:</strong> May need slightly stiffer</p>
+                  <p><strong>Common in:</strong> Olympic recurves</p>
+                  <p><strong>Example:</strong> 50# bow → 50-60# spine</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Equipment Maintenance -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
@@ -486,6 +635,113 @@
                     <li>• Stabilizer dampeners: Annually</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Professional Field Insights -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-user-graduate text-indigo-600 dark:text-indigo-400 mr-3"></i>
+            Professional Field Insights
+          </h2>
+          
+          <div class="grid gap-6 lg:grid-cols-2">
+            
+            <!-- Equipment Selection Wisdom -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                Equipment Selection Wisdom
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-yellow-800 dark:text-yellow-300 mb-2">Buy Quality Once</h4>
+                  <p class="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
+                    Invest in premium arrow components from the start. A $15 dozen quality arrows will outperform $8 budget arrows every time. Quality inserts, nocks, and fletching last longer and perform more consistently.
+                  </p>
+                  <p class="text-xs text-yellow-600 dark:text-yellow-500 italic">
+                    "The joy of cheap arrows is quickly forgotten, but the pain of poor performance lasts."
+                  </p>
+                </div>
+                
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-2">Test Before Committing</h4>
+                  <p class="text-sm text-blue-700 dark:text-blue-400 mb-2">
+                    Always buy single arrows to test spine compatibility before ordering dozens. Different manufacturers' spine ratings can vary by 5-10 points even with identical markings. Test multiple brands in your calculated spine range.
+                  </p>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-green-800 dark:text-green-300 mb-2">Component Matching</h4>
+                  <p class="text-sm text-green-700 dark:text-green-400">
+                    Match component weights across your set. Use the same insert, nock, and fletching weights on all arrows. Even 2-3 grain differences can affect grouping at longer distances.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Field Experience Tips -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-crosshairs text-green-500 mr-2"></i>
+                Field Experience Tips
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-red-800 dark:text-red-300 mb-2">Weather Considerations</h4>
+                  <p class="text-sm text-red-700 dark:text-red-400 mb-2">
+                    Wood arrows are significantly affected by humidity - they can gain 5-10 grains in wet conditions. Carbon arrows remain stable. Aluminum arrows may show slight weight changes due to condensation in extreme conditions.
+                  </p>
+                </div>
+                
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-purple-800 dark:text-purple-300 mb-2">Tournament Preparation</h4>
+                  <p class="text-sm text-purple-700 dark:text-purple-400 mb-2">
+                    Bring backup arrows with identical specifications. Check tournament rules for arrow marking requirements. Some competitions require specific nock colors or fletching arrangements for safety identification.
+                  </p>
+                </div>
+                
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
+                  <h4 class="font-medium text-indigo-800 dark:text-indigo-300 mb-2">Tuning Reality Check</h4>
+                  <p class="text-sm text-indigo-700 dark:text-indigo-400">
+                    Perfect paper tears don't always equal perfect groups at distance. Focus on actual target performance over theoretical perfection. Small paper tears may be acceptable if your groups are tight at 40+ yards.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Professional Equipment Standards -->
+          <div class="mt-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/30 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <i class="fas fa-medal text-gold-500 mr-2"></i>
+              Professional Equipment Standards
+            </h3>
+            
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Weight Tolerance</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  Professional arrows: ±0.5 grain weight tolerance within a dozen. Competition-grade components maintain tighter specifications than recreational equipment.
+                </p>
+              </div>
+              
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Straightness Standards</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  Target arrows: ±0.001" straightness. Hunting arrows: ±0.003" acceptable. Competition arrows often specify ±0.0005" for Olympic-level accuracy.
+                </p>
+              </div>
+              
+              <div class="bg-white dark:bg-gray-700 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Spine Consistency</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  Professional arrows maintain ±2 spine units within a dozen. Budget arrows may vary ±5 spine units, affecting consistency at longer distances.
+                </p>
               </div>
             </div>
           </div>
