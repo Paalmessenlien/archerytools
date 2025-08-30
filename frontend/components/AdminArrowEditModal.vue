@@ -483,16 +483,33 @@ const validateForm = (): boolean => {
 
   for (let i = 0; i < formData.value.spine_specifications.length; i++) {
     const spec = formData.value.spine_specifications[i];
-    if (!spec.spine || spec.spine < 100 || spec.spine > 1200) {
-      errorMessage.value = `Spine specification ${i + 1}: Spine value must be between 100 and 1200`;
+    
+    // Different spine validation ranges based on material type
+    const isWoodArrow = formData.value.material === 'Wood';
+    const minSpine = isWoodArrow ? 25 : 100;  // Wood arrows can have lower spine values (25-120)
+    const maxSpine = isWoodArrow ? 120 : 1200; // Carbon/aluminum arrows: 100-1200
+    
+    if (!spec.spine || spec.spine < minSpine || spec.spine > maxSpine) {
+      const spineRange = isWoodArrow ? '25 and 120' : '100 and 1200';
+      errorMessage.value = `Spine specification ${i + 1}: Spine value must be between ${spineRange} ${isWoodArrow ? '(wood arrows)' : '(carbon/aluminum arrows)'}`;
       return false;
     }
-    if (!spec.outer_diameter || spec.outer_diameter < 0.1 || spec.outer_diameter > 0.5) {
-      errorMessage.value = `Spine specification ${i + 1}: Outer diameter must be between 0.1 and 0.5 inches`;
+    // Different outer diameter ranges for different materials  
+    const minDiameter = isWoodArrow ? 0.2 : 0.1;   // Wood arrows typically thicker: 0.2-0.6 inches
+    const maxDiameter = isWoodArrow ? 0.6 : 0.5;   // Carbon/aluminum: 0.1-0.5 inches
+    
+    if (!spec.outer_diameter || spec.outer_diameter < minDiameter || spec.outer_diameter > maxDiameter) {
+      const diameterRange = isWoodArrow ? '0.2 and 0.6' : '0.1 and 0.5';
+      errorMessage.value = `Spine specification ${i + 1}: Outer diameter must be between ${diameterRange} inches ${isWoodArrow ? '(wood arrows)' : '(carbon/aluminum arrows)'}`;
       return false;
     }
-    if (!spec.gpi_weight || spec.gpi_weight < 1 || spec.gpi_weight > 25) {
-      errorMessage.value = `Spine specification ${i + 1}: GPI weight must be between 1 and 25`;
+    // Different GPI weight ranges for different materials
+    const minGPI = isWoodArrow ? 5 : 1;   // Wood arrows typically heavier: 5-35 GPI
+    const maxGPI = isWoodArrow ? 35 : 25; // Carbon/aluminum: 1-25 GPI
+    
+    if (!spec.gpi_weight || spec.gpi_weight < minGPI || spec.gpi_weight > maxGPI) {
+      const gpiRange = isWoodArrow ? '5 and 35' : '1 and 25';
+      errorMessage.value = `Spine specification ${i + 1}: GPI weight must be between ${gpiRange} ${isWoodArrow ? '(wood arrows)' : '(carbon/aluminum arrows)'}`;
       return false;
     }
   }
