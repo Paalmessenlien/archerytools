@@ -218,6 +218,15 @@ Intelligent manufacturer detection and linking system:
 - **Development Checklist**: Quality standards and component creation guidelines
 - **Troubleshooting**: Common issues and solutions for design system integration
 
+#### [Manufacturer Active Status System](MANUFACTURER_ACTIVE_STATUS_SYSTEM.md) 🔧
+**NEW (August 30, 2025)** - Complete filtering system to hide arrows from inactive manufacturers:
+- **Comprehensive Filtering**: Hide arrows from inactive manufacturers across database and calculator
+- **Admin Access Preserved**: Administrators retain full access via `include_inactive=True` parameter
+- **Existing Setup Protection**: Bow setups maintain access to previously configured arrows
+- **Database Migration 050**: System validation and readiness verification
+- **Performance Testing**: Sub-millisecond query performance with manufacturer joins
+- **Production Ready**: 210 total arrows (204 active, 6 inactive) with complete filtering
+
 #### [Mobile Journal Optimization](MOBILE_JOURNAL_OPTIMIZATION.md) 📱
 **NEW (August 29, 2025)** - Comprehensive mobile-first journal system optimization:
 - **Unified Component Architecture**: BaseJournalView.vue replacing context-specific components

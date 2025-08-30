@@ -746,13 +746,26 @@ class ArrowDatabase:
         
         return results
     
-    def get_arrow_details(self, arrow_id: int) -> Optional[Dict[str, Any]]:
-        """Get complete arrow details including all spine specifications"""
+    def get_arrow_details(self, arrow_id: int, include_inactive: bool = False) -> Optional[Dict[str, Any]]:
+        """Get complete arrow details including all spine specifications, filtering by manufacturer active status"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        # Get arrow info
-        cursor.execute('SELECT * FROM arrows WHERE id = ?', (arrow_id,))
+        # Get arrow info with manufacturer active status filtering
+        where_conditions = ["a.id = ?"]
+        params = [arrow_id]
+        
+        if not include_inactive:
+            where_conditions.append("m.is_active = TRUE")
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        cursor.execute(f'''
+            SELECT a.*, m.is_active as manufacturer_active
+            FROM arrows a
+            JOIN manufacturers m ON a.manufacturer = m.name
+            WHERE {where_clause}
+        ''', params)
         arrow = cursor.fetchone()
         
         if not arrow:

@@ -241,10 +241,14 @@ class UnifiedDatabase:
     # Arrow methods (enhanced to work with unified database)
     
     def search_arrows(self, manufacturer: str = None, spine_min: int = None, 
-                     spine_max: int = None, limit: int = 50) -> List[Dict[str, Any]]:
-        """Search arrows with enhanced filtering"""
+                     spine_max: int = None, limit: int = 50, include_inactive: bool = False) -> List[Dict[str, Any]]:
+        """Search arrows with enhanced filtering and manufacturer active status filtering"""
         conditions = []
         params = []
+        
+        # Always filter by active manufacturers unless explicitly requested otherwise (admin)
+        if not include_inactive:
+            conditions.append("m.is_active = TRUE")
         
         if manufacturer:
             conditions.append("a.manufacturer LIKE ?")
@@ -263,8 +267,9 @@ class UnifiedDatabase:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(f'''
-                SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight
+                SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, m.is_active as manufacturer_active
                 FROM arrows a
+                JOIN manufacturers m ON a.manufacturer = m.name
                 LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
                 WHERE {where_clause}
                 ORDER BY a.manufacturer, a.model_name
@@ -272,20 +277,31 @@ class UnifiedDatabase:
             ''', params + [limit])
             return [dict(row) for row in cursor.fetchall()]
     
-    def get_arrow_by_id(self, arrow_id: int) -> Optional[Dict[str, Any]]:
-        """Get arrow with spine specifications"""
+    def get_arrow_by_id(self, arrow_id: int, include_inactive: bool = False) -> Optional[Dict[str, Any]]:
+        """Get arrow with spine specifications, filtering by manufacturer active status"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT a.*, 
+            
+            # Build WHERE clause based on active status filtering
+            where_conditions = ["a.id = ?"]
+            params = [arrow_id]
+            
+            if not include_inactive:
+                where_conditions.append("m.is_active = TRUE")
+            
+            where_clause = " AND ".join(where_conditions)
+            
+            cursor.execute(f'''
+                SELECT a.*, m.is_active as manufacturer_active,
                        GROUP_CONCAT(ss.spine) as spines,
                        GROUP_CONCAT(ss.outer_diameter) as diameters,
                        GROUP_CONCAT(ss.gpi_weight) as gpi_weights
                 FROM arrows a
+                JOIN manufacturers m ON a.manufacturer = m.name
                 LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
-                WHERE a.id = ?
+                WHERE {where_clause}
                 GROUP BY a.id
-            ''', (arrow_id,))
+            ''', params)
             row = cursor.fetchone()
             return dict(row) if row else None
     
@@ -315,14 +331,15 @@ class UnifiedDatabase:
             return cursor.lastrowid
     
     def get_setup_arrows(self, setup_id: int) -> List[Dict[str, Any]]:
-        """Get all arrows for a bow setup with full arrow details"""
+        """Get all arrows for a bow setup with full arrow details (includes inactive manufacturers for existing setups)"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT sa.*, a.manufacturer, a.model_name, a.material,
-                       ss.spine, ss.outer_diameter, ss.gpi_weight
+                       ss.spine, ss.outer_diameter, ss.gpi_weight, m.is_active as manufacturer_active
                 FROM setup_arrows sa
                 JOIN arrows a ON sa.arrow_id = a.id
+                LEFT JOIN manufacturers m ON a.manufacturer = m.name
                 LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id 
                     AND ss.spine = sa.calculated_spine
                 WHERE sa.setup_id = ?

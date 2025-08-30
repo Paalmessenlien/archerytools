@@ -8976,11 +8976,19 @@ def get_system_info(current_user):
         conn = arrow_db.get_connection()
         cursor = conn.cursor()
         
-        # Count arrows and manufacturers
-        cursor.execute("SELECT COUNT(*) FROM arrows")
+        # Count arrows and manufacturers (only from active manufacturers for public stats)
+        cursor.execute("""
+            SELECT COUNT(*) FROM arrows a
+            JOIN manufacturers m ON a.manufacturer = m.name
+            WHERE m.is_active = TRUE
+        """)
         arrow_count = cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(DISTINCT manufacturer) FROM arrows")
+        cursor.execute("""
+            SELECT COUNT(DISTINCT a.manufacturer) FROM arrows a
+            JOIN manufacturers m ON a.manufacturer = m.name
+            WHERE m.is_active = TRUE
+        """)
         manufacturer_count = cursor.fetchone()[0]
         
         # Count spine specifications
