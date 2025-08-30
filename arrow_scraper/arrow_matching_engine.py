@@ -61,6 +61,7 @@ class MatchRequest:
     target_foc_range: Tuple[float, float] = None      # (min, max) FOC percentage
     arrow_type_preference: str = None                  # hunting, target, etc.
     material_preference: str = None                    # wood, carbon, aluminum, etc.
+    wood_species_preference: str = None                # For wood arrows: cedar, pine, ash, etc.
     
     # Constraints
     max_results: int = 50  # Allow more results for progressive loading
@@ -155,10 +156,26 @@ class ArrowMatchingEngine:
         
         # If wood material is requested and we didn't find enough arrows, search specifically for wood manufacturers
         if request.material_preference and request.material_preference.lower() == 'wood' and len(search_results) < request.max_results:
-            wood_manufacturers = ['Traditional Wood', 'Traditional Wood Arrows']
+            # Define wood species to manufacturer mapping (updated for Migration 047 manufacturers)
+            wood_species_manufacturers = {
+                'Port Orford Cedar': ['Port Orford Cedar Shafts'],
+                'Sitka Spruce': ['Sitka Spruce Shafts'],
+                'Douglas Fir': ['Douglas Fir Shafts'],
+                'Pine': ['Pine Shafts'],
+                'Ash': ['Ash Shafts'],
+                'Bamboo': ['Bamboo Shafts', 'Traditional Wood Arrows'],  # Both new and old bamboo entries
+                '': ['Traditional Wood Arrows', 'Port Orford Cedar Shafts', 'Sitka Spruce Shafts', 'Douglas Fir Shafts', 'Pine Shafts', 'Ash Shafts', 'Bamboo Shafts']  # All when no species specified
+            }
+            
+            # Get manufacturers to search based on wood species preference
+            if request.wood_species_preference and request.wood_species_preference in wood_species_manufacturers:
+                target_manufacturers = wood_species_manufacturers[request.wood_species_preference]
+            else:
+                target_manufacturers = wood_species_manufacturers['']  # All wood manufacturers
+            
             additional_results = []
             
-            for wood_mfr in wood_manufacturers:
+            for wood_mfr in target_manufacturers:
                 wood_arrows = self.db.search_arrows(
                     spine_min=int(spine_range['minimum'] - spine_expansion),
                     spine_max=int(spine_range['maximum'] + spine_expansion),
@@ -289,19 +306,48 @@ class ArrowMatchingEngine:
         
         if is_wood_arrow and len(spine_specs) >= 2:
             # For wood arrows, find if optimal spine falls within the range
-            spine_values = [spec['spine'] for spec in spine_specs]
+            spine_values = []
+            for spec in spine_specs:
+                spine_val = spec['spine']
+                # Convert spine value to float/int if it's a string
+                if isinstance(spine_val, str):
+                    try:
+                        spine_val = float(spine_val)
+                    except ValueError:
+                        continue  # Skip invalid spine values
+                spine_values.append(spine_val)
+            
+            if not spine_values:
+                return None
+                
             min_spine = min(spine_values)
             max_spine = max(spine_values)
             
             # If optimal spine falls within the wood arrow's range, it's a perfect match
             if min_spine <= optimal_spine <= max_spine:
                 # Choose the spine specification closest to the optimal
-                best_spine_match = min(spine_specs, key=lambda spec: abs(spec['spine'] - optimal_spine))
+                def safe_spine_diff(spec):
+                    spine_val = spec['spine']
+                    if isinstance(spine_val, str):
+                        try:
+                            spine_val = float(spine_val)
+                        except ValueError:
+                            return float('inf')  # Invalid values get lowest priority
+                    return abs(spine_val - optimal_spine)
+                
+                best_spine_match = min(spine_specs, key=safe_spine_diff)
                 min_deviation = 0  # Perfect match for wood arrows within range
             else:
                 # Use normal matching logic for wood arrows outside range
                 for spec in spine_specs:
                     spine_value = spec['spine']
+                    # Convert spine value to float/int if it's a string
+                    if isinstance(spine_value, str):
+                        try:
+                            spine_value = float(spine_value)
+                        except ValueError:
+                            continue  # Skip invalid spine values
+                    
                     deviation = abs(spine_value - optimal_spine)
                     if deviation < min_deviation:
                         min_deviation = deviation
@@ -310,6 +356,13 @@ class ArrowMatchingEngine:
             # Normal matching logic for non-wood arrows
             for spec in spine_specs:
                 spine_value = spec['spine']
+                # Convert spine value to float/int if it's a string
+                if isinstance(spine_value, str):
+                    try:
+                        spine_value = float(spine_value)
+                    except ValueError:
+                        continue  # Skip invalid spine values
+                
                 deviation = abs(spine_value - optimal_spine)
                 if deviation < min_deviation:
                     min_deviation = deviation
@@ -555,19 +608,19 @@ class ArrowMatchingEngine:
             'Skylon': 'Skylon Archery'
         }
         
-        # If wood material is requested, prioritize wood manufacturers
+        # If wood material is requested, let the wood species logic handle manufacturer filtering
         if material_preference == 'wood':
             if preferred_manufacturers:
                 # Check if any preferred manufacturers are wood manufacturers
-                wood_manufacturers = ['Traditional Wood', 'Traditional Wood Arrows']
+                wood_manufacturers = ['Traditional Wood', 'Traditional Wood Arrows', 'Port Orford Cedar', 'Sitka Spruce', 'Douglas Fir', 'Pine', 'Ash', 'Bamboo']
                 for pref in preferred_manufacturers:
                     if any(wood_mfr.lower() in pref.lower() for wood_mfr in wood_manufacturers):
                         return manufacturer_mapping.get(pref, pref)
-                # If no wood manufacturers in preferences, use first wood manufacturer
-                return 'Traditional Wood Arrows'
+                # If no wood manufacturers in preferences, return None to let species logic handle it
+                return None
             else:
-                # No preferences, default to first wood manufacturer
-                return 'Traditional Wood Arrows'
+                # No preferences, return None to let wood species logic handle manufacturer selection
+                return None
         
         # For non-wood materials, use existing logic
         if not preferred_manufacturers:

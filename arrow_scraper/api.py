@@ -1520,7 +1520,8 @@ def get_arrow_recommendations():
                 experience_level=data.get('experience_level', 'intermediate'),
                 arrow_length=float(data.get('arrow_length', 29.0)),
                 point_weight_preference=float(data.get('point_weight', 100.0)),
-                preferred_manufacturers=data.get('preferred_manufacturers', [])
+                preferred_manufacturers=data.get('preferred_manufacturers', []),
+                wood_species=data.get('wood_species', None)
             )
         except Exception as e:
             return jsonify({'error': f'Invalid archer profile: {str(e)}'}), 400

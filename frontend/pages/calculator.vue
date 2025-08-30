@@ -171,6 +171,44 @@
             </md-filled-select>
           </div>
 
+          <!-- Wood Species Selection (shown when wood material is selected) -->
+          <div v-if="bowConfig.arrow_material === 'wood'">
+            <md-filled-select
+              label="Wood Species"
+              :value="bowConfig.wood_species || ''"
+              @change="updateBowConfig({ wood_species: $event.target.value })"
+              class="w-full"
+            >
+              <md-select-option value="">
+                <div slot="headline">All Wood Species</div>
+              </md-select-option>
+              <md-select-option value="Port Orford Cedar">
+                <div slot="headline">Port Orford Cedar</div>
+                <div slot="supporting-text">Traditional gold standard - balanced performance</div>
+              </md-select-option>
+              <md-select-option value="Sitka Spruce">
+                <div slot="headline">Sitka Spruce</div>
+                <div slot="supporting-text">Lightweight - best for target & 3D</div>
+              </md-select-option>
+              <md-select-option value="Douglas Fir">
+                <div slot="headline">Douglas Fir</div>
+                <div slot="supporting-text">Heavy - superior penetration for hunting</div>
+              </md-select-option>
+              <md-select-option value="Pine">
+                <div slot="headline">Pine</div>
+                <div slot="supporting-text">Versatile workhorse - training & general use</div>
+              </md-select-option>
+              <md-select-option value="Ash">
+                <div slot="headline">Ash</div>
+                <div slot="supporting-text">Maximum durability - war arrows & heavy bows</div>
+              </md-select-option>
+              <md-select-option value="Bamboo">
+                <div slot="headline">Bamboo</div>
+                <div slot="supporting-text">Natural composite - unique ballistics</div>
+              </md-select-option>
+            </md-filled-select>
+          </div>
+
           <!-- Arrow Length (always shown) -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -518,6 +556,33 @@
             <strong>Wood Arrow Calculation:</strong> Uses traditional wood arrow spine charts with pound-based measurements. 
             This calculation method works for any bow type when wood arrows are selected.
           </p>
+          
+          <!-- Species-specific recommendations -->
+          <div v-if="bowConfig.wood_species" class="mt-2 p-2 bg-orange-100 dark:bg-orange-800/30 rounded border border-orange-300 dark:border-orange-700">
+            <p class="text-xs font-medium text-orange-900 dark:text-orange-100 mb-1">
+              <i class="fas fa-tree mr-1"></i>{{ bowConfig.wood_species }} Characteristics:
+            </p>
+            <p class="text-xs text-orange-700 dark:text-orange-300">
+              <template v-if="bowConfig.wood_species === 'Port Orford Cedar'">
+                Traditional gold standard with excellent balance of speed and penetration. Versatile for target and hunting.
+              </template>
+              <template v-else-if="bowConfig.wood_species === 'Sitka Spruce'">
+                Lightest wood species with highest strength-to-weight ratio. Best for target shooting and flat trajectories.
+              </template>
+              <template v-else-if="bowConfig.wood_species === 'Douglas Fir'">
+                Heavy, robust wood for maximum penetration. Ideal for big game hunting with superior bone penetration.
+              </template>
+              <template v-else-if="bowConfig.wood_species === 'Pine'">
+                Versatile and cost-effective. Great for training, stump shooting, and general purpose applications.
+              </template>
+              <template v-else-if="bowConfig.wood_species === 'Ash'">
+                Heaviest, most durable hardwood. Historic war arrow material for maximum durability and impact.
+              </template>
+              <template v-else-if="bowConfig.wood_species === 'Bamboo'">
+                Natural composite with unique tapered structure. Remarkable strength and spring characteristics.
+              </template>
+            </p>
+          </div>
         </div>
         
         <div v-else-if="!bowConfig.arrow_material || bowConfig.arrow_material === ''" class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">

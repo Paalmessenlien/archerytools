@@ -9,6 +9,7 @@ interface ArrowFilters {
   diameter_range: string
   diameter_min: string
   diameter_max: string
+  wood_species: string
   sortBy: string
 }
 
@@ -23,6 +24,7 @@ export const useArrowFiltersStore = defineStore('arrowFilters', () => {
     diameter_range: '',
     diameter_min: '',
     diameter_max: '',
+    wood_species: '',
     sortBy: 'compatibility'
   })
 
@@ -55,6 +57,7 @@ export const useArrowFiltersStore = defineStore('arrowFilters', () => {
       diameter_range: '',
       diameter_min: '',
       diameter_max: '',
+      wood_species: '',
       sortBy: 'compatibility'
     }
     // Clear from localStorage

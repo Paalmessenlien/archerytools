@@ -28,6 +28,7 @@ class ArcherProfile:
     arrow_length: float = 29.0
     point_weight_preference: float = 100.0
     target_foc_range: Tuple[float, float] = None
+    wood_species: str = None  # For wood arrow filtering
     notes: str = ""
 
 @dataclass
@@ -367,6 +368,7 @@ Report ID: {session.session_id}
             target_foc_range=archer_profile.target_foc_range,
             arrow_type_preference=arrow_type,
             material_preference=material_preference,
+            wood_species_preference=archer_profile.wood_species,
             max_results=50  # Allow more results for progressive loading
         )
         

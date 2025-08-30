@@ -94,7 +94,7 @@
                   <md-assist-chip :label="`Spine: ${getSpineDisplay(recommendation.arrow)}`">
                     <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
                   </md-assist-chip>
-                  <md-assist-chip :label="recommendation.arrow.material || 'Material N/A'">
+                  <md-assist-chip :label="getWoodSpeciesDisplay(recommendation.arrow) || recommendation.arrow.material || 'Material N/A'">
                     <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #059669;"></i>
                   </md-assist-chip>
                   <md-assist-chip :label="`⌀ ${getDiameterDisplay(recommendation.arrow)}`">
@@ -542,6 +542,17 @@ const getSpineDisplay = (arrow) => {
 }
 
 const getDiameterDisplay = (arrow) => {
+  // For wood arrows, extract diameter from notes if available
+  if (arrow.material && arrow.material.toLowerCase() === 'wood' && arrow.spine_specifications) {
+    const spec = arrow.spine_specifications[0]
+    if (spec && spec.notes) {
+      const diameterMatch = spec.notes.match(/Diameter: ([\w\/\d\-\.]+)/i)
+      if (diameterMatch) {
+        return `${diameterMatch[1]}"`
+      }
+    }
+  }
+  
   // Prioritize exact matched diameter over range
   if (arrow.matched_outer_diameter) {
     return `${arrow.matched_outer_diameter}"`
@@ -556,6 +567,17 @@ const getDiameterDisplay = (arrow) => {
 }
 
 const getWeightDisplay = (arrow) => {
+  // For wood arrows, check for GPI range in notes first
+  if (arrow.material && arrow.material.toLowerCase() === 'wood' && arrow.spine_specifications) {
+    const spec = arrow.spine_specifications[0]
+    if (spec && spec.notes) {
+      const gpiMatch = spec.notes.match(/GPI range: ([\d\.\-\+]+)/i)
+      if (gpiMatch) {
+        return `${gpiMatch[1]} GPI`
+      }
+    }
+  }
+  
   // Prioritize exact matched weight over range
   if (arrow.matched_gpi) {
     return `${arrow.matched_gpi} GPI`
@@ -580,6 +602,40 @@ const getWeightDisplay = (arrow) => {
   }
   
   return 'N/A'
+}
+
+const getWoodSpeciesDisplay = (arrow) => {
+  // Extract wood species from manufacturer name for wood arrows
+  if (!arrow.material || arrow.material.toLowerCase() !== 'wood') {
+    return null
+  }
+  
+  const manufacturer = arrow.manufacturer || ''
+  
+  if (manufacturer.includes('Cedar')) {
+    return 'Port Orford Cedar'
+  } else if (manufacturer.includes('Spruce')) {
+    return 'Sitka Spruce'  
+  } else if (manufacturer.includes('Fir')) {
+    return 'Douglas Fir'
+  } else if (manufacturer.includes('Pine')) {
+    return 'Pine'
+  } else if (manufacturer.includes('Ash')) {
+    return 'Ash'
+  } else if (manufacturer.includes('Bamboo') || arrow.model_name?.includes('Bamboo')) {
+    return 'Bamboo'
+  } else if (arrow.model_name) {
+    // Extract from model name as fallback
+    const modelName = arrow.model_name.toLowerCase()
+    if (modelName.includes('cedar')) return 'Cedar'
+    if (modelName.includes('pine')) return 'Pine'
+    if (modelName.includes('ash')) return 'Ash'
+    if (modelName.includes('bamboo')) return 'Bamboo'
+    if (modelName.includes('fir')) return 'Fir'
+    if (modelName.includes('birch')) return 'Birch'
+  }
+  
+  return 'Wood'
 }
 
 const getNumericSpine = (arrow) => {
@@ -998,6 +1054,12 @@ const loadRecommendations = async () => {
       if (filters.value.manufacturer) {
         console.log(`Adding manufacturer filter to API request: "${filters.value.manufacturer}"`)
         requestData.preferred_manufacturers = [filters.value.manufacturer]
+      }
+      
+      // Add wood species filter if selected
+      if (filters.value.wood_species && bowConfig.value.arrow_material === 'wood') {
+        console.log(`Adding wood species filter to API request: "${filters.value.wood_species}"`)
+        requestData.wood_species = filters.value.wood_species
       }
       
     console.log('Sending recommendation request:', requestData)

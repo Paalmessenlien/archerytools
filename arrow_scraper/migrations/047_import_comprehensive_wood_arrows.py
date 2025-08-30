@@ -228,9 +228,9 @@ def migrate_up(cursor):
                 created_manufacturers.append(manufacturer)
                 print(f"     ✅ Created manufacturer: {manufacturer}")
             
-            # Create arrow entry
+            # Create arrow entry (or update if exists)
             cursor.execute("""
-                INSERT INTO arrows (
+                INSERT OR IGNORE INTO arrows (
                     manufacturer, model_name, material, description, arrow_type, created_at
                 ) VALUES (?, ?, ?, ?, ?, datetime('now'))
             """, (
@@ -241,7 +241,10 @@ def migrate_up(cursor):
                 'wood'
             ))
             
-            arrow_id = cursor.lastrowid
+            # Get arrow ID whether it was just created or already existed
+            cursor.execute("SELECT id FROM arrows WHERE manufacturer = ? AND model_name = ?", (manufacturer, model))
+            arrow_result = cursor.fetchone()
+            arrow_id = arrow_result[0] if arrow_result else cursor.lastrowid
             created_arrows.append(arrow_id)
             print(f"     ✅ Created arrow model: {model} (ID: {arrow_id})")
             
@@ -282,9 +285,9 @@ def migrate_up(cursor):
                 # Create unique spine identifier including diameter for woods with multiple diameter options
                 spine_identifier = f"{spine_value}@{diameter_str}"
                 
-                # Insert spine specification
+                # Insert spine specification (replace if exists to update with new data)
                 cursor.execute("""
-                    INSERT INTO spine_specifications (
+                    INSERT OR REPLACE INTO spine_specifications (
                         arrow_id, spine, outer_diameter, inner_diameter, gpi_weight,
                         length_options, wall_thickness, insert_weight_range, nock_size,
                         notes, created_at
