@@ -864,8 +864,8 @@ def get_arrows():
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         
-        # Search arrows using database
-        db = get_database()
+        # Search arrows using unified database (with manufacturer active status filtering)
+        db = get_unified_database()
         if not db:
             return jsonify({'error': 'Database not available'}), 500
             
@@ -880,7 +880,8 @@ def get_arrows():
             diameter_min=diameter_min,
             diameter_max=diameter_max,
             model_search=search_query,
-            limit=per_page * 10  # Get more for pagination
+            limit=per_page * 10,  # Get more for pagination
+            include_inactive=False  # Filter out inactive manufacturers for public API
         )
         
         # Enhance arrows with proper image URLs

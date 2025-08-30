@@ -28,7 +28,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 
 ## Recent Major Updates (2025):
 - ✅ **Manufacturer Active Status Filtering System**: Complete filtering system to hide arrows from inactive manufacturers while preserving admin access and existing configurations ([Details](docs/MANUFACTURER_ACTIVE_STATUS_SYSTEM.md))
-- ✅ **Wood Arrow Species Import System**: Comprehensive import of 6 traditional wood arrow species with 60+ spine specifications and traditional archery calculations (Migrations 047-049)
+- ✅ **Wood Arrow Species Import & Calculator Integration**: Comprehensive import of 6 traditional wood arrow species with 54+ spine specifications, traditional archery calculations, and full calculator integration (Migrations 047-050)
 - ✅ **Manufacturer Approval System Fix**: Fixed pending manufacturer creation in bow setup forms not appearing in admin approval queue (August 2025)
 - ✅ **Draw Length Unification & Speed System Fix**: Comprehensive fix for draw length management confusion and speed calculation issues ([Details](docs/DRAW_LENGTH_UNIFICATION_FIX.md))
 - ✅ **Journal Enhancement Phase 6**: Advanced integration & system consolidation with unified change history ([Details](docs/JOURNAL_ENHANCEMENT_PHASE6.md))

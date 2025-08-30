@@ -139,6 +139,39 @@ When deactivating a manufacturer:
 3. **User Communication**: Inform users if popular arrows become unavailable
 4. **Reactivation**: Simple boolean toggle to restore manufacturer visibility
 
+## Wood Arrow Calculator Integration Fix (August 30, 2025)
+
+### Issue Resolution
+During implementation testing, discovered that wood arrows were not appearing in the calculator due to API architectural inconsistency:
+
+**Problem**: API `get_arrows()` endpoint was using legacy `ArrowDatabase` class instead of `UnifiedDatabase` class, resulting in:
+- Missing manufacturer active status filtering
+- Incomplete parameter support (material, arrow_type, etc.)
+- Wood arrows from inactive manufacturers incorrectly appearing
+
+**Solution**: 
+1. **Enhanced UnifiedDatabase**: Added comprehensive parameter support matching ArrowDatabase functionality
+2. **Updated API Endpoint**: Changed `get_database()` to `get_unified_database()` in arrow search
+3. **Added Filtering Parameter**: Explicit `include_inactive=False` for public API endpoints
+
+### Results After Fix
+- ✅ **54 total wood arrows** properly filtered (15 from active manufacturers visible)
+- ✅ **6 wood species available**: Ash, Bamboo, Douglas Fir, Pine, Port Orford Cedar, Sitka Spruce  
+- ✅ **Traditional bow compatibility**: Wood arrows now appear in calculator for longbow/recurve setups
+- ✅ **Proper filtering**: Inactive "Traditional Wood Arrows" manufacturer correctly hidden
+- ✅ **API consistency**: All endpoints now use unified architecture with consistent filtering
+
+### Technical Implementation
+```python
+# API endpoint change (api.py:868)
+db = get_unified_database()  # Changed from get_database()
+arrows = db.search_arrows(
+    material=material,  # Now supported
+    include_inactive=False,  # Explicit filtering
+    # ... other parameters
+)
+```
+
 ## Related Documentation
 - **[Database Schema](DATABASE_SCHEMA.md)**: Complete table structures and relationships
 - **[Database Migrations](DATABASE_MIGRATIONS.md)**: Migration system and procedures
@@ -147,5 +180,5 @@ When deactivating a manufacturer:
 
 ---
 
-**Last Updated**: August 30, 2025  
+**Last Updated**: August 30, 2025 (Wood Arrow Calculator Integration Fix)  
 **Next Review**: Next major system update

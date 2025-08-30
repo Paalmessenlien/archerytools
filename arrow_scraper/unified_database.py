@@ -240,8 +240,12 @@ class UnifiedDatabase:
     
     # Arrow methods (enhanced to work with unified database)
     
-    def search_arrows(self, manufacturer: str = None, spine_min: int = None, 
-                     spine_max: int = None, limit: int = 50, include_inactive: bool = False) -> List[Dict[str, Any]]:
+    def search_arrows(self, manufacturer: str = None, arrow_type: str = None, 
+                     material: str = None, spine_min: int = None, spine_max: int = None,
+                     gpi_min: float = None, gpi_max: float = None,
+                     diameter_min: float = None, diameter_max: float = None,
+                     diameter_category: str = None, model_search: str = None,
+                     limit: int = 50, include_inactive: bool = False) -> List[Dict[str, Any]]:
         """Search arrows with enhanced filtering and manufacturer active status filtering"""
         conditions = []
         params = []
@@ -253,6 +257,18 @@ class UnifiedDatabase:
         if manufacturer:
             conditions.append("a.manufacturer LIKE ?")
             params.append(f"%{manufacturer}%")
+            
+        if arrow_type:
+            conditions.append("a.arrow_type = ?")
+            params.append(arrow_type)
+            
+        if material:
+            conditions.append("a.material = ?")
+            params.append(material)
+            
+        if model_search:
+            conditions.append("(a.model_name LIKE ? OR a.description LIKE ?)")
+            params.extend([f"%{model_search}%", f"%{model_search}%"])
         
         if spine_min:
             conditions.append("ss.spine >= ?")
@@ -261,6 +277,22 @@ class UnifiedDatabase:
         if spine_max:
             conditions.append("ss.spine <= ?")
             params.append(spine_max)
+            
+        if gpi_min:
+            conditions.append("ss.gpi_weight >= ?")
+            params.append(gpi_min)
+            
+        if gpi_max:
+            conditions.append("ss.gpi_weight <= ?")
+            params.append(gpi_max)
+            
+        if diameter_min:
+            conditions.append("ss.outer_diameter >= ?")
+            params.append(diameter_min)
+            
+        if diameter_max:
+            conditions.append("ss.outer_diameter <= ?")
+            params.append(diameter_max)
         
         where_clause = " AND ".join(conditions) if conditions else "1=1"
         
@@ -272,7 +304,7 @@ class UnifiedDatabase:
                 JOIN manufacturers m ON a.manufacturer = m.name
                 LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
                 WHERE {where_clause}
-                ORDER BY a.manufacturer, a.model_name
+                ORDER BY a.manufacturer, a.model_name, ss.spine
                 LIMIT ?
             ''', params + [limit])
             return [dict(row) for row in cursor.fetchall()]
