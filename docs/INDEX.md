@@ -422,6 +422,16 @@ curl http://localhost/health         # Production mode health check
 - **Maintenance Operations**: VACUUM, ANALYZE, and optimization with real-time progress
 - **Production Diagnostic Tools**: Robust scripts for troubleshooting production database issues
 
+#### [Admin Statistics and Updates System](ADMIN_STATISTICS_UPDATES_SYSTEM.md) 📊
+**NEW (August 30, 2025)** - Comprehensive usage analytics and development transparency:
+- **Admin Usage Statistics Dashboard**: Complete metrics including users, bow setups, equipment, and arrows with real-time charts
+- **Platform Updates Page**: Git commit timeline with automatic commit type classification and developer activity
+- **Data Visualizations**: Chart.js integration with arrows by manufacturer and equipment by category charts
+- **Navigation Integration**: Statistics link in admin section, updates link in about section
+- **Auto-refresh System**: 30-second refresh intervals with manual refresh capabilities
+- **Authentication Security**: Admin-only statistics access with JWT token validation for updates
+- **API Composable Fix**: Resolved $fetch compatibility issues with project's useApi() pattern
+
 ### New Calculation System (August 2025)
 - ✅ **Chronograph Data Integration**: Complete system for storing and utilizing measured arrow speeds
 - ✅ **Enhanced Speed Calculations**: Sophisticated 3-tier calculation hierarchy with data priority
