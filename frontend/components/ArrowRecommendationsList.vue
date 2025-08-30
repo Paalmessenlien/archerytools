@@ -461,14 +461,14 @@ const filteredRecommendations = computed(() => {
         }
         return diameterCompDesc
       case 'weight_asc':
-        const weightCompAsc = getNumericWeight(a.arrow) - getNumericWeight(b.arrow)
+        const weightCompAsc = getConfiguredArrowWeight(a.arrow) - getConfiguredArrowWeight(b.arrow)
         // Secondary sort by match score if weights are equal
         if (weightCompAsc === 0) {
           return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
         }
         return weightCompAsc
       case 'weight_desc':
-        const weightCompDesc = getNumericWeight(b.arrow) - getNumericWeight(a.arrow)
+        const weightCompDesc = getConfiguredArrowWeight(b.arrow) - getConfiguredArrowWeight(a.arrow)
         // Secondary sort by match score if weights are equal
         if (weightCompDesc === 0) {
           return (b.match_percentage || b.compatibility_score || 0) - (a.match_percentage || a.compatibility_score || 0)
@@ -660,6 +660,13 @@ const getNumericWeight = (arrow) => {
   }
   
   return 0
+}
+
+const getConfiguredArrowWeight = (arrow) => {
+  // Calculate the total configured arrow weight for sorting purposes
+  // This matches the weight calculation used in calculateTotalArrowWeight
+  const userArrowLength = cleanNumericValue(bowConfig.value?.arrow_length) || 32
+  return calculateTotalArrowWeight(arrow, userArrowLength)
 }
 
 const getNumericDiameter = (arrow) => {
