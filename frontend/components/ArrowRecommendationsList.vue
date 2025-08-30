@@ -804,39 +804,20 @@ const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) =>
     console.log(`🎯 Estimated GPI weight for ${arrow.manufacturer} ${arrow.model_name} (${spineSpec.spine} spine): ${gpiWeight} GPI`)
   }
   
-  // Arrow base length (from manufacturer database) - used for WEIGHT calculation only
-  // This is different from user's calculator length which is used for tuning/spine calculations
-  let arrowBaseLength = null
+  // Use user's actual arrow length for weight calculation (not manufacturer base length)
+  // This provides realistic weight estimates for cut arrows
+  const userArrowLength = cleanNumericValue(arrowLength) || 32
   
-  // First priority: Use arrow's own base length from database
-  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
-    // Use the most common/middle length option from arrow's database specifications
-    const sortedLengths = [...spineSpec.length_options].sort((a, b) => a - b)
-    const rawArrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
-    arrowBaseLength = cleanNumericValue(rawArrowBaseLength)
-    console.log(`📏 Using arrow's base length from database: "${rawArrowBaseLength}" → Cleaned: ${arrowBaseLength}" (options: ${spineSpec.length_options.join(', ')})`)
-  } else {
-    // Arrow has no base length data - use spine-based manufacturer defaults
-    if (spineSpec.spine <= 300) {
-      arrowBaseLength = 28  // Very stiff spines typically come in shorter lengths
-    } else if (spineSpec.spine <= 350) {
-      arrowBaseLength = 29  // Standard target/hunting length
-    } else if (spineSpec.spine <= 400) {
-      arrowBaseLength = 30  // Medium spine hunting arrows
-    } else {
-      arrowBaseLength = 31  // Weak spine traditional/longer arrows
-    }
-    console.log(`⚠️  Arrow has no base length data - using spine-based default: ${arrowBaseLength}" (spine: ${spineSpec.spine})`)
-  }
-  
-  // Ensure we have a valid base length for calculation
-  if (!arrowBaseLength || arrowBaseLength <= 0) {
-    console.error(`❌ Cannot calculate weight - no valid base length for ${arrow.manufacturer} ${arrow.model_name}`)
+  // Validate user length is reasonable
+  if (userArrowLength <= 0 || userArrowLength > 36) {
+    console.error(`❌ Invalid user arrow length: ${userArrowLength}" for ${arrow.manufacturer} ${arrow.model_name}`)
     return 0
   }
   
-  // Calculate shaft weight using arrow's base length (not user's calculator length)
-  const shaftWeight = gpiWeight * arrowBaseLength
+  // Calculate shaft weight using user's actual arrow length (matches bow setup calculation)
+  const shaftWeight = gpiWeight * userArrowLength
+  
+  console.log(`📏 Using user's arrow length for weight calculation: ${userArrowLength}" (instead of manufacturer base length)`)
   
   // Add component weights from user's bow configuration
   const pointWeight = componentWeights.point_weight || bowConfig.value?.point_weight || 125
@@ -852,7 +833,7 @@ const calculateTotalArrowWeight = (arrow, arrowLength, componentWeights = {}) =>
   const totalWeight = shaftWeight + pointWeight + insertWeight + nockWeight + bushingWeight + totalVaneWeight
   
   console.log(`⚖️  Weight calculation for ${arrow.manufacturer} ${arrow.model_name}:`)
-  console.log(`   Shaft: ${gpiWeight} GPI × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)} gn`)
+  console.log(`   Shaft: ${gpiWeight} GPI × ${userArrowLength}" = ${shaftWeight.toFixed(1)} gn`)
   console.log(`   Components: Point(${pointWeight}) + Insert(${insertWeight}) + Nock(${nockWeight}) + Vanes(${totalVaneWeight.toFixed(1)}) = ${(pointWeight + insertWeight + nockWeight + totalVaneWeight).toFixed(1)} gn`)
   console.log(`   Total: ${totalWeight.toFixed(1)} gn`)
   
@@ -882,33 +863,15 @@ const getWeightCalculationDebug = (arrow, arrowLength) => {
     gpiSource = 'estimated'
   }
   
-  // Arrow base length calculation
-  let arrowBaseLength = null
-  let lengthSource = 'unknown'
+  // Use user's actual arrow length for debug calculation consistency
+  const userArrowLength = cleanNumericValue(arrowLength) || 32
   
-  if (spineSpec.length_options && spineSpec.length_options.length > 0) {
-    const sortedLengths = [...spineSpec.length_options].sort((a, b) => a - b)
-    arrowBaseLength = sortedLengths[Math.floor(sortedLengths.length / 2)]
-    lengthSource = `database (${spineSpec.length_options.join(', ')})`
-  } else {
-    if (spineSpec.spine <= 300) {
-      arrowBaseLength = 28
-    } else if (spineSpec.spine <= 350) {
-      arrowBaseLength = 29
-    } else if (spineSpec.spine <= 400) {
-      arrowBaseLength = 30
-    } else {
-      arrowBaseLength = 31
-    }
-    lengthSource = `spine-based default`
+  if (userArrowLength <= 0 || userArrowLength > 36) {
+    return `ERROR: Invalid user arrow length: ${userArrowLength}" for ${arrow.manufacturer} ${arrow.model_name}`
   }
   
-  if (!arrowBaseLength || arrowBaseLength <= 0) {
-    return `ERROR: No valid base length for ${arrow.manufacturer} ${arrow.model_name}`
-  }
-  
-  // Calculate components
-  const shaftWeight = gpiWeight * arrowBaseLength
+  // Calculate components using user's actual length
+  const shaftWeight = gpiWeight * userArrowLength
   const pointWeight = bowConfig.value?.point_weight || 125
   const insertWeight = bowConfig.value?.insert_weight || 0
   const nockWeight = bowConfig.value?.nock_weight || 10
@@ -922,8 +885,8 @@ const getWeightCalculationDebug = (arrow, arrowLength) => {
   return `${arrow.manufacturer} ${arrow.model_name}
 Raw Length Input: "${arrowLength}" → Cleaned: ${cleanedLength}
 GPI: ${gpiWeight} (${gpiSource})
-Length: ${arrowBaseLength}" (${lengthSource})
-Shaft: ${gpiWeight} × ${arrowBaseLength}" = ${shaftWeight.toFixed(1)}gn
+Length: ${userArrowLength}" (user actual length)
+Shaft: ${gpiWeight} × ${userArrowLength}" = ${shaftWeight.toFixed(1)}gn
 Point: ${pointWeight}gn
 Insert: ${insertWeight}gn
 Nock: ${nockWeight}gn
