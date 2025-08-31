@@ -101,6 +101,7 @@ class ArrowDataValidator:
         self._validate_material_standardization()
         self._validate_spine_data_quality()
         self._validate_manufacturer_integration()
+        self._validate_duplicate_detection()
         self._validate_data_field_formatting()
         self._validate_calculator_compatibility()
         
@@ -336,6 +337,133 @@ class ArrowDataValidator:
                     current_value="inactive",
                     suggested_fix="Reactivate manufacturer or migrate arrows",
                     sql_fix=f"UPDATE manufacturers SET is_active = 1 WHERE name = '{row['manufacturer']}';"
+                ))
+    
+    def _validate_duplicate_detection(self):
+        """Detect duplicate arrow entries and spine specifications"""
+        print("🔍 Detecting duplicate arrows and spine specifications...")
+        
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # 1. Detect duplicate arrows (same manufacturer + model_name)
+            cursor.execute('''
+                SELECT manufacturer, model_name, COUNT(*) as count, GROUP_CONCAT(id) as arrow_ids
+                FROM arrows 
+                WHERE manufacturer IS NOT NULL AND model_name IS NOT NULL
+                GROUP BY LOWER(TRIM(manufacturer)), LOWER(TRIM(model_name))
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC
+            ''')
+            
+            for row in cursor.fetchall():
+                arrow_ids = row['arrow_ids'].split(',')
+                # Report all but the first arrow as duplicates
+                for arrow_id in arrow_ids[1:]:
+                    self.validation_issues.append(ValidationIssue(
+                        category="Duplicate Detection",
+                        severity="warning",
+                        arrow_id=int(arrow_id),
+                        manufacturer=row['manufacturer'],
+                        model_name=row['model_name'],
+                        field="duplicate_arrow",
+                        issue=f"Duplicate arrow entry ({row['count']} total found)",
+                        current_value=f"Arrow ID {arrow_id}",
+                        suggested_fix="Remove duplicate or merge specifications",
+                        sql_fix=f"-- DELETE FROM arrows WHERE id = {arrow_id}; -- Review before deletion"
+                    ))
+            
+            # 2. Detect duplicate spine specifications for same arrow
+            cursor.execute('''
+                SELECT ss.arrow_id, a.manufacturer, a.model_name, ss.spine, COUNT(*) as count, 
+                       GROUP_CONCAT(ss.id) as spine_ids
+                FROM spine_specifications ss
+                JOIN arrows a ON ss.arrow_id = a.id
+                GROUP BY ss.arrow_id, ss.spine
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC
+            ''')
+            
+            for row in cursor.fetchall():
+                spine_ids = row['spine_ids'].split(',')
+                # Report all but the first spine spec as duplicates
+                for spine_id in spine_ids[1:]:
+                    self.validation_issues.append(ValidationIssue(
+                        category="Duplicate Detection",
+                        severity="warning",
+                        arrow_id=row['arrow_id'],
+                        manufacturer=row['manufacturer'],
+                        model_name=row['model_name'],
+                        field="duplicate_spine_spec",
+                        issue=f"Duplicate spine specification (spine {row['spine']}, {row['count']} total)",
+                        current_value=f"Spine spec ID {spine_id}",
+                        suggested_fix="Remove duplicate spine specification",
+                        sql_fix=f"DELETE FROM spine_specifications WHERE id = {spine_id};"
+                    ))
+            
+            # 3. Detect near-duplicate arrows (similar names, fuzzy matching)
+            cursor.execute('''
+                SELECT a1.id as id1, a1.manufacturer as man1, a1.model_name as model1,
+                       a2.id as id2, a2.manufacturer as man2, a2.model_name as model2
+                FROM arrows a1
+                JOIN arrows a2 ON a1.id < a2.id
+                WHERE LOWER(TRIM(a1.manufacturer)) = LOWER(TRIM(a2.manufacturer))
+                  AND (
+                    -- Very similar model names (minor differences)
+                    LOWER(REPLACE(REPLACE(a1.model_name, ' ', ''), '-', '')) = 
+                    LOWER(REPLACE(REPLACE(a2.model_name, ' ', ''), '-', ''))
+                    OR
+                    -- One model name contains the other
+                    (LENGTH(a1.model_name) > 3 AND LENGTH(a2.model_name) > 3 AND
+                     (LOWER(a1.model_name) LIKE '%' || LOWER(a2.model_name) || '%' OR
+                      LOWER(a2.model_name) LIKE '%' || LOWER(a1.model_name) || '%'))
+                  )
+                LIMIT 50
+            ''')
+            
+            for row in cursor.fetchall():
+                self.validation_issues.append(ValidationIssue(
+                    category="Duplicate Detection",
+                    severity="info",
+                    arrow_id=row['id2'],
+                    manufacturer=row['man2'],
+                    model_name=row['model2'],
+                    field="near_duplicate",
+                    issue=f"Potential duplicate of Arrow ID {row['id1']} ({row['model1']})",
+                    current_value=f"Similar to: {row['model1']}",
+                    suggested_fix="Review and merge if truly duplicate",
+                    sql_fix=f"-- Potential duplicate: Compare Arrow {row['id1']} vs {row['id2']}"
+                ))
+            
+            # 4. Detect arrows with identical specifications but different IDs
+            cursor.execute('''
+                SELECT ss1.arrow_id as arrow1, ss2.arrow_id as arrow2,
+                       a1.manufacturer, a1.model_name as model1, a2.model_name as model2,
+                       ss1.spine, ss1.outer_diameter, ss1.gpi_weight
+                FROM spine_specifications ss1
+                JOIN spine_specifications ss2 ON ss1.id < ss2.id
+                JOIN arrows a1 ON ss1.arrow_id = a1.id
+                JOIN arrows a2 ON ss2.arrow_id = a2.id
+                WHERE LOWER(TRIM(a1.manufacturer)) = LOWER(TRIM(a2.manufacturer))
+                  AND ss1.spine = ss2.spine
+                  AND ABS(COALESCE(ss1.outer_diameter, 0) - COALESCE(ss2.outer_diameter, 0)) < 0.001
+                  AND ABS(COALESCE(ss1.gpi_weight, 0) - COALESCE(ss2.gpi_weight, 0)) < 0.1
+                  AND ss1.arrow_id != ss2.arrow_id
+                LIMIT 25
+            ''')
+            
+            for row in cursor.fetchall():
+                self.validation_issues.append(ValidationIssue(
+                    category="Duplicate Detection", 
+                    severity="info",
+                    arrow_id=row['arrow2'],
+                    manufacturer=row['manufacturer'],
+                    model_name=row['model2'],
+                    field="identical_specifications",
+                    issue=f"Identical specs to {row['model1']} (spine {row['spine']}, diameter {row['outer_diameter']}, weight {row['gpi_weight']})",
+                    current_value="Identical specifications",
+                    suggested_fix="Review if truly different arrows or consolidate",
+                    sql_fix=f"-- Review: Arrow {row['arrow1']} vs {row['arrow2']} have identical specs"
                 ))
     
     def _validate_data_field_formatting(self):

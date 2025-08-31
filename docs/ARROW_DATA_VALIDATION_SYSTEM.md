@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Arrow Data Validation System is a comprehensive tool integrated into the ArrowTuner admin panel that identifies and fixes data quality issues in the arrow database. This system ensures arrow specifications are accurate, consistently formatted, and compatible with the calculator engine.
+The Arrow Data Validation System is a comprehensive tool integrated into the ArrowTuner admin panel that identifies and fixes data quality issues in the arrow database. This system provides 7 validation categories to ensure arrow specifications are accurate, consistently formatted, duplicate-free, and compatible with the calculator engine.
 
 ## Features
 
@@ -31,13 +31,20 @@ The Arrow Data Validation System is a comprehensive tool integrated into the Arr
    - Validates active manufacturer status filtering
    - Ensures proper manufacturer-arrow relationships
 
-5. **Data Field Formatting**
+5. **Duplicate Detection**
+   - Identifies exact duplicate arrows (same manufacturer + model name)
+   - Detects duplicate spine specifications for the same arrow
+   - Finds near-duplicate arrows with similar names (fuzzy matching)
+   - Discovers arrows with identical specifications but different IDs
+   - Provides safe deletion recommendations with review comments
+
+6. **Data Field Formatting**
    - Detects problematic formatting patterns that break calculator logic
    - Identifies European decimal notation (e.g., "33,5" → "33.5")
    - Validates length_options, outer_diameter, and gpi_weight formatting
    - Catches problematic comma patterns like "31, 5"
 
-6. **Calculator Compatibility**
+7. **Calculator Compatibility**
    - Tests JSON parsing compatibility
    - Validates field data types and ranges
    - Ensures calculator can process arrow specifications
