@@ -11196,12 +11196,11 @@ def execute_arrow_validation_fixes(current_user):
         backup_name = f"validation_fixes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         print(f"🛡️ Creating automatic backup before validation fixes: {backup_name}")
-        backup_result = backup_manager.create_backup(backup_name, description="Automatic backup before arrow validation fixes")
+        backup_path = backup_manager.create_backup(backup_name)
         
-        if not backup_result['success']:
+        if not backup_path:
             return jsonify({
-                'error': 'Failed to create backup before applying fixes',
-                'backup_error': backup_result.get('error', 'Unknown backup error')
+                'error': 'Failed to create backup before applying fixes'
             }), 500
         
         # Run validation to get current issues
@@ -11243,7 +11242,7 @@ def execute_arrow_validation_fixes(current_user):
         
         return jsonify({
             'success': True,
-            'backup_created': backup_result['backup_id'],
+            'backup_created': backup_path,
             'backup_name': backup_name,
             'fixes_applied': fixes_applied,
             'errors': errors,
@@ -11328,12 +11327,11 @@ def merge_duplicate_arrows(current_user):
         backup_name = f"duplicate_merge_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         print(f"🛡️ Creating backup before duplicate merge: {backup_name}")
-        backup_result = backup_manager.create_backup(backup_name, description="Automatic backup before duplicate arrow merge")
+        backup_path = backup_manager.create_backup(backup_name)
         
-        if not backup_result['success']:
+        if not backup_path:
             return jsonify({
-                'error': 'Failed to create backup before merge operation',
-                'backup_error': backup_result.get('error', 'Unknown backup error')
+                'error': 'Failed to create backup before merge operation'
             }), 500
         
         # Execute merge operation
@@ -11342,7 +11340,7 @@ def merge_duplicate_arrows(current_user):
         
         return jsonify({
             'success': True,
-            'backup_created': backup_result['backup_id'],
+            'backup_created': backup_path,
             'backup_name': backup_name,
             'merged_count': merge_result['merged_count'],
             'merge_operations': merge_result['merge_operations'],
