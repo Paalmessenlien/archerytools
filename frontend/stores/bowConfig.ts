@@ -148,7 +148,8 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       bowConfig.value.draw_length,
       bowConfig.value.bow_type,
       bowConfig.value.arrow_length,
-      bowConfig.value.point_weight
+      bowConfig.value.point_weight,
+      bowConfig.value.string_material
     ]
   })
 

@@ -9,6 +9,7 @@ This guide provides a comprehensive overview of the Archery Tools platform archi
 - [Development Workflows](#development-workflows)
 - [Testing Strategy](#testing-strategy)
 - [Deployment Process](#deployment-process)
+- [Recent Updates](#recent-updates)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -562,6 +563,28 @@ curl https://yourdomain.com/api/health
 - [ ] Test core user workflows
 - [ ] Verify backup system functioning
 - [ ] Performance monitoring active
+
+---
+
+## Recent Updates
+
+### August 2025: Critical Spine Calculation Fixes
+
+**Major fixes to spine calculation accuracy** - See [Spine Calculation Fixes](SPINE_CALCULATION_FIXES_AUGUST_2025.md) for details:
+
+1. **Arrow Length Direction Fixed**: Longer arrows now correctly require stiffer spines (lower numbers)
+   - Fixed backwards length adjustment logic in spine calculations
+   - 28"→700, 29"→675, 30"→650, 31"→625 (correctly decreasing)
+
+2. **Wood Arrow System Implemented**: Wood arrows now use proper pound test values
+   - Wood arrows return spine values like "40#" instead of deflection values like "700"
+   - Proper material_preference parameter handling throughout calculation chain
+
+3. **Database Schema Updates**: Added migrations for new functionality
+   - Migration 051: `string_material` column for string type effects
+   - Migration 052: `wood_species` column for wood arrow specifications
+
+**Validation**: All fixes validated against German industry standards and real-world archery physics.
 
 ---
 

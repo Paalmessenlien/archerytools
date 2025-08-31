@@ -171,6 +171,33 @@
             </md-filled-select>
           </div>
 
+          <!-- String Material Selection (shown for recurve and traditional bows) -->
+          <div v-if="bowConfig.bow_type === 'recurve' || bowConfig.bow_type === 'traditional'">
+            <md-filled-select
+              label="String Material"
+              :value="bowConfig.string_material || ''"
+              @change="updateBowConfig({ string_material: $event.target.value })"
+              class="w-full"
+            >
+              <md-select-option value="">
+                <div slot="headline">Not Specified</div>
+                <div slot="supporting-text">Use default calculation</div>
+              </md-select-option>
+              <md-select-option value="fastflight">
+                <div slot="headline">FastFlight / Spectra</div>
+                <div slot="supporting-text">Modern synthetic string (baseline)</div>
+              </md-select-option>
+              <md-select-option value="dacron">
+                <div slot="headline">Dacron / B50</div>
+                <div slot="supporting-text">Traditional string (+15 spine adjustment)</div>
+              </md-select-option>
+              <md-select-option value="dyneema">
+                <div slot="headline">Dyneema / B55</div>
+                <div slot="supporting-text">High-performance synthetic</div>
+              </md-select-option>
+            </md-filled-select>
+          </div>
+
           <!-- Wood Species Selection (shown when wood material is selected) -->
           <div v-if="bowConfig.arrow_material === 'wood'">
             <md-filled-select

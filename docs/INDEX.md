@@ -49,6 +49,13 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Spine Calculation Fixes - August 2025](SPINE_CALCULATION_FIXES_AUGUST_2025.md) ⚡ CRITICAL
+Critical fixes to spine calculation accuracy:
+- **Arrow Length Direction Fix**: Corrected backwards length adjustment logic
+- **Wood Arrow System**: Proper pound test values (40#) instead of deflection values
+- **Database Schema**: Added string_material and wood_species columns
+- **Validation**: Verified against German industry standards and physics principles
+
 #### [Archery Calculations Guide](ARCHERY_CALCULATIONS_GUIDE.md) ⚡ ENHANCED
 Professional archery physics calculations and algorithms:
 - **Industry-Leading Speed Estimation**: IBO-compliant formulas validated against chronograph data with proper weight and draw adjustments

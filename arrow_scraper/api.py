@@ -1437,24 +1437,70 @@ def get_arrow_types():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type):
-    """Simple spine calculation fallback when tuning system is unavailable"""
-    # Basic spine calculation based on draw weight and arrow length
-    base_spine = draw_weight * 12.5
+def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, string_material=None, material_preference=None):
+    """Simple spine calculation fallback - corrected based on German industry standards"""
+    # Check for wood arrow calculation first
+    if material_preference and material_preference.lower() == 'wood':
+        # Wood arrows use pound test values (40#, 45#, 50#, etc.)
+        wood_spine = round(draw_weight)  # Simple conversion: 40lbs = 40# spine
+        
+        return {
+            'calculated_spine': f"{wood_spine}#",
+            'spine_range': {
+                'minimum': f"{max(wood_spine - 5, 25)}#",
+                'optimal': f"{wood_spine}#", 
+                'maximum': f"{wood_spine + 5}#"
+            },
+            'calculations': {
+                'base_spine': wood_spine,
+                'adjustments': {
+                    'bow_weight_conversion': wood_spine,
+                    'system_type': 'wood_pound_test',
+                    'bow_type': bow_type,
+                    'material': 'wood'
+                },
+                'total_adjustment': 0,
+                'bow_type': bow_type,
+                'confidence': 'high'
+            },
+            'notes': [
+                'Wood arrow spine calculation using pound test system',
+                f'Recommended spine: {wood_spine}# (pound test)',
+                'Range represents typical wood arrow spine tolerances'
+            ],
+            'source': 'wood_arrow_calculator'
+        }
     
-    # Adjust for arrow length (longer = weaker/higher spine number)
+    # Bow-type specific base calculations (corrected from German standards)
+    if bow_type == 'compound':
+        # Compound bows: more aggressive formula for faster, stiffer requirements
+        base_spine = draw_weight * 12.5
+    elif bow_type == 'recurve':
+        # Recurve bows: German formula spine = 1100 - (draw_weight × 10)
+        base_spine = 1100 - (draw_weight * 10)
+    elif bow_type == 'traditional':
+        # Traditional bows: same as recurve (German system doesn't differentiate)
+        base_spine = 1100 - (draw_weight * 10)
+    else:
+        # Default to compound calculation
+        base_spine = draw_weight * 12.5
+    
+    # Adjust for arrow length (longer = stiffer needed/lower spine number)
     length_adjustment = (arrow_length - 28) * 25
-    base_spine += length_adjustment
+    base_spine -= length_adjustment
     
     # Adjust for point weight (heavier = weaker/higher spine number)
     point_adjustment = (point_weight - 125) * 0.5
     base_spine += point_adjustment
     
-    # Bow type adjustments
-    if bow_type == 'recurve':
-        base_spine += 50  # Recurve typically needs weaker arrows
-    elif bow_type == 'traditional':
-        base_spine += 100  # Traditional bows need even weaker arrows
+    # String material adjustment (based on German calculator)
+    string_adjustment = 0
+    if string_material:
+        if string_material.lower() in ['dacron', 'b50']:
+            string_adjustment = 15  # Dacron strings need weaker arrows (higher spine)
+        elif string_material.lower() in ['fastflight', 'spectra', 'dyneema', 'b55']:
+            string_adjustment = 0   # FastFlight baseline
+    base_spine += string_adjustment
     
     calculated_spine = round(base_spine)
     
@@ -1466,16 +1512,26 @@ def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type):
             'optimal': calculated_spine,
             'maximum': calculated_spine + 25
         },
-        'adjustments': {
-            'length_adjustment': length_adjustment,
-            'point_weight_adjustment': point_adjustment,
-            'bow_type': bow_type
+        'calculations': {
+            'base_spine': base_spine + length_adjustment - point_adjustment - string_adjustment,
+            'adjustments': {
+                'length_adjustment': -length_adjustment,  # Negative because we subtract
+                'point_weight_adjustment': point_adjustment,
+                'string_material_adjustment': string_adjustment,
+                'bow_type_method': f'{bow_type}_formula',
+                'bow_type': bow_type,
+                'string_material': string_material or 'not_specified'
+            },
+            'total_adjustment': -length_adjustment + point_adjustment + string_adjustment,
+            'bow_type': bow_type,
+            'confidence': 'high'  # Improved confidence with corrected formula
         },
-        'base_spine': base_spine - length_adjustment - point_adjustment,
-        'total_adjustment': length_adjustment + point_adjustment,
-        'bow_type': bow_type,
-        'confidence': 'medium',
-        'notes': ['Calculated using simplified spine formula']
+        'notes': [
+            'Calculated using corrected spine formula',
+            f'Base formula: {bow_type}_spine_formula',
+            'String material factor included' if string_material else 'String material not specified'
+        ],
+        'source': 'corrected_simple_calculator'
     }
 
 # Tuning Calculation API
@@ -1510,6 +1566,7 @@ def calculate_spine():
             draw_length=effective_draw_length,  # Use corrected draw length
             nock_weight=float(data.get('nock_weight', 10.0)),
             fletching_weight=float(data.get('fletching_weight', 15.0)),
+            string_material=data.get('string_material'),  # Add string material parameter
             material_preference=data.get('arrow_material')
         )
         
@@ -11504,9 +11561,9 @@ def calculate_effective_bow_weight(draw_weight, arrow_length, point_weight, bow_
     """Calculate effective bow weight with adjustments"""
     effective_weight = draw_weight
     
-    # Arrow length adjustment (5 lbs per inch difference from 28")
+    # Arrow length adjustment (5 lbs per inch difference from 28") - longer = stiffer needed
     length_adjustment = (arrow_length - 28) * 5
-    effective_weight += length_adjustment
+    effective_weight -= length_adjustment
     
     # Point weight adjustment (5 lbs per 25 grain difference from 125gr)
     point_adjustment = ((point_weight - 125) / 25) * 5
