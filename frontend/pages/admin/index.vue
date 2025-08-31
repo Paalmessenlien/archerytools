@@ -700,6 +700,322 @@
             </div>
           </div>
         </md-elevated-card>
+        
+        <!-- Arrow Data Validation -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <i class="fas fa-check-circle mr-2 text-purple-600"></i>
+                  Arrow Data Validation
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  Validate arrow database quality and identify issues preventing arrows from displaying in calculator
+                </p>
+              </div>
+            </div>
+            
+            <!-- Validation Controls -->
+            <div class="flex gap-4 mb-6">
+              <CustomButton
+                @click="runValidation"
+                :disabled="validation.isLoading"
+                variant="filled"
+                class="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                <i class="fas fa-play mr-2"></i>
+                {{ validation.isLoading ? 'Running Validation...' : 'Run Data Validation' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="validation.lastReport"
+                @click="generateSqlFixes"
+                :disabled="validation.isGeneratingFixes"
+                variant="outlined"
+                class="text-purple-600 border-purple-300"
+              >
+                <i class="fas fa-code mr-2"></i>
+                {{ validation.isGeneratingFixes ? 'Generating...' : 'Generate SQL Fixes' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="validation.lastReport"
+                @click="clearValidationResults"
+                variant="outlined"
+                class="text-gray-600 border-gray-300"
+              >
+                <i class="fas fa-trash mr-2"></i>
+                Clear Results
+              </CustomButton>
+            </div>
+            
+            <!-- Loading Progress -->
+            <div v-if="validation.isLoading" class="mb-6">
+              <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                <div class="flex items-center">
+                  <i class="fas fa-spinner fa-spin text-purple-600 dark:text-purple-400 mr-3"></i>
+                  <div>
+                    <h4 class="text-sm font-medium text-purple-800 dark:text-purple-200">Data Validation Running</h4>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                      Analyzing arrow database for quality issues... This may take 30-60 seconds.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Validation Results -->
+            <div v-if="validation.lastReport" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Validation Report</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+                    <div class="font-medium text-blue-800 dark:text-blue-200">Total Arrows</div>
+                    <div class="text-2xl font-bold text-blue-600">{{ validation.lastReport.total_arrows.toLocaleString() }}</div>
+                  </div>
+                  <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded">
+                    <div class="font-medium text-red-800 dark:text-red-200">Critical Issues</div>
+                    <div class="text-2xl font-bold text-red-600">{{ validation.lastReport.critical_issues }}</div>
+                  </div>
+                  <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded">
+                    <div class="font-medium text-yellow-800 dark:text-yellow-200">Warning Issues</div>
+                    <div class="text-2xl font-bold text-yellow-600">{{ validation.lastReport.warning_issues }}</div>
+                  </div>
+                  <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded">
+                    <div class="font-medium text-green-800 dark:text-green-200">Info Issues</div>
+                    <div class="text-2xl font-bold text-green-600">{{ validation.lastReport.info_issues }}</div>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-gray-900/20 p-3 rounded">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Calculator Impact</div>
+                    <div class="text-2xl font-bold text-gray-600">{{ validation.lastReport.calculator_impact.estimated_calculator_accuracy.toFixed(1) }}%</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Issues by Category -->
+              <div v-if="Object.keys(validation.lastReport.issues_by_category).length > 0" class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Issues by Category</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div 
+                    v-for="(count, category) in validation.lastReport.issues_by_category" 
+                    :key="category"
+                    class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded"
+                  >
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ category }}</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ count }} issues</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Fix Recommendations -->
+              <div v-if="validation.lastReport.fix_recommendations.length > 0" class="p-4">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Recommended Actions</h5>
+                <ul class="space-y-2">
+                  <li 
+                    v-for="(recommendation, index) in validation.lastReport.fix_recommendations" 
+                    :key="index"
+                    class="flex items-start text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    <span class="text-green-500 mr-2">•</span>
+                    <span>{{ recommendation }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- Detailed Issues List -->
+            <div v-if="validation.lastReport && validation.lastReport.issues && validation.lastReport.issues.length > 0" class="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100">Problematic Arrows ({{ validation.lastReport.issues.length }} issues)</h5>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Specific arrows with data quality issues</p>
+              </div>
+              
+              <div class="max-h-96 overflow-y-auto">
+                <div v-for="(issue, index) in validation.lastReport.issues" :key="index" class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                  <div class="p-4">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                          <span 
+                            :class="{
+                              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': issue.severity === 'critical',
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': issue.severity === 'warning',
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': issue.severity === 'info'
+                            }"
+                            class="px-2 py-1 rounded-full text-xs font-medium"
+                          >
+                            <i :class="{
+                              'fas fa-exclamation-triangle': issue.severity === 'critical',
+                              'fas fa-exclamation-circle': issue.severity === 'warning', 
+                              'fas fa-info-circle': issue.severity === 'info'
+                            }" class="mr-1"></i>
+                            {{ issue.severity.toUpperCase() }}
+                          </span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400">{{ issue.category }}</span>
+                        </div>
+                        
+                        <div class="mb-2">
+                          <h6 class="font-medium text-gray-900 dark:text-gray-100">
+                            Arrow ID {{ issue.arrow_id }}: {{ issue.manufacturer }} {{ issue.model_name }}
+                          </h6>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Field: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">{{ issue.field }}</code>
+                          </p>
+                        </div>
+                        
+                        <div class="mb-2">
+                          <p class="text-sm text-red-600 dark:text-red-400">
+                            <i class="fas fa-bug mr-1"></i>
+                            Problem: {{ issue.issue }}
+                          </p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Current value: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">{{ issue.current_value }}</code>
+                          </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <p class="text-sm text-green-600 dark:text-green-400">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Suggested fix: {{ issue.suggested_fix }}
+                          </p>
+                          <div v-if="issue.sql_fix && !issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded">
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">SQL Fix:</p>
+                            <code class="text-xs text-gray-800 dark:text-gray-200 block mb-3 font-mono">{{ issue.sql_fix }}</code>
+                            
+                            <div class="flex items-center space-x-2">
+                              <CustomButton
+                                @click="executeIndividualFix(issue, index)"
+                                :disabled="issue.executing"
+                                variant="filled"
+                                size="small"
+                                class="bg-green-600 text-white hover:bg-green-700 text-xs"
+                              >
+                                <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-play'" class="mr-1"></i>
+                                {{ issue.executing ? 'Running...' : 'Run Fix' }}
+                              </CustomButton>
+                              
+                              <CustomButton
+                                @click="copyIndividualSql(issue.sql_fix)"
+                                variant="outlined"
+                                size="small"
+                                class="text-gray-600 border-gray-300 text-xs"
+                              >
+                                <i class="fas fa-copy mr-1"></i>
+                                Copy SQL
+                              </CustomButton>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Manual Edit Field -->
+                        <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                          <label class="block text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">
+                            Manual Edit - {{ issue.field }}:
+                          </label>
+                          <div class="flex items-center space-x-2">
+                            <input
+                              v-model="issue.manual_value"
+                              type="text"
+                              :placeholder="String(issue.current_value)"
+                              class="flex-1 text-xs px-2 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            />
+                            <CustomButton
+                              @click="executeManualFix(issue, index)"
+                              :disabled="issue.executing || !issue.manual_value"
+                              variant="filled"
+                              size="small"
+                              class="bg-blue-600 text-white hover:bg-blue-700 text-xs"
+                            >
+                              <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-edit'" class="mr-1"></i>
+                              {{ issue.executing ? 'Updating...' : 'Update' }}
+                            </CustomButton>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SQL Fix Script Display -->
+            <div v-if="validation.sqlFixScript" class="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100">SQL Fix Script</h5>
+                <div class="flex space-x-2">
+                  <CustomButton
+                    @click="executeSqlFixes"
+                    :disabled="validation.isExecutingFixes"
+                    variant="filled"
+                    class="bg-green-600 text-white hover:bg-green-700 text-xs px-3 py-1"
+                  >
+                    <i class="fas fa-database mr-1"></i>
+                    {{ validation.isExecutingFixes ? 'Executing...' : 'Backup & Execute Fixes' }}
+                  </CustomButton>
+                  <CustomButton
+                    @click="copySqlScript"
+                    variant="outlined"
+                    class="text-gray-600 border-gray-300 text-xs px-3 py-1"
+                  >
+                    <i class="fas fa-copy mr-1"></i>
+                    Copy Script
+                  </CustomButton>
+                </div>
+              </div>
+              <div class="p-4">
+                <pre class="text-xs text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900 p-3 rounded border overflow-x-auto">{{ validation.sqlFixScript }}</pre>
+              </div>
+            </div>
+            
+            <!-- Execution Results -->
+            <div v-if="validation.executionResult" class="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h5 class="font-medium text-green-800 dark:text-green-200 mb-2">
+                <i class="fas fa-check-circle mr-2"></i>
+                Fixes Applied Successfully
+              </h5>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Backup Created:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.backup_name }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Fixes Applied:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.fixes_applied }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Before Issues:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.before_issues }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">After Issues:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.after_issues }}</div>
+                </div>
+              </div>
+              <div v-if="validation.executionResult.errors && validation.executionResult.errors.length > 0" class="mt-3">
+                <span class="text-red-700 dark:text-red-300 text-sm font-medium">Errors:</span>
+                <ul class="text-xs text-red-600 dark:text-red-400 mt-1">
+                  <li v-for="error in validation.executionResult.errors" :key="error">• {{ error }}</li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- Validation Tips -->
+            <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>
+                Validation Information
+              </h4>
+              <ul class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <li>• Critical issues prevent arrows from appearing in calculator results</li>
+                <li>• Warning issues may cause filtering or display problems</li>
+                <li>• Apply SQL fixes carefully and test calculator functionality afterward</li>
+                <li>• Re-run validation after applying fixes to verify improvements</li>
+                <li>• Backup database before applying large-scale fixes</li>
+              </ul>
+            </div>
+          </div>
+        </md-elevated-card>
       </div>
       
       <!-- Maintenance Tab -->
@@ -2331,6 +2647,16 @@ const scraping = ref({
   lastResult: null
 })
 
+// Validation state
+const validation = ref({
+  isLoading: false,
+  isGeneratingFixes: false,
+  isExecutingFixes: false,
+  lastReport: null,
+  sqlFixScript: null,
+  executionResult: null
+})
+
 // Maintenance state
 const migrationStatus = ref(null)
 const showAllMigrations = ref(false)
@@ -3084,6 +3410,207 @@ const clearScrapingResults = () => {
   scraping.value.lastResult = null
   scraping.value.url = ''
   scraping.value.manufacturer = ''
+}
+
+// Arrow Data Validation Methods
+const runValidation = async () => {
+  validation.value.isLoading = true
+  validation.value.lastReport = null
+  validation.value.sqlFixScript = null
+  
+  try {
+    const response = await api.get('/admin/validate-arrows')
+    validation.value.lastReport = response
+    
+    showNotification('Validation completed successfully', 'success')
+  } catch (error) {
+    console.error('Error running validation:', error)
+    showNotification('Failed to run validation: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isLoading = false
+  }
+}
+
+const generateSqlFixes = async () => {
+  validation.value.isGeneratingFixes = true
+  
+  try {
+    const response = await api.get('/admin/validate-arrows/sql-fix')
+    validation.value.sqlFixScript = response.sql_script
+    
+    showNotification('SQL fix script generated successfully', 'success')
+  } catch (error) {
+    console.error('Error generating SQL fixes:', error)
+    showNotification('Failed to generate SQL fixes: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isGeneratingFixes = false
+  }
+}
+
+const clearValidationResults = () => {
+  validation.value.lastReport = null
+  validation.value.sqlFixScript = null
+}
+
+const copySqlScript = async () => {
+  if (validation.value.sqlFixScript) {
+    try {
+      await navigator.clipboard.writeText(validation.value.sqlFixScript)
+      showNotification('SQL script copied to clipboard', 'success')
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      showNotification('Failed to copy script to clipboard', 'error')
+    }
+  }
+}
+
+const executeSqlFixes = async () => {
+  if (!validation.value.sqlFixScript) {
+    showNotification('No SQL fixes available', 'error')
+    return
+  }
+
+  // Confirm execution
+  const confirmed = confirm(
+    'This will create a backup and execute SQL fixes to resolve arrow data issues. Continue?'
+  )
+  
+  if (!confirmed) return
+
+  validation.value.isExecutingFixes = true
+  validation.value.executionResult = null
+
+  try {
+    const response = await api.post('/admin/validate-arrows/execute-fixes')
+    validation.value.executionResult = response
+    
+    showNotification(
+      `Successfully applied ${response.fixes_applied} fixes. Issues reduced from ${response.before_issues} to ${response.after_issues}.`,
+      'success'
+    )
+    
+    // Clear the script since fixes have been applied
+    validation.value.sqlFixScript = null
+    
+    // Optionally re-run validation to show updated status
+    setTimeout(() => {
+      runValidation()
+    }, 1000)
+    
+  } catch (error) {
+    console.error('Error executing SQL fixes:', error)
+    showNotification('Failed to execute SQL fixes: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isExecutingFixes = false
+  }
+}
+
+const executeIndividualFix = async (issue, index) => {
+  if (!issue.sql_fix || issue.sql_fix.startsWith('--')) {
+    showNotification('No executable SQL fix available for this issue', 'error')
+    return
+  }
+
+  const confirmed = confirm(
+    `Execute SQL fix for Arrow ID ${issue.arrow_id}?\n\nThis will run: ${issue.sql_fix}`
+  )
+  
+  if (!confirmed) return
+
+  // Set executing state for this specific issue
+  validation.value.lastReport.issues[index].executing = true
+
+  try {
+    const response = await api.post('/admin/execute-sql', {
+      sql: issue.sql_fix,
+      description: `Fix for Arrow ID ${issue.arrow_id}: ${issue.issue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Successfully fixed Arrow ID ${issue.arrow_id}`, 'success')
+      
+      // Remove this issue from the list since it's been fixed
+      validation.value.lastReport.issues.splice(index, 1)
+      validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+      validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+      validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+    } else {
+      showNotification('Failed to execute fix: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error executing individual fix:', error)
+    showNotification('Failed to execute fix: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].executing = false
+  }
+}
+
+const executeManualFix = async (issue, index) => {
+  if (!issue.manual_value || issue.manual_value.trim() === '') {
+    showNotification('Please enter a value to update', 'error')
+    return
+  }
+
+  let sql = ''
+  const newValue = issue.manual_value.trim()
+
+  // Generate appropriate SQL based on the field and table structure
+  if (issue.field === 'spine') {
+    sql = `UPDATE spine_specifications SET spine = '${newValue}' WHERE arrow_id = ${issue.arrow_id};`
+  } else if (['length_options', 'outer_diameter', 'gpi_weight'].includes(issue.field)) {
+    sql = `UPDATE spine_specifications SET ${issue.field} = '${newValue}' WHERE arrow_id = ${issue.arrow_id};`
+  } else {
+    sql = `UPDATE arrows SET ${issue.field} = '${newValue}' WHERE id = ${issue.arrow_id};`
+  }
+
+  const confirmed = confirm(
+    `Update ${issue.field} to "${newValue}" for Arrow ID ${issue.arrow_id}?\n\nThis will run: ${sql}`
+  )
+  
+  if (!confirmed) return
+
+  // Set executing state for this specific issue
+  validation.value.lastReport.issues[index].executing = true
+
+  try {
+    const response = await api.post('/admin/execute-sql', {
+      sql: sql,
+      description: `Manual update for Arrow ID ${issue.arrow_id}: ${issue.field} = ${newValue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Successfully updated ${issue.field} for Arrow ID ${issue.arrow_id}`, 'success')
+      
+      // Update the current value and clear manual input
+      validation.value.lastReport.issues[index].current_value = newValue
+      validation.value.lastReport.issues[index].manual_value = ''
+      
+      // If this was a formatting fix, remove the issue
+      if (issue.category === 'Data Field Formatting' || issue.category === 'Spine Data Quality') {
+        validation.value.lastReport.issues.splice(index, 1)
+        validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+        validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+        validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+      }
+    } else {
+      showNotification('Failed to execute manual update: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error executing manual fix:', error)
+    showNotification('Failed to execute manual update: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].executing = false
+  }
+}
+
+const copyIndividualSql = async (sqlFix) => {
+  try {
+    await navigator.clipboard.writeText(sqlFix)
+    showNotification('SQL fix copied to clipboard', 'success')
+  } catch (error) {
+    console.error('Error copying to clipboard:', error)
+    showNotification('Failed to copy SQL to clipboard', 'error')
+  }
 }
 
 // Maintenance functions

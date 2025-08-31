@@ -11082,6 +11082,228 @@ def validate_migrations(current_user):
         print(f"Error validating migrations: {e}")
         return jsonify({'error': 'Failed to validate migrations'}), 500
 
+@app.route('/api/admin/validate-arrows', methods=['GET'])
+@token_required
+@admin_required
+def validate_arrows_data(current_user):
+    """Validate arrow data quality for calculator compatibility"""
+    try:
+        # Import the validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        # Get database path from current database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Convert dataclass to dict for JSON response
+        validation_results = {
+            'total_arrows': report.total_arrows,
+            'total_issues': report.total_issues,
+            'critical_issues': report.critical_issues,
+            'warning_issues': report.warning_issues,
+            'info_issues': report.info_issues,
+            'issues_by_category': report.issues_by_category,
+            'summary_stats': report.summary_stats,
+            'fix_recommendations': report.fix_recommendations,
+            'calculator_impact': report.calculator_impact,
+            'validation_timestamp': datetime.now().isoformat(),
+            'issues': [
+                {
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': issue.current_value,
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix
+                }
+                for issue in report.validation_issues
+            ][:100]  # Limit to first 100 issues for performance
+        }
+        
+        return jsonify(validation_results), 200
+        
+    except Exception as e:
+        print(f"Error validating arrow data: {e}")
+        return jsonify({'error': f'Failed to validate arrow data: {str(e)}'}), 500
+
+@app.route('/api/admin/validate-arrows/sql-fix', methods=['GET'])
+@token_required
+@admin_required  
+def get_arrow_validation_sql_fix(current_user):
+    """Generate SQL fix script for arrow data validation issues"""
+    try:
+        # Import the validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        # Get database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Generate SQL fix script
+        validator = ArrowDataValidator(db_path)
+        validator.validate_all_data()  # Run validation first
+        sql_script = validator.get_sql_fix_script()
+        
+        return jsonify({
+            'sql_script': sql_script,
+            'generated_at': datetime.now().isoformat(),
+            'total_fixes': len(validator.validation_issues)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error generating SQL fix script: {e}")
+        return jsonify({'error': f'Failed to generate SQL fix script: {str(e)}'}), 500
+
+@app.route('/api/admin/validate-arrows/execute-fixes', methods=['POST'])
+@token_required
+@admin_required
+def execute_arrow_validation_fixes(current_user):
+    """Execute arrow data validation fixes with automatic backup"""
+    try:
+        # Import required modules
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        from backup_manager import BackupManager
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Create automatic backup before applying fixes
+        backup_manager = BackupManager()
+        backup_name = f"validation_fixes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        print(f"🛡️ Creating automatic backup before validation fixes: {backup_name}")
+        backup_result = backup_manager.create_backup(backup_name, description="Automatic backup before arrow validation fixes")
+        
+        if not backup_result['success']:
+            return jsonify({
+                'error': 'Failed to create backup before applying fixes',
+                'backup_error': backup_result.get('error', 'Unknown backup error')
+            }), 500
+        
+        # Run validation to get current issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        if report.total_issues == 0:
+            return jsonify({
+                'success': True,
+                'message': 'No validation issues to fix',
+                'issues_fixed': 0,
+                'backup_created': backup_result['backup_id']
+            }), 200
+        
+        # Execute SQL fixes
+        fixes_applied = 0
+        errors = []
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Apply each SQL fix
+            for issue in validator.validation_issues:
+                if issue.sql_fix and not issue.sql_fix.strip().startswith('--'):
+                    try:
+                        cursor.execute(issue.sql_fix)
+                        fixes_applied += 1
+                        print(f"✅ Applied fix for {issue.manufacturer} {issue.model_name}: {issue.field}")
+                    except Exception as fix_error:
+                        error_msg = f"Failed to apply fix for {issue.manufacturer} {issue.model_name}: {str(fix_error)}"
+                        errors.append(error_msg)
+                        print(f"❌ {error_msg}")
+            
+            conn.commit()
+        
+        # Run validation again to verify fixes
+        post_fix_validator = ArrowDataValidator(db_path)
+        post_fix_report = post_fix_validator.validate_all_data()
+        
+        return jsonify({
+            'success': True,
+            'backup_created': backup_result['backup_id'],
+            'backup_name': backup_name,
+            'fixes_applied': fixes_applied,
+            'errors': errors,
+            'before_issues': report.total_issues,
+            'after_issues': post_fix_report.total_issues,
+            'improvement': report.total_issues - post_fix_report.total_issues,
+            'execution_timestamp': datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error executing validation fixes: {e}")
+        return jsonify({'error': f'Failed to execute validation fixes: {str(e)}'}), 500
+
+@app.route('/api/admin/execute-sql', methods=['POST'])
+@token_required
+@admin_required
+def execute_individual_sql(current_user):
+    """Execute individual SQL statement for arrow data fixes"""
+    try:
+        data = request.get_json()
+        sql = data.get('sql', '').strip()
+        description = data.get('description', 'Manual SQL execution')
+        
+        if not sql:
+            return jsonify({'success': False, 'error': 'No SQL statement provided'}), 400
+        
+        # Basic security check - only allow UPDATE and DELETE statements for arrow data
+        sql_upper = sql.upper().strip()
+        if not (sql_upper.startswith('UPDATE ARROWS') or 
+                sql_upper.startswith('UPDATE SPINE_SPECIFICATIONS') or
+                sql_upper.startswith('DELETE FROM SPINE_SPECIFICATIONS')):
+            return jsonify({'success': False, 'error': 'Only UPDATE and DELETE statements for arrow data are allowed'}), 400
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        # Execute the SQL
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            rows_affected = cursor.rowcount
+            conn.commit()
+        
+        print(f"✅ Executed individual SQL fix: {description}")
+        print(f"   SQL: {sql}")
+        print(f"   Rows affected: {rows_affected}")
+        
+        return jsonify({
+            'success': True,
+            'rows_affected': rows_affected,
+            'description': description,
+            'sql_executed': sql
+        })
+        
+    except Exception as e:
+        print(f"Error executing individual SQL: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Database Health Management API Endpoints
 
 @app.route('/api/admin/database/health', methods=['GET'])
