@@ -76,6 +76,13 @@ The Arrow Data Validation System is a comprehensive tool integrated into the Arr
 - **Generate SQL Fixes**: Automated fix script generation for all issues
 - **Backup & Execute**: Automatic backup creation before applying fixes
 
+#### **Duplicate Management**
+- **Merge Duplicates Dialog**: Interactive interface for selective duplicate merging
+- **Checkbox Selection**: Individual duplicate selection with visual feedback
+- **Select All Option**: Bulk selection for confident duplicate removal
+- **Smart Merging**: Preserves all spine specifications while consolidating arrows
+- **Conflict Resolution**: Automatically handles overlapping spine specifications
+
 #### **Safety Features**
 - **Automatic Backups**: Uses built-in BackupManager before SQL execution
 - **Safety Confirmations**: User confirmation required for all database changes
@@ -106,6 +113,12 @@ The Arrow Data Validation System is a comprehensive tool integrated into the Arr
 - **Authentication**: Admin token required
 - **Security**: Only allows UPDATE and DELETE for arrow data tables
 - **Features**: Individual issue resolution with detailed reporting
+
+#### `POST /api/admin/validate-arrows/merge-duplicates`
+- **Purpose**: Merge all duplicate arrows with automatic backup
+- **Authentication**: Admin token required
+- **Features**: Smart merging preserving spine specifications, conflict resolution
+- **Safety**: Creates backup before merge operation, comprehensive error handling
 
 ## Technical Implementation
 
@@ -220,6 +233,22 @@ diameter_ranges = {
 2. Enter new value in "Manual Edit" field
 3. Click "Update" button to apply custom value
 4. System generates appropriate SQL based on field type
+
+### **Duplicate Management**
+
+#### **Selective Merge Duplicates**
+1. After running validation, click "Merge Duplicates" button if duplicates found
+2. Review duplicate arrows in interactive dialog
+3. Use checkboxes to select specific duplicates to merge
+4. Click "Select All Duplicates" for bulk selection if confident
+5. Click "Merge X Selected" to consolidate chosen duplicates
+6. System creates backup and merges spine specifications safely
+
+#### **Merge Logic**
+- **Primary Arrow**: Lowest ID arrow is kept as the primary record
+- **Spine Preservation**: All unique spine specifications are moved to primary arrow
+- **Conflict Resolution**: Duplicate spine specifications are automatically removed
+- **Safe Deletion**: Duplicate arrow records deleted after spine migration
 
 ### **Batch Operations**
 

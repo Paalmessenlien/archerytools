@@ -740,6 +740,17 @@
               </CustomButton>
               
               <CustomButton
+                v-if="validation.lastReport && hasDuplicateIssues"
+                @click="showMergeDuplicatesDialog = true"
+                :disabled="validation.isExecutingMerge"
+                variant="filled"
+                class="bg-orange-600 text-white hover:bg-orange-700"
+              >
+                <i class="fas fa-layer-group mr-2"></i>
+                {{ validation.isExecutingMerge ? 'Merging...' : 'Merge Duplicates' }}
+              </CustomButton>
+              
+              <CustomButton
                 v-if="validation.lastReport"
                 @click="clearValidationResults"
                 variant="outlined"
@@ -2509,6 +2520,118 @@
       </div>
     </div>
   </div>
+
+  <!-- Merge Duplicates Dialog -->
+  <div v-if="showMergeDuplicatesDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <i class="fas fa-layer-group mr-2 text-orange-600"></i>
+          Merge Duplicate Arrows
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Select duplicate arrows to merge. Primary arrow (lowest ID) will be kept, duplicates will be consolidated.
+        </p>
+      </div>
+      
+      <div class="p-6 max-h-[60vh] overflow-y-auto">
+        <!-- Select All Controls -->
+        <div class="flex items-center justify-between mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded">
+          <div class="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              :checked="selectAllDuplicates"
+              @change="toggleSelectAllDuplicates"
+              class="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
+            />
+            <label class="text-sm font-medium text-orange-800 dark:text-orange-200">
+              Select All Duplicates ({{ duplicateIssues.length }} found)
+            </label>
+          </div>
+          <div class="text-xs text-orange-700 dark:text-orange-300">
+            {{ selectedDuplicates.size }} selected
+          </div>
+        </div>
+        
+        <!-- Duplicate Issues List -->
+        <div class="space-y-3">
+          <div 
+            v-for="(issue, index) in duplicateIssues" 
+            :key="index"
+            class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+            :class="{
+              'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700': selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`),
+              'bg-white dark:bg-gray-800': !selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`)
+            }"
+          >
+            <div class="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                :checked="selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`)"
+                @change="toggleDuplicateSelection(issue, $event.target.checked)"
+                class="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 mt-1"
+              />
+              
+              <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                  <span 
+                    :class="{
+                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': issue.severity === 'warning',
+                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': issue.severity === 'info'
+                    }"
+                    class="px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    {{ issue.severity.toUpperCase() }}
+                  </span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">{{ issue.field }}</span>
+                </div>
+                
+                <h6 class="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                  Arrow ID {{ issue.arrow_id }}: {{ issue.manufacturer }} {{ issue.model_name }}
+                </h6>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  {{ issue.issue }}
+                </p>
+                
+                <p class="text-xs text-orange-600 dark:text-orange-400">
+                  <i class="fas fa-lightbulb mr-1"></i>
+                  {{ issue.suggested_fix }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="duplicateIssues.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+          <p>No duplicate arrows found!</p>
+        </div>
+      </div>
+      
+      <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+        <CustomButton
+          @click="showMergeDuplicatesDialog = false"
+          variant="outlined"
+          class="text-gray-600 border-gray-300"
+        >
+          Cancel
+        </CustomButton>
+        
+        <div class="space-x-3">
+          <CustomButton
+            @click="mergeSelectedDuplicates"
+            :disabled="selectedDuplicates.size === 0 || validation.isExecutingMerge"
+            variant="filled"
+            class="bg-orange-600 text-white hover:bg-orange-700"
+          >
+            <i :class="validation.isExecutingMerge ? 'fas fa-spinner fa-spin' : 'fas fa-layer-group'" class="mr-2"></i>
+            {{ validation.isExecutingMerge ? 'Merging...' : `Merge ${selectedDuplicates.size} Selected` }}
+          </CustomButton>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -2652,9 +2775,24 @@ const validation = ref({
   isLoading: false,
   isGeneratingFixes: false,
   isExecutingFixes: false,
+  isExecutingMerge: false,
   lastReport: null,
   sqlFixScript: null,
   executionResult: null
+})
+
+// Merge duplicates state
+const showMergeDuplicatesDialog = ref(false)
+const selectedDuplicates = ref(new Set())
+const selectAllDuplicates = ref(false)
+
+// Computed property for duplicate issues
+const hasDuplicateIssues = computed(() => {
+  return validation.value.lastReport?.issues?.some(issue => issue.category === 'Duplicate Detection') || false
+})
+
+const duplicateIssues = computed(() => {
+  return validation.value.lastReport?.issues?.filter(issue => issue.category === 'Duplicate Detection') || []
 })
 
 // Maintenance state
@@ -3450,6 +3588,57 @@ const generateSqlFixes = async () => {
 const clearValidationResults = () => {
   validation.value.lastReport = null
   validation.value.sqlFixScript = null
+  selectedDuplicates.value.clear()
+  selectAllDuplicates.value = false
+}
+
+// Merge duplicates methods
+const toggleDuplicateSelection = (issue, isSelected) => {
+  if (isSelected) {
+    selectedDuplicates.value.add(`${issue.arrow_id}_${issue.field}`)
+  } else {
+    selectedDuplicates.value.delete(`${issue.arrow_id}_${issue.field}`)
+  }
+}
+
+const toggleSelectAllDuplicates = () => {
+  if (selectAllDuplicates.value) {
+    selectedDuplicates.value.clear()
+  } else {
+    duplicateIssues.value.forEach(issue => {
+      selectedDuplicates.value.add(`${issue.arrow_id}_${issue.field}`)
+    })
+  }
+  selectAllDuplicates.value = !selectAllDuplicates.value
+}
+
+const mergeSelectedDuplicates = async () => {
+  if (selectedDuplicates.value.size === 0) {
+    showNotification('No duplicates selected for merging', 'warning')
+    return
+  }
+  
+  validation.value.isExecutingMerge = true
+  
+  try {
+    const response = await api.post('/admin/validate-arrows/merge-duplicates')
+    
+    showNotification(`Successfully merged ${response.merged_count} duplicate arrows`, 'success')
+    
+    // Clear selections and refresh validation
+    selectedDuplicates.value.clear()
+    selectAllDuplicates.value = false
+    showMergeDuplicatesDialog.value = false
+    
+    // Re-run validation to see updated results
+    await runValidation()
+    
+  } catch (error) {
+    console.error('Error merging duplicates:', error)
+    showNotification('Failed to merge duplicates: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isExecutingMerge = false
+  }
 }
 
 const copySqlScript = async () => {

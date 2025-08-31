@@ -11304,6 +11304,57 @@ def execute_individual_sql(current_user):
         print(f"Error executing individual SQL: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/admin/validate-arrows/merge-duplicates', methods=['POST'])
+@token_required
+@admin_required
+def merge_duplicate_arrows(current_user):
+    """Merge all duplicate arrows with automatic backup"""
+    try:
+        # Import required modules
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        from backup_manager import BackupManager
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Create automatic backup before merging
+        backup_manager = BackupManager()
+        backup_name = f"duplicate_merge_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        print(f"🛡️ Creating backup before duplicate merge: {backup_name}")
+        backup_result = backup_manager.create_backup(backup_name, description="Automatic backup before duplicate arrow merge")
+        
+        if not backup_result['success']:
+            return jsonify({
+                'error': 'Failed to create backup before merge operation',
+                'backup_error': backup_result.get('error', 'Unknown backup error')
+            }), 500
+        
+        # Execute merge operation
+        validator = ArrowDataValidator(db_path)
+        merge_result = validator.merge_all_duplicates()
+        
+        return jsonify({
+            'success': True,
+            'backup_created': backup_result['backup_id'],
+            'backup_name': backup_name,
+            'merged_count': merge_result['merged_count'],
+            'merge_operations': merge_result['merge_operations'],
+            'errors': merge_result['errors'],
+            'total_groups_processed': merge_result['total_groups_processed'],
+            'execution_timestamp': datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error merging duplicate arrows: {e}")
+        return jsonify({'error': f'Failed to merge duplicates: {str(e)}'}), 500
+
 # Database Health Management API Endpoints
 
 @app.route('/api/admin/database/health', methods=['GET'])

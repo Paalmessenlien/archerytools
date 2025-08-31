@@ -944,6 +944,101 @@ class ArrowDataValidator:
             'estimated_calculator_accuracy': max(0, 100 - (hidden_arrows * 2))  # Rough estimate
         }
     
+    def merge_all_duplicates(self) -> Dict[str, Any]:
+        """Merge all duplicate arrows while preserving spine specifications"""
+        print("🔄 Starting merge all duplicates operation...")
+        
+        merged_count = 0
+        errors = []
+        merge_operations = []
+        
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Find all duplicate arrow groups
+            cursor.execute('''
+                SELECT manufacturer, model_name, COUNT(*) as count, GROUP_CONCAT(id) as arrow_ids
+                FROM arrows 
+                WHERE manufacturer IS NOT NULL AND model_name IS NOT NULL
+                GROUP BY LOWER(TRIM(manufacturer)), LOWER(TRIM(model_name))
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC
+            ''')
+            
+            duplicate_groups = cursor.fetchall()
+            
+            for group in duplicate_groups:
+                try:
+                    arrow_ids = [int(id_str) for id_str in group['arrow_ids'].split(',')]
+                    primary_arrow_id = arrow_ids[0]  # Keep the first arrow as primary
+                    duplicate_ids = arrow_ids[1:]    # Merge others into primary
+                    
+                    print(f"🔄 Merging {group['manufacturer']} {group['model_name']}: keeping ID {primary_arrow_id}, merging {duplicate_ids}")
+                    
+                    # Move all spine specifications from duplicates to primary arrow
+                    for dup_id in duplicate_ids:
+                        # Check if moving spine specs would create duplicates
+                        cursor.execute('''
+                            SELECT spine FROM spine_specifications 
+                            WHERE arrow_id = ? AND spine IN (
+                                SELECT spine FROM spine_specifications WHERE arrow_id = ?
+                            )
+                        ''', (dup_id, primary_arrow_id))
+                        
+                        conflicting_spines = cursor.fetchall()
+                        
+                        if conflicting_spines:
+                            # Delete conflicting spine specs from duplicate arrow
+                            conflicting_spine_values = [str(row['spine']) for row in conflicting_spines]
+                            spine_list = "','".join(conflicting_spine_values)
+                            cursor.execute(f'''
+                                DELETE FROM spine_specifications 
+                                WHERE arrow_id = {dup_id} AND spine IN ('{spine_list}')
+                            ''')
+                            print(f"  ⚠️  Removed {len(conflicting_spines)} conflicting spine specs from duplicate")
+                        
+                        # Move remaining spine specifications to primary arrow
+                        cursor.execute('''
+                            UPDATE spine_specifications 
+                            SET arrow_id = ? 
+                            WHERE arrow_id = ?
+                        ''', (primary_arrow_id, dup_id))
+                        
+                        moved_specs = cursor.rowcount
+                        if moved_specs > 0:
+                            print(f"  ✅ Moved {moved_specs} spine specifications to primary arrow")
+                    
+                    # Delete duplicate arrow entries
+                    for dup_id in duplicate_ids:
+                        cursor.execute('DELETE FROM arrows WHERE id = ?', (dup_id,))
+                    
+                    merge_operations.append({
+                        'manufacturer': group['manufacturer'],
+                        'model_name': group['model_name'],
+                        'primary_arrow_id': primary_arrow_id,
+                        'merged_arrow_ids': duplicate_ids,
+                        'duplicate_count': len(duplicate_ids)
+                    })
+                    
+                    merged_count += len(duplicate_ids)
+                    
+                except Exception as e:
+                    error_msg = f"Failed to merge {group['manufacturer']} {group['model_name']}: {str(e)}"
+                    errors.append(error_msg)
+                    print(f"❌ {error_msg}")
+            
+            conn.commit()
+        
+        print(f"✅ Merge operation complete: {merged_count} duplicate arrows merged")
+        
+        return {
+            'success': True,
+            'merged_count': merged_count,
+            'merge_operations': merge_operations,
+            'errors': errors,
+            'total_groups_processed': len(duplicate_groups)
+        }
+    
     def get_sql_fix_script(self) -> str:
         """Generate comprehensive SQL script to fix all issues"""
         
