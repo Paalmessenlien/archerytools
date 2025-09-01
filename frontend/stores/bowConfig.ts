@@ -85,7 +85,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     lastCalculation.value = null
   }
 
-  const calculateRecommendedSpine = async () => {
+  const calculateRecommendedSpine = async (chartSelection: any = null) => {
     if (isLoading.value) return
 
     isLoading.value = true
@@ -93,7 +93,11 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       // Use the centralized calculation system
       const { calculateSpineAPI } = await import('~/utils/spineCalculation')
       const api = useApi()
-      const result = await calculateSpineAPI(bowConfig.value, api)
+      
+      // Use provided chart selection or get it from bowConfig
+      const activeChartSelection = chartSelection || bowConfig.value.chart_selection
+      
+      const result = await calculateSpineAPI(bowConfig.value, api, activeChartSelection)
       recommendedSpine.value = result.recommended_spine
       lastCalculation.value = new Date()
     } catch (error) {
@@ -149,7 +153,9 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       bowConfig.value.bow_type,
       bowConfig.value.arrow_length,
       bowConfig.value.point_weight,
-      bowConfig.value.string_material
+      bowConfig.value.string_material,
+      bowConfig.value.calculation_method,
+      bowConfig.value.chart_selection
     ]
   })
 

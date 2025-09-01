@@ -30,12 +30,29 @@ export interface CompatibilityResult {
  * Frontend should NEVER do client-side spine calculations
  * @param bowConfig - The bow configuration for spine calculation
  * @param apiInstance - Required API instance from useApi() composable
+ * @param chartSelection - Optional spine chart selection for chart-based calculations
  */
-export async function calculateSpineAPI(bowConfig: BowConfiguration, apiInstance: any): Promise<SpineCalculationResult> {
+export async function calculateSpineAPI(
+  bowConfig: BowConfiguration, 
+  apiInstance: any, 
+  chartSelection: any = null
+): Promise<SpineCalculationResult> {
   if (!apiInstance) {
     throw new Error('API instance is required for spine calculation. Pass useApi() as second parameter.')
   }
-  return await apiInstance.calculateSpine(bowConfig)
+  
+  // Prepare the calculation data
+  const calculationData = { ...bowConfig }
+  
+  // Add chart parameters if chart is selected
+  if (chartSelection?.manufacturer) {
+    calculationData.manufacturer_chart = chartSelection.manufacturer
+  }
+  if (chartSelection?.chartId) {
+    calculationData.chart_id = chartSelection.chartId
+  }
+  
+  return await apiInstance.calculateSpine(calculationData)
 }
 
 /**

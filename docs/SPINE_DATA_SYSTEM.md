@@ -2,7 +2,29 @@
 
 ## Overview
 
-The Archery Tools platform includes a comprehensive spine calculation data system that provides advanced spine calculations, material properties, and tuning guidance. This system enhances the basic spine calculations with professional-grade data and admin-configurable parameters.
+The Archery Tools platform includes a comprehensive spine calculation data system that provides multiple spine calculation methods, material properties, and tuning guidance. This system offers Universal Formula (default), German Industry Standard, and chart-based calculations with professional-grade data and admin-configurable parameters.
+
+## Calculation Methods
+
+### Universal Formula (Default)
+- **Purpose**: Generic spine calculation compatible with all manufacturers
+- **Formula**: `12.5 × draw_weight + bow_type_adjustments + length_adjustments`
+- **Usage**: Default method for all bow types and manufacturers
+- **Advantages**: Consistent, well-tested, works across all equipment
+
+### German Industry Standard
+- **Purpose**: Specialized formulas optimized for recurve and traditional bows
+- **Formulas**: 
+  - Recurve/Traditional: `1100 - (draw_weight × 10)`
+  - Compound: `draw_weight × 12.5`
+- **Usage**: Alternative method for European-style calculations
+- **Advantages**: Optimized for traditional archery disciplines
+
+### Chart-Based Calculation
+- **Purpose**: Use manufacturer-specific spine charts for precise recommendations
+- **Data Source**: Manufacturer spine chart database with real chart data
+- **Usage**: When specific manufacturer charts are available
+- **Advantages**: Most accurate for specific manufacturer/model combinations
 
 ## System Architecture
 
@@ -121,26 +143,61 @@ POST   /api/admin/spine-data/test-calculation
 
 **Location**: `arrow_scraper/spine_service.py`
 
-**Purpose**: Centralized spine calculation service that provides consistent calculations across the entire system.
+**Purpose**: Centralized spine calculation service that provides multiple calculation methods and consistent calculations across the entire system.
 
 **Key Methods**:
-- `calculate_spine()` - Standard spine calculation
+- `calculate_spine()` - Multi-method spine calculation with calculation_method parameter
 - `calculate_enhanced_spine()` - Advanced calculation with material factors
 - `get_calculation_parameters()` - Retrieve admin-configurable parameters
 - `get_material_properties()` - Get material characteristics
 - `calculate_bow_setup_spine()` - Calculate spine for saved bow configurations
+- `_lookup_chart_spine()` - Chart-based spine lookup from manufacturer databases
 
-**Integration**: Used by the main tuning API to provide enhanced spine calculations.
+**Calculation Method Support**:
+- **calculation_method='universal'**: Uses restored universal formula (default)
+- **calculation_method='german_industry'**: Uses German Industry Standard formulas
+- **manufacturer_chart + chart_id**: Uses chart-based lookup from database
 
-### 3. Calculator Page Enhancement
+**Integration**: Used by the main tuning API (`/api/tuning/calculate-spine`) to provide multiple calculation methods.
+
+### 3. Frontend Integration
+
+**Location**: `frontend/components/ManufacturerSpineChartSelector.vue`
+
+The frontend provides a comprehensive interface for spine calculation method selection:
+
+**Calculation Method Selection**:
+- Dropdown interface for choosing calculation method
+- Universal Formula (default) with generic spine charts
+- German Industry Standard with specialized recurve/traditional formulas
+- Chart-based selection with manufacturer spine chart database
+
+**State Management** (`frontend/stores/bowConfig.ts`):
+- `calculation_method` property in bow configuration
+- `chart_selection` object for manufacturer chart parameters
+- Automatic recalculation when method or chart selection changes
+- Integration with `shouldRecalculate` computed property
+
+**API Integration** (`frontend/utils/spineCalculation.ts`):
+- `calculateSpineAPI()` function handles chart selection parameters
+- Passes `manufacturer_chart` and `chart_id` to backend API
+- Maintains consistency between frontend state and backend calculations
+
+**Type Support** (`frontend/types/arrow.ts`):
+- `BaseBowConfiguration` interface includes `calculation_method` and `chart_selection`
+- TypeScript support for all calculation method parameters
+- Type safety for chart selection object structure
+
+### 4. Calculator Page Enhancement
 
 **Location**: `frontend/pages/calculator.vue`
 
 The spine data system enhances the calculator page by:
+- Multiple calculation method selection via dropdown interface
 - Using advanced calculation parameters instead of hardcoded values
-- Applying material-specific adjustments
+- Applying material-specific adjustments and manufacturer charts
 - Providing manufacturer-specific recommendations
-- Offering more accurate spine calculations
+- Offering more accurate spine calculations with method-specific ranges
 
 ### 4. Arrow Recommendations
 

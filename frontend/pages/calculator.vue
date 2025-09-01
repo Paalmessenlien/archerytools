@@ -927,6 +927,9 @@ const ballisticsResult = ref(null)
 const isCalculatingBallistics = ref(false)
 const comprehensivePerformance = ref(null)
 const isCalculatingPerformance = ref(false)
+
+// Spine chart selection state
+const spineChartSelection = ref(null)
 const showPerformanceDashboard = ref(false)
 
 // Helper functions for performance dashboard
@@ -1212,9 +1215,25 @@ const handleClearFilters = () => {
 }
 
 // Handle spine chart selection
-const handleSpineChartSelection = (selection) => {
-  // Handle the spine chart selection if needed
+const handleSpineChartSelection = async (selection) => {
+  // Store the complete chart selection
   console.log('Spine chart selection:', selection)
+  spineChartSelection.value = selection
+  
+  // Update the bow configuration with chart selection and calculation method
+  const updates: any = {}
+  if (selection.calculationMethod) {
+    updates.calculation_method = selection.calculationMethod
+  }
+  if (selection.manufacturer || selection.chartId) {
+    updates.chart_selection = {
+      manufacturer: selection.manufacturer,
+      chartId: selection.chartId,
+      calculationMethod: selection.calculationMethod
+    }
+  }
+  
+  updateBowConfig(updates)
 }
 
 

@@ -34,7 +34,10 @@ class UnifiedSpineService:
         nock_weight: float = 10.0,
         fletching_weight: float = 15.0,
         material_preference: Optional[str] = None,
-        string_material: Optional[str] = None
+        string_material: Optional[str] = None,
+        calculation_method: str = 'universal',
+        manufacturer_chart: Optional[str] = None,
+        chart_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Calculate spine using the same logic as the calculator page API endpoint.
@@ -119,7 +122,10 @@ class UnifiedSpineService:
             point_weight=point_weight,
             bow_type=bow_type.lower(),
             string_material=string_material,
-            material_preference=material_preference
+            material_preference=material_preference,
+            calculation_method=calculation_method,
+            manufacturer_chart=manufacturer_chart,
+            chart_id=chart_id
         )
     
     def _calculate_simple_spine(
@@ -129,11 +135,14 @@ class UnifiedSpineService:
         point_weight: float,
         bow_type: str,
         string_material: Optional[str] = None,
-        material_preference: Optional[str] = None
+        material_preference: Optional[str] = None,
+        calculation_method: str = 'universal',
+        manufacturer_chart: Optional[str] = None,
+        chart_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Simple spine calculation - corrected based on German industry standards
-        Uses different base formulas for different bow types instead of universal + adjustments
+        Simple spine calculation with chart-based lookup support
+        Supports universal formula, German industry standard, and manufacturer charts
         """
         # Check for wood arrow calculation first
         if material_preference and material_preference.lower() == 'wood':
@@ -169,24 +178,44 @@ class UnifiedSpineService:
                 'source': 'wood_arrow_calculator'
             }
         
-        # Bow-type specific base calculations (corrected from German standards)
-        if bow_type == 'compound':
-            # Compound bows: more aggressive formula for faster, stiffer requirements
-            base_spine = draw_weight * 12.5
-            bow_type_adjustment = 0
-        elif bow_type == 'recurve':
-            # Recurve bows: German formula spine = 1100 - (draw_weight × 10)
-            # Adjusted to account for our other factors
-            base_spine = 1100 - (draw_weight * 10)
-            bow_type_adjustment = 0  # No additional adjustment needed
-        elif bow_type == 'traditional':
-            # Traditional bows: same as recurve (German system doesn't differentiate)
-            base_spine = 1100 - (draw_weight * 10)
-            bow_type_adjustment = 0  # No additional adjustment needed
+        # Chart-based calculation (if manufacturer chart is selected)
+        if manufacturer_chart and chart_id:
+            chart_result = self._lookup_chart_spine(
+                manufacturer_chart, chart_id, draw_weight, arrow_length, bow_type
+            )
+            if chart_result:
+                return chart_result
+        
+        # Calculation method selection
+        if calculation_method == 'german_industry':
+            # German Industry Standard formulas
+            if bow_type == 'compound':
+                base_spine = draw_weight * 12.5
+                bow_type_adjustment = 0
+            elif bow_type == 'recurve':
+                base_spine = 1100 - (draw_weight * 10)
+                bow_type_adjustment = 0
+            elif bow_type == 'traditional':
+                base_spine = 1100 - (draw_weight * 10)
+                bow_type_adjustment = 0
+            else:
+                base_spine = draw_weight * 12.5
+                bow_type_adjustment = 0
         else:
-            # Default to compound calculation
+            # Universal formula (original system - default)
             base_spine = draw_weight * 12.5
-            bow_type_adjustment = 0
+            
+            # Bow type adjustments (original system)
+            if bow_type == 'compound':
+                bow_type_adjustment = 0
+            elif bow_type == 'recurve':
+                bow_type_adjustment = 50  # Original recurve adjustment
+            elif bow_type == 'traditional':
+                bow_type_adjustment = 100  # Original traditional adjustment
+            else:
+                bow_type_adjustment = 0
+            
+            base_spine += bow_type_adjustment
         
         # Adjust for arrow length (longer = stiffer needed/lower spine number)
         length_adjustment = (arrow_length - 28) * 25
@@ -216,26 +245,136 @@ class UnifiedSpineService:
                 'maximum': calculated_spine + 25
             },
             'calculations': {
-                'base_spine': base_spine - length_adjustment - point_adjustment - string_adjustment,
+                'base_spine': base_spine - bow_type_adjustment - length_adjustment - point_adjustment - string_adjustment,
                 'adjustments': {
                     'length_adjustment': length_adjustment,
                     'point_weight_adjustment': point_adjustment,
                     'string_material_adjustment': string_adjustment,
-                    'bow_type_method': f'{bow_type}_formula',
+                    'bow_type_adjustment': bow_type_adjustment,
+                    'calculation_method': calculation_method,
+                    'bow_type_method': f'{calculation_method}_{bow_type}_formula',
                     'bow_type': bow_type,
                     'string_material': string_material or 'not_specified'
                 },
-                'total_adjustment': length_adjustment + point_adjustment + string_adjustment,
+                'total_adjustment': bow_type_adjustment + length_adjustment + point_adjustment + string_adjustment,
                 'bow_type': bow_type,
                 'confidence': 'high'  # Improved confidence with corrected formula
             },
             'notes': [
-                'Calculated using corrected spine formula',
-                f'Base formula: {bow_type}_spine_formula',
+                f'Calculated using {calculation_method} spine formula',
+                f'Base formula: {calculation_method}_{bow_type}_formula',
                 'String material factor included' if string_material else 'String material not specified'
             ],
-            'source': 'corrected_simple_calculator'
+            'source': f'{calculation_method}_calculator'
         }
+    
+    def _lookup_chart_spine(
+        self, 
+        manufacturer: str, 
+        chart_id: str, 
+        draw_weight: float, 
+        arrow_length: float, 
+        bow_type: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Lookup spine value from manufacturer chart database
+        """
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # First try custom charts
+            cursor.execute("""
+                SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                FROM custom_spine_charts 
+                WHERE id = ? AND is_active = 1
+            """, (chart_id,))
+            
+            result = cursor.fetchone()
+            if not result:
+                # Try manufacturer charts
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+                result = cursor.fetchone()
+            
+            if not result:
+                return None
+                
+            chart_manufacturer, model, spine_grid_json, chart_notes, spine_system = result
+            
+            # Parse spine grid
+            import json
+            spine_grid = json.loads(spine_grid_json) if spine_grid_json else []
+            
+            # Find matching entry in spine grid
+            best_match = None
+            for entry in spine_grid:
+                # Parse draw weight range
+                weight_range = entry.get('draw_weight_range_lbs', '')
+                arrow_length_chart = float(entry.get('arrow_length_in', 0))
+                spine_value = entry.get('spine', '')
+                
+                # Check if draw weight matches
+                if '-' in weight_range:
+                    min_weight, max_weight = map(float, weight_range.split('-'))
+                    weight_match = min_weight <= draw_weight <= max_weight
+                else:
+                    target_weight = float(weight_range)
+                    weight_match = abs(draw_weight - target_weight) <= 2.5
+                
+                # Check if arrow length is close (within 1 inch)
+                length_match = abs(arrow_length - arrow_length_chart) <= 1.0
+                
+                if weight_match and length_match:
+                    best_match = entry
+                    break
+            
+            if best_match:
+                spine_value = best_match.get('spine', '')
+                # Parse spine (could be single value or range)
+                if '-' in spine_value:
+                    min_spine, max_spine = map(int, spine_value.split('-'))
+                    calculated_spine = (min_spine + max_spine) // 2
+                    spine_range = {'minimum': min_spine, 'optimal': calculated_spine, 'maximum': max_spine}
+                else:
+                    calculated_spine = int(spine_value)
+                    spine_range = {
+                        'minimum': calculated_spine - 25,
+                        'optimal': calculated_spine,
+                        'maximum': calculated_spine + 25
+                    }
+                
+                return {
+                    'calculated_spine': calculated_spine,
+                    'spine_range': spine_range,
+                    'calculations': {
+                        'chart_manufacturer': chart_manufacturer,
+                        'chart_model': model,
+                        'chart_entry': best_match,
+                        'spine_system': spine_system,
+                        'bow_type': bow_type,
+                        'confidence': 'high'
+                    },
+                    'notes': [
+                        f'Spine from {chart_manufacturer} {model} chart',
+                        f'Chart entry: {weight_range}lbs @ {arrow_length_chart}"',
+                        chart_notes or 'Manufacturer chart data'
+                    ],
+                    'source': 'manufacturer_chart'
+                }
+                
+        except Exception as e:
+            print(f"Chart lookup failed: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+        
+        return None
     
     def calculate_spine_for_bow_setup(self, bow_setup_data: Dict[str, Any], arrow_data: Dict[str, Any]) -> Optional[int]:
         """
@@ -555,6 +694,9 @@ def calculate_unified_spine(
     draw_length: float = 28.0,
     string_material: Optional[str] = None,
     material_preference: Optional[str] = None,
+    calculation_method: str = 'universal',
+    manufacturer_chart: Optional[str] = None,
+    chart_id: Optional[str] = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
@@ -571,6 +713,9 @@ def calculate_unified_spine(
         draw_length=draw_length,
         string_material=string_material,
         material_preference=material_preference,
+        calculation_method=calculation_method,
+        manufacturer_chart=manufacturer_chart,
+        chart_id=chart_id,
         **kwargs
     )
 

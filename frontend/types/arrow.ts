@@ -55,6 +55,12 @@ export interface BaseBowConfiguration {
   arrow_material?: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
   string_material?: 'fastflight' | 'dacron' | 'dyneema' | 'spectra' | 'b50' | 'b55'
   wood_species?: string // For wood arrows
+  calculation_method?: 'universal' | 'german_industry' // Spine calculation method
+  chart_selection?: { // Selected spine chart for calculations
+    manufacturer?: string
+    chartId?: string
+    calculationMethod?: string
+  }
   arrow_rest_type?: 'drop-away' | 'whisker-biscuit' | 'blade'
   nock_type?: 'pin' | 'press-fit' | 'over-nock' | 'lighted' | 'half-moon'
   vane_type?: 'plastic' | 'feather' | 'spin' | 'hybrid' | 'blazer' | 'helical'

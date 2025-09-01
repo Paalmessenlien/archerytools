@@ -1437,7 +1437,7 @@ def get_arrow_types():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, string_material=None, material_preference=None):
+def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, string_material=None, material_preference=None, calculation_method='universal'):
     """Simple spine calculation fallback - corrected based on German industry standards"""
     # Check for wood arrow calculation first
     if material_preference and material_preference.lower() == 'wood':
@@ -1471,19 +1471,36 @@ def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, st
             'source': 'wood_arrow_calculator'
         }
     
-    # Bow-type specific base calculations (corrected from German standards)
-    if bow_type == 'compound':
-        # Compound bows: more aggressive formula for faster, stiffer requirements
-        base_spine = draw_weight * 12.5
-    elif bow_type == 'recurve':
-        # Recurve bows: German formula spine = 1100 - (draw_weight × 10)
-        base_spine = 1100 - (draw_weight * 10)
-    elif bow_type == 'traditional':
-        # Traditional bows: same as recurve (German system doesn't differentiate)
-        base_spine = 1100 - (draw_weight * 10)
+    # Calculation method selection
+    if calculation_method == 'german_industry':
+        # German Industry Standard formulas
+        if bow_type == 'compound':
+            base_spine = draw_weight * 12.5
+            bow_type_adjustment = 0
+        elif bow_type == 'recurve':
+            base_spine = 1100 - (draw_weight * 10)
+            bow_type_adjustment = 0
+        elif bow_type == 'traditional':
+            base_spine = 1100 - (draw_weight * 10)
+            bow_type_adjustment = 0
+        else:
+            base_spine = draw_weight * 12.5
+            bow_type_adjustment = 0
     else:
-        # Default to compound calculation
+        # Universal formula (original system - default)
         base_spine = draw_weight * 12.5
+        
+        # Bow type adjustments (original system)
+        if bow_type == 'compound':
+            bow_type_adjustment = 0
+        elif bow_type == 'recurve':
+            bow_type_adjustment = 50  # Original recurve adjustment
+        elif bow_type == 'traditional':
+            bow_type_adjustment = 100  # Original traditional adjustment
+        else:
+            bow_type_adjustment = 0
+        
+        base_spine += bow_type_adjustment
     
     # Adjust for arrow length (longer = stiffer needed/lower spine number)
     length_adjustment = (arrow_length - 28) * 25
@@ -1513,25 +1530,26 @@ def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, st
             'maximum': calculated_spine + 25
         },
         'calculations': {
-            'base_spine': base_spine + length_adjustment - point_adjustment - string_adjustment,
+            'base_spine': base_spine - bow_type_adjustment - length_adjustment - point_adjustment - string_adjustment,
             'adjustments': {
-                'length_adjustment': -length_adjustment,  # Negative because we subtract
+                'length_adjustment': length_adjustment,
                 'point_weight_adjustment': point_adjustment,
                 'string_material_adjustment': string_adjustment,
-                'bow_type_method': f'{bow_type}_formula',
+                'bow_type_adjustment': bow_type_adjustment,
+                'bow_type_method': f'{bow_type}_universal_formula',
                 'bow_type': bow_type,
                 'string_material': string_material or 'not_specified'
             },
-            'total_adjustment': -length_adjustment + point_adjustment + string_adjustment,
+            'total_adjustment': bow_type_adjustment + length_adjustment + point_adjustment + string_adjustment,
             'bow_type': bow_type,
             'confidence': 'high'  # Improved confidence with corrected formula
         },
         'notes': [
-            'Calculated using corrected spine formula',
-            f'Base formula: {bow_type}_spine_formula',
+            f'Calculated using {calculation_method} spine formula',
+            f'Base formula: {calculation_method}_{bow_type}_formula',
             'String material factor included' if string_material else 'String material not specified'
         ],
-        'source': 'corrected_simple_calculator'
+        'source': f'{calculation_method}_calculator'
     }
 
 # Tuning Calculation API
@@ -1567,7 +1585,10 @@ def calculate_spine():
             nock_weight=float(data.get('nock_weight', 10.0)),
             fletching_weight=float(data.get('fletching_weight', 15.0)),
             string_material=data.get('string_material'),  # Add string material parameter
-            material_preference=data.get('arrow_material')
+            material_preference=data.get('arrow_material'),
+            calculation_method=data.get('calculation_method', 'universal'),
+            manufacturer_chart=data.get('manufacturer_chart'),
+            chart_id=data.get('chart_id')
         )
         
         return jsonify({

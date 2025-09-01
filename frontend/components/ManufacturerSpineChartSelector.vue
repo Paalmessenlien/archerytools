@@ -130,6 +130,32 @@
       </div>
     </div>
 
+    <!-- Calculation Method Selection -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <i class="fas fa-calculator mr-2"></i>
+        Calculation Method
+      </label>
+      <md-filled-select 
+        :value="calculationMethod" 
+        @change="updateCalculationMethod($event.target.value)"
+        label="Choose calculation method"
+        class="w-full"
+      >
+        <md-select-option value="universal">
+          <div slot="headline">Universal Formula (Default)</div>
+          <div slot="supporting-text">Generic spine charts - works for all manufacturers</div>
+        </md-select-option>
+        <md-select-option value="german_industry">
+          <div slot="headline">German Industry Standard</div>
+          <div slot="supporting-text">Specialized formulas for recurve/traditional bows</div>
+        </md-select-option>
+      </md-filled-select>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        Universal formula provides broader compatibility; German standard offers specialized accuracy for European equipment
+      </p>
+    </div>
+
     <!-- Calculation Mode Toggle -->
     <div class="mb-4">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -264,6 +290,7 @@ const emit = defineEmits<{
     chartId: string | null
     chart: SpineChart | null
     calculationMode: string
+    calculationMethod: string
     professionalSettings: any
   }]
 }>()
@@ -280,6 +307,7 @@ const showChartDetails = ref(false)
 const selectedManufacturer = ref<string>('')
 const selectedChartId = ref<string>('')
 const calculationMode = ref<string>('simple')
+const calculationMethod = ref<string>('universal')
 
 // Professional mode settings
 const bowSpeed = ref<number | null>(null)
@@ -355,6 +383,11 @@ const updateCalculationMode = (mode: string) => {
   emitSelectionChange()
 }
 
+const updateCalculationMethod = (method: string) => {
+  calculationMethod.value = method
+  emitSelectionChange()
+}
+
 const updateBowSpeed = (speed: string | number) => {
   const numSpeed = typeof speed === 'string' ? parseInt(speed) || null : speed
   bowSpeed.value = numSpeed
@@ -372,6 +405,7 @@ const emitSelectionChange = () => {
     chartId: selectedChartId.value || null,
     chart: selectedChart.value,
     calculationMode: calculationMode.value,
+    calculationMethod: calculationMethod.value,
     professionalSettings: {
       bowSpeed: bowSpeed.value,
       releaseType: releaseType.value
