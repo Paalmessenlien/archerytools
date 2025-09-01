@@ -129,6 +129,35 @@ Both new columns (`string_material`, `wood_species`) are properly integrated wit
 
 These fixes ensure the platform provides accurate spine recommendations that match industry standards, improving arrow selection accuracy and archer safety.
 
+## September 2025 Updates
+
+### Additional Light Bow Improvements
+
+**Light Bow Formula Enhancements** (September 1, 2025):
+- Added graduated formula system for very light bows (≤25lbs): `1000 - (weight × 3.5)`
+- Improved light bow formula (26-35lbs): `950 - (weight × 4.5)`
+- Enhanced standard formula (36lbs+): `900 - (weight × 5.0)`
+
+**Enhanced Length Adjustment Factor**:
+- Increased from 15 to 25 spine units per inch based on industry research
+- Better aligns with ratio of cubes physics principle and manufacturer charts
+- Provides more realistic spine sensitivity for arrow length changes
+
+**Validation Results** (September 2025):
+```
+25lbs Recurve:
+28" -> 912 spine ✅ (was 650 - too stiff)
+30" -> 862 spine ✅ (proper length adjustment)
+
+35lbs Recurve:
+28" -> 792 spine ✅ (was 590 - too stiff) 
+30" -> 742 spine ✅ (50 unit difference vs 30 previously)
+```
+
+**Files Updated** (September 1, 2025):
+- `arrow_scraper/spine_service.py:223-237` - Light bow formulas and length adjustment factor
+
 ---
-*Document created: August 31, 2025*
-*System: Archery Tools Platform v2025.8*
+*Document created: August 31, 2025*  
+*Updated: September 1, 2025*  
+*System: Archery Tools Platform v2025.9*

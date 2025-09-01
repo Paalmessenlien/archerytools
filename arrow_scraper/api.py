@@ -1588,7 +1588,10 @@ def calculate_spine():
             material_preference=data.get('arrow_material'),
             calculation_method=data.get('calculation_method', 'universal'),
             manufacturer_chart=data.get('manufacturer_chart'),
-            chart_id=data.get('chart_id')
+            chart_id=data.get('chart_id'),
+            # Professional mode parameters
+            bow_speed=float(data['bow_speed']) if data.get('bow_speed') else None,
+            release_type=data.get('release_type')
         )
         
         return jsonify({
