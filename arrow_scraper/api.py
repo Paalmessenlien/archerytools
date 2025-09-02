@@ -10293,6 +10293,90 @@ def get_manufacturer_charts_for_calculator(manufacturer):
         print(f"Error getting charts for manufacturer {manufacturer}: {e}")
         return jsonify({'error': f'Failed to get charts for {manufacturer}'}), 500
 
+@app.route('/api/calculator/system-default', methods=['GET'])
+def get_system_default_chart():
+    """Get system default spine chart for calculator, with optional material preference"""
+    try:
+        bow_type = request.args.get('bow_type', 'compound')
+        material_preference = request.args.get('material', None)  # Optional material filter
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Enhanced query that considers material preference
+        if material_preference:
+            # Try to find material-specific system default first
+            material_conditions = {
+                'carbon': "AND (manufacturer LIKE '%Carbon%' OR model LIKE '%Carbon%' OR manufacturer = 'Generic')",
+                'wood': "AND (manufacturer LIKE '%Wood%' OR manufacturer IN ('Port Orford Cedar', 'Douglas Fir', 'Pine', 'Birch'))",
+                'aluminum': "AND (manufacturer LIKE '%Aluminum%' OR model LIKE '%Aluminum%' OR model LIKE '%XX7%')",
+                'carbon-aluminum': "AND (model LIKE '%FMJ%' OR model LIKE '%A/C%')"
+            }
+            
+            material_condition = material_conditions.get(material_preference.lower(), "")
+            
+            query = f"""
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE bow_type = ? AND is_active = 1 {material_condition}
+                ORDER BY is_system_default DESC, calculation_priority ASC
+                LIMIT 1
+            """
+        else:
+            # Original query for system default only
+            query = """
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """
+        
+        cursor.execute(query, (bow_type,))
+        result = cursor.fetchone()
+        
+        # If no manufacturer chart, check custom charts
+        if not result:
+            cursor.execute("""
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM custom_spine_charts 
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """, (bow_type,))
+            result = cursor.fetchone()
+        
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'default_chart': {
+                    'id': result[0],
+                    'manufacturer': result[1],
+                    'model': result[2],
+                    'bow_type': result[3],
+                    'spine_system': result[4],
+                    'chart_notes': result[5]
+                },
+                'bow_type': bow_type,
+                'material_preference': material_preference
+            })
+        else:
+            return jsonify({
+                'default_chart': None,
+                'bow_type': bow_type,
+                'material_preference': material_preference,
+                'message': f'No system default chart configured for {bow_type} bows' + (f' with {material_preference} material' if material_preference else '')
+            })
+            
+    except Exception as e:
+        print(f"Error getting system default chart: {e}")
+        return jsonify({'error': 'Failed to get system default chart'}), 500
+
 @app.route('/api/calculator/spine-recommendation-enhanced', methods=['POST'])
 def calculate_enhanced_spine_recommendation():
     """Enhanced spine calculation using manufacturer-specific charts"""
@@ -10419,9 +10503,9 @@ def get_all_spine_charts(current_user):
         cursor.execute("""
             SELECT 'manufacturer' as chart_type, id, manufacturer, model, bow_type, 
                    spine_system, chart_notes, provenance, is_active, created_at,
-                   grid_definition, spine_grid
+                   grid_definition, spine_grid, is_system_default, calculation_priority
             FROM manufacturer_spine_charts_enhanced
-            ORDER BY manufacturer, model, bow_type
+            ORDER BY is_system_default DESC, calculation_priority ASC, manufacturer, model, bow_type
         """)
         
         manufacturer_charts = []
@@ -10438,16 +10522,18 @@ def get_all_spine_charts(current_user):
                 'is_active': bool(row[8]),
                 'created_at': row[9],
                 'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else []
+                'spine_grid': json.loads(row[11]) if row[11] else [],
+                'is_system_default': bool(row[12]) if len(row) > 12 else False,
+                'calculation_priority': row[13] if len(row) > 13 else 100
             })
         
         # Get custom charts
         cursor.execute("""
             SELECT 'custom' as chart_type, id, manufacturer, model, bow_type, 
                    spine_system, chart_notes, created_by, is_active, created_at,
-                   grid_definition, spine_grid
+                   grid_definition, spine_grid, is_system_default, calculation_priority
             FROM custom_spine_charts
-            ORDER BY chart_name
+            ORDER BY is_system_default DESC, calculation_priority ASC, chart_name
         """)
         
         custom_charts = []
@@ -10464,7 +10550,9 @@ def get_all_spine_charts(current_user):
                 'is_active': bool(row[8]),
                 'created_at': row[9],
                 'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else []
+                'spine_grid': json.loads(row[11]) if row[11] else [],
+                'is_system_default': bool(row[12]) if len(row) > 12 else False,
+                'calculation_priority': row[13] if len(row) > 13 else 100
             })
         
         conn.close()
@@ -10666,6 +10754,109 @@ def create_manufacturer_override(current_user, chart_id):
     except Exception as e:
         print(f"Error creating manufacturer override: {e}")
         return jsonify({'error': 'Failed to create manufacturer override'}), 500
+
+@app.route('/api/admin/spine-charts/system-settings', methods=['GET'])
+@token_required
+@admin_required
+def get_spine_system_settings(current_user):
+    """Get spine calculation system settings"""
+    try:
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        settings = spine_service.get_system_settings()
+        return jsonify({'settings': settings})
+    except Exception as e:
+        print(f"Error getting spine system settings: {e}")
+        return jsonify({'error': 'Failed to get system settings'}), 500
+
+@app.route('/api/admin/spine-charts/system-settings/<setting_name>', methods=['PUT'])
+@token_required
+@admin_required
+def update_spine_system_setting(current_user, setting_name):
+    """Update a spine calculation system setting"""
+    try:
+        data = request.get_json()
+        setting_value = data.get('value')
+        
+        if setting_value is None:
+            return jsonify({'error': 'Setting value is required'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        success = spine_service.update_system_setting(setting_name, str(setting_value), current_user['id'])
+        
+        if success:
+            return jsonify({'message': 'System setting updated successfully'})
+        else:
+            return jsonify({'error': 'Setting not found or update failed'}), 404
+            
+    except Exception as e:
+        print(f"Error updating spine system setting: {e}")
+        return jsonify({'error': 'Failed to update system setting'}), 500
+
+@app.route('/api/admin/spine-charts/<chart_type>/<int:chart_id>/set-default', methods=['POST'])
+@token_required
+@admin_required
+def set_system_default_chart(current_user, chart_type, chart_id):
+    """Set a spine chart as the system default"""
+    try:
+        if chart_type not in ['manufacturer', 'custom']:
+            return jsonify({'error': 'Invalid chart type. Must be manufacturer or custom'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        success = spine_service.set_system_default_chart(chart_id, chart_type)
+        
+        if success:
+            return jsonify({'message': f'Chart {chart_id} set as system default'})
+        else:
+            return jsonify({'error': 'Chart not found or update failed'}), 404
+            
+    except Exception as e:
+        print(f"Error setting system default chart: {e}")
+        return jsonify({'error': 'Failed to set system default chart'}), 500
+
+@app.route('/api/admin/spine-charts/<chart_type>/<int:chart_id>/duplicate', methods=['POST'])
+@token_required
+@admin_required
+def duplicate_spine_chart(current_user, chart_type, chart_id):
+    """Duplicate a spine chart for testing and modification"""
+    try:
+        data = request.get_json()
+        new_name = data.get('name')
+        
+        if not new_name:
+            return jsonify({'error': 'New chart name is required'}), 400
+        
+        if chart_type not in ['manufacturer', 'custom']:
+            return jsonify({'error': 'Invalid chart type. Must be manufacturer or custom'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        new_chart_id = spine_service.duplicate_spine_chart(
+            chart_id, new_name, chart_type, current_user['id']
+        )
+        
+        if new_chart_id:
+            return jsonify({
+                'message': 'Chart duplicated successfully',
+                'new_chart_id': new_chart_id,
+                'new_chart_name': new_name
+            }), 201
+        else:
+            return jsonify({'error': 'Chart not found or duplication failed'}), 404
+            
+    except Exception as e:
+        print(f"Error duplicating spine chart: {e}")
+        return jsonify({'error': 'Failed to duplicate chart'}), 500
 
 # Database Migration Management API Endpoints
 

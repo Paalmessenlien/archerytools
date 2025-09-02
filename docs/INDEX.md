@@ -49,6 +49,13 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Spine Chart System Defaults](SPINE_CHART_SYSTEM_DEFAULTS.md) ⚡ NEW
+Material-aware system defaults and intelligent chart selection:
+- **Complete Bow Type Coverage**: System defaults for compound, recurve, longbow, and traditional bows
+- **Material Intelligence**: Carbon, wood, aluminum compatibility with automatic chart selection
+- **Shooting Style Integration**: Dynamic spine adjustments based on archery discipline
+- **Admin Management**: Web interface for configuring system defaults with visual indicators
+
 #### [Spine Calculation Fixes - August 2025](SPINE_CALCULATION_FIXES_AUGUST_2025.md) ⚡ CRITICAL
 Critical fixes to spine calculation accuracy:
 - **Arrow Length Direction Fix**: Corrected backwards length adjustment logic

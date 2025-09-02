@@ -4,6 +4,14 @@
 
 The Archery Tools platform includes a comprehensive spine calculation data system that provides multiple spine calculation methods, material properties, and tuning guidance. This system offers Universal Formula (default), German Industry Standard, and chart-based calculations with professional-grade data and admin-configurable parameters.
 
+**🆕 Enhanced Features (September 2025):**
+- **Material-Aware System Defaults**: Intelligent chart selection based on bow type AND arrow material preference
+- **Complete Bow Type Coverage**: System defaults for compound, recurve, longbow, and traditional bows
+- **Shooting Style Integration**: Dynamic spine adjustments based on archery discipline
+- **Admin Management Interface**: Web-based system default configuration with visual indicators
+
+For detailed information on the new system defaults functionality, see: **[Spine Chart System Defaults Documentation](SPINE_CHART_SYSTEM_DEFAULTS.md)**
+
 ## Calculation Methods
 
 ### Universal Formula (Default)

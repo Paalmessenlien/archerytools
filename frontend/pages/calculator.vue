@@ -758,6 +758,7 @@
             <div v-if="showProfessionalSpine">
               <ManufacturerSpineChartSelector
                 :bow-type="bowConfig.bow_type"
+                :material-preference="bowConfig.arrow_material"
                 @selection-change="handleSpineChartSelection"
               />
             </div>

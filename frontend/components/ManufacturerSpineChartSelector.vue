@@ -14,7 +14,7 @@
       >
         <md-select-option value="">
           <div slot="headline">Generic Charts (Default)</div>
-          <div slot="supporting-text">Use standard spine calculations</div>
+          <div slot="supporting-text">Use standard spine calculations (no chart override)</div>
         </md-select-option>
         <md-select-option 
           v-for="manufacturer in availableManufacturers" 
@@ -276,11 +276,13 @@ interface SpineChart {
 // Props
 interface Props {
   bowType?: string
+  materialPreference?: string
   onSelectionChange?: (selection: any) => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  bowType: 'compound'
+  bowType: 'compound',
+  materialPreference: ''
 })
 
 // Emits
@@ -331,11 +333,43 @@ const loadManufacturers = async () => {
   try {
     const response = await api.get('/calculator/manufacturers')
     availableManufacturers.value = response.manufacturers || []
+    
+    // After loading manufacturers, check for system default charts
+    await loadSystemDefaults()
   } catch (err) {
     error.value = 'Failed to load manufacturers. Using generic calculations.'
     console.error('Error loading manufacturers:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const loadSystemDefaults = async () => {
+  try {
+    // Build query with material preference if available
+    let query = `/calculator/system-default?bow_type=${props.bowType}`
+    if (props.materialPreference) {
+      query += `&material=${props.materialPreference}`
+    }
+    
+    const response = await api.get(query)
+    
+    if (response.default_chart) {
+      const defaultChart = response.default_chart
+      console.log(`🎯 Found system default chart: ${defaultChart.manufacturer} ${defaultChart.model}`)
+      
+      // Auto-select the manufacturer and chart
+      selectedManufacturer.value = defaultChart.manufacturer
+      selectedChartId.value = defaultChart.id.toString()
+      
+      // Load charts for the manufacturer
+      await loadManufacturerCharts(defaultChart.manufacturer)
+      
+      emitSelectionChange()
+    }
+  } catch (err) {
+    // System defaults are optional - don't show error if not available
+    console.log('No system default chart configured for', props.bowType, props.materialPreference ? `with ${props.materialPreference} material` : '')
   }
 }
 
@@ -431,11 +465,20 @@ onMounted(() => {
   loadManufacturers()
 })
 
-// Watch for bow type changes to filter relevant charts
-watch(() => props.bowType, () => {
+// Watch for bow type changes to filter relevant charts and reload system defaults
+watch(() => props.bowType, async () => {
   if (selectedManufacturer.value) {
     loadManufacturerCharts(selectedManufacturer.value)
   }
+  
+  // Check for system defaults for new bow type
+  await loadSystemDefaults()
+})
+
+// Watch for material preference changes to reload appropriate defaults
+watch(() => props.materialPreference, async () => {
+  // Reload system defaults when material preference changes
+  await loadSystemDefaults()
 })
 </script>
 

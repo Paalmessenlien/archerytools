@@ -85,6 +85,60 @@ class UnifiedSpineService:
         # The old advanced calculator uses outdated Easton chart logic that doesn't match research standards
         print(f"🎯 Using research-based calculation for {bow_type} bow")
         
+        # Check if chart-based calculation is requested (Professional Mode)
+        if manufacturer_chart or chart_id:
+            print(f"🎯 Using chart-based calculation: manufacturer={manufacturer_chart}, chart_id={chart_id}")
+            chart_result = self._lookup_chart_spine(
+                manufacturer_chart or '', 
+                chart_id or '', 
+                draw_weight, 
+                arrow_length, 
+                bow_type
+            )
+            
+            if chart_result:
+                # Apply Professional mode adjustments to chart-based result
+                if bow_speed is not None or release_type is not None:
+                    adjusted_draw_weight = draw_weight
+                    professional_adjustments = []
+                    
+                    if bow_speed is not None:
+                        speed_adjustment = self._get_bow_speed_adjustment(bow_speed)
+                        adjusted_draw_weight += speed_adjustment
+                        if speed_adjustment != 0:
+                            professional_adjustments.append(f"Bow speed {bow_speed}fps: {speed_adjustment:+.1f}lbs")
+                    
+                    if release_type is not None:
+                        release_adjustment = self._get_release_type_adjustment(release_type)
+                        adjusted_draw_weight += release_adjustment
+                        if release_adjustment != 0:
+                            professional_adjustments.append(f"Release type {release_type}: {release_adjustment:+.1f}lbs")
+                    
+                    # Re-lookup with adjusted draw weight if significant change
+                    if abs(adjusted_draw_weight - draw_weight) > 1.0:
+                        adjusted_chart_result = self._lookup_chart_spine(
+                            manufacturer_chart or '', 
+                            chart_id or '', 
+                            adjusted_draw_weight, 
+                            arrow_length, 
+                            bow_type
+                        )
+                        if adjusted_chart_result:
+                            chart_result = adjusted_chart_result
+                    
+                    # Add professional adjustments to result
+                    if professional_adjustments:
+                        chart_result['calculations']['professional_mode'] = True
+                        chart_result['calculations']['original_draw_weight'] = draw_weight
+                        chart_result['calculations']['adjusted_draw_weight'] = adjusted_draw_weight
+                        chart_result['calculations']['professional_adjustments'] = professional_adjustments
+                        chart_result['notes'].extend(professional_adjustments)
+                        chart_result['source'] = 'professional_chart_' + chart_result.get('source', 'calculator')
+                
+                return chart_result
+            else:
+                print(f"⚠️ Chart lookup failed, falling back to formula calculation")
+        
         # Apply Professional mode adjustments if parameters provided
         adjusted_draw_weight = draw_weight
         professional_adjustments = []
@@ -253,22 +307,69 @@ class UnifiedSpineService:
             conn = self.db.get_connection()
             cursor = conn.cursor()
             
-            # First try custom charts
-            cursor.execute("""
-                SELECT manufacturer, model, spine_grid, chart_notes, spine_system
-                FROM custom_spine_charts 
-                WHERE id = ? AND is_active = 1
-            """, (chart_id,))
+            # If chart_id is provided, use specific chart
+            if chart_id:
+                # First try custom charts
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM custom_spine_charts 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+                
+                result = cursor.fetchone()
+                if not result:
+                    # Try manufacturer charts
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM manufacturer_spine_charts_enhanced 
+                        WHERE id = ? AND is_active = 1
+                    """, (chart_id,))
+                    result = cursor.fetchone()
             
-            result = cursor.fetchone()
-            if not result:
-                # Try manufacturer charts
+            # If no specific chart or chart lookup failed, find best matching chart for manufacturer
+            elif manufacturer:
+                # First try to find manufacturer chart marked as system default
                 cursor.execute("""
                     SELECT manufacturer, model, spine_grid, chart_notes, spine_system
                     FROM manufacturer_spine_charts_enhanced 
-                    WHERE id = ? AND is_active = 1
-                """, (chart_id,))
+                    WHERE manufacturer = ? AND bow_type = ? AND is_active = 1 AND is_system_default = 1
+                    ORDER BY calculation_priority ASC
+                    LIMIT 1
+                """, (manufacturer, bow_type))
                 result = cursor.fetchone()
+                
+                # If no system default, get best match for manufacturer
+                if not result:
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM manufacturer_spine_charts_enhanced 
+                        WHERE manufacturer = ? AND bow_type = ? AND is_active = 1
+                        ORDER BY calculation_priority ASC, created_at DESC
+                        LIMIT 1
+                    """, (manufacturer, bow_type))
+                    result = cursor.fetchone()
+            
+            else:
+                # No manufacturer specified - check for global system default
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                    ORDER BY calculation_priority ASC
+                    LIMIT 1
+                """, (bow_type,))
+                result = cursor.fetchone()
+                
+                # Also check custom charts for system default
+                if not result:
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM custom_spine_charts 
+                        WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                        ORDER BY calculation_priority ASC
+                        LIMIT 1
+                    """, (bow_type,))
+                    result = cursor.fetchone()
             
             if not result:
                 return None
@@ -507,6 +608,181 @@ class UnifiedSpineService:
         finally:
             if conn:
                 conn.close()
+    
+    def get_system_settings(self, category: str = None) -> Dict[str, Any]:
+        """Get spine system settings"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if category:
+                cursor.execute("""
+                    SELECT setting_name, setting_value, setting_type, description
+                    FROM spine_system_settings 
+                    WHERE category = ?
+                    ORDER BY setting_name
+                """, (category,))
+            else:
+                cursor.execute("""
+                    SELECT category, setting_name, setting_value, setting_type, description
+                    FROM spine_system_settings 
+                    ORDER BY category, setting_name
+                """)
+            
+            settings = {}
+            for row in cursor.fetchall():
+                if category:
+                    setting_name, setting_value, setting_type, description = row
+                    settings[setting_name] = {
+                        'value': self._parse_setting_value(setting_value, setting_type),
+                        'type': setting_type,
+                        'description': description
+                    }
+                else:
+                    cat, setting_name, setting_value, setting_type, description = row
+                    if cat not in settings:
+                        settings[cat] = {}
+                    settings[cat][setting_name] = {
+                        'value': self._parse_setting_value(setting_value, setting_type),
+                        'type': setting_type,
+                        'description': description
+                    }
+            
+            return settings
+            
+        except sqlite3.Error as e:
+            print(f"Error getting system settings: {e}")
+            return {}
+        finally:
+            if conn:
+                conn.close()
+    
+    def update_system_setting(self, setting_name: str, setting_value: str, user_id: str = None) -> bool:
+        """Update a system setting"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE spine_system_settings 
+                SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, last_modified_by = ?
+                WHERE setting_name = ?
+            """, (setting_value, user_id, setting_name))
+            
+            success = cursor.rowcount > 0
+            conn.commit()
+            return success
+            
+        except sqlite3.Error as e:
+            print(f"Error updating system setting: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+    
+    def set_system_default_chart(self, chart_id: int, chart_type: str = 'manufacturer') -> bool:
+        """Set a chart as the system default"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Clear all existing system defaults
+            if chart_type == 'manufacturer':
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0")
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 1 WHERE id = ?", (chart_id,))
+            else:
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0")
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 1 WHERE id = ?", (chart_id,))
+            
+            success = cursor.rowcount > 0
+            conn.commit()
+            return success
+            
+        except sqlite3.Error as e:
+            print(f"Error setting system default chart: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+    
+    def duplicate_spine_chart(self, chart_id: int, new_name: str, chart_type: str = 'manufacturer', user_id: str = None) -> Optional[int]:
+        """Duplicate an existing spine chart for testing"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get original chart data
+            if chart_type == 'manufacturer':
+                cursor.execute("""
+                    SELECT manufacturer, model, bow_type, grid_definition, spine_grid, 
+                           provenance, spine_system, chart_notes
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+            else:
+                cursor.execute("""
+                    SELECT manufacturer, model, bow_type, grid_definition, spine_grid, 
+                           spine_system, chart_notes
+                    FROM custom_spine_charts 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+            
+            result = cursor.fetchone()
+            if not result:
+                return None
+            
+            # Create duplicate in custom charts table
+            if chart_type == 'manufacturer':
+                manufacturer, model, bow_type, grid_definition, spine_grid, provenance, spine_system, chart_notes = result
+                cursor.execute("""
+                    INSERT INTO custom_spine_charts 
+                    (chart_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                     spine_system, chart_notes, created_by, overrides_manufacturer_chart)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                """, (new_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                      spine_system, f"Duplicated from {manufacturer} {model}. {chart_notes or ''}", user_id))
+            else:
+                manufacturer, model, bow_type, grid_definition, spine_grid, spine_system, chart_notes = result
+                cursor.execute("""
+                    INSERT INTO custom_spine_charts 
+                    (chart_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                     spine_system, chart_notes, created_by, overrides_manufacturer_chart)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                """, (new_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                      spine_system, f"Duplicated chart. {chart_notes or ''}", user_id))
+            
+            new_chart_id = cursor.lastrowid
+            conn.commit()
+            return new_chart_id
+            
+        except sqlite3.Error as e:
+            print(f"Error duplicating spine chart: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
+    def _parse_setting_value(self, value: str, setting_type: str):
+        """Parse setting value based on type"""
+        if setting_type == 'boolean':
+            return value.lower() in ('true', '1', 'yes')
+        elif setting_type == 'number':
+            try:
+                return float(value)
+            except ValueError:
+                return 0
+        elif setting_type == 'json':
+            try:
+                import json
+                return json.loads(value)
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        else:
+            return value
     
     def get_flight_problem_diagnostics(self, problem_category: str = None) -> Dict[str, Any]:
         """Get flight problem diagnostics and solutions"""
