@@ -11,7 +11,21 @@
       "mcp__playwright__browser_select_option",
       "Bash(sqlite3:*)",
       "WebFetch(domain:www.bogensportwelt.de)",
-      "WebFetch(domain:www.nano-bogensport.de)"
+      "WebFetch(domain:www.nano-bogensport.de)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_fill_form",
+      "Bash(python test:*)",
+      "Bash(python:*)",
+      "Bash(./start-unified.sh:*)",
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(curl:*)",
+      "Bash(git push:*)",
+      "Bash(PYTHONPATH=/home/paal/arrowtuner2 python -c \"from arrow_scraper.spine_service import calculate_unified_spine; result = calculate_unified_spine(draw_weight=30, arrow_length=28, point_weight=125, bow_type=''recurve'', string_material=''fastflight''); print(''30lbs recurve:'', result[''calculated_spine'']); result = calculate_unified_spine(draw_weight=50, arrow_length=28, point_weight=125, bow_type=''recurve'', string_material=''fastflight''); print(''50lbs recurve:'', result[''calculated_spine'']); result = calculate_unified_spine(draw_weight=30, arrow_length=28, point_weight=125, bow_type=''compound'', string_material=None); print(''30lbs compound:'', result[''calculated_spine'']); result = calculate_unified_spine(draw_weight=50, arrow_length=28, point_weight=125, bow_type=''compound'', string_material=None); print(''50lbs compound:'', result[''calculated_spine''])\")",
+      "WebSearch"
     ],
     "deny": []
   }
