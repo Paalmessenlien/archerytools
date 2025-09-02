@@ -13,6 +13,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     arrow_length: 29,
     point_weight: 125,
     arrow_material: 'carbon',
+    shooting_style: 'standard',
     arrow_rest_type: 'drop-away',
     nock_type: 'pin',
     vane_type: 'plastic',

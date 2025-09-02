@@ -53,6 +53,7 @@ export interface BaseBowConfiguration {
   arrow_length: number
   point_weight: number
   arrow_material?: 'carbon' | 'aluminum' | 'wood' | 'fiberglass' | 'carbon-aluminum'
+  shooting_style?: 'standard' | 'barebow' | 'olympic' | 'traditional' | 'hunting' | 'target'
   string_material?: 'fastflight' | 'dacron' | 'dyneema' | 'spectra' | 'b50' | 'b55'
   wood_species?: string // For wood arrows
   calculation_method?: 'universal' | 'german_industry' // Spine calculation method

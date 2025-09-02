@@ -112,6 +112,36 @@
             </md-filled-select>
           </div>
 
+          <!-- Shooting Style (always shown) -->
+          <div>
+            <md-filled-select
+              ref="shootingStyleSelect"
+              label="Shooting Style"
+              :value="bowConfig.shooting_style || 'standard'"
+              @change="updateBowConfig({ shooting_style: $event.target.value })"
+              class="w-full"
+            >
+              <md-select-option value="standard">
+                <div slot="headline">Standard</div>
+              </md-select-option>
+              <md-select-option value="barebow" v-if="bowConfig.bow_type === 'recurve'">
+                <div slot="headline">Barebow</div>
+              </md-select-option>
+              <md-select-option value="olympic" v-if="bowConfig.bow_type === 'recurve'">
+                <div slot="headline">Olympic Recurve</div>
+              </md-select-option>
+              <md-select-option value="traditional" v-if="['traditional', 'longbow'].includes(bowConfig.bow_type)">
+                <div slot="headline">Traditional Instinctive</div>
+              </md-select-option>
+              <md-select-option value="hunting" v-if="['compound', 'recurve', 'traditional', 'longbow'].includes(bowConfig.bow_type)">
+                <div slot="headline">Hunting</div>
+              </md-select-option>
+              <md-select-option value="target" v-if="bowConfig.bow_type === 'compound'">
+                <div slot="headline">Target Competition</div>
+              </md-select-option>
+            </md-filled-select>
+          </div>
+
           <!-- Draw Weight (hidden when bow setup is selected, shown in manual mode) -->
           <div v-if="!selectedBowSetup || selectedBowSetupId === ''">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -162,7 +192,7 @@
               <md-select-option value="aluminum">
                 <div slot="headline">Aluminum</div>
               </md-select-option>
-              <md-select-option value="wood">
+              <md-select-option value="Wood">
                 <div slot="headline">Wood</div>
               </md-select-option>
               <md-select-option value="fiberglass">

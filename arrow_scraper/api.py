@@ -1586,6 +1586,7 @@ def calculate_spine():
             fletching_weight=float(data.get('fletching_weight', 15.0)),
             string_material=data.get('string_material'),  # Add string material parameter
             material_preference=data.get('arrow_material'),
+            shooting_style=data.get('shooting_style', 'standard'),  # Add shooting style parameter
             calculation_method=data.get('calculation_method', 'universal'),
             manufacturer_chart=data.get('manufacturer_chart'),
             chart_id=data.get('chart_id'),

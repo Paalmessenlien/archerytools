@@ -961,7 +961,8 @@ class ArrowDatabase:
         valid_columns = {
             'user_id', 'name', 'bow_type', 'draw_weight', 'draw_length', 
             'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
-            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model'
+            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model',
+            'shooting_style'  # Add shooting style support
         }
         
         # Filter setup_data to only include valid columns
@@ -1014,7 +1015,8 @@ class ArrowDatabase:
         valid_columns = {
             'name', 'bow_type', 'draw_weight', 'draw_length', 
             'arrow_length', 'point_weight', 'nock_weight', 'fletching_weight', 
-            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model'
+            'insert_weight', 'bow_make', 'setup_name', 'brace_height', 'bow_model',
+            'shooting_style'  # Add shooting style support
         }
         
         # Filter kwargs to only include valid columns
