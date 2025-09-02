@@ -9,7 +9,7 @@ This is a documentation-only migration as the database schema changes were
 implemented directly in the spine_service.py system.
 """
 
-def upgrade(db_connection):
+def up(db_connection):
     """
     Document the spine calculation method enhancement implementation.
     
@@ -59,7 +59,7 @@ def upgrade(db_connection):
     
     return True
 
-def downgrade(db_connection):
+def down(db_connection):
     """
     Downgrade would involve removing calculation_method support
     from spine_service.py and reverting frontend components.

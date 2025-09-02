@@ -35,6 +35,7 @@ class UnifiedSpineService:
         fletching_weight: float = 15.0,
         material_preference: Optional[str] = None,
         string_material: Optional[str] = None,
+        shooting_style: str = 'standard',
         calculation_method: str = 'universal',
         manufacturer_chart: Optional[str] = None,
         chart_id: Optional[str] = None,
@@ -42,7 +43,7 @@ class UnifiedSpineService:
         release_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Calculate spine using the same logic as the calculator page API endpoint.
+        Calculate spine using reverted simple formulas with shooting style support.
         
         Args:
             draw_weight: Bow's marked draw weight in pounds
@@ -53,6 +54,8 @@ class UnifiedSpineService:
             nock_weight: Nock weight in grains (default 10)
             fletching_weight: Fletching weight in grains (default 15)
             material_preference: Optional arrow material preference
+            string_material: String material type for adjustments
+            shooting_style: Shooting style ('standard', 'barebow', 'olympic', 'traditional', 'hunting', 'target')
             
         Returns:
             Dictionary with spine calculation results in same format as calculator API
@@ -66,6 +69,17 @@ class UnifiedSpineService:
         valid_bow_types = ['compound', 'recurve', 'traditional']
         if bow_type.lower() not in valid_bow_types:
             bow_type = 'compound'
+            
+        # Handle wood arrows - they use pound-test spine values instead of deflection values
+        if material_preference and material_preference.lower() == 'wood':
+            return self._calculate_wood_arrow_spine(
+                draw_weight=draw_weight,
+                arrow_length=arrow_length,
+                point_weight=point_weight,
+                bow_type=bow_type,
+                string_material=string_material,
+                shooting_style=shooting_style
+            )
         
         # Always use the research-based simple calculator for all bow types
         # The old advanced calculator uses outdated Easton chart logic that doesn't match research standards
@@ -89,7 +103,7 @@ class UnifiedSpineService:
             if release_adjustment != 0:
                 professional_adjustments.append(f"Release type {release_type}: {release_adjustment:+.1f}lbs")
         
-        # Fallback to simple calculation (same logic as calculator API)
+        # Fallback to simple calculation (reverted to original formulas)
         result = self._calculate_simple_spine(
             draw_weight=adjusted_draw_weight,
             arrow_length=arrow_length,
@@ -97,9 +111,7 @@ class UnifiedSpineService:
             bow_type=bow_type.lower(),
             string_material=string_material,
             material_preference=material_preference,
-            calculation_method=calculation_method,
-            manufacturer_chart=manufacturer_chart,
-            chart_id=chart_id
+            shooting_style=shooting_style.lower()
         )
         
         # Add Professional mode information to the result
@@ -121,142 +133,75 @@ class UnifiedSpineService:
         bow_type: str,
         string_material: Optional[str] = None,
         material_preference: Optional[str] = None,
-        calculation_method: str = 'universal',
-        manufacturer_chart: Optional[str] = None,
-        chart_id: Optional[str] = None
+        shooting_style: str = 'standard'
     ) -> Dict[str, Any]:
         """
-        Simple spine calculation with chart-based lookup support
-        Supports universal formula, German industry standard, and manufacturer charts
+        Simple spine calculation - reverted to original formulas with shooting style support
+        This ensures exact consistency with the original calculator logic.
         """
-        # Check for wood arrow calculation first
-        if material_preference and material_preference.lower() == 'wood':
-            # Wood arrows use pound test values (40#, 45#, 50#, etc.)
-            # Convert draw weight to recommended wood spine using traditional formula
-            wood_spine = round(draw_weight)  # Simple conversion: 40lbs = 40# spine
-            
-            # Wood arrows have their own range system
-            return {
-                'calculated_spine': f"{wood_spine}#",
-                'spine_range': {
-                    'minimum': f"{max(wood_spine - 5, 25)}#",
-                    'optimal': f"{wood_spine}#", 
-                    'maximum': f"{wood_spine + 5}#"
-                },
-                'calculations': {
-                    'base_spine': wood_spine,
-                    'adjustments': {
-                        'bow_weight_conversion': wood_spine,
-                        'system_type': 'wood_pound_test',
-                        'bow_type': bow_type,
-                        'material': 'wood'
-                    },
-                    'total_adjustment': 0,
-                    'bow_type': bow_type,
-                    'confidence': 'high'
-                },
-                'notes': [
-                    'Wood arrow spine calculation using pound test system',
-                    f'Recommended spine: {wood_spine}# (pound test)',
-                    'Range represents typical wood arrow spine tolerances'
-                ],
-                'source': 'wood_arrow_calculator'
-            }
+        # Wood arrows should use proper database lookup, not formula override
+        # The database contains comprehensive wood arrow species data that should be used instead
         
-        # Chart-based calculation (if manufacturer chart is selected)
-        if manufacturer_chart and chart_id:
-            chart_result = self._lookup_chart_spine(
-                manufacturer_chart, chart_id, draw_weight, arrow_length, bow_type
-            )
-            if chart_result:
-                return chart_result
+        # CORRECTED SPINE CALCULATION - Higher draw weight = Lower spine numbers (stiffer)
+        # Base calculation: Start with high number and divide by draw weight
+        base_spine = 18000 / draw_weight  # Example: 25lb = 720, 50lb = 360
         
-        # Research-standard formula: Recommended Spine = (bowWeight × bowType × (arrowLength - 1)) / (pointWeight / 100)
+        # Adjust for arrow length (longer arrows need STIFFER = LOWER spine numbers)
+        # Every 1" change = ±4% spine change (reduced from 10% - was too aggressive)
+        length_factor = (arrow_length - 28) * 0.04
+        base_spine = base_spine * (1 - length_factor)
         
-        # Bow type multipliers (from research document)
-        if bow_type == 'compound':
-            bow_type_multiplier = 1.0
-        elif bow_type in ['recurve', 'traditional']:
-            bow_type_multiplier = 1.2  # Research standard for recurve/longbow
-        else:
-            bow_type_multiplier = 1.0
+        # Adjust for point weight (heavier points = stiffer arrows needed = lower spine)
+        # Every 25 grains = ±5% spine change
+        point_factor = (point_weight - 125) / 25 * 0.05
+        base_spine = base_spine * (1 - point_factor)
         
-        # Carbon Express adjustment system for compound bows (from research)
-        effective_draw_weight = draw_weight
-        carbon_express_adjustments = []
+        # Bow type adjustments - Recurve/Traditional need weaker arrows (higher spine)
+        bow_type_multiplier = 1.0
+        if bow_type == 'recurve':
+            bow_type_multiplier = 1.15  # 15% weaker (higher spine number)
+        elif bow_type == 'traditional':
+            bow_type_multiplier = 1.25  # 25% weaker (higher spine number)
         
-        if bow_type == 'compound':
-            # Carbon Express systematic adjustments
-            # Single cam adjustment (+7 lbs) - assume single cam if not specified
-            effective_draw_weight += 7
-            carbon_express_adjustments.append("Single cam: +7 lbs")
-            
-            # Let-off adjustment (assume 65-80% let-off for most compounds)
-            effective_draw_weight -= 5
-            carbon_express_adjustments.append("High let-off (65-80%): -5 lbs")
-            
-            # Point weight adjustment (-6 lbs for 100gr insert plus point)
-            if point_weight >= 100:
-                effective_draw_weight -= 6
-                carbon_express_adjustments.append("Point weight 100gr+: -6 lbs")
-            
-            # Arrow length adjustment (+3 lbs for 28" arrows)
-            if abs(arrow_length - 28.0) < 0.5:  # Close to 28"
-                effective_draw_weight += 3
-                carbon_express_adjustments.append("28\" arrow length: +3 lbs")
+        base_spine = base_spine * bow_type_multiplier
         
-        # CORRECTED: The research formula produces deflection values, need realistic spine ratings
-        # Real-world spine calculation based on draw weight and bow type
-        
-        if calculation_method == 'german_industry':
-            # German Industry method - more conservative spine recommendations
-            if bow_type == 'compound':
-                base_spine = 300 + (effective_draw_weight * 2.2)  # Conservative compound formula
-            elif bow_type in ['recurve', 'traditional']:
-                base_spine = 250 + (effective_draw_weight * 4.5)  # Traditional/recurve formula
-            else:
-                base_spine = 300 + (effective_draw_weight * 2.2)
-        else:
-            # Universal formula - realistic spine ratings based on industry practices
-            if bow_type == 'compound':
-                base_spine = 720 - (effective_draw_weight * 6.5)  # 45lbs = 453, 60lbs = 330
-            elif bow_type in ['recurve', 'traditional']:
-                # Improved formula for light bow support - more appropriate for traditional archery
-                if effective_draw_weight <= 25:
-                    # Very light bow formula: better support for youth/beginner traditional bows
-                    base_spine = 1000 - (effective_draw_weight * 3.5)  # 20lbs = 930, 25lbs = 912
-                elif effective_draw_weight <= 35:
-                    # Light bow formula: better support for 25-35lbs traditional/recurve
-                    base_spine = 950 - (effective_draw_weight * 4.5)  # 30lbs = 815, 35lbs = 792
-                else:
-                    # Standard formula for medium/heavy bows
-                    base_spine = 900 - (effective_draw_weight * 5.0)  # 45lbs = 675, 50lbs = 650
-            else:
-                base_spine = 720 - (effective_draw_weight * 6.5)
-        
-        # Length adjustment: shorter arrows need higher spine numbers (weaker)
-        # Increased adjustment factor based on industry research and ratio of cubes principle
-        length_adjustment = (arrow_length - 28) * 25  # 25 spine units per inch (industry standard)
-        base_spine -= length_adjustment  # Shorter = higher spine number (26" vs 28" = +50 spine)
-        
-        # Point weight adjustment: lighter points need higher spine numbers (weaker)  
-        point_adjustment = (point_weight - 125) * 0.6  # 0.6 spine units per grain
-        base_spine -= point_adjustment  # Lighter = higher spine number (80gr vs 125gr = +27 spine)
-        
-        bow_type_adjustment = 0  # Adjustments now included in realistic formulas
-        
-        # String material adjustment (based on German calculator)
-        string_adjustment = 0
+        # String material adjustment - Dacron/B50 need weaker arrows (higher spine)
+        string_multiplier = 1.0
         if string_material:
             if string_material.lower() in ['dacron', 'b50']:
-                string_adjustment = 15  # Dacron strings need weaker arrows (higher spine)
+                string_multiplier = 1.05  # 5% weaker (higher spine)
             elif string_material.lower() in ['fastflight', 'spectra', 'dyneema', 'b55']:
-                string_adjustment = 0   # FastFlight baseline
-        base_spine += string_adjustment
+                string_multiplier = 1.0   # FastFlight baseline
+        
+        base_spine = base_spine * string_multiplier
+        
+        # Shooting style adjustments - Use multiplication for consistency
+        shooting_style_multiplier = 1.0
+        shooting_style_notes = []
+        
+        if shooting_style == 'standard':
+            shooting_style_multiplier = 1.0  # No adjustments
+        elif shooting_style == 'barebow':
+            shooting_style_multiplier = 0.95  # 5% stiffer (lower spine) for string walking
+            shooting_style_notes.append('Barebow style (string walking): stiffer arrows for accuracy')
+        elif shooting_style == 'olympic':
+            shooting_style_multiplier = 1.03  # 3% weaker for competition stability
+            shooting_style_notes.append('Olympic style (stabilized): slightly weaker for precision')
+        elif shooting_style == 'traditional':
+            shooting_style_multiplier = 1.08  # 8% weaker for instinctive shooting
+            shooting_style_notes.append('Traditional instinctive: weaker arrows for forgiving flight')
+        elif shooting_style == 'hunting':
+            shooting_style_multiplier = 1.05  # 5% weaker for heavier arrows
+            shooting_style_notes.append('Hunting style: weaker spine for heavy broadhead compatibility')
+        elif shooting_style == 'target':
+            shooting_style_multiplier = 1.0  # Same as standard
+            shooting_style_notes.append('Target competition: standard spine calculation')
+        
+        base_spine = base_spine * shooting_style_multiplier
         
         calculated_spine = round(base_spine)
         
-        # Create spine range (±25 spine for research-based tolerance)
+        # Create spine range (±25 spine for tolerance)
         return {
             'calculated_spine': calculated_spine,
             'spine_range': {
@@ -265,34 +210,31 @@ class UnifiedSpineService:
                 'maximum': calculated_spine + 25
             },
             'calculations': {
-                'base_draw_weight': draw_weight,
-                'effective_draw_weight': effective_draw_weight,
-                'bow_type_multiplier': bow_type_multiplier,
-                'formula_result': base_spine,
+                'base_spine': 18000 / draw_weight,
                 'adjustments': {
-                    'carbon_express_adjustments': carbon_express_adjustments if bow_type == 'compound' else [],
-                    'effective_weight_change': effective_draw_weight - draw_weight if bow_type == 'compound' else 0,
-                    'length_adjustment': length_adjustment,
-                    'point_weight_adjustment': point_adjustment,
-                    'string_material_adjustment': string_adjustment,
-                    'calculation_method': calculation_method,
-                    'bow_type_method': f'realistic_{calculation_method}_{bow_type}',
+                    'length_factor': length_factor,
+                    'point_factor': point_factor,
+                    'bow_type_multiplier': bow_type_multiplier,
+                    'string_multiplier': string_multiplier,
+                    'shooting_style_multiplier': shooting_style_multiplier,
                     'bow_type': bow_type,
-                    'string_material': string_material or 'not_specified'
+                    'string_material': string_material or 'not_specified',
+                    'shooting_style': shooting_style
                 },
-                'total_adjustment': -length_adjustment - point_adjustment + string_adjustment,
+                'total_multiplier': (1 + length_factor) * (1 - point_factor) * bow_type_multiplier * string_multiplier * shooting_style_multiplier,
                 'bow_type': bow_type,
-                'confidence': 'high'  # High confidence with research-standard formula
+                'confidence': 'high'  # High confidence with corrected formula
             },
             'notes': [
-                f'Realistic spine calculation: {calculation_method} method for {bow_type} bow',
-                f'Effective draw weight: {effective_draw_weight}lbs (adjusted from {draw_weight}lbs)',
-                f'Carbon Express adjustments: {", ".join(carbon_express_adjustments)}' if carbon_express_adjustments else 'Standard bow parameters applied',
-                f'Length adjustment: {-length_adjustment:+.1f} spine units ({arrow_length}" vs 28" baseline)',
-                f'Point weight adjustment: {-point_adjustment:+.1f} spine units ({point_weight}gr vs 125gr baseline)',
-                'String material factor included' if string_material else 'String material not specified'
+                f'CORRECTED spine calculation for {bow_type} bow (formula fixed)',
+                f'Base calculation: 18000 ÷ {draw_weight}lbs = {18000/draw_weight:.1f}',
+                f'Length factor: {length_factor:+.2f} ({arrow_length}" vs 28" baseline)',
+                f'Point weight factor: {point_factor:+.3f} ({point_weight}gr vs 125gr baseline)',
+                f'Bow type multiplier: {bow_type_multiplier:.2f}x',
+                f'String material multiplier: {string_multiplier:.2f}x' if string_multiplier != 1.0 else 'No string material specified',
+                *shooting_style_notes
             ],
-            'source': f'research_based_{calculation_method}_calculator'
+            'source': 'corrected_spine_calculator'
         }
     
     def _lookup_chart_spine(
@@ -711,20 +653,20 @@ class UnifiedSpineService:
     def _get_bow_speed_adjustment(self, bow_speed: float) -> float:
         """
         Calculate draw weight adjustment based on bow speed (Professional mode).
-        Based on industry standards from spine_calculator.py and calculation_formulas.json
+        Reduced adjustment values to prevent "too soft" spine recommendations for heavy bows.
         """
         if bow_speed <= 275:
-            return -10.0  # Slower bows need weaker spine
+            return -3.0  # Slower bows need slightly weaker spine (reduced from -10.0)
         elif bow_speed <= 300:
-            return -5.0
+            return -1.5  # Reduced from -5.0
         elif bow_speed <= 320:
             return 0.0   # Baseline speed range
         elif bow_speed <= 340:
-            return 5.0   # Faster bows need stiffer spine  
+            return 2.0   # Faster bows need slightly stiffer spine (reduced from 5.0)
         elif bow_speed <= 350:
-            return 10.0
+            return 4.0   # Reduced from 10.0
         else:
-            return 15.0  # Very fast bows need much stiffer spine
+            return 6.0   # Very fast bows need stiffer spine (reduced from 15.0)
 
     def _get_release_type_adjustment(self, release_type: str) -> float:
         """
@@ -735,6 +677,133 @@ class UnifiedSpineService:
             return 5.0   # Finger release needs stiffer spine (+5lbs equivalent)
         else:  # mechanical release (default)
             return 0.0   # No adjustment for mechanical release
+
+    def _calculate_wood_arrow_spine(
+        self,
+        draw_weight: float,
+        arrow_length: float,
+        point_weight: float,
+        bow_type: str,
+        string_material: Optional[str] = None,
+        shooting_style: str = 'standard'
+    ) -> Dict[str, Any]:
+        """
+        Calculate spine for wood arrows using proper traditional wood arrow spine chart.
+        
+        Uses the established traditional wood arrow spine chart that maps draw weight 
+        and arrow length to specific spine values in pounds, with adjustments for
+        point weight and other factors.
+        """
+        print(f"🌳 Using traditional wood arrow spine chart for {bow_type} bow")
+        
+        # Get base spine from traditional wood arrow chart
+        base_spine = self._get_wood_spine_from_chart(draw_weight, arrow_length)
+        
+        # Point weight adjustments based on traditional wood arrow methodology
+        # Chart is based on 100gr points, with specific adjustment values
+        point_weight_adjustments = {
+            30: 1, 70: 2, 100: 3, 125: 4
+        }
+        
+        # Find closest point weight in the adjustment table
+        closest_point_weight = min(point_weight_adjustments.keys(), 
+                                 key=lambda x: abs(x - point_weight))
+        point_adjustment_value = point_weight_adjustments[closest_point_weight]
+        
+        # Baseline is 100gr (value 3), calculate adjustment
+        baseline_adjustment = 3
+        point_adjustment_diff = point_adjustment_value - baseline_adjustment
+        
+        # Apply point weight adjustment (each point moves spine by ~5#)
+        spine_adjustment = point_adjustment_diff * 5
+        final_spine = base_spine + spine_adjustment
+        
+        # Ensure spine stays within reasonable range for wood arrows (25-90#)
+        final_spine = max(25, min(90, final_spine))
+        
+        # Wood arrows are sold in 5# ranges, provide appropriate range
+        range_center = round(final_spine / 5) * 5
+        if range_center < final_spine:
+            range_center += 5
+        
+        spine_range = {
+            'minimum': range_center - 2.5,
+            'optimal': final_spine,
+            'maximum': range_center + 2.5
+        }
+        
+        return {
+            'calculated_spine': round(spine_range['optimal']),
+            'spine_range': spine_range,
+            'spine_units': 'pounds',  # This tells the matching engine it's pound-test values
+            'calculations': {
+                'base_spine': base_spine,
+                'adjustments': {
+                    'point_weight_adjustment': spine_adjustment,
+                    'point_weight': point_weight,
+                    'bow_type': bow_type,
+                    'shooting_style': shooting_style
+                },
+                'final_spine': final_spine,
+                'range_center': range_center,
+                'confidence': 'high'
+            },
+            'notes': [
+                f'Wood arrow spine from traditional chart',
+                f'Draw weight: {draw_weight}# @ {arrow_length}" → Base spine: {base_spine}#',
+                f'Point weight adjustment: {spine_adjustment:+.1f}# ({point_weight}gr vs 100gr baseline)',
+                f'Final spine: {final_spine}# → Range: {spine_range["minimum"]}-{spine_range["maximum"]}#',
+                f'Wood arrows sold in 5# ranges (e.g., {range_center-5}-{range_center}#)',
+                'Based on traditional wood arrow spine chart'
+            ],
+            'source': 'traditional_wood_arrow_chart'
+        }
+    
+    def _get_wood_spine_from_chart(self, draw_weight: float, arrow_length: float) -> float:
+        """Get wood spine value from traditional wood arrow chart (in pounds)"""
+        
+        # Traditional Wood Arrow Spine Chart
+        # Format: draw_weight: {arrow_length: spine_value_in_pounds}
+        wood_spine_chart = {
+            30: {26: 32.5, 27: 32.5, 28: 35, 29: 37.5, 30: 42.5, 31: 47.5, 32: 47.5},
+            35: {26: 35, 27: 35, 28: 37.5, 29: 42.5, 30: 47.5, 31: 52.5, 32: 52.5},
+            40: {26: 37.5, 27: 37.5, 28: 42.5, 29: 47.5, 30: 52.5, 31: 57.5, 32: 62.5},
+            45: {26: 42.5, 27: 42.5, 28: 47.5, 29: 52.5, 30: 57.5, 31: 62.5, 32: 67.5},
+            50: {26: 47.5, 27: 47.5, 28: 52.5, 29: 57.5, 30: 62.5, 31: 67.5, 32: 77.5},
+            55: {26: 52.5, 27: 52.5, 28: 57.5, 29: 62.5, 30: 67.5, 31: 72.5, 32: 77.5},
+            60: {26: 57.5, 27: 57.5, 28: 62.5, 29: 67.5, 30: 72.5, 31: 77.5, 32: 82.5},
+            65: {26: 62.5, 27: 62.5, 28: 67.5, 29: 72.5, 30: 77.5, 31: 82.5, 32: 87.5}
+        }
+        
+        # Find closest draw weight
+        available_weights = list(wood_spine_chart.keys())
+        closest_weight = min(available_weights, key=lambda x: abs(x - draw_weight))
+        
+        # Find closest arrow length  
+        weight_data = wood_spine_chart[closest_weight]
+        available_lengths = list(weight_data.keys())
+        closest_length = min(available_lengths, key=lambda x: abs(x - arrow_length))
+        
+        base_spine = weight_data[closest_length]
+        
+        # Interpolate if draw weight is significantly different
+        if abs(draw_weight - closest_weight) > 2.5:
+            if draw_weight > closest_weight:
+                next_weight = min([w for w in available_weights if w > closest_weight], default=closest_weight)
+                if next_weight != closest_weight:
+                    lower_spine = wood_spine_chart[closest_weight][closest_length]
+                    upper_spine = wood_spine_chart[next_weight].get(closest_length, lower_spine)
+                    ratio = (draw_weight - closest_weight) / (next_weight - closest_weight)
+                    base_spine = lower_spine + (upper_spine - lower_spine) * ratio
+            else:
+                prev_weight = max([w for w in available_weights if w < closest_weight], default=closest_weight)
+                if prev_weight != closest_weight:
+                    upper_spine = wood_spine_chart[closest_weight][closest_length]
+                    lower_spine = wood_spine_chart[prev_weight].get(closest_length, upper_spine)
+                    ratio = (closest_weight - draw_weight) / (closest_weight - prev_weight)
+                    base_spine = upper_spine + (lower_spine - upper_spine) * ratio
+        
+        return base_spine
 
 
 # Global instance for easy import
@@ -749,6 +818,7 @@ def calculate_unified_spine(
     draw_length: float = 28.0,
     string_material: Optional[str] = None,
     material_preference: Optional[str] = None,
+    shooting_style: str = 'standard',
     calculation_method: str = 'universal',
     manufacturer_chart: Optional[str] = None,
     chart_id: Optional[str] = None,
@@ -758,7 +828,7 @@ def calculate_unified_spine(
 ) -> Dict[str, Any]:
     """
     Convenience function for unified spine calculation.
-    Uses corrected logic with German calculator validation.
+    Uses reverted simple formulas with shooting style support.
     
     This is the function that should be imported and used throughout the system.
     """
@@ -770,6 +840,7 @@ def calculate_unified_spine(
         draw_length=draw_length,
         string_material=string_material,
         material_preference=material_preference,
+        shooting_style=shooting_style,
         calculation_method=calculation_method,
         manufacturer_chart=manufacturer_chart,
         chart_id=chart_id,
