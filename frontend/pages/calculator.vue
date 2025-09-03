@@ -547,6 +547,49 @@
           </div>
         </div>
 
+        <!-- Spine Chart Source Display -->
+        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
+              <div>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Spine Chart in Use:</p>
+                <div v-if="spineChartSelection && spineChartSelection.manufacturer && spineChartSelection.chartId">
+                  <!-- Specific manufacturer chart selected -->
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ spineChartSelection.manufacturer }}
+                    <span v-if="spineChartSelection.chart?.model"> - {{ spineChartSelection.chart.model }}</span>
+                  </p>
+                  <div class="flex items-center mt-1">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full mr-2">
+                      Manufacturer Chart
+                    </span>
+                    <span v-if="spineChartSelection.chart?.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                      <i class="fas fa-star mr-1"></i>
+                      System Default
+                    </span>
+                  </div>
+                </div>
+                <div v-else>
+                  <!-- Generic/universal calculation -->
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Universal Spine Formula
+                  </p>
+                  <span class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
+                    Standard Calculation
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-if="spineChartSelection && spineChartSelection.calculationMethod" class="text-right">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Method:</p>
+              <p class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {{ spineChartSelection.calculationMethod === 'universal' ? 'Universal' : 'German Industry' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Enhanced Spine Calculation Results -->
         <div v-if="enhancedSpineResult" class="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <h4 class="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
