@@ -9,8 +9,12 @@ The Archery Tools platform includes a comprehensive spine calculation data syste
 - **Complete Bow Type Coverage**: System defaults for compound, recurve, longbow, and traditional bows
 - **Shooting Style Integration**: Dynamic spine adjustments based on archery discipline
 - **Admin Management Interface**: Web-based system default configuration with visual indicators
+- **Frontend Visual Indicators**: Comprehensive visual feedback showing system defaults and chart sources
+- **Chart Source Display**: Real-time display of current spine chart in use on calculator page
 
 For detailed information on the new system defaults functionality, see: **[Spine Chart System Defaults Documentation](SPINE_CHART_SYSTEM_DEFAULTS.md)**
+
+For complete implementation details including visual enhancements, see: **[System Defaults Implementation Guide](SPINE_CHART_SYSTEM_DEFAULTS_IMPLEMENTATION.md)**
 
 ## Calculation Methods
 

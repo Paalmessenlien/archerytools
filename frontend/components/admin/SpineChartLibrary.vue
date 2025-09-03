@@ -180,6 +180,9 @@
                 Status
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                System Default
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -192,15 +195,9 @@
             >
               <td class="px-4 py-4">
                 <div>
-                  <div class="flex items-center space-x-2">
-                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {{ chart.manufacturer }} {{ chart.model }}
-                    </p>
-                    <span v-if="chart.is_system_default" class="px-2 py-1 text-xs bg-yellow-500 text-white rounded-full">
-                      <i class="fas fa-star mr-1"></i>
-                      System Default
-                    </span>
-                  </div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ chart.manufacturer }} {{ chart.model }}
+                  </p>
                   <p v-if="chart.chart_notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {{ chart.chart_notes.substring(0, 50) }}{{ chart.chart_notes.length > 50 ? '...' : '' }}
                   </p>
@@ -228,6 +225,15 @@
                     : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                 ]">
                   {{ chart.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-center">
+                <span v-if="chart.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                  <i class="fas fa-star text-yellow-600 dark:text-yellow-400 mr-1"></i>
+                  Default
+                </span>
+                <span v-else class="text-gray-400 dark:text-gray-500 text-xs">
+                  —
                 </span>
               </td>
               <td class="px-4 py-4">

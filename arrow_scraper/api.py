@@ -10306,6 +10306,8 @@ def get_system_default_chart():
         
         conn = db.get_connection()
         cursor = conn.cursor()
+        print(f"🔍 Debug: Database path: {db.db_path if hasattr(db, 'db_path') else 'Unknown'}")
+        print(f"🔍 Debug: Request for bow_type='{bow_type}', material='{material_preference}'")
         
         # Enhanced query that considers material preference
         if material_preference:

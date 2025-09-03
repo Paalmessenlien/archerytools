@@ -57,13 +57,15 @@ Material-aware system defaults and intelligent chart selection:
 - **Admin Management**: Web interface for configuring system defaults with visual indicators
 
 #### [Spine Chart System Defaults Implementation](SPINE_CHART_SYSTEM_DEFAULTS_IMPLEMENTATION.md) 🔧 NEW
-**September 2025** - Complete implementation details for per-bow-type system defaults:
+**September 2025** - Complete implementation details for per-bow-type system defaults with visual enhancements:
 - **Per-Bow-Type Logic**: System defaults specific to each bow type instead of global defaults
-- **Edit-Based Management**: System defaults set through chart editing interface instead of star buttons
+- **Edit-Based Management**: System defaults set through chart editing interface instead of star buttons  
+- **Visual Admin Interface**: Dedicated system default column with yellow star indicators
+- **Frontend Visual Indicators**: System default markers throughout manufacturer and chart selection
+- **Chart Source Display**: Prominent display of current spine chart under Calculated Specifications
 - **Database Service Updates**: Modified spine service for bow-type-specific default management
 - **API Enhancements**: Material preference support with intelligent chart selection
-- **Admin Interface Redesign**: Replaced star button system with checkbox-based default setting
-- **Frontend Integration**: Enhanced calculator with automatic appropriate default loading
+- **User Experience**: Complete transparency of calculation sources with professional visual design
 
 #### [Spine Calculation Fixes - August 2025](SPINE_CALCULATION_FIXES_AUGUST_2025.md) ⚡ CRITICAL
 Critical fixes to spine calculation accuracy:

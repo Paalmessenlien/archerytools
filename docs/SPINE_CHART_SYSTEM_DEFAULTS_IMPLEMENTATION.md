@@ -325,11 +325,60 @@ ORDER BY bow_type;
 - Validation of bow type and chart existence before updates
 - Comprehensive error handling and rollback procedures
 
+## Latest Enhancements (September 2025)
+
+### Visual Indicators and User Experience Improvements
+
+#### **1. Admin Panel Visual Enhancements**
+- **Dedicated System Default Column**: New table column showing yellow star badges for system defaults
+- **Clean Chart Display**: Removed duplicate badges from chart names for better organization
+- **Status Clarity**: Clear visual separation between chart type, active status, and system default status
+
+#### **2. Frontend Calculator Enhancements** 
+- **System Default Notifications**: Clear notification when system default charts are auto-loaded
+- **Manufacturer List Indicators**: Yellow stars next to manufacturers with system default charts
+- **Chart Selection Indicators**: Yellow stars next to specific charts that are system defaults
+- **Chart Source Display**: New section under "Calculated Specifications" showing current spine chart in use
+
+#### **3. Chart Source Display Feature**
+**Location**: Calculator page under "Calculated Specifications"
+
+**Two Display Modes**:
+- **Manufacturer Chart Mode**: Shows manufacturer name, model, chart type badge, and system default indicator
+- **Universal Formula Mode**: Shows "Universal Spine Formula" with standard calculation badge
+
+**Technical Implementation**:
+```vue
+<!-- Spine Chart Source Display -->
+<div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center">
+      <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
+      <div>
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Spine Chart in Use:</p>
+        <div v-if="spineChartSelection && spineChartSelection.manufacturer && spineChartSelection.chartId">
+          <!-- Manufacturer chart details with system default indicator -->
+        </div>
+        <div v-else>
+          <!-- Universal formula display -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+#### **4. Enhanced Visual Feedback System**
+- **Real-time Updates**: Chart source display updates automatically when selection changes
+- **System Default Awareness**: Clear indication throughout the interface when defaults are active
+- **Professional Styling**: Consistent Material Design 3 theming with yellow star system
+- **Mobile Responsive**: Optimized display for all screen sizes
+
 ## Future Enhancements
 
 ### Planned Improvements
 1. **Multi-Chart Defaults**: Support multiple recommended charts per bow type
-2. **User Preferences**: Per-user default chart preferences
+2. **User Preferences**: Per-user default chart preferences  
 3. **Machine Learning**: Adaptive defaults based on user selection patterns
 4. **Regional Defaults**: Location-based default chart selection
 
@@ -339,6 +388,23 @@ ORDER BY bow_type;
 - Tournament-specific spine chart configurations
 - Advanced admin analytics for system default usage
 
+## Complete Feature Summary
+
+### ✅ Implemented Features (September 2025)
+1. **Per-Bow-Type System Defaults**: Each bow type can have its own system default chart
+2. **Edit-Based Management**: System defaults set through chart editing interface with checkbox
+3. **Visual Admin Interface**: Dedicated system default column with yellow star indicators
+4. **Frontend Visual Indicators**: System default markers throughout manufacturer and chart selection
+5. **Chart Source Display**: Prominent display of current chart source under calculations
+6. **Material-Aware Selection**: Intelligent chart selection based on bow type and material preference
+7. **API Enhancements**: Enhanced endpoints with material preference support and per-bow-type logic
+
+### 🎯 User Experience Benefits
+- **Transparency**: Users always know which calculation source is being used
+- **Consistency**: System defaults ensure consistent experience for each bow type
+- **Flexibility**: Administrators can easily configure appropriate defaults per bow type
+- **Professional Interface**: Clean, modern design with clear visual hierarchy
+
 ---
 
-*This documentation covers the complete per-bow-type system defaults implementation completed in September 2025.*
+*This documentation covers the complete per-bow-type system defaults implementation with visual enhancements completed in September 2025.*
