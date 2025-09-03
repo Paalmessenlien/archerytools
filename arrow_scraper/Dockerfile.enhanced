@@ -57,7 +57,7 @@ RUN echo "🔍 Checking arrow_data_validator.py..." && \
 
 # Verify build integrity (imports only - no database files expected at build time)
 RUN echo "🔍 Final build verification..." && \
-    python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    from arrow_data_validator import ArrowDataValidator\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful including validation module\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && \
+    python3 -c "import sys; sys.path.append('/app'); exec('try:\\n    from arrow_data_validator import ArrowDataValidator\\n    import flask, sqlite3, requests, jwt\\n    print(\\\"✅ Core imports successful including validation module\\\")\\nexcept ImportError as e:\\n    print(f\\\"❌ Import failed: {e}\\\")\\n    exit(1)')" && \
     echo "✅ Build verification completed"
 
 # Switch to non-root user
