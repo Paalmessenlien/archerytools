@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy application code
 COPY arrow_scraper/ ./arrow_scraper/
 COPY data/ ./data/
+COPY arrow_data_validator.py ./arrow_data_validator.py
 
 # Create logs directory
 RUN mkdir -p logs
