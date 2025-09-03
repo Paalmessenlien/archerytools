@@ -57,18 +57,35 @@ def import_arrow_data_validator():
         '/app',  # /app/arrow_data_validator.py (production Docker)
         os.getcwd(),  # Current working directory
         os.path.dirname(__file__),  # Same directory as api.py
+        '/app/arrow_scraper',  # /app/arrow_scraper/ (if copied there)
+        os.path.join(os.getcwd(), 'arrow_scraper'),  # ./arrow_scraper/
     ]
+    
+    debug_info = []
     
     for path in validator_paths:
         if path not in sys.path:
             sys.path.append(path)
+        
+        # Check if the file actually exists at this path
+        validator_file = os.path.join(path, 'arrow_data_validator.py')
+        file_exists = os.path.exists(validator_file)
+        debug_info.append(f"Path: {path}, File exists: {file_exists}")
+        
         try:
             from arrow_data_validator import ArrowDataValidator
             return ArrowDataValidator
-        except ImportError:
+        except ImportError as e:
+            debug_info.append(f"Import failed from {path}: {str(e)}")
             continue
     
-    raise ImportError("ArrowDataValidator module not found in any expected location")
+    # If we get here, create detailed error message
+    debug_msg = "\n".join(debug_info)
+    cwd = os.getcwd()
+    files_in_cwd = os.listdir(cwd) if os.path.exists(cwd) else []
+    
+    error_msg = f"ArrowDataValidator module not found. Debug info:\n{debug_msg}\nCWD: {cwd}\nFiles in CWD: {files_in_cwd[:10]}"
+    raise ImportError(error_msg)
 
 def get_current_user_optional():
     """
