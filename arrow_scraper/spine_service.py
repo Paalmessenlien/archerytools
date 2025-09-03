@@ -683,22 +683,37 @@ class UnifiedSpineService:
                 conn.close()
     
     def set_system_default_chart(self, chart_id: int, chart_type: str = 'manufacturer') -> bool:
-        """Set a chart as the system default"""
+        """Set a chart as the system default for its specific bow type"""
         conn = None
         try:
             conn = self.db.get_connection()
             cursor = conn.cursor()
             
-            # Clear all existing system defaults
+            # Get the bow type of the chart to be set as default
             if chart_type == 'manufacturer':
-                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0")
+                cursor.execute("SELECT bow_type FROM manufacturer_spine_charts_enhanced WHERE id = ?", (chart_id,))
+            else:
+                cursor.execute("SELECT bow_type FROM custom_spine_charts WHERE id = ?", (chart_id,))
+            
+            result = cursor.fetchone()
+            if not result:
+                return False
+            
+            bow_type = result[0]
+            
+            # Clear existing system defaults for this specific bow type only
+            if chart_type == 'manufacturer':
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
                 cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 1 WHERE id = ?", (chart_id,))
             else:
-                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0")
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
                 cursor.execute("UPDATE custom_spine_charts SET is_system_default = 1 WHERE id = ?", (chart_id,))
             
             success = cursor.rowcount > 0
             conn.commit()
+            print(f"✅ Set system default for {bow_type} bow type: chart ID {chart_id}")
             return success
             
         except sqlite3.Error as e:
