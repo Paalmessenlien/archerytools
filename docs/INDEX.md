@@ -49,6 +49,15 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Enhanced Validation System](ENHANCED_VALIDATION_SYSTEM.md) ✨ NEW
+Advanced data quality monitoring with intelligent auto-fix capabilities:
+- **Auto-Fix SQL Generation**: Automatic solutions for search visibility, manufacturer status, and data completion issues
+- **Sorting & Filtering**: Advanced issue organization by severity (Critical/Warning/Info) and category
+- **"Not a Duplicate" System**: False positive management with persistent exclusion tracking
+- **Click-to-Fix Interface**: Color-coded action buttons with real-time progress indicators
+- **Database Persistence**: Comprehensive issue tracking with deduplication and occurrence counting
+- **Performance Metrics**: Health score monitoring and validation run history
+
 #### [Spine Chart System Defaults](SPINE_CHART_SYSTEM_DEFAULTS.md) ⚡ NEW
 Material-aware system defaults and intelligent chart selection:
 - **Complete Bow Type Coverage**: System defaults for compound, recurve, longbow, and traditional bows
