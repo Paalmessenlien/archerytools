@@ -45,6 +45,31 @@ from change_log_service import ChangeLogService
 import jwt
 from auth import token_required, get_user_from_google_token
 
+def import_arrow_data_validator():
+    """
+    Import ArrowDataValidator with production-compatible path resolution
+    """
+    import sys
+    
+    # Try multiple paths for arrow_data_validator (development vs production)
+    validator_paths = [
+        os.path.dirname(os.path.dirname(__file__)),  # ../arrow_data_validator.py (development)
+        '/app',  # /app/arrow_data_validator.py (production Docker)
+        os.getcwd(),  # Current working directory
+        os.path.dirname(__file__),  # Same directory as api.py
+    ]
+    
+    for path in validator_paths:
+        if path not in sys.path:
+            sys.path.append(path)
+        try:
+            from arrow_data_validator import ArrowDataValidator
+            return ArrowDataValidator
+        except ImportError:
+            continue
+    
+    raise ImportError("ArrowDataValidator module not found in any expected location")
+
 def get_current_user_optional():
     """
     Get current user from JWT token if present, return None if no valid token
@@ -11365,10 +11390,11 @@ def validate_migrations(current_user):
 def validate_arrows_data(current_user):
     """Validate arrow data quality for calculator compatibility"""
     try:
-        # Import the validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         # Get database path from current database instance
         db = get_database()
@@ -11431,10 +11457,11 @@ def validate_arrows_data(current_user):
 def get_arrow_validation_sql_fix(current_user):
     """Generate SQL fix script for arrow data validation issues"""
     try:
-        # Import the validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         # Get database path
         db = get_database()
@@ -11464,10 +11491,15 @@ def get_arrow_validation_sql_fix(current_user):
 def execute_arrow_validation_fixes(current_user):
     """Execute arrow data validation fixes with automatic backup"""
     try:
-        # Import required modules
+        # Import required modules with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
+        
+        # Import backup manager
         import sys
         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
         from backup_manager import BackupManager
         
         # Get database instance
@@ -11595,10 +11627,15 @@ def execute_individual_sql(current_user):
 def merge_duplicate_arrows(current_user):
     """Merge all duplicate arrows with automatic backup"""
     try:
-        # Import required modules
+        # Import required modules with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
+        
+        # Import backup manager
         import sys
         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
         from backup_manager import BackupManager
         
         # Get database instance
@@ -11647,10 +11684,11 @@ def merge_duplicate_arrows(current_user):
 def get_validation_status(current_user):
     """Get overall validation health and latest results"""
     try:
-        # Import the enhanced validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the enhanced validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         db = get_database()
         if not db:
@@ -11698,10 +11736,11 @@ def get_validation_status(current_user):
 def trigger_validation_run(current_user):
     """Trigger a comprehensive validation run"""
     try:
-        # Import the enhanced validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the enhanced validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         db = get_database()
         if not db:
@@ -11755,10 +11794,11 @@ def trigger_validation_run(current_user):
 def get_validation_issues(current_user):
     """Get current validation issues with filtering options"""
     try:
-        # Import the enhanced validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the enhanced validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         db = get_database()
         if not db:
@@ -11822,10 +11862,11 @@ def get_validation_issues(current_user):
 def apply_validation_fix(current_user, issue_id):
     """Apply automated fix for a specific validation issue"""
     try:
-        # Import the enhanced validation script
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from arrow_data_validator import ArrowDataValidator
+        # Import the enhanced validation script with production-compatible paths
+        try:
+            ArrowDataValidator = import_arrow_data_validator()
+        except ImportError as e:
+            return jsonify({'error': f'Failed to import validation module: {str(e)}'}), 500
         
         db = get_database()
         if not db:
