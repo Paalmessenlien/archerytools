@@ -7,8 +7,10 @@ Comprehensive validation tool to identify data quality issues preventing arrows 
 import sqlite3
 import json
 import re
+import hashlib
+import time
 from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from arrow_scraper.unified_database import UnifiedDatabase
 from datetime import datetime
@@ -26,6 +28,19 @@ class ValidationIssue:
     current_value: Any
     suggested_fix: str
     sql_fix: Optional[str] = None
+    auto_fixable: bool = False
+    issue_hash: Optional[str] = None
+    
+    def __post_init__(self):
+        """Generate unique hash for issue identification and set auto_fixable"""
+        if self.issue_hash is None:
+            # Create hash from arrow_id, field, and issue description
+            hash_content = f"{self.arrow_id}:{self.field}:{self.issue}:{self.current_value}"
+            self.issue_hash = hashlib.md5(hash_content.encode()).hexdigest()
+        
+        # Auto-set auto_fixable based on presence of valid SQL fix
+        if self.sql_fix and not self.sql_fix.startswith('--'):
+            self.auto_fixable = True
 
 @dataclass
 class ValidationReport:
@@ -42,12 +57,14 @@ class ValidationReport:
     calculator_impact: Dict[str, Any]
 
 class ArrowDataValidator:
-    """Comprehensive arrow data validation engine"""
+    """Comprehensive arrow data validation engine with database persistence"""
     
     def __init__(self, database_path: str = None):
         """Initialize validator with database connection"""
         self.db = UnifiedDatabase(database_path)
         self.validation_issues = []
+        self.current_run_id = None
+        self.validation_start_time = None
         
         # Standard material categories for frontend compatibility
         self.standard_materials = {
@@ -81,9 +98,13 @@ class ArrowDataValidator:
             'carbon core aluminum jacket': 'Carbon / Aluminum',
         }
     
-    def validate_all_data(self) -> ValidationReport:
-        """Run comprehensive validation on all arrow data"""
+    def validate_all_data(self, triggered_by: str = 'manual') -> ValidationReport:
+        """Run comprehensive validation on all arrow data with database persistence"""
         print("🔍 Starting comprehensive arrow data validation...")
+        
+        # Initialize validation run
+        self.validation_start_time = time.time()
+        self._start_validation_run(triggered_by)
         
         # Clear previous issues
         self.validation_issues = []
@@ -96,20 +117,47 @@ class ArrowDataValidator:
             
             print(f"📊 Analyzing {total_arrows} arrows in database...")
         
-        # Run all validation categories
-        self._validate_critical_fields()
-        self._validate_material_standardization()
-        self._validate_spine_data_quality()
-        self._validate_manufacturer_integration()
-        self._validate_duplicate_detection()
-        self._validate_data_field_formatting()
-        self._validate_calculator_compatibility()
-        
-        # Generate comprehensive report
-        report = self._generate_validation_report(total_arrows)
-        
-        print(f"✅ Validation complete: {report.total_issues} issues found")
-        return report
+        try:
+            # Run all validation categories
+            self._validate_critical_fields()
+            self._validate_search_visibility()  # NEW: Critical for arrow 2508 type issues
+            self._validate_database_integrity()  # NEW: JOIN and architecture validation
+            self._validate_material_standardization()
+            self._validate_spine_data_quality()
+            self._validate_manufacturer_integration()
+            self._validate_duplicate_detection()
+            self._validate_data_field_formatting()
+            self._validate_calculator_compatibility()
+            
+            # Store issues in database
+            self._persist_validation_issues()
+            
+            # Generate comprehensive report
+            report = self._generate_validation_report(total_arrows)
+            
+            # Complete validation run record
+            self._complete_validation_run(report, total_arrows)
+            
+            print(f"✅ Validation complete: {report.total_issues} issues found")
+            return report
+            
+        except Exception as e:
+            print(f"❌ Validation failed: {e}")
+            # Still complete the run but mark as error
+            report = ValidationReport(
+                total_arrows=total_arrows,
+                total_issues=len(self.validation_issues),
+                critical_issues=sum(1 for issue in self.validation_issues if issue.severity == 'critical'),
+                warning_issues=sum(1 for issue in self.validation_issues if issue.severity == 'warning'),
+                info_issues=sum(1 for issue in self.validation_issues if issue.severity == 'info'),
+                issues_by_category={},
+                validation_issues=self.validation_issues,
+                summary_stats={'error': str(e)},
+                fix_recommendations=[],
+                calculator_impact={}
+            )
+            self._complete_validation_run(report, total_arrows)
+            raise
     
     def _validate_critical_fields(self):
         """Validate critical required fields"""
@@ -177,6 +225,291 @@ class ArrowDataValidator:
                     current_value="NULL",
                     suggested_fix="Add spine specifications or remove arrow",
                     sql_fix=f"DELETE FROM arrows WHERE id = {row['id']}; -- Remove arrow without spine data"
+                ))
+    
+    def _validate_search_visibility(self):
+        """Validate that arrows appear in search results - Critical for arrow 2508 type issues"""
+        print("🔍 Validating search visibility (arrow 2508 type issues)...")
+        
+        # Test a sample of arrows to see if they appear in search results
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Get a sample of arrows for search visibility testing
+            cursor.execute('''
+                SELECT a.id, a.manufacturer, a.model_name, a.material, a.arrow_type,
+                       COUNT(ss.id) as spine_count
+                FROM arrows a
+                LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+                GROUP BY a.id
+                ORDER BY RANDOM()
+                LIMIT 100
+            ''')
+            sample_arrows = cursor.fetchall()
+            
+            search_failures = 0
+            for arrow in sample_arrows:
+                # Test if arrow appears in basic search
+                try:
+                    # Use the database's search method directly
+                    search_results = self.db.search_arrows(limit=1000)  # Get many results
+                    arrow_found = any(result['id'] == arrow['id'] for result in search_results)
+                    
+                    # If no results at all, this indicates database path/connection issues
+                    if len(search_results) == 0:
+                        # This is a critical database architecture issue
+                        self.validation_issues.append(ValidationIssue(
+                            category="Database Integrity",
+                            severity="critical", 
+                            arrow_id=0,
+                            manufacturer="SYSTEM",
+                            model_name="DATABASE",
+                            field="database_path",
+                            issue="Search returns 0 results - database path or connection issue",
+                            current_value="Empty search results",
+                            suggested_fix="Verify database path and data availability",
+                            sql_fix=f"-- Critical: Database at {self.db.db_path} appears empty or unreachable"
+                        ))
+                        break  # No point testing more arrows if search is broken
+                    
+                    if not arrow_found:
+                        search_failures += 1
+                        
+                        # Check if arrow appears in unlimited search (test if it's a limit issue)
+                        unlimited_results = self.db.search_arrows(limit=10000, include_inactive=True)
+                        arrow_in_unlimited = any(result['id'] == arrow['id'] for result in unlimited_results)
+                        
+                        if arrow_in_unlimited:
+                            # Arrow exists but is beyond normal search limits due to ordering
+                            # Auto-fix by improving the arrow's search ranking through data optimization
+                            
+                            # We can boost visibility by ensuring the arrow has complete data
+                            cursor.execute('''
+                                SELECT COUNT(*) FROM spine_specifications 
+                                WHERE arrow_id = ? AND (gpi_weight IS NULL OR outer_diameter IS NULL)
+                            ''', (arrow['id'],))
+                            incomplete_specs = cursor.fetchone()[0]
+                            
+                            if incomplete_specs > 0:
+                                # Fix incomplete spine specifications to improve search ranking
+                                sql_fix = f'''UPDATE spine_specifications 
+                                           SET gpi_weight = COALESCE(gpi_weight, 8.0),
+                                               outer_diameter = COALESCE(outer_diameter, 0.300)
+                                           WHERE arrow_id = {arrow['id']} 
+                                           AND (gpi_weight IS NULL OR outer_diameter IS NULL);'''
+                                suggested_fix = "Complete missing spine data to improve search ranking"
+                            else:
+                                # Update arrow to have better search visibility by improving description
+                                sql_fix = f'''UPDATE arrows 
+                                           SET description = COALESCE(description, '{arrow['manufacturer']} {arrow['model_name']} - High quality arrow'),
+                                               arrow_type = COALESCE(arrow_type, 'target')
+                                           WHERE id = {arrow['id']};'''
+                                suggested_fix = "Enhance arrow description and type for better search visibility"
+                        else:
+                            # Check if manufacturer exists in manufacturers table
+                            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='manufacturers'")
+                            has_manufacturers_table = cursor.fetchone() is not None
+                            
+                            if has_manufacturers_table and arrow['manufacturer']:
+                                # Check if manufacturer exists and is active
+                                cursor.execute("SELECT is_active FROM manufacturers WHERE name = ?", (arrow['manufacturer'],))
+                                mfr_result = cursor.fetchone()
+                                
+                                if not mfr_result:
+                                    # Manufacturer missing - add it
+                                    sql_fix = f"INSERT INTO manufacturers (name, is_active) VALUES ('{arrow['manufacturer']}', 1);"
+                                    suggested_fix = f"Add missing manufacturer '{arrow['manufacturer']}' to manufacturers table"
+                                elif not mfr_result['is_active']:
+                                    # Manufacturer inactive - activate it
+                                    sql_fix = f"UPDATE manufacturers SET is_active = 1 WHERE name = '{arrow['manufacturer']}';"
+                                    suggested_fix = f"Activate manufacturer '{arrow['manufacturer']}' to make arrows visible"
+                                else:
+                                    # Other visibility issue - data integrity
+                                    sql_fix = f"-- Arrow ID {arrow['id']} visibility issue requires manual investigation"
+                                    suggested_fix = "Data integrity issue requiring manual review"
+                            else:
+                                # No manufacturers table or no manufacturer name
+                                if not arrow['manufacturer']:
+                                    sql_fix = f"UPDATE arrows SET manufacturer = 'Unknown' WHERE id = {arrow['id']};"
+                                    suggested_fix = "Set manufacturer to 'Unknown' for proper search indexing"
+                                else:
+                                    sql_fix = f"-- Database architecture issue - manufacturers table missing"
+                                    suggested_fix = "Database architecture requires manufacturers table"
+                        
+                        self.validation_issues.append(ValidationIssue(
+                            category="Search Visibility",
+                            severity="critical",
+                            arrow_id=arrow['id'],
+                            manufacturer=arrow['manufacturer'] or 'Unknown',
+                            model_name=arrow['model_name'] or 'Unknown',
+                            field="search_visibility",
+                            issue="Arrow exists but does not appear in search results",
+                            current_value=f"Arrow ID {arrow['id']} invisible",
+                            suggested_fix=suggested_fix,
+                            sql_fix=sql_fix
+                        ))
+                        
+                        # Also test specific manufacturer search
+                        if arrow['manufacturer']:
+                            mfr_results = self.db.search_arrows(manufacturer=arrow['manufacturer'], limit=1000)
+                            mfr_found = any(result['id'] == arrow['id'] for result in mfr_results)
+                            if not mfr_found:
+                                # Check manufacturer status for specific search issues
+                                if has_manufacturers_table:
+                                    cursor.execute("SELECT is_active FROM manufacturers WHERE name = ?", (arrow['manufacturer'],))
+                                    mfr_result = cursor.fetchone()
+                                    
+                                    if not mfr_result:
+                                        sql_fix = f"INSERT INTO manufacturers (name, is_active) VALUES ('{arrow['manufacturer']}', 1);"
+                                        suggested_fix = f"Add manufacturer '{arrow['manufacturer']}' for proper search filtering"
+                                    elif not mfr_result['is_active']:
+                                        sql_fix = f"UPDATE manufacturers SET is_active = 1 WHERE name = '{arrow['manufacturer']}';"
+                                        suggested_fix = f"Activate manufacturer '{arrow['manufacturer']}' for search visibility"
+                                    else:
+                                        sql_fix = f"-- Manufacturer search issue for arrow {arrow['id']} needs manual review"
+                                        suggested_fix = "Complex search issue requiring manual investigation"
+                                else:
+                                    sql_fix = f"-- No manufacturers table - architecture issue"
+                                    suggested_fix = "Database needs manufacturers table for search functionality"
+                                
+                                self.validation_issues.append(ValidationIssue(
+                                    category="Search Visibility",
+                                    severity="critical",
+                                    arrow_id=arrow['id'],
+                                    manufacturer=arrow['manufacturer'],
+                                    model_name=arrow['model_name'] or 'Unknown',
+                                    field="manufacturer_search",
+                                    issue="Arrow not found in manufacturer search",
+                                    current_value=f"Missing from {arrow['manufacturer']} search",
+                                    suggested_fix=suggested_fix,
+                                    sql_fix=sql_fix
+                                ))
+                except Exception as e:
+                    # Search method failed entirely
+                    self.validation_issues.append(ValidationIssue(
+                        category="Search Visibility",
+                        severity="critical",
+                        arrow_id=arrow['id'],
+                        manufacturer=arrow['manufacturer'] or 'Unknown',
+                        model_name=arrow['model_name'] or 'Unknown',
+                        field="search_system",
+                        issue=f"Search system failure: {str(e)}",
+                        current_value="Search method crashed",
+                        suggested_fix="Fix database search method implementation",
+                        sql_fix=None
+                    ))
+            
+            if search_failures > 0:
+                print(f"⚠️  Found {search_failures} arrows with search visibility issues")
+            else:
+                print("✅ All sampled arrows are search-visible")
+    
+    def _validate_database_integrity(self):
+        """Validate database JOIN integrity and architecture consistency"""
+        print("🔍 Validating database integrity and architecture...")
+        
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Check if manufacturers table exists (critical for UnifiedDatabase)
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='manufacturers';")
+            has_manufacturers_table = cursor.fetchone() is not None
+            
+            if not has_manufacturers_table:
+                # This is the exact issue that caused arrow 2508 to be invisible
+                self.validation_issues.append(ValidationIssue(
+                    category="Database Integrity",
+                    severity="critical",
+                    arrow_id=0,  # System-level issue
+                    manufacturer="SYSTEM",
+                    model_name="DATABASE_ARCHITECTURE",
+                    field="manufacturers_table",
+                    issue="manufacturers table does not exist - causes UnifiedDatabase search failures",
+                    current_value="Table missing",
+                    suggested_fix="Create manufacturers table or use ArrowDatabase consistently",
+                    sql_fix="CREATE TABLE manufacturers (id INTEGER PRIMARY KEY, name TEXT UNIQUE, is_active BOOLEAN DEFAULT TRUE);"
+                ))
+            
+            # Check for orphaned spine specifications
+            cursor.execute('''
+                SELECT ss.id, ss.arrow_id 
+                FROM spine_specifications ss 
+                LEFT JOIN arrows a ON ss.arrow_id = a.id 
+                WHERE a.id IS NULL
+                LIMIT 10
+            ''')
+            orphaned_specs = cursor.fetchall()
+            
+            for spec in orphaned_specs:
+                self.validation_issues.append(ValidationIssue(
+                    category="Database Integrity",
+                    severity="warning",
+                    arrow_id=spec['arrow_id'],
+                    manufacturer="ORPHANED",
+                    model_name="SPINE_SPEC",
+                    field="arrow_id_reference",
+                    issue="Spine specification references non-existent arrow",
+                    current_value=f"Orphaned spec ID {spec['id']}",
+                    suggested_fix="Remove orphaned spine specification",
+                    sql_fix=f"DELETE FROM spine_specifications WHERE id = {spec['id']};"
+                ))
+            
+            # Check for arrows without spine specifications
+            cursor.execute('''
+                SELECT a.id, a.manufacturer, a.model_name 
+                FROM arrows a 
+                LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id 
+                WHERE ss.id IS NULL
+                LIMIT 10
+            ''')
+            arrows_without_spines = cursor.fetchall()
+            
+            for arrow in arrows_without_spines:
+                self.validation_issues.append(ValidationIssue(
+                    category="Database Integrity",
+                    severity="warning",
+                    arrow_id=arrow['id'],
+                    manufacturer=arrow['manufacturer'] or 'Unknown',
+                    model_name=arrow['model_name'] or 'Unknown',
+                    field="spine_specifications",
+                    issue="Arrow has no spine specifications",
+                    current_value="No spine data",
+                    suggested_fix="Add spine specifications or remove arrow",
+                    sql_fix=f"DELETE FROM arrows WHERE id = {arrow['id']}; -- Remove arrow without spine data"
+                ))
+            
+            # Test actual database search performance
+            try:
+                import time
+                start_time = time.time()
+                test_results = self.db.search_arrows(limit=100)
+                search_time = (time.time() - start_time) * 1000  # milliseconds
+                
+                if search_time > 1000:  # More than 1 second is concerning
+                    self.validation_issues.append(ValidationIssue(
+                        category="Database Integrity",
+                        severity="warning",
+                        arrow_id=0,
+                        manufacturer="SYSTEM",
+                        model_name="PERFORMANCE",
+                        field="search_performance",
+                        issue=f"Slow search performance: {search_time:.0f}ms",
+                        current_value=f"{search_time:.0f}ms",
+                        suggested_fix="Optimize database indexes or query structure",
+                        sql_fix="CREATE INDEX IF NOT EXISTS idx_arrows_search ON arrows(manufacturer, material, arrow_type);"
+                    ))
+            except Exception as e:
+                self.validation_issues.append(ValidationIssue(
+                    category="Database Integrity",
+                    severity="critical",
+                    arrow_id=0,
+                    manufacturer="SYSTEM",
+                    model_name="SEARCH_ENGINE",
+                    field="search_method",
+                    issue=f"Database search method completely failed: {str(e)}",
+                    current_value="Search broken",
+                    suggested_fix="Fix database architecture or search implementation",
+                    sql_fix=None
                 ))
     
     def _validate_material_standardization(self):
@@ -340,17 +673,35 @@ class ArrowDataValidator:
                 ))
     
     def _validate_duplicate_detection(self):
-        """Detect duplicate arrow entries and spine specifications"""
+        """Detect duplicate arrow entries and spine specifications, excluding user-marked false positives"""
         print("🔍 Detecting duplicate arrows and spine specifications...")
         
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             
-            # 1. Detect duplicate arrows (same manufacturer + model_name)
+            # Create duplicate_exclusions table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS duplicate_exclusions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arrow_id INTEGER NOT NULL,
+                    field TEXT NOT NULL,
+                    issue_hash TEXT,
+                    reason TEXT,
+                    excluded_by TEXT NOT NULL,
+                    excluded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(arrow_id, field)
+                )
+            ''')
+            
+            # 1. Detect duplicate arrows (same manufacturer + model_name), excluding marked false positives
             cursor.execute('''
                 SELECT manufacturer, model_name, COUNT(*) as count, GROUP_CONCAT(id) as arrow_ids
                 FROM arrows 
                 WHERE manufacturer IS NOT NULL AND model_name IS NOT NULL
+                  AND id NOT IN (
+                      SELECT arrow_id FROM duplicate_exclusions 
+                      WHERE field = 'duplicate_arrow'
+                  )
                 GROUP BY LOWER(TRIM(manufacturer)), LOWER(TRIM(model_name))
                 HAVING COUNT(*) > 1
                 ORDER BY count DESC
@@ -373,12 +724,16 @@ class ArrowDataValidator:
                         sql_fix=f"-- DELETE FROM arrows WHERE id = {arrow_id}; -- Review before deletion"
                     ))
             
-            # 2. Detect duplicate spine specifications for same arrow
+            # 2. Detect duplicate spine specifications for same arrow, excluding marked false positives
             cursor.execute('''
                 SELECT ss.arrow_id, a.manufacturer, a.model_name, ss.spine, COUNT(*) as count, 
                        GROUP_CONCAT(ss.id) as spine_ids
                 FROM spine_specifications ss
                 JOIN arrows a ON ss.arrow_id = a.id
+                WHERE ss.arrow_id NOT IN (
+                    SELECT arrow_id FROM duplicate_exclusions 
+                    WHERE field = 'duplicate_spine_spec'
+                )
                 GROUP BY ss.arrow_id, ss.spine
                 HAVING COUNT(*) > 1
                 ORDER BY count DESC
@@ -401,7 +756,7 @@ class ArrowDataValidator:
                         sql_fix=f"DELETE FROM spine_specifications WHERE id = {spine_id};"
                     ))
             
-            # 3. Detect near-duplicate arrows (similar names, fuzzy matching)
+            # 3. Detect near-duplicate arrows (similar names, fuzzy matching), excluding marked false positives
             cursor.execute('''
                 SELECT a1.id as id1, a1.manufacturer as man1, a1.model_name as model1,
                        a2.id as id2, a2.manufacturer as man2, a2.model_name as model2
@@ -417,6 +772,11 @@ class ArrowDataValidator:
                     (LENGTH(a1.model_name) > 3 AND LENGTH(a2.model_name) > 3 AND
                      (LOWER(a1.model_name) LIKE '%' || LOWER(a2.model_name) || '%' OR
                       LOWER(a2.model_name) LIKE '%' || LOWER(a1.model_name) || '%'))
+                  )
+                  -- Exclude pairs marked as not duplicates
+                  AND a2.id NOT IN (
+                      SELECT arrow_id FROM duplicate_exclusions 
+                      WHERE field = 'near_duplicate'
                   )
                 LIMIT 50
             ''')
@@ -1122,6 +1482,313 @@ class ArrowDataValidator:
             summary += f"• {rec}\n"
         
         return summary
+    
+    # ========================================
+    # DATABASE PERSISTENCE METHODS
+    # ========================================
+    
+    def _start_validation_run(self, triggered_by: str = 'manual'):
+        """Start a new validation run record in database"""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Get current database version (from migration table if available)
+                try:
+                    cursor.execute("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
+                    db_version = str(cursor.fetchone()[0])
+                except:
+                    db_version = "unknown"
+                
+                # Insert new validation run
+                cursor.execute("""
+                    INSERT INTO validation_runs 
+                    (run_timestamp, triggered_by, validation_version, database_version)
+                    VALUES (datetime('now'), ?, '2.0', ?)
+                """, (triggered_by, db_version))
+                
+                self.current_run_id = cursor.lastrowid
+                conn.commit()
+                print(f"📊 Started validation run #{self.current_run_id}")
+                
+        except Exception as e:
+            print(f"⚠️  Could not start validation run record: {e}")
+            self.current_run_id = None
+    
+    def _persist_validation_issues(self):
+        """Store validation issues in database with deduplication"""
+        if not self.current_run_id or not self.validation_issues:
+            return
+        
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                for issue in self.validation_issues:
+                    # Check if this issue already exists (by hash)
+                    cursor.execute("""
+                        SELECT id, occurrence_count FROM validation_issues 
+                        WHERE issue_hash = ? AND is_resolved = FALSE
+                    """, (issue.issue_hash,))
+                    
+                    existing = cursor.fetchone()
+                    
+                    if existing:
+                        # Update existing issue
+                        cursor.execute("""
+                            UPDATE validation_issues 
+                            SET occurrence_count = occurrence_count + 1,
+                                last_seen = datetime('now'),
+                                run_id = ?
+                            WHERE id = ?
+                        """, (self.current_run_id, existing[0]))
+                    else:
+                        # Insert new issue
+                        cursor.execute("""
+                            INSERT INTO validation_issues 
+                            (run_id, issue_hash, category, severity, arrow_id, manufacturer, 
+                             model_name, field, issue_description, current_value, suggested_fix, 
+                             sql_fix, auto_fixable)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            self.current_run_id, issue.issue_hash, issue.category, issue.severity,
+                            issue.arrow_id, issue.manufacturer, issue.model_name, issue.field,
+                            issue.issue, str(issue.current_value), issue.suggested_fix,
+                            issue.sql_fix, issue.auto_fixable
+                        ))
+                
+                conn.commit()
+                print(f"💾 Persisted {len(self.validation_issues)} validation issues")
+                
+        except Exception as e:
+            print(f"⚠️  Could not persist validation issues: {e}")
+    
+    def _complete_validation_run(self, report: ValidationReport, total_arrows: int):
+        """Complete validation run record with final statistics"""
+        if not self.current_run_id:
+            return
+        
+        try:
+            run_duration_ms = int((time.time() - self.validation_start_time) * 1000)
+            health_score = self._calculate_health_score(report, total_arrows)
+            
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE validation_runs SET
+                        total_issues = ?,
+                        critical_issues = ?,
+                        warning_issues = ?,
+                        info_issues = ?,
+                        health_score = ?,
+                        run_duration_ms = ?,
+                        total_arrows_checked = ?
+                    WHERE id = ?
+                """, (
+                    report.total_issues, report.critical_issues, report.warning_issues,
+                    report.info_issues, health_score, run_duration_ms, total_arrows,
+                    self.current_run_id
+                ))
+                
+                conn.commit()
+                print(f"✅ Completed validation run #{self.current_run_id} (Health Score: {health_score:.1f}%)")
+                
+        except Exception as e:
+            print(f"⚠️  Could not complete validation run record: {e}")
+    
+    def _calculate_health_score(self, report: ValidationReport, total_arrows: int) -> float:
+        """Calculate overall database health score (0-100)"""
+        if total_arrows == 0:
+            return 0.0
+        
+        # Weight different issue types
+        critical_weight = 10
+        warning_weight = 3
+        info_weight = 1
+        
+        # Calculate weighted issue score
+        weighted_issues = (
+            report.critical_issues * critical_weight +
+            report.warning_issues * warning_weight +
+            report.info_issues * info_weight
+        )
+        
+        # Calculate max possible score (if every arrow had every type of issue)
+        max_possible_issues = total_arrows * (critical_weight + warning_weight + info_weight)
+        
+        # Calculate health score (higher is better)
+        if max_possible_issues == 0:
+            return 100.0
+        
+        health_score = max(0.0, 100.0 - (weighted_issues / max_possible_issues * 100))
+        return health_score
+    
+    def get_validation_history(self, limit: int = 10) -> List[Dict]:
+        """Get recent validation run history"""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, run_timestamp, total_issues, critical_issues, warning_issues,
+                           info_issues, health_score, run_duration_ms, triggered_by,
+                           total_arrows_checked
+                    FROM validation_runs
+                    ORDER BY run_timestamp DESC
+                    LIMIT ?
+                """, (limit,))
+                
+                runs = []
+                for row in cursor.fetchall():
+                    runs.append({
+                        'id': row[0],
+                        'timestamp': row[1],
+                        'total_issues': row[2],
+                        'critical_issues': row[3],
+                        'warning_issues': row[4],
+                        'info_issues': row[5],
+                        'health_score': row[6],
+                        'duration_ms': row[7],
+                        'triggered_by': row[8],
+                        'arrows_checked': row[9]
+                    })
+                
+                return runs
+                
+        except Exception as e:
+            print(f"⚠️  Could not fetch validation history: {e}")
+            return []
+    
+    def get_persistent_issues(self, severity: str = None, category: str = None, resolved: bool = False) -> List[Dict]:
+        """Get validation issues from database with filtering"""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                where_conditions = ["is_resolved = ?"]
+                params = [resolved]
+                
+                if severity:
+                    where_conditions.append("severity = ?")
+                    params.append(severity)
+                
+                if category:
+                    where_conditions.append("category = ?")
+                    params.append(category)
+                
+                where_clause = " AND ".join(where_conditions)
+                
+                cursor.execute(f"""
+                    SELECT id, category, severity, arrow_id, manufacturer, model_name,
+                           field, issue_description, current_value, suggested_fix, sql_fix,
+                           auto_fixable, first_seen, last_seen, occurrence_count
+                    FROM validation_issues
+                    WHERE {where_clause}
+                    ORDER BY severity DESC, last_seen DESC
+                """, params)
+                
+                issues = []
+                for row in cursor.fetchall():
+                    issues.append({
+                        'id': row[0],
+                        'category': row[1],
+                        'severity': row[2],
+                        'arrow_id': row[3],
+                        'manufacturer': row[4],
+                        'model_name': row[5],
+                        'field': row[6],
+                        'description': row[7],
+                        'current_value': row[8],
+                        'suggested_fix': row[9],
+                        'sql_fix': row[10],
+                        'auto_fixable': row[11],
+                        'first_seen': row[12],
+                        'last_seen': row[13],
+                        'occurrence_count': row[14]
+                    })
+                
+                return issues
+                
+        except Exception as e:
+            print(f"⚠️  Could not fetch persistent issues: {e}")
+            return []
+    
+    def apply_automated_fix(self, issue_id: int, applied_by: str = 'system') -> Dict[str, Any]:
+        """Apply automated fix for a validation issue"""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Get issue details
+                cursor.execute("""
+                    SELECT sql_fix, auto_fixable, issue_description, arrow_id
+                    FROM validation_issues
+                    WHERE id = ? AND is_resolved = FALSE
+                """, (issue_id,))
+                
+                issue = cursor.fetchone()
+                if not issue or not issue[1]:  # auto_fixable
+                    return {
+                        'success': False,
+                        'error': 'Issue not found or not auto-fixable'
+                    }
+                
+                sql_fix = issue[0]
+                if not sql_fix:
+                    return {
+                        'success': False,
+                        'error': 'No SQL fix available'
+                    }
+                
+                try:
+                    # Execute the fix
+                    cursor.execute(sql_fix)
+                    
+                    # Record the fix attempt
+                    cursor.execute("""
+                        INSERT INTO validation_fixes
+                        (issue_id, fix_method, fix_description, sql_executed, 
+                         success, applied_by)
+                        VALUES (?, 'automated', ?, ?, TRUE, ?)
+                    """, (issue_id, issue[2], sql_fix, applied_by))
+                    
+                    # Mark issue as resolved
+                    cursor.execute("""
+                        UPDATE validation_issues 
+                        SET is_resolved = TRUE, resolved_at = datetime('now'), resolved_by = ?
+                        WHERE id = ?
+                    """, (applied_by, issue_id))
+                    
+                    conn.commit()
+                    
+                    return {
+                        'success': True,
+                        'fix_id': cursor.lastrowid,
+                        'sql_executed': sql_fix
+                    }
+                    
+                except Exception as fix_error:
+                    # Record failed fix attempt
+                    cursor.execute("""
+                        INSERT INTO validation_fixes
+                        (issue_id, fix_method, fix_description, sql_executed, 
+                         success, error_message, applied_by)
+                        VALUES (?, 'automated', ?, ?, FALSE, ?, ?)
+                    """, (issue_id, issue[2], sql_fix, str(fix_error), applied_by))
+                    
+                    conn.commit()
+                    
+                    return {
+                        'success': False,
+                        'error': f'Fix execution failed: {fix_error}'
+                    }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to apply fix: {e}'
+            }
 
 # CLI interface for running validation
 if __name__ == "__main__":

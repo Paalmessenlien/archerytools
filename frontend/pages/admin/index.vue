@@ -838,12 +838,45 @@
             <!-- Detailed Issues List -->
             <div v-if="validation.lastReport && validation.lastReport.issues && validation.lastReport.issues.length > 0" class="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h5 class="font-medium text-gray-900 dark:text-gray-100">Problematic Arrows ({{ validation.lastReport.issues.length }} issues)</h5>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Specific arrows with data quality issues</p>
+                <div class="flex justify-between items-start mb-3">
+                  <div>
+                    <h5 class="font-medium text-gray-900 dark:text-gray-100">Problematic Arrows ({{ sortedValidationIssues.length }} issues)</h5>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Specific arrows with data quality issues</p>
+                  </div>
+                  
+                  <!-- Sorting Controls -->
+                  <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
+                      <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Sort by:</label>
+                      <select 
+                        v-model="validationSortBy"
+                        class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="severity">Severity</option>
+                        <option value="category">Category</option>
+                        <option value="arrow_id">Arrow ID</option>
+                        <option value="manufacturer">Manufacturer</option>
+                      </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                      <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Filter:</label>
+                      <select 
+                        v-model="validationFilterSeverity"
+                        class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">All</option>
+                        <option value="critical">Critical Only</option>
+                        <option value="warning">Warning Only</option>
+                        <option value="info">Info Only</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div class="max-h-96 overflow-y-auto">
-                <div v-for="(issue, index) in validation.lastReport.issues" :key="index" class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                <div v-for="(issue, index) in sortedValidationIssues" :key="`${issue.arrow_id}-${issue.field}-${index}`" class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                   <div class="p-4">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -890,9 +923,14 @@
                             <i class="fas fa-lightbulb mr-1"></i>
                             Suggested fix: {{ issue.suggested_fix }}
                           </p>
-                          <div v-if="issue.sql_fix && !issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded">
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">SQL Fix:</p>
-                            <code class="text-xs text-gray-800 dark:text-gray-200 block mb-3 font-mono">{{ issue.sql_fix }}</code>
+                          
+                          <!-- Auto-fixable issues with SQL -->
+                          <div v-if="issue.sql_fix && !issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded">
+                            <p class="text-xs text-green-600 dark:text-green-400 mb-2 font-medium">
+                              <i class="fas fa-magic mr-1"></i>
+                              Auto-Fixable SQL Solution:
+                            </p>
+                            <code class="text-xs text-gray-800 dark:text-gray-200 block mb-3 font-mono bg-white dark:bg-gray-800 p-2 rounded border">{{ issue.sql_fix }}</code>
                             
                             <div class="flex items-center space-x-2">
                               <CustomButton
@@ -902,8 +940,8 @@
                                 size="small"
                                 class="bg-green-600 text-white hover:bg-green-700 text-xs"
                               >
-                                <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-play'" class="mr-1"></i>
-                                {{ issue.executing ? 'Running...' : 'Run Fix' }}
+                                <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'" class="mr-1"></i>
+                                {{ issue.executing ? 'Applying Fix...' : 'Auto Fix' }}
                               </CustomButton>
                               
                               <CustomButton
@@ -916,6 +954,58 @@
                                 Copy SQL
                               </CustomButton>
                             </div>
+                          </div>
+                          
+                          <!-- Manual review issues -->
+                          <div v-else-if="issue.sql_fix && issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded">
+                            <p class="text-xs text-yellow-700 dark:text-yellow-300 mb-2 font-medium">
+                              <i class="fas fa-eye mr-1"></i>
+                              Manual Review Required:
+                            </p>
+                            <code class="text-xs text-gray-700 dark:text-gray-300 block mb-3 font-mono bg-white dark:bg-gray-800 p-2 rounded border">{{ issue.sql_fix }}</code>
+                            
+                            <div class="flex items-center space-x-2">
+                              <CustomButton
+                                @click="copyIndividualSql(issue.sql_fix)"
+                                variant="outlined"
+                                size="small"
+                                class="text-yellow-600 border-yellow-300 text-xs"
+                              >
+                                <i class="fas fa-copy mr-1"></i>
+                                Copy Notes
+                              </CustomButton>
+                              
+                              <CustomButton
+                                @click="navigateTo(`/arrows/${issue.arrow_id}`)"
+                                variant="outlined"
+                                size="small"
+                                class="text-blue-600 border-blue-300 text-xs"
+                              >
+                                <i class="fas fa-external-link-alt mr-1"></i>
+                                View Arrow
+                              </CustomButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Issues without SQL fixes (use manual edit field) -->
+                          <div v-else class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
+                            <p class="text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">
+                              <i class="fas fa-hand-paper mr-1"></i>
+                              Manual Fix Required:
+                            </p>
+                            <div class="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                              No automated solution available - use manual edit below
+                            </div>
+                            
+                            <CustomButton
+                              @click="navigateTo(`/arrows/${issue.arrow_id}`)"
+                              variant="outlined"
+                              size="small"
+                              class="text-blue-600 border-blue-300 text-xs"
+                            >
+                              <i class="fas fa-external-link-alt mr-1"></i>
+                              View Arrow
+                            </CustomButton>
                           </div>
                         </div>
                         
@@ -2594,10 +2684,24 @@
                   {{ issue.issue }}
                 </p>
                 
-                <p class="text-xs text-orange-600 dark:text-orange-400">
+                <p class="text-xs text-orange-600 dark:text-orange-400 mb-3">
                   <i class="fas fa-lightbulb mr-1"></i>
                   {{ issue.suggested_fix }}
                 </p>
+                
+                <!-- Not a Duplicate Action -->
+                <div class="mt-2">
+                  <CustomButton
+                    @click="markNotDuplicate(issue, index)"
+                    :disabled="issue.marking_not_duplicate"
+                    variant="outlined"
+                    size="small"
+                    class="text-blue-600 border-blue-300 text-xs"
+                  >
+                    <i :class="issue.marking_not_duplicate ? 'fas fa-spinner fa-spin' : 'fas fa-times'" class="mr-1"></i>
+                    {{ issue.marking_not_duplicate ? 'Marking...' : 'Not a Duplicate' }}
+                  </CustomButton>
+                </div>
               </div>
             </div>
           </div>
@@ -2655,6 +2759,7 @@ const userStats = ref({
 const loading = ref(false)
 const showInviteModal = ref(false)
 const isSendingInvite = ref(false)
+
 
 // Tab management
 const activeTab = ref('users')
@@ -2781,6 +2886,10 @@ const validation = ref({
   executionResult: null
 })
 
+// Validation sorting and filtering
+const validationSortBy = ref('severity')
+const validationFilterSeverity = ref('')
+
 // Merge duplicates state
 const showMergeDuplicatesDialog = ref(false)
 const selectedDuplicates = ref(new Set())
@@ -2793,6 +2902,53 @@ const hasDuplicateIssues = computed(() => {
 
 const duplicateIssues = computed(() => {
   return validation.value.lastReport?.issues?.filter(issue => issue.category === 'Duplicate Detection') || []
+})
+
+// Computed property for sorted and filtered validation issues
+const sortedValidationIssues = computed(() => {
+  if (!validation.value.lastReport?.issues) return []
+  
+  let issues = [...validation.value.lastReport.issues]
+  
+  // Apply severity filter
+  if (validationFilterSeverity.value) {
+    issues = issues.filter(issue => issue.severity === validationFilterSeverity.value)
+  }
+  
+  // Define severity order for sorting
+  const severityOrder = { critical: 0, warning: 1, info: 2 }
+  
+  // Apply sorting
+  issues.sort((a, b) => {
+    switch (validationSortBy.value) {
+      case 'severity':
+        // Critical first, then warning, then info
+        const severityDiff = severityOrder[a.severity] - severityOrder[b.severity]
+        if (severityDiff !== 0) return severityDiff
+        // Secondary sort by arrow_id
+        return a.arrow_id - b.arrow_id
+        
+      case 'category':
+        const categoryDiff = a.category.localeCompare(b.category)
+        if (categoryDiff !== 0) return categoryDiff
+        // Secondary sort by severity
+        return severityOrder[a.severity] - severityOrder[b.severity]
+        
+      case 'arrow_id':
+        return a.arrow_id - b.arrow_id
+        
+      case 'manufacturer':
+        const manufacturerDiff = (a.manufacturer || '').localeCompare(b.manufacturer || '')
+        if (manufacturerDiff !== 0) return manufacturerDiff
+        // Secondary sort by arrow_id
+        return a.arrow_id - b.arrow_id
+        
+      default:
+        return 0
+    }
+  })
+  
+  return issues
 })
 
 // Maintenance state
@@ -3398,6 +3554,7 @@ const checkAndLoadAdminData = async () => {
   }
 }
 
+
 // Load data on mount
 onMounted(() => {
   console.log('Admin page mounted!')
@@ -3560,7 +3717,9 @@ const runValidation = async () => {
     const response = await api.get('/admin/validate-arrows')
     validation.value.lastReport = response
     
-    showNotification('Validation completed successfully', 'success')
+    // Show detailed validation summary
+    const { total_issues, health_score } = response
+    showNotification(`Validation complete: ${total_issues} issues found (Health: ${health_score}%)`, 'success')
   } catch (error) {
     console.error('Error running validation:', error)
     showNotification('Failed to run validation: ' + (error.message || 'Unknown error'), 'error')
@@ -3799,6 +3958,49 @@ const copyIndividualSql = async (sqlFix) => {
   } catch (error) {
     console.error('Error copying to clipboard:', error)
     showNotification('Failed to copy SQL to clipboard', 'error')
+  }
+}
+
+const markNotDuplicate = async (issue, index) => {
+  const confirmed = confirm(
+    `Mark this as NOT a duplicate?\n\n` +
+    `Arrow ID ${issue.arrow_id}: ${issue.manufacturer} ${issue.model_name}\n` +
+    `Issue: ${issue.issue}\n\n` +
+    `This will exclude this pair from future duplicate detection.`
+  )
+  
+  if (!confirmed) return
+
+  // Set loading state
+  validation.value.lastReport.issues[index].marking_not_duplicate = true
+
+  try {
+    const response = await api.post('/admin/validation/mark-not-duplicate', {
+      arrow_id: issue.arrow_id,
+      field: issue.field,
+      issue_hash: issue.issue_hash || `${issue.arrow_id}_${issue.field}`,
+      reason: `User marked as not duplicate: ${issue.issue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Arrow ID ${issue.arrow_id} marked as not a duplicate`, 'success')
+      
+      // Remove this issue from the duplicate list
+      validation.value.lastReport.issues.splice(index, 1)
+      
+      // Update issue counts
+      validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+      validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+      validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+      
+    } else {
+      showNotification('Failed to mark as not duplicate: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error marking not duplicate:', error)
+    showNotification('Failed to mark as not duplicate: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].marking_not_duplicate = false
   }
 }
 

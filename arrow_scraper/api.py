@@ -11381,6 +11381,14 @@ def validate_arrows_data(current_user):
         validator = ArrowDataValidator(db_path)
         report = validator.validate_all_data()
         
+        # Calculate health score
+        total_arrows = report.total_arrows
+        critical_count = report.critical_issues
+        warning_count = report.warning_issues
+        
+        # Health score: 100 - (critical_issues * 10 + warning_issues * 2) / total_arrows * 100
+        health_score = max(0, 100 - ((critical_count * 10 + warning_count * 2) / max(total_arrows, 1) * 100))
+        
         # Convert dataclass to dict for JSON response
         validation_results = {
             'total_arrows': report.total_arrows,
@@ -11388,6 +11396,7 @@ def validate_arrows_data(current_user):
             'critical_issues': report.critical_issues,
             'warning_issues': report.warning_issues,
             'info_issues': report.info_issues,
+            'health_score': round(health_score, 1),  # Add health_score for frontend
             'issues_by_category': report.issues_by_category,
             'summary_stats': report.summary_stats,
             'fix_recommendations': report.fix_recommendations,
@@ -11629,6 +11638,304 @@ def merge_duplicate_arrows(current_user):
     except Exception as e:
         print(f"Error merging duplicate arrows: {e}")
         return jsonify({'error': f'Failed to merge duplicates: {str(e)}'}), 500
+
+# Enhanced Arrow Validation System API Endpoints
+
+@app.route('/api/admin/validation/status', methods=['GET'])
+@token_required
+@admin_required
+def get_validation_status(current_user):
+    """Get overall validation health and latest results"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Quick validation run focusing on critical issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Categorize issues by severity
+        critical_issues = [issue for issue in validator.validation_issues if issue.severity == 'critical']
+        warning_issues = [issue for issue in validator.validation_issues if issue.severity == 'warning']
+        
+        # Calculate validation health score
+        total_arrows = report.total_arrows
+        critical_count = len(critical_issues)
+        warning_count = len(warning_issues)
+        
+        # Health score: 100 - (critical_issues * 10 + warning_issues * 2) / total_arrows * 100
+        health_score = max(0, 100 - ((critical_count * 10 + warning_count * 2) / max(total_arrows, 1) * 100))
+        
+        return jsonify({
+            'validation_health_score': round(health_score, 1),
+            'status': 'excellent' if health_score >= 90 else 'good' if health_score >= 70 else 'fair' if health_score >= 50 else 'poor',
+            'total_arrows': total_arrows,
+            'total_issues': len(validator.validation_issues),
+            'critical_issues': critical_count,
+            'warning_issues': warning_count,
+            'issues_by_category': report.issues_by_category,
+            'search_visibility_issues': len([i for i in critical_issues if i.category == 'Search Visibility']),
+            'database_integrity_issues': len([i for i in critical_issues if i.category == 'Database Integrity']),
+            'last_validation': datetime.now().isoformat(),
+            'quick_fix_available': sum(1 for issue in validator.validation_issues if issue.sql_fix)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting validation status: {e}")
+        return jsonify({'error': f'Failed to get validation status: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/run', methods=['POST'])
+@token_required
+@admin_required
+def trigger_validation_run(current_user):
+    """Trigger a comprehensive validation run"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run comprehensive validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Return detailed results
+        return jsonify({
+            'success': True,
+            'validation_timestamp': datetime.now().isoformat(),
+            'total_arrows': report.total_arrows,
+            'total_issues': report.total_issues,
+            'critical_issues': report.critical_issues,
+            'warning_issues': report.warning_issues,
+            'info_issues': report.info_issues,
+            'issues_by_category': report.issues_by_category,
+            'summary_stats': report.summary_stats,
+            'fix_recommendations': report.fix_recommendations,
+            'calculator_impact': report.calculator_impact,
+            'detailed_issues': [
+                {
+                    'id': idx,
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': str(issue.current_value),
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix,
+                    'auto_fixable': bool(issue.sql_fix)
+                }
+                for idx, issue in enumerate(validator.validation_issues)
+            ]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error running validation: {e}")
+        return jsonify({'error': f'Failed to run validation: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/issues', methods=['GET'])
+@token_required
+@admin_required
+def get_validation_issues(current_user):
+    """Get current validation issues with filtering options"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Get query parameters for filtering
+        severity_filter = request.args.get('severity')  # critical, warning, info
+        category_filter = request.args.get('category')  # Search Visibility, Database Integrity, etc.
+        limit = int(request.args.get('limit', 100))
+        
+        # Run validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Filter issues
+        filtered_issues = validator.validation_issues
+        if severity_filter:
+            filtered_issues = [i for i in filtered_issues if i.severity == severity_filter]
+        if category_filter:
+            filtered_issues = [i for i in filtered_issues if i.category == category_filter]
+        
+        # Limit results
+        filtered_issues = filtered_issues[:limit]
+        
+        return jsonify({
+            'total_issues': len(validator.validation_issues),
+            'filtered_count': len(filtered_issues),
+            'applied_filters': {
+                'severity': severity_filter,
+                'category': category_filter,
+                'limit': limit
+            },
+            'issues': [
+                {
+                    'id': idx,
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': str(issue.current_value),
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix,
+                    'auto_fixable': bool(issue.sql_fix)
+                }
+                for idx, issue in enumerate(filtered_issues)
+            ]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting validation issues: {e}")
+        return jsonify({'error': f'Failed to get validation issues: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/fix/<int:issue_id>', methods=['POST'])
+@token_required
+@admin_required
+def apply_validation_fix(current_user, issue_id):
+    """Apply automated fix for a specific validation issue"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run validation to get current issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Find the specific issue
+        if issue_id >= len(validator.validation_issues):
+            return jsonify({'error': 'Issue ID not found'}), 404
+        
+        issue = validator.validation_issues[issue_id]
+        
+        if not issue.sql_fix:
+            return jsonify({'error': 'Issue is not auto-fixable'}), 400
+        
+        # Apply the SQL fix
+        with validator.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(issue.sql_fix)
+            affected_rows = cursor.rowcount
+            conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'issue_id': issue_id,
+            'arrow_id': issue.arrow_id,
+            'fix_applied': issue.sql_fix,
+            'affected_rows': affected_rows,
+            'fix_timestamp': datetime.now().isoformat(),
+            'issue_details': {
+                'category': issue.category,
+                'severity': issue.severity,
+                'manufacturer': issue.manufacturer,
+                'model_name': issue.model_name,
+                'issue': issue.issue
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error applying validation fix: {e}")
+        return jsonify({'error': f'Failed to apply fix: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/mark-not-duplicate', methods=['POST'])
+@token_required
+@admin_required
+def mark_not_duplicate(current_user):
+    """Mark an issue as not a duplicate to exclude from future detection"""
+    try:
+        data = request.get_json()
+        arrow_id = data.get('arrow_id')
+        field = data.get('field', 'unknown')
+        issue_hash = data.get('issue_hash')
+        reason = data.get('reason', 'User marked as not duplicate')
+        
+        if not arrow_id:
+            return jsonify({'success': False, 'error': 'Arrow ID required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Create table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS duplicate_exclusions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arrow_id INTEGER NOT NULL,
+                    field TEXT NOT NULL,
+                    issue_hash TEXT,
+                    reason TEXT,
+                    excluded_by TEXT NOT NULL,
+                    excluded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(arrow_id, field)
+                )
+            ''')
+            
+            # Insert exclusion record
+            cursor.execute('''
+                INSERT OR REPLACE INTO duplicate_exclusions 
+                (arrow_id, field, issue_hash, reason, excluded_by)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (arrow_id, field, issue_hash, reason, current_user['email']))
+            
+            # Mark the validation issue as resolved
+            if issue_hash:
+                cursor.execute('''
+                    UPDATE validation_issues 
+                    SET is_resolved = TRUE, 
+                        resolved_at = datetime('now'),
+                        resolved_by = ?
+                    WHERE issue_hash = ?
+                ''', (current_user['email'], issue_hash))
+            
+            conn.commit()
+            
+        return jsonify({
+            'success': True,
+            'message': f'Arrow ID {arrow_id} marked as not a duplicate'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error marking not duplicate: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Database Health Management API Endpoints
 
