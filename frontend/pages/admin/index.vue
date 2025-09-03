@@ -3859,11 +3859,7 @@ const executeIndividualFix = async (issue, index) => {
     return
   }
 
-  const confirmed = confirm(
-    `Execute SQL fix for Arrow ID ${issue.arrow_id}?\n\nThis will run: ${issue.sql_fix}`
-  )
-  
-  if (!confirmed) return
+  // Auto-execute without confirmation prompt
 
   // Set executing state for this specific issue
   validation.value.lastReport.issues[index].executing = true
