@@ -21,9 +21,15 @@
           :key="manufacturer.manufacturer" 
           :value="manufacturer.manufacturer"
         >
-          <div slot="headline">{{ manufacturer.manufacturer }}</div>
+          <div slot="headline">
+            {{ manufacturer.manufacturer }}
+            <span v-if="isManufacturerSystemDefault(manufacturer.manufacturer)" class="ml-2">
+              <i class="fas fa-star text-yellow-500"></i>
+            </span>
+          </div>
           <div slot="supporting-text">
             {{ manufacturer.chart_count }} charts • {{ manufacturer.bow_types.join(', ') }}
+            <span v-if="isManufacturerSystemDefault(manufacturer.manufacturer)" class="text-yellow-600 dark:text-yellow-400"> • System Default</span>
           </div>
         </md-select-option>
       </md-filled-select>
@@ -50,12 +56,33 @@
           :key="chart.id" 
           :value="chart.id.toString()"
         >
-          <div slot="headline">{{ chart.model }} ({{ formatBowType(chart.bow_type) }})</div>
+          <div slot="headline">
+            {{ chart.model }} ({{ formatBowType(chart.bow_type) }})
+            <span v-if="chart.id === currentSystemDefault?.id" class="ml-2">
+              <i class="fas fa-star text-yellow-500"></i>
+            </span>
+          </div>
           <div slot="supporting-text">
             {{ chart.spine_system }} • {{ chart.provenance?.substring(0, 50) }}...
+            <span v-if="chart.id === currentSystemDefault?.id" class="text-yellow-600 dark:text-yellow-400"> • System Default</span>
           </div>
         </md-select-option>
       </md-filled-select>
+    </div>
+
+    <!-- System Default Notification -->
+    <div v-if="currentSystemDefault && selectedChartId === currentSystemDefault.id.toString()" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+      <div class="flex items-center">
+        <i class="fas fa-star text-yellow-600 dark:text-yellow-400 mr-2"></i>
+        <div>
+          <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            System Default Chart Loaded
+          </p>
+          <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+            This is the default spine chart for {{ formatBowType(props.bowType) }} bows{{ props.materialPreference ? ` with ${props.materialPreference} arrows` : '' }}
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Chart Information Display -->
@@ -318,6 +345,7 @@ const releaseType = ref<string>('mechanical')
 // Data
 const availableManufacturers = ref<Manufacturer[]>([])
 const availableCharts = ref<SpineChart[]>([])
+const currentSystemDefault = ref<SpineChart | null>(null)
 
 // Computed
 const selectedChart = computed(() => {
@@ -356,6 +384,7 @@ const loadSystemDefaults = async () => {
     
     if (response.default_chart) {
       const defaultChart = response.default_chart
+      currentSystemDefault.value = defaultChart
       console.log(`🎯 Found system default chart: ${defaultChart.manufacturer} ${defaultChart.model}`)
       
       // Auto-select the manufacturer and chart
@@ -366,9 +395,12 @@ const loadSystemDefaults = async () => {
       await loadManufacturerCharts(defaultChart.manufacturer)
       
       emitSelectionChange()
+    } else {
+      currentSystemDefault.value = null
     }
   } catch (err) {
     // System defaults are optional - don't show error if not available
+    currentSystemDefault.value = null
     console.log('No system default chart configured for', props.bowType, props.materialPreference ? `with ${props.materialPreference} material` : '')
   }
 }
@@ -458,6 +490,10 @@ const formatBowType = (bowType: string): string => {
     'traditional': 'Traditional'
   }
   return typeMap[bowType] || bowType
+}
+
+const isManufacturerSystemDefault = (manufacturer: string): boolean => {
+  return currentSystemDefault.value?.manufacturer === manufacturer
 }
 
 // Lifecycle

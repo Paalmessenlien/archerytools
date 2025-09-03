@@ -10322,8 +10322,8 @@ def get_system_default_chart():
             query = f"""
                 SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
                 FROM manufacturer_spine_charts_enhanced 
-                WHERE bow_type = ? AND is_active = 1 {material_condition}
-                ORDER BY is_system_default DESC, calculation_priority ASC
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1 {material_condition}
+                ORDER BY calculation_priority ASC
                 LIMIT 1
             """
         else:
@@ -10336,8 +10336,10 @@ def get_system_default_chart():
                 LIMIT 1
             """
         
+        print(f"🔍 Debug: Executing query for bow_type '{bow_type}': {query}")
         cursor.execute(query, (bow_type,))
         result = cursor.fetchone()
+        print(f"🔍 Debug: Query result: {result}")
         
         # If no manufacturer chart, check custom charts
         if not result:
