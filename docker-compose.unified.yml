@@ -10,8 +10,8 @@ services:
   # Flask API Backend - Consistent across all environments
   api:
     build: 
-      context: ./arrow_scraper
-      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+      context: .
+      dockerfile: arrow_scraper/${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-api
     restart: unless-stopped
     ports:
@@ -138,8 +138,8 @@ services:
   # This service is kept for compatibility but can be disabled
   db-init:
     build: 
-      context: ./arrow_scraper
-      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+      context: .
+      dockerfile: arrow_scraper/${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-init
     environment:
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
@@ -157,8 +157,8 @@ services:
   # Database Backup Service - Scheduled backups
   db-backup:
     build: 
-      context: ./arrow_scraper
-      dockerfile: ${API_DOCKERFILE:-Dockerfile}
+      context: .
+      dockerfile: arrow_scraper/${API_DOCKERFILE:-Dockerfile}
     container_name: arrowtuner-db-backup
     environment:
       - ARROW_DATABASE_PATH=/app/databases/arrow_database.db
