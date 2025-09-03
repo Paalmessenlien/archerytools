@@ -366,38 +366,6 @@
             </div>
           </div>
         </div>
-        
-        <!-- Draw Length Configuration (All Bow Types) -->
-        <div v-if="setupData.bow_type" class="mb-4 p-4 border border-gray-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-          <h4 class="flex items-center mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
-            <i class="mr-2 text-blue-600 fas fa-ruler-horizontal"></i>
-            Draw Length Configuration (Used for All Calculations)
-          </h4>
-          
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Draw Length at Draw Weight: <span class="font-semibold text-blue-600 dark:text-purple-400">{{ setupData.draw_length || 28.0 }}"</span>
-            </label>
-            <md-slider
-              min="24"
-              max="34"
-              step="0.25"
-              :value="setupData.draw_length || 28.0"
-              @input="setupData.draw_length = parseFloat($event.target.value)"
-              labeled
-              ticks
-              class="w-full mobile-slider-safe"
-            ></md-slider>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>24"</span>
-              <span>34"</span>
-            </div>
-            <div class="text-xs text-blue-600 dark:text-blue-400 mt-2">
-              <i class="fas fa-info-circle mr-1"></i>
-              <span class="font-medium">Critical:</span> This is your measured draw length at this bow's draw weight. All spine calculations and arrow recommendations will use this value.
-            </div>
-          </div>
-        </div>
 
         <div class="mb-4">
           <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Usage</label>

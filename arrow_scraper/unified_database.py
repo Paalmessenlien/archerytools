@@ -298,15 +298,49 @@ class UnifiedDatabase:
         
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(f'''
-                SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, m.is_active as manufacturer_active
-                FROM arrows a
-                JOIN manufacturers m ON a.manufacturer = m.name
-                LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
-                WHERE {where_clause}
-                ORDER BY a.manufacturer, a.model_name, ss.spine
-                LIMIT ?
-            ''', params + [limit])
+            
+            # Check if manufacturers table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='manufacturers';")
+            has_manufacturers_table = cursor.fetchone() is not None
+            
+            if has_manufacturers_table:
+                # Use manufacturer active status filtering when table exists
+                query = f'''
+                    SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, m.is_active as manufacturer_active
+                    FROM arrows a
+                    JOIN manufacturers m ON a.manufacturer = m.name
+                    LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE {where_clause}
+                    ORDER BY a.manufacturer, a.model_name, ss.spine
+                    LIMIT ?
+                '''
+            else:
+                # Fallback: search without manufacturer filtering, treat all as active
+                # Remove manufacturer active status conditions if manufacturers table doesn't exist
+                fallback_conditions = [c for c in conditions if not c.startswith("m.is_active")]
+                fallback_params = []
+                param_index = 0
+                
+                for condition in conditions:
+                    if not condition.startswith("m.is_active"):
+                        # Count placeholders in this condition
+                        placeholders = condition.count('?')
+                        fallback_params.extend(params[param_index:param_index + placeholders])
+                    param_index += condition.count('?')
+                    
+                fallback_where_clause = " AND ".join(fallback_conditions) if fallback_conditions else "1=1"
+                
+                query = f'''
+                    SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, 1 as manufacturer_active
+                    FROM arrows a
+                    LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE {fallback_where_clause}
+                    ORDER BY a.manufacturer, a.model_name, ss.spine
+                    LIMIT ?
+                '''
+                params = fallback_params
+            
+            cursor.execute(query, params + [limit])
             return [dict(row) for row in cursor.fetchall()]
     
     def get_arrow_by_id(self, arrow_id: int, include_inactive: bool = False) -> Optional[Dict[str, Any]]:
@@ -314,26 +348,44 @@ class UnifiedDatabase:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Build WHERE clause based on active status filtering
-            where_conditions = ["a.id = ?"]
-            params = [arrow_id]
+            # Check if manufacturers table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='manufacturers';")
+            has_manufacturers_table = cursor.fetchone() is not None
             
-            if not include_inactive:
-                where_conditions.append("m.is_active = TRUE")
-            
-            where_clause = " AND ".join(where_conditions)
-            
-            cursor.execute(f'''
-                SELECT a.*, m.is_active as manufacturer_active,
-                       GROUP_CONCAT(ss.spine) as spines,
-                       GROUP_CONCAT(ss.outer_diameter) as diameters,
-                       GROUP_CONCAT(ss.gpi_weight) as gpi_weights
-                FROM arrows a
-                JOIN manufacturers m ON a.manufacturer = m.name
-                LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
-                WHERE {where_clause}
-                GROUP BY a.id
-            ''', params)
+            if has_manufacturers_table:
+                # Build WHERE clause based on active status filtering
+                where_conditions = ["a.id = ?"]
+                params = [arrow_id]
+                
+                if not include_inactive:
+                    where_conditions.append("m.is_active = TRUE")
+                
+                where_clause = " AND ".join(where_conditions)
+                
+                cursor.execute(f'''
+                    SELECT a.*, m.is_active as manufacturer_active,
+                           GROUP_CONCAT(ss.spine) as spines,
+                           GROUP_CONCAT(ss.outer_diameter) as diameters,
+                           GROUP_CONCAT(ss.gpi_weight) as gpi_weights
+                    FROM arrows a
+                    JOIN manufacturers m ON a.manufacturer = m.name
+                    LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE {where_clause}
+                    GROUP BY a.id
+                ''', params)
+            else:
+                # Fallback: get arrow without manufacturer filtering
+                cursor.execute('''
+                    SELECT a.*, 1 as manufacturer_active,
+                           GROUP_CONCAT(ss.spine) as spines,
+                           GROUP_CONCAT(ss.outer_diameter) as diameters,
+                           GROUP_CONCAT(ss.gpi_weight) as gpi_weights
+                    FROM arrows a
+                    LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+                    WHERE a.id = ?
+                    GROUP BY a.id
+                ''', [arrow_id])
+                
             row = cursor.fetchone()
             return dict(row) if row else None
     

@@ -180,6 +180,9 @@
                 Status
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                System Default
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -224,13 +227,23 @@
                   {{ chart.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
+              <td class="px-4 py-4 text-center">
+                <span v-if="chart.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                  <i class="fas fa-star text-yellow-600 dark:text-yellow-400 mr-1"></i>
+                  Default
+                </span>
+                <span v-else class="text-gray-400 dark:text-gray-500 text-xs">
+                  —
+                </span>
+              </td>
               <td class="px-4 py-4">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1">
                   <CustomButton
                     @click="viewChart(chart)"
                     variant="text"
                     size="small"
                     class="text-blue-600 hover:bg-blue-100 dark:text-blue-400"
+                    title="View chart details"
                   >
                     <i class="fas fa-eye"></i>
                   </CustomButton>
@@ -242,6 +255,16 @@
                     :title="chart.chart_type === 'manufacturer' ? 'View/Edit (Read-only for manufacturer charts)' : 'Edit Chart'"
                   >
                     <i class="fas fa-edit"></i>
+                  </CustomButton>
+                  <!-- System default is now managed through chart editing -->
+                  <CustomButton
+                    @click="duplicateChart(chart)"
+                    variant="text"
+                    size="small"
+                    class="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400"
+                    title="Duplicate chart for testing"
+                  >
+                    <i class="fas fa-clone"></i>
                   </CustomButton>
                   <CustomButton
                     v-if="chart.chart_type === 'manufacturer'"
@@ -259,6 +282,7 @@
                     variant="text"
                     size="small"
                     class="text-red-600 hover:bg-red-100 dark:text-red-400"
+                    title="Delete custom chart"
                   >
                     <i class="fas fa-trash"></i>
                   </CustomButton>
@@ -490,6 +514,23 @@
                 Chart is active and available for calculations
               </label>
             </div>
+            
+            <!-- System Default Status -->
+            <div class="flex items-center space-x-3">
+              <input
+                v-model="editingChart.is_system_default"
+                type="checkbox"
+                class="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+              />
+              <label class="text-sm text-gray-700 dark:text-gray-300">
+                <i class="fas fa-star text-yellow-500 mr-1"></i>
+                Set as system default for {{ formatBowType(editingChart.bow_type) }} bows
+              </label>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 ml-7">
+              System default charts are automatically selected when users load the calculator for this bow type.
+              Only one chart per bow type can be the system default.
+            </p>
 
             <!-- Spine Grid Editor -->
             <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
@@ -643,10 +684,9 @@
                 variant="outlined"
                 class="text-gray-600 border-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
               >
-                {{ editingChart.chart_type === 'manufacturer' ? 'Close' : 'Cancel' }}
+                Cancel
               </CustomButton>
               <CustomButton
-                v-if="editingChart.chart_type === 'custom'"
                 @click="saveChart"
                 :disabled="savingChart"
                 variant="filled"
@@ -721,6 +761,8 @@ interface SpineChart {
   provenance?: string
   created_by?: string
   is_active: boolean
+  is_system_default?: boolean
+  calculation_priority?: number
   created_at: string
 }
 
@@ -958,7 +1000,7 @@ const saveChart = async () => {
   
   savingChart.value = true
   try {
-    // Only custom charts can be edited
+    // Handle both custom chart updates and system default changes
     if (editingChart.value.chart_type === 'custom') {
       await api.put(`/admin/spine-charts/custom/${editingChart.value.id}`, {
         manufacturer: editingChart.value.manufacturer,
@@ -970,11 +1012,16 @@ const saveChart = async () => {
         spine_grid: editingChart.value.spine_grid || [],
         grid_definition: editingChart.value.grid_definition || {}
       })
-      
-      // Reload charts to reflect changes
-      await loadSpineCharts()
-      closeEditModal()
     }
+    
+    // Handle system default setting (works for both manufacturer and custom charts)
+    if (editingChart.value.is_system_default) {
+      await api.post(`/admin/spine-charts/${editingChart.value.chart_type}/${editingChart.value.id}/set-default`)
+    }
+    
+    // Reload charts to reflect changes
+    await loadSpineCharts()
+    closeEditModal()
   } catch (err) {
     console.error('Error saving chart:', err)
     error.value = 'Failed to save chart changes'
@@ -1022,6 +1069,27 @@ const executeConfirmedAction = async () => {
 const cancelConfirmedAction = () => {
   confirmAction.value.show = false
   confirmAction.value.error = ''
+}
+
+// Duplication functions
+const duplicateChart = async (chart: SpineChart) => {
+  const newName = prompt(`Enter name for duplicated chart:`, `${chart.manufacturer} ${chart.model} (Copy)`)
+  
+  if (!newName) return
+  
+  try {
+    const response = await api.post(`/admin/spine-charts/${chart.chart_type}/${chart.id}/duplicate`, {
+      name: newName
+    })
+    
+    showToast(`Chart duplicated successfully: ${response.new_chart_name}`, 'success')
+    
+    // Refresh the charts list to show the new duplicate
+    await loadSpineCharts()
+  } catch (error) {
+    console.error('Error duplicating chart:', error)
+    showToast('Failed to duplicate chart', 'error')
+  }
 }
 
 // Utility functions

@@ -700,6 +700,423 @@
             </div>
           </div>
         </md-elevated-card>
+        
+        <!-- Arrow Data Validation -->
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <i class="fas fa-check-circle mr-2 text-purple-600"></i>
+                  Arrow Data Validation
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  Validate arrow database quality and identify issues preventing arrows from displaying in calculator
+                </p>
+              </div>
+            </div>
+            
+            <!-- Validation Controls -->
+            <div class="flex gap-4 mb-6">
+              <CustomButton
+                @click="runValidation"
+                :disabled="validation.isLoading"
+                variant="filled"
+                class="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                <i class="fas fa-play mr-2"></i>
+                {{ validation.isLoading ? 'Running Validation...' : 'Run Data Validation' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="validation.lastReport"
+                @click="generateSqlFixes"
+                :disabled="validation.isGeneratingFixes"
+                variant="outlined"
+                class="text-purple-600 border-purple-300"
+              >
+                <i class="fas fa-code mr-2"></i>
+                {{ validation.isGeneratingFixes ? 'Generating...' : 'Generate SQL Fixes' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="validation.lastReport && hasDuplicateIssues"
+                @click="showMergeDuplicatesDialog = true"
+                :disabled="validation.isExecutingMerge"
+                variant="filled"
+                class="bg-orange-600 text-white hover:bg-orange-700"
+              >
+                <i class="fas fa-layer-group mr-2"></i>
+                {{ validation.isExecutingMerge ? 'Merging...' : 'Merge Duplicates' }}
+              </CustomButton>
+              
+              <CustomButton
+                v-if="validation.lastReport"
+                @click="clearValidationResults"
+                variant="outlined"
+                class="text-gray-600 border-gray-300"
+              >
+                <i class="fas fa-trash mr-2"></i>
+                Clear Results
+              </CustomButton>
+            </div>
+            
+            <!-- Loading Progress -->
+            <div v-if="validation.isLoading" class="mb-6">
+              <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                <div class="flex items-center">
+                  <i class="fas fa-spinner fa-spin text-purple-600 dark:text-purple-400 mr-3"></i>
+                  <div>
+                    <h4 class="text-sm font-medium text-purple-800 dark:text-purple-200">Data Validation Running</h4>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                      Analyzing arrow database for quality issues... This may take 30-60 seconds.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Validation Results -->
+            <div v-if="validation.lastReport" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Validation Report</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+                    <div class="font-medium text-blue-800 dark:text-blue-200">Total Arrows</div>
+                    <div class="text-2xl font-bold text-blue-600">{{ validation.lastReport.total_arrows.toLocaleString() }}</div>
+                  </div>
+                  <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded">
+                    <div class="font-medium text-red-800 dark:text-red-200">Critical Issues</div>
+                    <div class="text-2xl font-bold text-red-600">{{ validation.lastReport.critical_issues }}</div>
+                  </div>
+                  <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded">
+                    <div class="font-medium text-yellow-800 dark:text-yellow-200">Warning Issues</div>
+                    <div class="text-2xl font-bold text-yellow-600">{{ validation.lastReport.warning_issues }}</div>
+                  </div>
+                  <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded">
+                    <div class="font-medium text-green-800 dark:text-green-200">Info Issues</div>
+                    <div class="text-2xl font-bold text-green-600">{{ validation.lastReport.info_issues }}</div>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-gray-900/20 p-3 rounded">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Calculator Impact</div>
+                    <div class="text-2xl font-bold text-gray-600">{{ validation.lastReport.calculator_impact.estimated_calculator_accuracy.toFixed(1) }}%</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Issues by Category -->
+              <div v-if="Object.keys(validation.lastReport.issues_by_category).length > 0" class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Issues by Category</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div 
+                    v-for="(count, category) in validation.lastReport.issues_by_category" 
+                    :key="category"
+                    class="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded"
+                  >
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ category }}</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ count }} issues</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Fix Recommendations -->
+              <div v-if="validation.lastReport.fix_recommendations.length > 0" class="p-4">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Recommended Actions</h5>
+                <ul class="space-y-2">
+                  <li 
+                    v-for="(recommendation, index) in validation.lastReport.fix_recommendations" 
+                    :key="index"
+                    class="flex items-start text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    <span class="text-green-500 mr-2">•</span>
+                    <span>{{ recommendation }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- Detailed Issues List -->
+            <div v-if="validation.lastReport && validation.lastReport.issues && validation.lastReport.issues.length > 0" class="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-start mb-3">
+                  <div>
+                    <h5 class="font-medium text-gray-900 dark:text-gray-100">Problematic Arrows ({{ sortedValidationIssues.length }} issues)</h5>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Specific arrows with data quality issues</p>
+                  </div>
+                  
+                  <!-- Sorting Controls -->
+                  <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
+                      <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Sort by:</label>
+                      <select 
+                        v-model="validationSortBy"
+                        class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="severity">Severity</option>
+                        <option value="category">Category</option>
+                        <option value="arrow_id">Arrow ID</option>
+                        <option value="manufacturer">Manufacturer</option>
+                      </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                      <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Filter:</label>
+                      <select 
+                        v-model="validationFilterSeverity"
+                        class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">All</option>
+                        <option value="critical">Critical Only</option>
+                        <option value="warning">Warning Only</option>
+                        <option value="info">Info Only</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="max-h-96 overflow-y-auto">
+                <div v-for="(issue, index) in sortedValidationIssues" :key="`${issue.arrow_id}-${issue.field}-${index}`" class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                  <div class="p-4">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                          <span 
+                            :class="{
+                              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': issue.severity === 'critical',
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': issue.severity === 'warning',
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': issue.severity === 'info'
+                            }"
+                            class="px-2 py-1 rounded-full text-xs font-medium"
+                          >
+                            <i :class="{
+                              'fas fa-exclamation-triangle': issue.severity === 'critical',
+                              'fas fa-exclamation-circle': issue.severity === 'warning', 
+                              'fas fa-info-circle': issue.severity === 'info'
+                            }" class="mr-1"></i>
+                            {{ issue.severity.toUpperCase() }}
+                          </span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400">{{ issue.category }}</span>
+                        </div>
+                        
+                        <div class="mb-2">
+                          <h6 class="font-medium text-gray-900 dark:text-gray-100">
+                            Arrow ID {{ issue.arrow_id }}: {{ issue.manufacturer }} {{ issue.model_name }}
+                          </h6>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Field: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">{{ issue.field }}</code>
+                          </p>
+                        </div>
+                        
+                        <div class="mb-2">
+                          <p class="text-sm text-red-600 dark:text-red-400">
+                            <i class="fas fa-bug mr-1"></i>
+                            Problem: {{ issue.issue }}
+                          </p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Current value: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">{{ issue.current_value }}</code>
+                          </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <p class="text-sm text-green-600 dark:text-green-400">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Suggested fix: {{ issue.suggested_fix }}
+                          </p>
+                          
+                          <!-- Auto-fixable issues with SQL -->
+                          <div v-if="issue.sql_fix && !issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded">
+                            <p class="text-xs text-green-600 dark:text-green-400 mb-2 font-medium">
+                              <i class="fas fa-magic mr-1"></i>
+                              Auto-Fixable SQL Solution:
+                            </p>
+                            <code class="text-xs text-gray-800 dark:text-gray-200 block mb-3 font-mono bg-white dark:bg-gray-800 p-2 rounded border">{{ issue.sql_fix }}</code>
+                            
+                            <div class="flex items-center space-x-2">
+                              <CustomButton
+                                @click="executeIndividualFix(issue, index)"
+                                :disabled="issue.executing"
+                                variant="filled"
+                                size="small"
+                                class="bg-green-600 text-white hover:bg-green-700 text-xs"
+                              >
+                                <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'" class="mr-1"></i>
+                                {{ issue.executing ? 'Applying Fix...' : 'Auto Fix' }}
+                              </CustomButton>
+                              
+                              <CustomButton
+                                @click="copyIndividualSql(issue.sql_fix)"
+                                variant="outlined"
+                                size="small"
+                                class="text-gray-600 border-gray-300 text-xs"
+                              >
+                                <i class="fas fa-copy mr-1"></i>
+                                Copy SQL
+                              </CustomButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Manual review issues -->
+                          <div v-else-if="issue.sql_fix && issue.sql_fix.startsWith('--')" class="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded">
+                            <p class="text-xs text-yellow-700 dark:text-yellow-300 mb-2 font-medium">
+                              <i class="fas fa-eye mr-1"></i>
+                              Manual Review Required:
+                            </p>
+                            <code class="text-xs text-gray-700 dark:text-gray-300 block mb-3 font-mono bg-white dark:bg-gray-800 p-2 rounded border">{{ issue.sql_fix }}</code>
+                            
+                            <div class="flex items-center space-x-2">
+                              <CustomButton
+                                @click="copyIndividualSql(issue.sql_fix)"
+                                variant="outlined"
+                                size="small"
+                                class="text-yellow-600 border-yellow-300 text-xs"
+                              >
+                                <i class="fas fa-copy mr-1"></i>
+                                Copy Notes
+                              </CustomButton>
+                              
+                              <CustomButton
+                                @click="navigateTo(`/arrows/${issue.arrow_id}`)"
+                                variant="outlined"
+                                size="small"
+                                class="text-blue-600 border-blue-300 text-xs"
+                              >
+                                <i class="fas fa-external-link-alt mr-1"></i>
+                                View Arrow
+                              </CustomButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Issues without SQL fixes (use manual edit field) -->
+                          <div v-else class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
+                            <p class="text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">
+                              <i class="fas fa-hand-paper mr-1"></i>
+                              Manual Fix Required:
+                            </p>
+                            <div class="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                              No automated solution available - use manual edit below
+                            </div>
+                            
+                            <CustomButton
+                              @click="navigateTo(`/arrows/${issue.arrow_id}`)"
+                              variant="outlined"
+                              size="small"
+                              class="text-blue-600 border-blue-300 text-xs"
+                            >
+                              <i class="fas fa-external-link-alt mr-1"></i>
+                              View Arrow
+                            </CustomButton>
+                          </div>
+                        </div>
+                        
+                        <!-- Manual Edit Field -->
+                        <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                          <label class="block text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">
+                            Manual Edit - {{ issue.field }}:
+                          </label>
+                          <div class="flex items-center space-x-2">
+                            <input
+                              v-model="issue.manual_value"
+                              type="text"
+                              :placeholder="String(issue.current_value)"
+                              class="flex-1 text-xs px-2 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            />
+                            <CustomButton
+                              @click="executeManualFix(issue, index)"
+                              :disabled="issue.executing || !issue.manual_value"
+                              variant="filled"
+                              size="small"
+                              class="bg-blue-600 text-white hover:bg-blue-700 text-xs"
+                            >
+                              <i :class="issue.executing ? 'fas fa-spinner fa-spin' : 'fas fa-edit'" class="mr-1"></i>
+                              {{ issue.executing ? 'Updating...' : 'Update' }}
+                            </CustomButton>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SQL Fix Script Display -->
+            <div v-if="validation.sqlFixScript" class="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h5 class="font-medium text-gray-900 dark:text-gray-100">SQL Fix Script</h5>
+                <div class="flex space-x-2">
+                  <CustomButton
+                    @click="executeSqlFixes"
+                    :disabled="validation.isExecutingFixes"
+                    variant="filled"
+                    class="bg-green-600 text-white hover:bg-green-700 text-xs px-3 py-1"
+                  >
+                    <i class="fas fa-database mr-1"></i>
+                    {{ validation.isExecutingFixes ? 'Executing...' : 'Backup & Execute Fixes' }}
+                  </CustomButton>
+                  <CustomButton
+                    @click="copySqlScript"
+                    variant="outlined"
+                    class="text-gray-600 border-gray-300 text-xs px-3 py-1"
+                  >
+                    <i class="fas fa-copy mr-1"></i>
+                    Copy Script
+                  </CustomButton>
+                </div>
+              </div>
+              <div class="p-4">
+                <pre class="text-xs text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900 p-3 rounded border overflow-x-auto">{{ validation.sqlFixScript }}</pre>
+              </div>
+            </div>
+            
+            <!-- Execution Results -->
+            <div v-if="validation.executionResult" class="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h5 class="font-medium text-green-800 dark:text-green-200 mb-2">
+                <i class="fas fa-check-circle mr-2"></i>
+                Fixes Applied Successfully
+              </h5>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Backup Created:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.backup_name }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Fixes Applied:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.fixes_applied }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">Before Issues:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.before_issues }}</div>
+                </div>
+                <div>
+                  <span class="text-green-700 dark:text-green-300 font-medium">After Issues:</span>
+                  <div class="text-green-600 dark:text-green-400">{{ validation.executionResult.after_issues }}</div>
+                </div>
+              </div>
+              <div v-if="validation.executionResult.errors && validation.executionResult.errors.length > 0" class="mt-3">
+                <span class="text-red-700 dark:text-red-300 text-sm font-medium">Errors:</span>
+                <ul class="text-xs text-red-600 dark:text-red-400 mt-1">
+                  <li v-for="error in validation.executionResult.errors" :key="error">• {{ error }}</li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- Validation Tips -->
+            <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>
+                Validation Information
+              </h4>
+              <ul class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <li>• Critical issues prevent arrows from appearing in calculator results</li>
+                <li>• Warning issues may cause filtering or display problems</li>
+                <li>• Apply SQL fixes carefully and test calculator functionality afterward</li>
+                <li>• Re-run validation after applying fixes to verify improvements</li>
+                <li>• Backup database before applying large-scale fixes</li>
+              </ul>
+            </div>
+          </div>
+        </md-elevated-card>
       </div>
       
       <!-- Maintenance Tab -->
@@ -2193,6 +2610,132 @@
       </div>
     </div>
   </div>
+
+  <!-- Merge Duplicates Dialog -->
+  <div v-if="showMergeDuplicatesDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <i class="fas fa-layer-group mr-2 text-orange-600"></i>
+          Merge Duplicate Arrows
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Select duplicate arrows to merge. Primary arrow (lowest ID) will be kept, duplicates will be consolidated.
+        </p>
+      </div>
+      
+      <div class="p-6 max-h-[60vh] overflow-y-auto">
+        <!-- Select All Controls -->
+        <div class="flex items-center justify-between mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded">
+          <div class="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              :checked="selectAllDuplicates"
+              @change="toggleSelectAllDuplicates"
+              class="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
+            />
+            <label class="text-sm font-medium text-orange-800 dark:text-orange-200">
+              Select All Duplicates ({{ duplicateIssues.length }} found)
+            </label>
+          </div>
+          <div class="text-xs text-orange-700 dark:text-orange-300">
+            {{ selectedDuplicates.size }} selected
+          </div>
+        </div>
+        
+        <!-- Duplicate Issues List -->
+        <div class="space-y-3">
+          <div 
+            v-for="(issue, index) in duplicateIssues" 
+            :key="index"
+            class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+            :class="{
+              'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700': selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`),
+              'bg-white dark:bg-gray-800': !selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`)
+            }"
+          >
+            <div class="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                :checked="selectedDuplicates.has(`${issue.arrow_id}_${issue.field}`)"
+                @change="toggleDuplicateSelection(issue, $event.target.checked)"
+                class="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 mt-1"
+              />
+              
+              <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                  <span 
+                    :class="{
+                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': issue.severity === 'warning',
+                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': issue.severity === 'info'
+                    }"
+                    class="px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    {{ issue.severity.toUpperCase() }}
+                  </span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">{{ issue.field }}</span>
+                </div>
+                
+                <h6 class="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                  Arrow ID {{ issue.arrow_id }}: {{ issue.manufacturer }} {{ issue.model_name }}
+                </h6>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  {{ issue.issue }}
+                </p>
+                
+                <p class="text-xs text-orange-600 dark:text-orange-400 mb-3">
+                  <i class="fas fa-lightbulb mr-1"></i>
+                  {{ issue.suggested_fix }}
+                </p>
+                
+                <!-- Not a Duplicate Action -->
+                <div class="mt-2">
+                  <CustomButton
+                    @click="markNotDuplicate(issue, index)"
+                    :disabled="issue.marking_not_duplicate"
+                    variant="outlined"
+                    size="small"
+                    class="text-blue-600 border-blue-300 text-xs"
+                  >
+                    <i :class="issue.marking_not_duplicate ? 'fas fa-spinner fa-spin' : 'fas fa-times'" class="mr-1"></i>
+                    {{ issue.marking_not_duplicate ? 'Marking...' : 'Not a Duplicate' }}
+                  </CustomButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="duplicateIssues.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+          <p>No duplicate arrows found!</p>
+        </div>
+      </div>
+      
+      <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+        <CustomButton
+          @click="showMergeDuplicatesDialog = false"
+          variant="outlined"
+          class="text-gray-600 border-gray-300"
+        >
+          Cancel
+        </CustomButton>
+        
+        <div class="space-x-3">
+          <CustomButton
+            @click="mergeSelectedDuplicates"
+            :disabled="selectedDuplicates.size === 0 || validation.isExecutingMerge"
+            variant="filled"
+            class="bg-orange-600 text-white hover:bg-orange-700"
+          >
+            <i :class="validation.isExecutingMerge ? 'fas fa-spinner fa-spin' : 'fas fa-layer-group'" class="mr-2"></i>
+            {{ validation.isExecutingMerge ? 'Merging...' : `Merge ${selectedDuplicates.size} Selected` }}
+          </CustomButton>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -2216,6 +2759,7 @@ const userStats = ref({
 const loading = ref(false)
 const showInviteModal = ref(false)
 const isSendingInvite = ref(false)
+
 
 // Tab management
 const activeTab = ref('users')
@@ -2329,6 +2873,82 @@ const scraping = ref({
   manufacturer: '',
   isLoading: false,
   lastResult: null
+})
+
+// Validation state
+const validation = ref({
+  isLoading: false,
+  isGeneratingFixes: false,
+  isExecutingFixes: false,
+  isExecutingMerge: false,
+  lastReport: null,
+  sqlFixScript: null,
+  executionResult: null
+})
+
+// Validation sorting and filtering
+const validationSortBy = ref('severity')
+const validationFilterSeverity = ref('')
+
+// Merge duplicates state
+const showMergeDuplicatesDialog = ref(false)
+const selectedDuplicates = ref(new Set())
+const selectAllDuplicates = ref(false)
+
+// Computed property for duplicate issues
+const hasDuplicateIssues = computed(() => {
+  return validation.value.lastReport?.issues?.some(issue => issue.category === 'Duplicate Detection') || false
+})
+
+const duplicateIssues = computed(() => {
+  return validation.value.lastReport?.issues?.filter(issue => issue.category === 'Duplicate Detection') || []
+})
+
+// Computed property for sorted and filtered validation issues
+const sortedValidationIssues = computed(() => {
+  if (!validation.value.lastReport?.issues) return []
+  
+  let issues = [...validation.value.lastReport.issues]
+  
+  // Apply severity filter
+  if (validationFilterSeverity.value) {
+    issues = issues.filter(issue => issue.severity === validationFilterSeverity.value)
+  }
+  
+  // Define severity order for sorting
+  const severityOrder = { critical: 0, warning: 1, info: 2 }
+  
+  // Apply sorting
+  issues.sort((a, b) => {
+    switch (validationSortBy.value) {
+      case 'severity':
+        // Critical first, then warning, then info
+        const severityDiff = severityOrder[a.severity] - severityOrder[b.severity]
+        if (severityDiff !== 0) return severityDiff
+        // Secondary sort by arrow_id
+        return a.arrow_id - b.arrow_id
+        
+      case 'category':
+        const categoryDiff = a.category.localeCompare(b.category)
+        if (categoryDiff !== 0) return categoryDiff
+        // Secondary sort by severity
+        return severityOrder[a.severity] - severityOrder[b.severity]
+        
+      case 'arrow_id':
+        return a.arrow_id - b.arrow_id
+        
+      case 'manufacturer':
+        const manufacturerDiff = (a.manufacturer || '').localeCompare(b.manufacturer || '')
+        if (manufacturerDiff !== 0) return manufacturerDiff
+        // Secondary sort by arrow_id
+        return a.arrow_id - b.arrow_id
+        
+      default:
+        return 0
+    }
+  })
+  
+  return issues
 })
 
 // Maintenance state
@@ -2934,6 +3554,7 @@ const checkAndLoadAdminData = async () => {
   }
 }
 
+
 // Load data on mount
 onMounted(() => {
   console.log('Admin page mounted!')
@@ -3084,6 +3705,303 @@ const clearScrapingResults = () => {
   scraping.value.lastResult = null
   scraping.value.url = ''
   scraping.value.manufacturer = ''
+}
+
+// Arrow Data Validation Methods
+const runValidation = async () => {
+  validation.value.isLoading = true
+  validation.value.lastReport = null
+  validation.value.sqlFixScript = null
+  
+  try {
+    const response = await api.get('/admin/validate-arrows')
+    validation.value.lastReport = response
+    
+    // Show detailed validation summary
+    const { total_issues, health_score } = response
+    showNotification(`Validation complete: ${total_issues} issues found (Health: ${health_score}%)`, 'success')
+  } catch (error) {
+    console.error('Error running validation:', error)
+    showNotification('Failed to run validation: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isLoading = false
+  }
+}
+
+const generateSqlFixes = async () => {
+  validation.value.isGeneratingFixes = true
+  
+  try {
+    const response = await api.get('/admin/validate-arrows/sql-fix')
+    validation.value.sqlFixScript = response.sql_script
+    
+    showNotification('SQL fix script generated successfully', 'success')
+  } catch (error) {
+    console.error('Error generating SQL fixes:', error)
+    showNotification('Failed to generate SQL fixes: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isGeneratingFixes = false
+  }
+}
+
+const clearValidationResults = () => {
+  validation.value.lastReport = null
+  validation.value.sqlFixScript = null
+  selectedDuplicates.value.clear()
+  selectAllDuplicates.value = false
+}
+
+// Merge duplicates methods
+const toggleDuplicateSelection = (issue, isSelected) => {
+  if (isSelected) {
+    selectedDuplicates.value.add(`${issue.arrow_id}_${issue.field}`)
+  } else {
+    selectedDuplicates.value.delete(`${issue.arrow_id}_${issue.field}`)
+  }
+}
+
+const toggleSelectAllDuplicates = () => {
+  if (selectAllDuplicates.value) {
+    selectedDuplicates.value.clear()
+  } else {
+    duplicateIssues.value.forEach(issue => {
+      selectedDuplicates.value.add(`${issue.arrow_id}_${issue.field}`)
+    })
+  }
+  selectAllDuplicates.value = !selectAllDuplicates.value
+}
+
+const mergeSelectedDuplicates = async () => {
+  if (selectedDuplicates.value.size === 0) {
+    showNotification('No duplicates selected for merging', 'warning')
+    return
+  }
+  
+  validation.value.isExecutingMerge = true
+  
+  try {
+    const response = await api.post('/admin/validate-arrows/merge-duplicates')
+    
+    showNotification(`Successfully merged ${response.merged_count} duplicate arrows`, 'success')
+    
+    // Clear selections and refresh validation
+    selectedDuplicates.value.clear()
+    selectAllDuplicates.value = false
+    showMergeDuplicatesDialog.value = false
+    
+    // Re-run validation to see updated results
+    await runValidation()
+    
+  } catch (error) {
+    console.error('Error merging duplicates:', error)
+    showNotification('Failed to merge duplicates: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isExecutingMerge = false
+  }
+}
+
+const copySqlScript = async () => {
+  if (validation.value.sqlFixScript) {
+    try {
+      await navigator.clipboard.writeText(validation.value.sqlFixScript)
+      showNotification('SQL script copied to clipboard', 'success')
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      showNotification('Failed to copy script to clipboard', 'error')
+    }
+  }
+}
+
+const executeSqlFixes = async () => {
+  if (!validation.value.sqlFixScript) {
+    showNotification('No SQL fixes available', 'error')
+    return
+  }
+
+  // Confirm execution
+  const confirmed = confirm(
+    'This will create a backup and execute SQL fixes to resolve arrow data issues. Continue?'
+  )
+  
+  if (!confirmed) return
+
+  validation.value.isExecutingFixes = true
+  validation.value.executionResult = null
+
+  try {
+    const response = await api.post('/admin/validate-arrows/execute-fixes')
+    validation.value.executionResult = response
+    
+    showNotification(
+      `Successfully applied ${response.fixes_applied} fixes. Issues reduced from ${response.before_issues} to ${response.after_issues}.`,
+      'success'
+    )
+    
+    // Clear the script since fixes have been applied
+    validation.value.sqlFixScript = null
+    
+    // Optionally re-run validation to show updated status
+    setTimeout(() => {
+      runValidation()
+    }, 1000)
+    
+  } catch (error) {
+    console.error('Error executing SQL fixes:', error)
+    showNotification('Failed to execute SQL fixes: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.isExecutingFixes = false
+  }
+}
+
+const executeIndividualFix = async (issue, index) => {
+  if (!issue.sql_fix || issue.sql_fix.startsWith('--')) {
+    showNotification('No executable SQL fix available for this issue', 'error')
+    return
+  }
+
+  const confirmed = confirm(
+    `Execute SQL fix for Arrow ID ${issue.arrow_id}?\n\nThis will run: ${issue.sql_fix}`
+  )
+  
+  if (!confirmed) return
+
+  // Set executing state for this specific issue
+  validation.value.lastReport.issues[index].executing = true
+
+  try {
+    const response = await api.post('/admin/execute-sql', {
+      sql: issue.sql_fix,
+      description: `Fix for Arrow ID ${issue.arrow_id}: ${issue.issue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Successfully fixed Arrow ID ${issue.arrow_id}`, 'success')
+      
+      // Remove this issue from the list since it's been fixed
+      validation.value.lastReport.issues.splice(index, 1)
+      validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+      validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+      validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+    } else {
+      showNotification('Failed to execute fix: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error executing individual fix:', error)
+    showNotification('Failed to execute fix: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].executing = false
+  }
+}
+
+const executeManualFix = async (issue, index) => {
+  if (!issue.manual_value || issue.manual_value.trim() === '') {
+    showNotification('Please enter a value to update', 'error')
+    return
+  }
+
+  let sql = ''
+  const newValue = issue.manual_value.trim()
+
+  // Generate appropriate SQL based on the field and table structure
+  if (issue.field === 'spine') {
+    sql = `UPDATE spine_specifications SET spine = '${newValue}' WHERE arrow_id = ${issue.arrow_id};`
+  } else if (['length_options', 'outer_diameter', 'gpi_weight'].includes(issue.field)) {
+    sql = `UPDATE spine_specifications SET ${issue.field} = '${newValue}' WHERE arrow_id = ${issue.arrow_id};`
+  } else {
+    sql = `UPDATE arrows SET ${issue.field} = '${newValue}' WHERE id = ${issue.arrow_id};`
+  }
+
+  const confirmed = confirm(
+    `Update ${issue.field} to "${newValue}" for Arrow ID ${issue.arrow_id}?\n\nThis will run: ${sql}`
+  )
+  
+  if (!confirmed) return
+
+  // Set executing state for this specific issue
+  validation.value.lastReport.issues[index].executing = true
+
+  try {
+    const response = await api.post('/admin/execute-sql', {
+      sql: sql,
+      description: `Manual update for Arrow ID ${issue.arrow_id}: ${issue.field} = ${newValue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Successfully updated ${issue.field} for Arrow ID ${issue.arrow_id}`, 'success')
+      
+      // Update the current value and clear manual input
+      validation.value.lastReport.issues[index].current_value = newValue
+      validation.value.lastReport.issues[index].manual_value = ''
+      
+      // If this was a formatting fix, remove the issue
+      if (issue.category === 'Data Field Formatting' || issue.category === 'Spine Data Quality') {
+        validation.value.lastReport.issues.splice(index, 1)
+        validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+        validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+        validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+      }
+    } else {
+      showNotification('Failed to execute manual update: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error executing manual fix:', error)
+    showNotification('Failed to execute manual update: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].executing = false
+  }
+}
+
+const copyIndividualSql = async (sqlFix) => {
+  try {
+    await navigator.clipboard.writeText(sqlFix)
+    showNotification('SQL fix copied to clipboard', 'success')
+  } catch (error) {
+    console.error('Error copying to clipboard:', error)
+    showNotification('Failed to copy SQL to clipboard', 'error')
+  }
+}
+
+const markNotDuplicate = async (issue, index) => {
+  const confirmed = confirm(
+    `Mark this as NOT a duplicate?\n\n` +
+    `Arrow ID ${issue.arrow_id}: ${issue.manufacturer} ${issue.model_name}\n` +
+    `Issue: ${issue.issue}\n\n` +
+    `This will exclude this pair from future duplicate detection.`
+  )
+  
+  if (!confirmed) return
+
+  // Set loading state
+  validation.value.lastReport.issues[index].marking_not_duplicate = true
+
+  try {
+    const response = await api.post('/admin/validation/mark-not-duplicate', {
+      arrow_id: issue.arrow_id,
+      field: issue.field,
+      issue_hash: issue.issue_hash || `${issue.arrow_id}_${issue.field}`,
+      reason: `User marked as not duplicate: ${issue.issue}`
+    })
+    
+    if (response.success) {
+      showNotification(`Arrow ID ${issue.arrow_id} marked as not a duplicate`, 'success')
+      
+      // Remove this issue from the duplicate list
+      validation.value.lastReport.issues.splice(index, 1)
+      
+      // Update issue counts
+      validation.value.lastReport.critical_issues = validation.value.lastReport.issues.filter(i => i.severity === 'critical').length
+      validation.value.lastReport.warning_issues = validation.value.lastReport.issues.filter(i => i.severity === 'warning').length
+      validation.value.lastReport.info_issues = validation.value.lastReport.issues.filter(i => i.severity === 'info').length
+      
+    } else {
+      showNotification('Failed to mark as not duplicate: ' + (response.error || 'Unknown error'), 'error')
+    }
+  } catch (error) {
+    console.error('Error marking not duplicate:', error)
+    showNotification('Failed to mark as not duplicate: ' + (error.message || 'Unknown error'), 'error')
+  } finally {
+    validation.value.lastReport.issues[index].marking_not_duplicate = false
+  }
 }
 
 // Maintenance functions

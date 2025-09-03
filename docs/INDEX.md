@@ -49,6 +49,40 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Enhanced Validation System](ENHANCED_VALIDATION_SYSTEM.md) ✨ NEW
+Advanced data quality monitoring with intelligent auto-fix capabilities:
+- **Auto-Fix SQL Generation**: Automatic solutions for search visibility, manufacturer status, and data completion issues
+- **Sorting & Filtering**: Advanced issue organization by severity (Critical/Warning/Info) and category
+- **"Not a Duplicate" System**: False positive management with persistent exclusion tracking
+- **Click-to-Fix Interface**: Color-coded action buttons with real-time progress indicators
+- **Database Persistence**: Comprehensive issue tracking with deduplication and occurrence counting
+- **Performance Metrics**: Health score monitoring and validation run history
+
+#### [Spine Chart System Defaults](SPINE_CHART_SYSTEM_DEFAULTS.md) ⚡ NEW
+Material-aware system defaults and intelligent chart selection:
+- **Complete Bow Type Coverage**: System defaults for compound, recurve, longbow, and traditional bows
+- **Material Intelligence**: Carbon, wood, aluminum compatibility with automatic chart selection
+- **Shooting Style Integration**: Dynamic spine adjustments based on archery discipline
+- **Admin Management**: Web interface for configuring system defaults with visual indicators
+
+#### [Spine Chart System Defaults Implementation](SPINE_CHART_SYSTEM_DEFAULTS_IMPLEMENTATION.md) 🔧 NEW
+**September 2025** - Complete implementation details for per-bow-type system defaults with visual enhancements:
+- **Per-Bow-Type Logic**: System defaults specific to each bow type instead of global defaults
+- **Edit-Based Management**: System defaults set through chart editing interface instead of star buttons  
+- **Visual Admin Interface**: Dedicated system default column with yellow star indicators
+- **Frontend Visual Indicators**: System default markers throughout manufacturer and chart selection
+- **Chart Source Display**: Prominent display of current spine chart under Calculated Specifications
+- **Database Service Updates**: Modified spine service for bow-type-specific default management
+- **API Enhancements**: Material preference support with intelligent chart selection
+- **User Experience**: Complete transparency of calculation sources with professional visual design
+
+#### [Spine Calculation Fixes - August 2025](SPINE_CALCULATION_FIXES_AUGUST_2025.md) ⚡ CRITICAL
+Critical fixes to spine calculation accuracy:
+- **Arrow Length Direction Fix**: Corrected backwards length adjustment logic
+- **Wood Arrow System**: Proper pound test values (40#) instead of deflection values
+- **Database Schema**: Added string_material and wood_species columns
+- **Validation**: Verified against German industry standards and physics principles
+
 #### [Archery Calculations Guide](ARCHERY_CALCULATIONS_GUIDE.md) ⚡ ENHANCED
 Professional archery physics calculations and algorithms:
 - **Industry-Leading Speed Estimation**: IBO-compliant formulas validated against chronograph data with proper weight and draw adjustments

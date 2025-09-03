@@ -130,9 +130,19 @@ class ArrowMatchingEngine:
         else:
             spine_expansion = 50  # Larger expansion for carbon arrows (number-based rating)
             
+        # Handle wood arrow spine values (strings like "40#") vs numeric spine values
+        if spine_units == 'pounds':
+            # Extract numeric values from pound-based strings
+            spine_min = int(self._convert_spine_to_numeric(spine_range['minimum']) - spine_expansion)
+            spine_max = int(self._convert_spine_to_numeric(spine_range['maximum']) + spine_expansion)
+        else:
+            # Standard numeric spine values
+            spine_min = int(spine_range['minimum'] - spine_expansion)
+            spine_max = int(spine_range['maximum'] + spine_expansion)
+            
         search_params = {
-            'spine_min': int(spine_range['minimum'] - spine_expansion),
-            'spine_max': int(spine_range['maximum'] + spine_expansion),
+            'spine_min': spine_min,
+            'spine_max': spine_max,
             'arrow_type': None if request.material_preference and request.material_preference.lower() == 'wood' else request.arrow_type_preference,  # Skip arrow_type filter for wood arrows
             'diameter_min': request.target_diameter_range[0] if request.target_diameter_range else None,
             'diameter_max': request.target_diameter_range[1] if request.target_diameter_range else None,
@@ -177,8 +187,8 @@ class ArrowMatchingEngine:
             
             for wood_mfr in target_manufacturers:
                 wood_arrows = self.db.search_arrows(
-                    spine_min=int(spine_range['minimum'] - spine_expansion),
-                    spine_max=int(spine_range['maximum'] + spine_expansion),
+                    spine_min=spine_min,  # Use already converted values
+                    spine_max=spine_max,  # Use already converted values
                     manufacturer=wood_mfr,
                     material='Wood',  # Explicitly filter for wood material
                     limit=request.max_results
@@ -323,8 +333,11 @@ class ArrowMatchingEngine:
             min_spine = min(spine_values)
             max_spine = max(spine_values)
             
+            # Convert optimal spine to numeric for comparison (handle wood arrow pound values)
+            optimal_spine_numeric = self._convert_spine_to_numeric(optimal_spine)
+            
             # If optimal spine falls within the wood arrow's range, it's a perfect match
-            if min_spine <= optimal_spine <= max_spine:
+            if min_spine <= optimal_spine_numeric <= max_spine:
                 # Choose the spine specification closest to the optimal
                 def safe_spine_diff(spec):
                     spine_val = spec['spine']
@@ -333,7 +346,7 @@ class ArrowMatchingEngine:
                             spine_val = float(spine_val)
                         except ValueError:
                             return float('inf')  # Invalid values get lowest priority
-                    return abs(spine_val - optimal_spine)
+                    return abs(spine_val - optimal_spine_numeric)
                 
                 best_spine_match = min(spine_specs, key=safe_spine_diff)
                 min_deviation = 0  # Perfect match for wood arrows within range
@@ -348,7 +361,7 @@ class ArrowMatchingEngine:
                         except ValueError:
                             continue  # Skip invalid spine values
                     
-                    deviation = abs(spine_value - optimal_spine)
+                    deviation = abs(spine_value - optimal_spine_numeric)
                     if deviation < min_deviation:
                         min_deviation = deviation
                         best_spine_match = spec
@@ -417,8 +430,15 @@ class ArrowMatchingEngine:
         total_score = 0.0
         
         # Spine accuracy score (0-100)
-        spine_deviation = abs(best_spine_match['spine'] - optimal_spine)
-        max_acceptable_deviation = (spine_range['maximum'] - spine_range['minimum']) / 2
+        # Handle both numeric spine values and wood arrow pound values
+        spine_val = self._convert_spine_to_numeric(best_spine_match['spine'])
+        optimal_val = self._convert_spine_to_numeric(optimal_spine)
+        spine_deviation = abs(spine_val - optimal_val)
+        
+        # Calculate max acceptable deviation (handle string spine ranges)
+        min_range = self._convert_spine_to_numeric(spine_range['minimum'])
+        max_range = self._convert_spine_to_numeric(spine_range['maximum'])
+        max_acceptable_deviation = (max_range - min_range) / 2
         spine_accuracy = max(0, 100 - (spine_deviation / max_acceptable_deviation) * 100)
         total_score += spine_accuracy * self.scoring_weights[MatchCriteria.SPINE_ACCURACY]
         
@@ -484,7 +504,10 @@ class ArrowMatchingEngine:
     def _determine_confidence_level(self, spine_deviation: float, spine_range: Dict[str, float]) -> str:
         """Determine confidence level based on spine deviation"""
         
-        range_width = spine_range['maximum'] - spine_range['minimum']
+        # Handle string spine ranges (wood arrows)
+        max_val = self._convert_spine_to_numeric(spine_range['maximum'])
+        min_val = self._convert_spine_to_numeric(spine_range['minimum'])
+        range_width = max_val - min_val
         deviation_ratio = spine_deviation / (range_width / 2)
         
         if deviation_ratio <= 0.3:
@@ -500,8 +523,10 @@ class ArrowMatchingEngine:
         
         reasons = []
         
-        # Spine match quality
-        deviation = abs(best_spine_match['spine'] - optimal_spine)
+        # Spine match quality (handle string spine values)
+        spine_val = self._convert_spine_to_numeric(best_spine_match['spine'])
+        optimal_val = self._convert_spine_to_numeric(optimal_spine)
+        deviation = abs(spine_val - optimal_val)
         if deviation <= 10:
             reasons.append("Excellent spine match")
         elif deviation <= 25:
@@ -541,7 +566,10 @@ class ArrowMatchingEngine:
         issues = []
         
         # Spine deviation warnings
-        deviation = abs(best_spine_match['spine'] - ((spine_range['minimum'] + spine_range['maximum']) / 2))
+        spine_val = self._convert_spine_to_numeric(best_spine_match['spine'])
+        min_range = self._convert_spine_to_numeric(spine_range['minimum'])
+        max_range = self._convert_spine_to_numeric(spine_range['maximum'])
+        deviation = abs(spine_val - ((min_range + max_range) / 2))
         if deviation > 40:
             issues.append("Large spine deviation - may require tuning")
         elif deviation > 25:
@@ -587,6 +615,15 @@ class ArrowMatchingEngine:
         
         # Return mapped value or fallback to title case
         return material_mapping.get(normalized_preference, material_preference.title())
+    
+    def _convert_spine_to_numeric(self, spine_value) -> float:
+        """Convert spine value to numeric, handling both regular spine numbers and wood arrow pound values"""
+        if isinstance(spine_value, str):
+            try:
+                return float(spine_value.replace('#', ''))
+            except ValueError:
+                return 0.0
+        return float(spine_value)
     
     def _format_manufacturer_filter(self, preferred_manufacturers: Optional[List[str]], 
                                    material_preference: Optional[str] = None) -> Optional[str]:

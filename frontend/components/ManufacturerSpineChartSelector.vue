@@ -14,16 +14,22 @@
       >
         <md-select-option value="">
           <div slot="headline">Generic Charts (Default)</div>
-          <div slot="supporting-text">Use standard spine calculations</div>
+          <div slot="supporting-text">Use standard spine calculations (no chart override)</div>
         </md-select-option>
         <md-select-option 
           v-for="manufacturer in availableManufacturers" 
           :key="manufacturer.manufacturer" 
           :value="manufacturer.manufacturer"
         >
-          <div slot="headline">{{ manufacturer.manufacturer }}</div>
+          <div slot="headline">
+            {{ manufacturer.manufacturer }}
+            <span v-if="isManufacturerSystemDefault(manufacturer.manufacturer)" class="ml-2">
+              <i class="fas fa-star text-yellow-500"></i>
+            </span>
+          </div>
           <div slot="supporting-text">
             {{ manufacturer.chart_count }} charts • {{ manufacturer.bow_types.join(', ') }}
+            <span v-if="isManufacturerSystemDefault(manufacturer.manufacturer)" class="text-yellow-600 dark:text-yellow-400"> • System Default</span>
           </div>
         </md-select-option>
       </md-filled-select>
@@ -50,12 +56,33 @@
           :key="chart.id" 
           :value="chart.id.toString()"
         >
-          <div slot="headline">{{ chart.model }} ({{ formatBowType(chart.bow_type) }})</div>
+          <div slot="headline">
+            {{ chart.model }} ({{ formatBowType(chart.bow_type) }})
+            <span v-if="chart.id === currentSystemDefault?.id" class="ml-2">
+              <i class="fas fa-star text-yellow-500"></i>
+            </span>
+          </div>
           <div slot="supporting-text">
             {{ chart.spine_system }} • {{ chart.provenance?.substring(0, 50) }}...
+            <span v-if="chart.id === currentSystemDefault?.id" class="text-yellow-600 dark:text-yellow-400"> • System Default</span>
           </div>
         </md-select-option>
       </md-filled-select>
+    </div>
+
+    <!-- System Default Notification -->
+    <div v-if="currentSystemDefault && selectedChartId === currentSystemDefault.id.toString()" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+      <div class="flex items-center">
+        <i class="fas fa-star text-yellow-600 dark:text-yellow-400 mr-2"></i>
+        <div>
+          <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            System Default Chart Loaded
+          </p>
+          <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+            This is the default spine chart for {{ formatBowType(props.bowType) }} bows{{ props.materialPreference ? ` with ${props.materialPreference} arrows` : '' }}
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Chart Information Display -->
@@ -128,6 +155,32 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Calculation Method Selection -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <i class="fas fa-calculator mr-2"></i>
+        Calculation Method
+      </label>
+      <md-filled-select 
+        :value="calculationMethod" 
+        @change="updateCalculationMethod($event.target.value)"
+        label="Choose calculation method"
+        class="w-full"
+      >
+        <md-select-option value="universal">
+          <div slot="headline">Universal Formula (Default)</div>
+          <div slot="supporting-text">Generic spine charts - works for all manufacturers</div>
+        </md-select-option>
+        <md-select-option value="german_industry">
+          <div slot="headline">German Industry Standard</div>
+          <div slot="supporting-text">Specialized formulas for recurve/traditional bows</div>
+        </md-select-option>
+      </md-filled-select>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        Universal formula provides broader compatibility; German standard offers specialized accuracy for European equipment
+      </p>
     </div>
 
     <!-- Calculation Mode Toggle -->
@@ -250,11 +303,13 @@ interface SpineChart {
 // Props
 interface Props {
   bowType?: string
+  materialPreference?: string
   onSelectionChange?: (selection: any) => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  bowType: 'compound'
+  bowType: 'compound',
+  materialPreference: ''
 })
 
 // Emits
@@ -264,6 +319,7 @@ const emit = defineEmits<{
     chartId: string | null
     chart: SpineChart | null
     calculationMode: string
+    calculationMethod: string
     professionalSettings: any
   }]
 }>()
@@ -280,6 +336,7 @@ const showChartDetails = ref(false)
 const selectedManufacturer = ref<string>('')
 const selectedChartId = ref<string>('')
 const calculationMode = ref<string>('simple')
+const calculationMethod = ref<string>('universal')
 
 // Professional mode settings
 const bowSpeed = ref<number | null>(null)
@@ -288,6 +345,7 @@ const releaseType = ref<string>('mechanical')
 // Data
 const availableManufacturers = ref<Manufacturer[]>([])
 const availableCharts = ref<SpineChart[]>([])
+const currentSystemDefault = ref<SpineChart | null>(null)
 
 // Computed
 const selectedChart = computed(() => {
@@ -303,11 +361,47 @@ const loadManufacturers = async () => {
   try {
     const response = await api.get('/calculator/manufacturers')
     availableManufacturers.value = response.manufacturers || []
+    
+    // After loading manufacturers, check for system default charts
+    await loadSystemDefaults()
   } catch (err) {
     error.value = 'Failed to load manufacturers. Using generic calculations.'
     console.error('Error loading manufacturers:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const loadSystemDefaults = async () => {
+  try {
+    // Build query with material preference if available
+    let query = `/calculator/system-default?bow_type=${props.bowType}`
+    if (props.materialPreference) {
+      query += `&material=${props.materialPreference}`
+    }
+    
+    const response = await api.get(query)
+    
+    if (response.default_chart) {
+      const defaultChart = response.default_chart
+      currentSystemDefault.value = defaultChart
+      console.log(`🎯 Found system default chart: ${defaultChart.manufacturer} ${defaultChart.model}`)
+      
+      // Auto-select the manufacturer and chart
+      selectedManufacturer.value = defaultChart.manufacturer
+      selectedChartId.value = defaultChart.id.toString()
+      
+      // Load charts for the manufacturer
+      await loadManufacturerCharts(defaultChart.manufacturer)
+      
+      emitSelectionChange()
+    } else {
+      currentSystemDefault.value = null
+    }
+  } catch (err) {
+    // System defaults are optional - don't show error if not available
+    currentSystemDefault.value = null
+    console.log('No system default chart configured for', props.bowType, props.materialPreference ? `with ${props.materialPreference} material` : '')
   }
 }
 
@@ -355,6 +449,11 @@ const updateCalculationMode = (mode: string) => {
   emitSelectionChange()
 }
 
+const updateCalculationMethod = (method: string) => {
+  calculationMethod.value = method
+  emitSelectionChange()
+}
+
 const updateBowSpeed = (speed: string | number) => {
   const numSpeed = typeof speed === 'string' ? parseInt(speed) || null : speed
   bowSpeed.value = numSpeed
@@ -372,6 +471,7 @@ const emitSelectionChange = () => {
     chartId: selectedChartId.value || null,
     chart: selectedChart.value,
     calculationMode: calculationMode.value,
+    calculationMethod: calculationMethod.value,
     professionalSettings: {
       bowSpeed: bowSpeed.value,
       releaseType: releaseType.value
@@ -392,16 +492,29 @@ const formatBowType = (bowType: string): string => {
   return typeMap[bowType] || bowType
 }
 
+const isManufacturerSystemDefault = (manufacturer: string): boolean => {
+  return currentSystemDefault.value?.manufacturer === manufacturer
+}
+
 // Lifecycle
 onMounted(() => {
   loadManufacturers()
 })
 
-// Watch for bow type changes to filter relevant charts
-watch(() => props.bowType, () => {
+// Watch for bow type changes to filter relevant charts and reload system defaults
+watch(() => props.bowType, async () => {
   if (selectedManufacturer.value) {
     loadManufacturerCharts(selectedManufacturer.value)
   }
+  
+  // Check for system defaults for new bow type
+  await loadSystemDefaults()
+})
+
+// Watch for material preference changes to reload appropriate defaults
+watch(() => props.materialPreference, async () => {
+  // Reload system defaults when material preference changes
+  await loadSystemDefaults()
 })
 </script>
 

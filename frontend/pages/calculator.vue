@@ -112,6 +112,36 @@
             </md-filled-select>
           </div>
 
+          <!-- Shooting Style (always shown) -->
+          <div>
+            <md-filled-select
+              ref="shootingStyleSelect"
+              label="Shooting Style"
+              :value="bowConfig.shooting_style || 'standard'"
+              @change="updateBowConfig({ shooting_style: $event.target.value })"
+              class="w-full"
+            >
+              <md-select-option value="standard">
+                <div slot="headline">Standard</div>
+              </md-select-option>
+              <md-select-option value="barebow" v-if="bowConfig.bow_type === 'recurve'">
+                <div slot="headline">Barebow</div>
+              </md-select-option>
+              <md-select-option value="olympic" v-if="bowConfig.bow_type === 'recurve'">
+                <div slot="headline">Olympic Recurve</div>
+              </md-select-option>
+              <md-select-option value="traditional" v-if="['traditional', 'longbow'].includes(bowConfig.bow_type)">
+                <div slot="headline">Traditional Instinctive</div>
+              </md-select-option>
+              <md-select-option value="hunting" v-if="['compound', 'recurve', 'traditional', 'longbow'].includes(bowConfig.bow_type)">
+                <div slot="headline">Hunting</div>
+              </md-select-option>
+              <md-select-option value="target" v-if="bowConfig.bow_type === 'compound'">
+                <div slot="headline">Target Competition</div>
+              </md-select-option>
+            </md-filled-select>
+          </div>
+
           <!-- Draw Weight (hidden when bow setup is selected, shown in manual mode) -->
           <div v-if="!selectedBowSetup || selectedBowSetupId === ''">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -162,11 +192,38 @@
               <md-select-option value="aluminum">
                 <div slot="headline">Aluminum</div>
               </md-select-option>
-              <md-select-option value="wood">
+              <md-select-option value="Wood">
                 <div slot="headline">Wood</div>
               </md-select-option>
               <md-select-option value="fiberglass">
                 <div slot="headline">Fiberglass</div>
+              </md-select-option>
+            </md-filled-select>
+          </div>
+
+          <!-- String Material Selection (shown for recurve and traditional bows) -->
+          <div v-if="bowConfig.bow_type === 'recurve' || bowConfig.bow_type === 'traditional'">
+            <md-filled-select
+              label="String Material"
+              :value="bowConfig.string_material || ''"
+              @change="updateBowConfig({ string_material: $event.target.value })"
+              class="w-full"
+            >
+              <md-select-option value="">
+                <div slot="headline">Not Specified</div>
+                <div slot="supporting-text">Use default calculation</div>
+              </md-select-option>
+              <md-select-option value="fastflight">
+                <div slot="headline">FastFlight / Spectra</div>
+                <div slot="supporting-text">Modern synthetic string (baseline)</div>
+              </md-select-option>
+              <md-select-option value="dacron">
+                <div slot="headline">Dacron / B50</div>
+                <div slot="supporting-text">Traditional string (+15 spine adjustment)</div>
+              </md-select-option>
+              <md-select-option value="dyneema">
+                <div slot="headline">Dyneema / B55</div>
+                <div slot="supporting-text">High-performance synthetic</div>
               </md-select-option>
             </md-filled-select>
           </div>
@@ -490,6 +547,49 @@
           </div>
         </div>
 
+        <!-- Spine Chart Source Display -->
+        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
+              <div>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Spine Chart in Use:</p>
+                <div v-if="spineChartSelection && spineChartSelection.manufacturer && spineChartSelection.chartId">
+                  <!-- Specific manufacturer chart selected -->
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ spineChartSelection.manufacturer }}
+                    <span v-if="spineChartSelection.chart?.model"> - {{ spineChartSelection.chart.model }}</span>
+                  </p>
+                  <div class="flex items-center mt-1">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full mr-2">
+                      Manufacturer Chart
+                    </span>
+                    <span v-if="spineChartSelection.chart?.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                      <i class="fas fa-star mr-1"></i>
+                      System Default
+                    </span>
+                  </div>
+                </div>
+                <div v-else>
+                  <!-- Generic/universal calculation -->
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Universal Spine Formula
+                  </p>
+                  <span class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
+                    Standard Calculation
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-if="spineChartSelection && spineChartSelection.calculationMethod" class="text-right">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Method:</p>
+              <p class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {{ spineChartSelection.calculationMethod === 'universal' ? 'Universal' : 'German Industry' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Enhanced Spine Calculation Results -->
         <div v-if="enhancedSpineResult" class="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <h4 class="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
@@ -701,6 +801,7 @@
             <div v-if="showProfessionalSpine">
               <ManufacturerSpineChartSelector
                 :bow-type="bowConfig.bow_type"
+                :material-preference="bowConfig.arrow_material"
                 @selection-change="handleSpineChartSelection"
               />
             </div>
@@ -900,6 +1001,9 @@ const ballisticsResult = ref(null)
 const isCalculatingBallistics = ref(false)
 const comprehensivePerformance = ref(null)
 const isCalculatingPerformance = ref(false)
+
+// Spine chart selection state
+const spineChartSelection = ref(null)
 const showPerformanceDashboard = ref(false)
 
 // Helper functions for performance dashboard
@@ -1185,9 +1289,25 @@ const handleClearFilters = () => {
 }
 
 // Handle spine chart selection
-const handleSpineChartSelection = (selection) => {
-  // Handle the spine chart selection if needed
+const handleSpineChartSelection = async (selection) => {
+  // Store the complete chart selection
   console.log('Spine chart selection:', selection)
+  spineChartSelection.value = selection
+  
+  // Update the bow configuration with chart selection and calculation method
+  const updates: any = {}
+  if (selection.calculationMethod) {
+    updates.calculation_method = selection.calculationMethod
+  }
+  if (selection.manufacturer || selection.chartId) {
+    updates.chart_selection = {
+      manufacturer: selection.manufacturer,
+      chartId: selection.chartId,
+      calculationMethod: selection.calculationMethod
+    }
+  }
+  
+  updateBowConfig(updates)
 }
 
 

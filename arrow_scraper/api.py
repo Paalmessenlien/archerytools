@@ -1437,24 +1437,87 @@ def get_arrow_types():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type):
-    """Simple spine calculation fallback when tuning system is unavailable"""
-    # Basic spine calculation based on draw weight and arrow length
-    base_spine = draw_weight * 12.5
+def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type, string_material=None, material_preference=None, calculation_method='universal'):
+    """Simple spine calculation fallback - corrected based on German industry standards"""
+    # Check for wood arrow calculation first
+    if material_preference and material_preference.lower() == 'wood':
+        # Wood arrows use pound test values (40#, 45#, 50#, etc.)
+        wood_spine = round(draw_weight)  # Simple conversion: 40lbs = 40# spine
+        
+        return {
+            'calculated_spine': f"{wood_spine}#",
+            'spine_range': {
+                'minimum': f"{max(wood_spine - 5, 25)}#",
+                'optimal': f"{wood_spine}#", 
+                'maximum': f"{wood_spine + 5}#"
+            },
+            'calculations': {
+                'base_spine': wood_spine,
+                'adjustments': {
+                    'bow_weight_conversion': wood_spine,
+                    'system_type': 'wood_pound_test',
+                    'bow_type': bow_type,
+                    'material': 'wood'
+                },
+                'total_adjustment': 0,
+                'bow_type': bow_type,
+                'confidence': 'high'
+            },
+            'notes': [
+                'Wood arrow spine calculation using pound test system',
+                f'Recommended spine: {wood_spine}# (pound test)',
+                'Range represents typical wood arrow spine tolerances'
+            ],
+            'source': 'wood_arrow_calculator'
+        }
     
-    # Adjust for arrow length (longer = weaker/higher spine number)
+    # Calculation method selection
+    if calculation_method == 'german_industry':
+        # German Industry Standard formulas
+        if bow_type == 'compound':
+            base_spine = draw_weight * 12.5
+            bow_type_adjustment = 0
+        elif bow_type == 'recurve':
+            base_spine = 1100 - (draw_weight * 10)
+            bow_type_adjustment = 0
+        elif bow_type == 'traditional':
+            base_spine = 1100 - (draw_weight * 10)
+            bow_type_adjustment = 0
+        else:
+            base_spine = draw_weight * 12.5
+            bow_type_adjustment = 0
+    else:
+        # Universal formula (original system - default)
+        base_spine = draw_weight * 12.5
+        
+        # Bow type adjustments (original system)
+        if bow_type == 'compound':
+            bow_type_adjustment = 0
+        elif bow_type == 'recurve':
+            bow_type_adjustment = 50  # Original recurve adjustment
+        elif bow_type == 'traditional':
+            bow_type_adjustment = 100  # Original traditional adjustment
+        else:
+            bow_type_adjustment = 0
+        
+        base_spine += bow_type_adjustment
+    
+    # Adjust for arrow length (longer = stiffer needed/lower spine number)
     length_adjustment = (arrow_length - 28) * 25
-    base_spine += length_adjustment
+    base_spine -= length_adjustment
     
     # Adjust for point weight (heavier = weaker/higher spine number)
     point_adjustment = (point_weight - 125) * 0.5
     base_spine += point_adjustment
     
-    # Bow type adjustments
-    if bow_type == 'recurve':
-        base_spine += 50  # Recurve typically needs weaker arrows
-    elif bow_type == 'traditional':
-        base_spine += 100  # Traditional bows need even weaker arrows
+    # String material adjustment (based on German calculator)
+    string_adjustment = 0
+    if string_material:
+        if string_material.lower() in ['dacron', 'b50']:
+            string_adjustment = 15  # Dacron strings need weaker arrows (higher spine)
+        elif string_material.lower() in ['fastflight', 'spectra', 'dyneema', 'b55']:
+            string_adjustment = 0   # FastFlight baseline
+    base_spine += string_adjustment
     
     calculated_spine = round(base_spine)
     
@@ -1466,16 +1529,27 @@ def calculate_simple_spine(draw_weight, arrow_length, point_weight, bow_type):
             'optimal': calculated_spine,
             'maximum': calculated_spine + 25
         },
-        'adjustments': {
-            'length_adjustment': length_adjustment,
-            'point_weight_adjustment': point_adjustment,
-            'bow_type': bow_type
+        'calculations': {
+            'base_spine': base_spine - bow_type_adjustment - length_adjustment - point_adjustment - string_adjustment,
+            'adjustments': {
+                'length_adjustment': length_adjustment,
+                'point_weight_adjustment': point_adjustment,
+                'string_material_adjustment': string_adjustment,
+                'bow_type_adjustment': bow_type_adjustment,
+                'bow_type_method': f'{bow_type}_universal_formula',
+                'bow_type': bow_type,
+                'string_material': string_material or 'not_specified'
+            },
+            'total_adjustment': bow_type_adjustment + length_adjustment + point_adjustment + string_adjustment,
+            'bow_type': bow_type,
+            'confidence': 'high'  # Improved confidence with corrected formula
         },
-        'base_spine': base_spine - length_adjustment - point_adjustment,
-        'total_adjustment': length_adjustment + point_adjustment,
-        'bow_type': bow_type,
-        'confidence': 'medium',
-        'notes': ['Calculated using simplified spine formula']
+        'notes': [
+            f'Calculated using {calculation_method} spine formula',
+            f'Base formula: {calculation_method}_{bow_type}_formula',
+            'String material factor included' if string_material else 'String material not specified'
+        ],
+        'source': f'{calculation_method}_calculator'
     }
 
 # Tuning Calculation API
@@ -1510,7 +1584,15 @@ def calculate_spine():
             draw_length=effective_draw_length,  # Use corrected draw length
             nock_weight=float(data.get('nock_weight', 10.0)),
             fletching_weight=float(data.get('fletching_weight', 15.0)),
-            material_preference=data.get('arrow_material')
+            string_material=data.get('string_material'),  # Add string material parameter
+            material_preference=data.get('arrow_material'),
+            shooting_style=data.get('shooting_style', 'standard'),  # Add shooting style parameter
+            calculation_method=data.get('calculation_method', 'universal'),
+            manufacturer_chart=data.get('manufacturer_chart'),
+            chart_id=data.get('chart_id'),
+            # Professional mode parameters
+            bow_speed=float(data['bow_speed']) if data.get('bow_speed') else None,
+            release_type=data.get('release_type')
         )
         
         return jsonify({
@@ -10211,6 +10293,94 @@ def get_manufacturer_charts_for_calculator(manufacturer):
         print(f"Error getting charts for manufacturer {manufacturer}: {e}")
         return jsonify({'error': f'Failed to get charts for {manufacturer}'}), 500
 
+@app.route('/api/calculator/system-default', methods=['GET'])
+def get_system_default_chart():
+    """Get system default spine chart for calculator, with optional material preference"""
+    try:
+        bow_type = request.args.get('bow_type', 'compound')
+        material_preference = request.args.get('material', None)  # Optional material filter
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        print(f"🔍 Debug: Database path: {db.db_path if hasattr(db, 'db_path') else 'Unknown'}")
+        print(f"🔍 Debug: Request for bow_type='{bow_type}', material='{material_preference}'")
+        
+        # Enhanced query that considers material preference
+        if material_preference:
+            # Try to find material-specific system default first
+            material_conditions = {
+                'carbon': "AND (manufacturer LIKE '%Carbon%' OR model LIKE '%Carbon%' OR manufacturer = 'Generic')",
+                'wood': "AND (manufacturer LIKE '%Wood%' OR manufacturer IN ('Port Orford Cedar', 'Douglas Fir', 'Pine', 'Birch'))",
+                'aluminum': "AND (manufacturer LIKE '%Aluminum%' OR model LIKE '%Aluminum%' OR model LIKE '%XX7%')",
+                'carbon-aluminum': "AND (model LIKE '%FMJ%' OR model LIKE '%A/C%')"
+            }
+            
+            material_condition = material_conditions.get(material_preference.lower(), "")
+            
+            query = f"""
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1 {material_condition}
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """
+        else:
+            # Original query for system default only
+            query = """
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM manufacturer_spine_charts_enhanced 
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """
+        
+        print(f"🔍 Debug: Executing query for bow_type '{bow_type}': {query}")
+        cursor.execute(query, (bow_type,))
+        result = cursor.fetchone()
+        print(f"🔍 Debug: Query result: {result}")
+        
+        # If no manufacturer chart, check custom charts
+        if not result:
+            cursor.execute("""
+                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+                FROM custom_spine_charts 
+                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """, (bow_type,))
+            result = cursor.fetchone()
+        
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'default_chart': {
+                    'id': result[0],
+                    'manufacturer': result[1],
+                    'model': result[2],
+                    'bow_type': result[3],
+                    'spine_system': result[4],
+                    'chart_notes': result[5]
+                },
+                'bow_type': bow_type,
+                'material_preference': material_preference
+            })
+        else:
+            return jsonify({
+                'default_chart': None,
+                'bow_type': bow_type,
+                'material_preference': material_preference,
+                'message': f'No system default chart configured for {bow_type} bows' + (f' with {material_preference} material' if material_preference else '')
+            })
+            
+    except Exception as e:
+        print(f"Error getting system default chart: {e}")
+        return jsonify({'error': 'Failed to get system default chart'}), 500
+
 @app.route('/api/calculator/spine-recommendation-enhanced', methods=['POST'])
 def calculate_enhanced_spine_recommendation():
     """Enhanced spine calculation using manufacturer-specific charts"""
@@ -10337,9 +10507,9 @@ def get_all_spine_charts(current_user):
         cursor.execute("""
             SELECT 'manufacturer' as chart_type, id, manufacturer, model, bow_type, 
                    spine_system, chart_notes, provenance, is_active, created_at,
-                   grid_definition, spine_grid
+                   grid_definition, spine_grid, is_system_default, calculation_priority
             FROM manufacturer_spine_charts_enhanced
-            ORDER BY manufacturer, model, bow_type
+            ORDER BY is_system_default DESC, calculation_priority ASC, manufacturer, model, bow_type
         """)
         
         manufacturer_charts = []
@@ -10356,16 +10526,18 @@ def get_all_spine_charts(current_user):
                 'is_active': bool(row[8]),
                 'created_at': row[9],
                 'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else []
+                'spine_grid': json.loads(row[11]) if row[11] else [],
+                'is_system_default': bool(row[12]) if len(row) > 12 else False,
+                'calculation_priority': row[13] if len(row) > 13 else 100
             })
         
         # Get custom charts
         cursor.execute("""
             SELECT 'custom' as chart_type, id, manufacturer, model, bow_type, 
                    spine_system, chart_notes, created_by, is_active, created_at,
-                   grid_definition, spine_grid
+                   grid_definition, spine_grid, is_system_default, calculation_priority
             FROM custom_spine_charts
-            ORDER BY chart_name
+            ORDER BY is_system_default DESC, calculation_priority ASC, chart_name
         """)
         
         custom_charts = []
@@ -10382,7 +10554,9 @@ def get_all_spine_charts(current_user):
                 'is_active': bool(row[8]),
                 'created_at': row[9],
                 'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else []
+                'spine_grid': json.loads(row[11]) if row[11] else [],
+                'is_system_default': bool(row[12]) if len(row) > 12 else False,
+                'calculation_priority': row[13] if len(row) > 13 else 100
             })
         
         conn.close()
@@ -10584,6 +10758,109 @@ def create_manufacturer_override(current_user, chart_id):
     except Exception as e:
         print(f"Error creating manufacturer override: {e}")
         return jsonify({'error': 'Failed to create manufacturer override'}), 500
+
+@app.route('/api/admin/spine-charts/system-settings', methods=['GET'])
+@token_required
+@admin_required
+def get_spine_system_settings(current_user):
+    """Get spine calculation system settings"""
+    try:
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        settings = spine_service.get_system_settings()
+        return jsonify({'settings': settings})
+    except Exception as e:
+        print(f"Error getting spine system settings: {e}")
+        return jsonify({'error': 'Failed to get system settings'}), 500
+
+@app.route('/api/admin/spine-charts/system-settings/<setting_name>', methods=['PUT'])
+@token_required
+@admin_required
+def update_spine_system_setting(current_user, setting_name):
+    """Update a spine calculation system setting"""
+    try:
+        data = request.get_json()
+        setting_value = data.get('value')
+        
+        if setting_value is None:
+            return jsonify({'error': 'Setting value is required'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        success = spine_service.update_system_setting(setting_name, str(setting_value), current_user['id'])
+        
+        if success:
+            return jsonify({'message': 'System setting updated successfully'})
+        else:
+            return jsonify({'error': 'Setting not found or update failed'}), 404
+            
+    except Exception as e:
+        print(f"Error updating spine system setting: {e}")
+        return jsonify({'error': 'Failed to update system setting'}), 500
+
+@app.route('/api/admin/spine-charts/<chart_type>/<int:chart_id>/set-default', methods=['POST'])
+@token_required
+@admin_required
+def set_system_default_chart(current_user, chart_type, chart_id):
+    """Set a spine chart as the system default"""
+    try:
+        if chart_type not in ['manufacturer', 'custom']:
+            return jsonify({'error': 'Invalid chart type. Must be manufacturer or custom'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        success = spine_service.set_system_default_chart(chart_id, chart_type)
+        
+        if success:
+            return jsonify({'message': f'Chart {chart_id} set as system default'})
+        else:
+            return jsonify({'error': 'Chart not found or update failed'}), 404
+            
+    except Exception as e:
+        print(f"Error setting system default chart: {e}")
+        return jsonify({'error': 'Failed to set system default chart'}), 500
+
+@app.route('/api/admin/spine-charts/<chart_type>/<int:chart_id>/duplicate', methods=['POST'])
+@token_required
+@admin_required
+def duplicate_spine_chart(current_user, chart_type, chart_id):
+    """Duplicate a spine chart for testing and modification"""
+    try:
+        data = request.get_json()
+        new_name = data.get('name')
+        
+        if not new_name:
+            return jsonify({'error': 'New chart name is required'}), 400
+        
+        if chart_type not in ['manufacturer', 'custom']:
+            return jsonify({'error': 'Invalid chart type. Must be manufacturer or custom'}), 400
+        
+        spine_service = get_spine_service()
+        if not spine_service:
+            return jsonify({'error': 'Spine service not available'}), 500
+        
+        new_chart_id = spine_service.duplicate_spine_chart(
+            chart_id, new_name, chart_type, current_user['id']
+        )
+        
+        if new_chart_id:
+            return jsonify({
+                'message': 'Chart duplicated successfully',
+                'new_chart_id': new_chart_id,
+                'new_chart_name': new_name
+            }), 201
+        else:
+            return jsonify({'error': 'Chart not found or duplication failed'}), 404
+            
+    except Exception as e:
+        print(f"Error duplicating spine chart: {e}")
+        return jsonify({'error': 'Failed to duplicate chart'}), 500
 
 # Database Migration Management API Endpoints
 
@@ -11082,6 +11359,584 @@ def validate_migrations(current_user):
         print(f"Error validating migrations: {e}")
         return jsonify({'error': 'Failed to validate migrations'}), 500
 
+@app.route('/api/admin/validate-arrows', methods=['GET'])
+@token_required
+@admin_required
+def validate_arrows_data(current_user):
+    """Validate arrow data quality for calculator compatibility"""
+    try:
+        # Import the validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        # Get database path from current database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Calculate health score
+        total_arrows = report.total_arrows
+        critical_count = report.critical_issues
+        warning_count = report.warning_issues
+        
+        # Health score: 100 - (critical_issues * 10 + warning_issues * 2) / total_arrows * 100
+        health_score = max(0, 100 - ((critical_count * 10 + warning_count * 2) / max(total_arrows, 1) * 100))
+        
+        # Convert dataclass to dict for JSON response
+        validation_results = {
+            'total_arrows': report.total_arrows,
+            'total_issues': report.total_issues,
+            'critical_issues': report.critical_issues,
+            'warning_issues': report.warning_issues,
+            'info_issues': report.info_issues,
+            'health_score': round(health_score, 1),  # Add health_score for frontend
+            'issues_by_category': report.issues_by_category,
+            'summary_stats': report.summary_stats,
+            'fix_recommendations': report.fix_recommendations,
+            'calculator_impact': report.calculator_impact,
+            'validation_timestamp': datetime.now().isoformat(),
+            'issues': [
+                {
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': issue.current_value,
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix
+                }
+                for issue in report.validation_issues
+            ][:100]  # Limit to first 100 issues for performance
+        }
+        
+        return jsonify(validation_results), 200
+        
+    except Exception as e:
+        print(f"Error validating arrow data: {e}")
+        return jsonify({'error': f'Failed to validate arrow data: {str(e)}'}), 500
+
+@app.route('/api/admin/validate-arrows/sql-fix', methods=['GET'])
+@token_required
+@admin_required  
+def get_arrow_validation_sql_fix(current_user):
+    """Generate SQL fix script for arrow data validation issues"""
+    try:
+        # Import the validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        # Get database path
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Generate SQL fix script
+        validator = ArrowDataValidator(db_path)
+        validator.validate_all_data()  # Run validation first
+        sql_script = validator.get_sql_fix_script()
+        
+        return jsonify({
+            'sql_script': sql_script,
+            'generated_at': datetime.now().isoformat(),
+            'total_fixes': len(validator.validation_issues)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error generating SQL fix script: {e}")
+        return jsonify({'error': f'Failed to generate SQL fix script: {str(e)}'}), 500
+
+@app.route('/api/admin/validate-arrows/execute-fixes', methods=['POST'])
+@token_required
+@admin_required
+def execute_arrow_validation_fixes(current_user):
+    """Execute arrow data validation fixes with automatic backup"""
+    try:
+        # Import required modules
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        from backup_manager import BackupManager
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Create automatic backup before applying fixes
+        backup_manager = BackupManager()
+        backup_name = f"validation_fixes_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        print(f"🛡️ Creating automatic backup before validation fixes: {backup_name}")
+        backup_path = backup_manager.create_backup(backup_name)
+        
+        if not backup_path:
+            return jsonify({
+                'error': 'Failed to create backup before applying fixes'
+            }), 500
+        
+        # Run validation to get current issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        if report.total_issues == 0:
+            return jsonify({
+                'success': True,
+                'message': 'No validation issues to fix',
+                'issues_fixed': 0,
+                'backup_created': backup_result['backup_id']
+            }), 200
+        
+        # Execute SQL fixes
+        fixes_applied = 0
+        errors = []
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Apply each SQL fix
+            for issue in validator.validation_issues:
+                if issue.sql_fix and not issue.sql_fix.strip().startswith('--'):
+                    try:
+                        cursor.execute(issue.sql_fix)
+                        fixes_applied += 1
+                        print(f"✅ Applied fix for {issue.manufacturer} {issue.model_name}: {issue.field}")
+                    except Exception as fix_error:
+                        error_msg = f"Failed to apply fix for {issue.manufacturer} {issue.model_name}: {str(fix_error)}"
+                        errors.append(error_msg)
+                        print(f"❌ {error_msg}")
+            
+            conn.commit()
+        
+        # Run validation again to verify fixes
+        post_fix_validator = ArrowDataValidator(db_path)
+        post_fix_report = post_fix_validator.validate_all_data()
+        
+        return jsonify({
+            'success': True,
+            'backup_created': backup_path,
+            'backup_name': backup_name,
+            'fixes_applied': fixes_applied,
+            'errors': errors,
+            'before_issues': report.total_issues,
+            'after_issues': post_fix_report.total_issues,
+            'improvement': report.total_issues - post_fix_report.total_issues,
+            'execution_timestamp': datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error executing validation fixes: {e}")
+        return jsonify({'error': f'Failed to execute validation fixes: {str(e)}'}), 500
+
+@app.route('/api/admin/execute-sql', methods=['POST'])
+@token_required
+@admin_required
+def execute_individual_sql(current_user):
+    """Execute individual SQL statement for arrow data fixes"""
+    try:
+        data = request.get_json()
+        sql = data.get('sql', '').strip()
+        description = data.get('description', 'Manual SQL execution')
+        
+        if not sql:
+            return jsonify({'success': False, 'error': 'No SQL statement provided'}), 400
+        
+        # Basic security check - only allow UPDATE and DELETE statements for arrow data
+        sql_upper = sql.upper().strip()
+        if not (sql_upper.startswith('UPDATE ARROWS') or 
+                sql_upper.startswith('UPDATE SPINE_SPECIFICATIONS') or
+                sql_upper.startswith('DELETE FROM SPINE_SPECIFICATIONS')):
+            return jsonify({'success': False, 'error': 'Only UPDATE and DELETE statements for arrow data are allowed'}), 400
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        # Execute the SQL
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            rows_affected = cursor.rowcount
+            conn.commit()
+        
+        print(f"✅ Executed individual SQL fix: {description}")
+        print(f"   SQL: {sql}")
+        print(f"   Rows affected: {rows_affected}")
+        
+        return jsonify({
+            'success': True,
+            'rows_affected': rows_affected,
+            'description': description,
+            'sql_executed': sql
+        })
+        
+    except Exception as e:
+        print(f"Error executing individual SQL: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/validate-arrows/merge-duplicates', methods=['POST'])
+@token_required
+@admin_required
+def merge_duplicate_arrows(current_user):
+    """Merge all duplicate arrows with automatic backup"""
+    try:
+        # Import required modules
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        from backup_manager import BackupManager
+        
+        # Get database instance
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Create automatic backup before merging
+        backup_manager = BackupManager()
+        backup_name = f"duplicate_merge_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        print(f"🛡️ Creating backup before duplicate merge: {backup_name}")
+        backup_path = backup_manager.create_backup(backup_name)
+        
+        if not backup_path:
+            return jsonify({
+                'error': 'Failed to create backup before merge operation'
+            }), 500
+        
+        # Execute merge operation
+        validator = ArrowDataValidator(db_path)
+        merge_result = validator.merge_all_duplicates()
+        
+        return jsonify({
+            'success': True,
+            'backup_created': backup_path,
+            'backup_name': backup_name,
+            'merged_count': merge_result['merged_count'],
+            'merge_operations': merge_result['merge_operations'],
+            'errors': merge_result['errors'],
+            'total_groups_processed': merge_result['total_groups_processed'],
+            'execution_timestamp': datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error merging duplicate arrows: {e}")
+        return jsonify({'error': f'Failed to merge duplicates: {str(e)}'}), 500
+
+# Enhanced Arrow Validation System API Endpoints
+
+@app.route('/api/admin/validation/status', methods=['GET'])
+@token_required
+@admin_required
+def get_validation_status(current_user):
+    """Get overall validation health and latest results"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Quick validation run focusing on critical issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Categorize issues by severity
+        critical_issues = [issue for issue in validator.validation_issues if issue.severity == 'critical']
+        warning_issues = [issue for issue in validator.validation_issues if issue.severity == 'warning']
+        
+        # Calculate validation health score
+        total_arrows = report.total_arrows
+        critical_count = len(critical_issues)
+        warning_count = len(warning_issues)
+        
+        # Health score: 100 - (critical_issues * 10 + warning_issues * 2) / total_arrows * 100
+        health_score = max(0, 100 - ((critical_count * 10 + warning_count * 2) / max(total_arrows, 1) * 100))
+        
+        return jsonify({
+            'validation_health_score': round(health_score, 1),
+            'status': 'excellent' if health_score >= 90 else 'good' if health_score >= 70 else 'fair' if health_score >= 50 else 'poor',
+            'total_arrows': total_arrows,
+            'total_issues': len(validator.validation_issues),
+            'critical_issues': critical_count,
+            'warning_issues': warning_count,
+            'issues_by_category': report.issues_by_category,
+            'search_visibility_issues': len([i for i in critical_issues if i.category == 'Search Visibility']),
+            'database_integrity_issues': len([i for i in critical_issues if i.category == 'Database Integrity']),
+            'last_validation': datetime.now().isoformat(),
+            'quick_fix_available': sum(1 for issue in validator.validation_issues if issue.sql_fix)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting validation status: {e}")
+        return jsonify({'error': f'Failed to get validation status: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/run', methods=['POST'])
+@token_required
+@admin_required
+def trigger_validation_run(current_user):
+    """Trigger a comprehensive validation run"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run comprehensive validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Return detailed results
+        return jsonify({
+            'success': True,
+            'validation_timestamp': datetime.now().isoformat(),
+            'total_arrows': report.total_arrows,
+            'total_issues': report.total_issues,
+            'critical_issues': report.critical_issues,
+            'warning_issues': report.warning_issues,
+            'info_issues': report.info_issues,
+            'issues_by_category': report.issues_by_category,
+            'summary_stats': report.summary_stats,
+            'fix_recommendations': report.fix_recommendations,
+            'calculator_impact': report.calculator_impact,
+            'detailed_issues': [
+                {
+                    'id': idx,
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': str(issue.current_value),
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix,
+                    'auto_fixable': bool(issue.sql_fix)
+                }
+                for idx, issue in enumerate(validator.validation_issues)
+            ]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error running validation: {e}")
+        return jsonify({'error': f'Failed to run validation: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/issues', methods=['GET'])
+@token_required
+@admin_required
+def get_validation_issues(current_user):
+    """Get current validation issues with filtering options"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Get query parameters for filtering
+        severity_filter = request.args.get('severity')  # critical, warning, info
+        category_filter = request.args.get('category')  # Search Visibility, Database Integrity, etc.
+        limit = int(request.args.get('limit', 100))
+        
+        # Run validation
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Filter issues
+        filtered_issues = validator.validation_issues
+        if severity_filter:
+            filtered_issues = [i for i in filtered_issues if i.severity == severity_filter]
+        if category_filter:
+            filtered_issues = [i for i in filtered_issues if i.category == category_filter]
+        
+        # Limit results
+        filtered_issues = filtered_issues[:limit]
+        
+        return jsonify({
+            'total_issues': len(validator.validation_issues),
+            'filtered_count': len(filtered_issues),
+            'applied_filters': {
+                'severity': severity_filter,
+                'category': category_filter,
+                'limit': limit
+            },
+            'issues': [
+                {
+                    'id': idx,
+                    'category': issue.category,
+                    'severity': issue.severity,
+                    'arrow_id': issue.arrow_id,
+                    'manufacturer': issue.manufacturer,
+                    'model_name': issue.model_name,
+                    'field': issue.field,
+                    'issue': issue.issue,
+                    'current_value': str(issue.current_value),
+                    'suggested_fix': issue.suggested_fix,
+                    'sql_fix': issue.sql_fix,
+                    'auto_fixable': bool(issue.sql_fix)
+                }
+                for idx, issue in enumerate(filtered_issues)
+            ]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting validation issues: {e}")
+        return jsonify({'error': f'Failed to get validation issues: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/fix/<int:issue_id>', methods=['POST'])
+@token_required
+@admin_required
+def apply_validation_fix(current_user, issue_id):
+    """Apply automated fix for a specific validation issue"""
+    try:
+        # Import the enhanced validation script
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from arrow_data_validator import ArrowDataValidator
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        db_path = db.db_path if hasattr(db, 'db_path') else 'arrow_database.db'
+        
+        # Run validation to get current issues
+        validator = ArrowDataValidator(db_path)
+        report = validator.validate_all_data()
+        
+        # Find the specific issue
+        if issue_id >= len(validator.validation_issues):
+            return jsonify({'error': 'Issue ID not found'}), 404
+        
+        issue = validator.validation_issues[issue_id]
+        
+        if not issue.sql_fix:
+            return jsonify({'error': 'Issue is not auto-fixable'}), 400
+        
+        # Apply the SQL fix
+        with validator.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(issue.sql_fix)
+            affected_rows = cursor.rowcount
+            conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'issue_id': issue_id,
+            'arrow_id': issue.arrow_id,
+            'fix_applied': issue.sql_fix,
+            'affected_rows': affected_rows,
+            'fix_timestamp': datetime.now().isoformat(),
+            'issue_details': {
+                'category': issue.category,
+                'severity': issue.severity,
+                'manufacturer': issue.manufacturer,
+                'model_name': issue.model_name,
+                'issue': issue.issue
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error applying validation fix: {e}")
+        return jsonify({'error': f'Failed to apply fix: {str(e)}'}), 500
+
+@app.route('/api/admin/validation/mark-not-duplicate', methods=['POST'])
+@token_required
+@admin_required
+def mark_not_duplicate(current_user):
+    """Mark an issue as not a duplicate to exclude from future detection"""
+    try:
+        data = request.get_json()
+        arrow_id = data.get('arrow_id')
+        field = data.get('field', 'unknown')
+        issue_hash = data.get('issue_hash')
+        reason = data.get('reason', 'User marked as not duplicate')
+        
+        if not arrow_id:
+            return jsonify({'success': False, 'error': 'Arrow ID required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Create table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS duplicate_exclusions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arrow_id INTEGER NOT NULL,
+                    field TEXT NOT NULL,
+                    issue_hash TEXT,
+                    reason TEXT,
+                    excluded_by TEXT NOT NULL,
+                    excluded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(arrow_id, field)
+                )
+            ''')
+            
+            # Insert exclusion record
+            cursor.execute('''
+                INSERT OR REPLACE INTO duplicate_exclusions 
+                (arrow_id, field, issue_hash, reason, excluded_by)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (arrow_id, field, issue_hash, reason, current_user['email']))
+            
+            # Mark the validation issue as resolved
+            if issue_hash:
+                cursor.execute('''
+                    UPDATE validation_issues 
+                    SET is_resolved = TRUE, 
+                        resolved_at = datetime('now'),
+                        resolved_by = ?
+                    WHERE issue_hash = ?
+                ''', (current_user['email'], issue_hash))
+            
+            conn.commit()
+            
+        return jsonify({
+            'success': True,
+            'message': f'Arrow ID {arrow_id} marked as not a duplicate'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error marking not duplicate: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Database Health Management API Endpoints
 
 @app.route('/api/admin/database/health', methods=['GET'])
@@ -11233,9 +12088,9 @@ def calculate_effective_bow_weight(draw_weight, arrow_length, point_weight, bow_
     """Calculate effective bow weight with adjustments"""
     effective_weight = draw_weight
     
-    # Arrow length adjustment (5 lbs per inch difference from 28")
+    # Arrow length adjustment (5 lbs per inch difference from 28") - longer = stiffer needed
     length_adjustment = (arrow_length - 28) * 5
-    effective_weight += length_adjustment
+    effective_weight -= length_adjustment
     
     # Point weight adjustment (5 lbs per 25 grain difference from 125gr)
     point_adjustment = ((point_weight - 125) / 25) * 5

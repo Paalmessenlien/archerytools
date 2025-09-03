@@ -27,6 +27,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 ## Recent Major Updates (2025):
+- ✅ **Per-Bow-Type System Defaults with Visual Indicators**: Complete implementation of material-aware spine chart defaults specific to each bow type with comprehensive visual indicators and edit-based management ([Details](docs/SPINE_CHART_SYSTEM_DEFAULTS_IMPLEMENTATION.md))
 - ✅ **Manufacturer Active Status Filtering System**: Complete filtering system to hide arrows from inactive manufacturers while preserving admin access and existing configurations ([Details](docs/MANUFACTURER_ACTIVE_STATUS_SYSTEM.md))
 - ✅ **Wood Arrow Species Import & Calculator Integration**: Comprehensive import of 6 traditional wood arrow species with 54+ spine specifications, traditional archery calculations, and full calculator integration (Migrations 047-050)
 - ✅ **Manufacturer Approval System Fix**: Fixed pending manufacturer creation in bow setup forms not appearing in admin approval queue (August 2025)

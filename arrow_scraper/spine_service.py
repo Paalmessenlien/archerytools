@@ -33,10 +33,17 @@ class UnifiedSpineService:
         draw_length: float = 28.0,
         nock_weight: float = 10.0,
         fletching_weight: float = 15.0,
-        material_preference: Optional[str] = None
+        material_preference: Optional[str] = None,
+        string_material: Optional[str] = None,
+        shooting_style: str = 'standard',
+        calculation_method: str = 'universal',
+        manufacturer_chart: Optional[str] = None,
+        chart_id: Optional[str] = None,
+        bow_speed: Optional[float] = None,
+        release_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Calculate spine using the same logic as the calculator page API endpoint.
+        Calculate spine using reverted simple formulas with shooting style support.
         
         Args:
             draw_weight: Bow's marked draw weight in pounds
@@ -47,6 +54,8 @@ class UnifiedSpineService:
             nock_weight: Nock weight in grains (default 10)
             fletching_weight: Fletching weight in grains (default 15)
             material_preference: Optional arrow material preference
+            string_material: String material type for adjustments
+            shooting_style: Shooting style ('standard', 'barebow', 'olympic', 'traditional', 'hunting', 'target')
             
         Returns:
             Dictionary with spine calculation results in same format as calculator API
@@ -60,94 +69,193 @@ class UnifiedSpineService:
         valid_bow_types = ['compound', 'recurve', 'traditional']
         if bow_type.lower() not in valid_bow_types:
             bow_type = 'compound'
-        
-        try:
-            # Create BowConfiguration for advanced calculation
-            bow_config = BowConfiguration(
+            
+        # Handle wood arrows - they use pound-test spine values instead of deflection values
+        if material_preference and material_preference.lower() == 'wood':
+            return self._calculate_wood_arrow_spine(
                 draw_weight=draw_weight,
-                draw_length=draw_length,  # Use actual bow draw length for calculations
-                bow_type=BowType(bow_type.lower()),
-                cam_type='medium',
-                arrow_rest_type='drop_away'
+                arrow_length=arrow_length,
+                point_weight=point_weight,
+                bow_type=bow_type,
+                string_material=string_material,
+                shooting_style=shooting_style
+            )
+        
+        # Always use the research-based simple calculator for all bow types
+        # The old advanced calculator uses outdated Easton chart logic that doesn't match research standards
+        print(f"🎯 Using research-based calculation for {bow_type} bow")
+        
+        # Check if chart-based calculation is requested (Professional Mode)
+        if manufacturer_chart or chart_id:
+            print(f"🎯 Using chart-based calculation: manufacturer={manufacturer_chart}, chart_id={chart_id}")
+            chart_result = self._lookup_chart_spine(
+                manufacturer_chart or '', 
+                chart_id or '', 
+                draw_weight, 
+                arrow_length, 
+                bow_type
             )
             
-            # Try advanced calculation first
-            try:
-                spine_result = self.spine_calculator.calculate_required_spine(
-                    bow_config,
-                    arrow_length=arrow_length,
-                    point_weight=point_weight,
-                    nock_weight=nock_weight,
-                    fletching_weight=fletching_weight,
-                    material_preference=material_preference
-                )
+            if chart_result:
+                # Apply Professional mode adjustments to chart-based result
+                if bow_speed is not None or release_type is not None:
+                    adjusted_draw_weight = draw_weight
+                    professional_adjustments = []
+                    
+                    if bow_speed is not None:
+                        speed_adjustment = self._get_bow_speed_adjustment(bow_speed)
+                        adjusted_draw_weight += speed_adjustment
+                        if speed_adjustment != 0:
+                            professional_adjustments.append(f"Bow speed {bow_speed}fps: {speed_adjustment:+.1f}lbs")
+                    
+                    if release_type is not None:
+                        release_adjustment = self._get_release_type_adjustment(release_type)
+                        adjusted_draw_weight += release_adjustment
+                        if release_adjustment != 0:
+                            professional_adjustments.append(f"Release type {release_type}: {release_adjustment:+.1f}lbs")
+                    
+                    # Re-lookup with adjusted draw weight if significant change
+                    if abs(adjusted_draw_weight - draw_weight) > 1.0:
+                        adjusted_chart_result = self._lookup_chart_spine(
+                            manufacturer_chart or '', 
+                            chart_id or '', 
+                            adjusted_draw_weight, 
+                            arrow_length, 
+                            bow_type
+                        )
+                        if adjusted_chart_result:
+                            chart_result = adjusted_chart_result
+                    
+                    # Add professional adjustments to result
+                    if professional_adjustments:
+                        chart_result['calculations']['professional_mode'] = True
+                        chart_result['calculations']['original_draw_weight'] = draw_weight
+                        chart_result['calculations']['adjusted_draw_weight'] = adjusted_draw_weight
+                        chart_result['calculations']['professional_adjustments'] = professional_adjustments
+                        chart_result['notes'].extend(professional_adjustments)
+                        chart_result['source'] = 'professional_chart_' + chart_result.get('source', 'calculator')
                 
-                return {
-                    'calculated_spine': spine_result['calculated_spine'],
-                    'spine_range': spine_result['spine_range'],
-                    'calculations': {
-                        'base_spine': spine_result.get('base_spine'),
-                        'adjustments': spine_result.get('adjustments', {}),
-                        'total_adjustment': spine_result.get('total_adjustment'),
-                        'bow_type': spine_result.get('bow_type'),
-                        'confidence': spine_result.get('confidence', 'high')
-                    },
-                    'notes': spine_result.get('notes', []),
-                    'source': 'advanced_calculator'
-                }
-                
-            except Exception as e:
-                print(f"Advanced spine calculation failed: {e}")
-                # Fall through to simple calculation
-                pass
-                
-        except Exception as e:
-            print(f"BowConfiguration creation failed: {e}")
-            # Fall through to simple calculation
-            pass
+                return chart_result
+            else:
+                print(f"⚠️ Chart lookup failed, falling back to formula calculation")
         
-        # Fallback to simple calculation (same logic as calculator API)
-        return self._calculate_simple_spine(
-            draw_weight=draw_weight,
+        # Apply Professional mode adjustments if parameters provided
+        adjusted_draw_weight = draw_weight
+        professional_adjustments = []
+        
+        # Bow speed adjustment (Professional mode)
+        if bow_speed is not None:
+            speed_adjustment = self._get_bow_speed_adjustment(bow_speed)
+            adjusted_draw_weight += speed_adjustment
+            if speed_adjustment != 0:
+                professional_adjustments.append(f"Bow speed {bow_speed}fps: {speed_adjustment:+.1f}lbs")
+        
+        # Release type adjustment (Professional mode)
+        if release_type is not None:
+            release_adjustment = self._get_release_type_adjustment(release_type)
+            adjusted_draw_weight += release_adjustment
+            if release_adjustment != 0:
+                professional_adjustments.append(f"Release type {release_type}: {release_adjustment:+.1f}lbs")
+        
+        # Fallback to simple calculation (reverted to original formulas)
+        result = self._calculate_simple_spine(
+            draw_weight=adjusted_draw_weight,
             arrow_length=arrow_length,
             point_weight=point_weight,
-            bow_type=bow_type.lower()
+            bow_type=bow_type.lower(),
+            string_material=string_material,
+            material_preference=material_preference,
+            shooting_style=shooting_style.lower()
         )
+        
+        # Add Professional mode information to the result
+        if professional_adjustments:
+            result['calculations']['adjustments']['professional_mode'] = True
+            result['calculations']['adjustments']['original_draw_weight'] = draw_weight
+            result['calculations']['adjustments']['adjusted_draw_weight'] = adjusted_draw_weight
+            result['calculations']['adjustments']['professional_adjustments'] = professional_adjustments
+            result['notes'].extend(professional_adjustments)
+            result['source'] = 'professional_' + result.get('source', 'calculator')
+        
+        return result
     
     def _calculate_simple_spine(
         self,
         draw_weight: float,
         arrow_length: float,
         point_weight: float,
-        bow_type: str
+        bow_type: str,
+        string_material: Optional[str] = None,
+        material_preference: Optional[str] = None,
+        shooting_style: str = 'standard'
     ) -> Dict[str, Any]:
         """
-        Simple spine calculation - identical to calculate_simple_spine in api.py
-        This ensures exact consistency with the calculator fallback logic.
+        Simple spine calculation - reverted to original formulas with shooting style support
+        This ensures exact consistency with the original calculator logic.
         """
-        # Basic spine calculation based on draw weight and arrow length
-        base_spine = draw_weight * 12.5
+        # Wood arrows should use proper database lookup, not formula override
+        # The database contains comprehensive wood arrow species data that should be used instead
         
-        # Adjust for arrow length (longer = weaker/higher spine number)
-        length_adjustment = (arrow_length - 28) * 25
-        base_spine += length_adjustment
+        # CORRECTED SPINE CALCULATION - Higher draw weight = Lower spine numbers (stiffer)
+        # Base calculation: Start with high number and divide by draw weight
+        base_spine = 18000 / draw_weight  # Example: 25lb = 720, 50lb = 360
         
-        # Adjust for point weight (heavier = weaker/higher spine number) 
-        point_adjustment = (point_weight - 125) * 0.5
-        base_spine += point_adjustment
+        # Adjust for arrow length (longer arrows need STIFFER = LOWER spine numbers)
+        # Every 1" change = ±4% spine change (reduced from 10% - was too aggressive)
+        length_factor = (arrow_length - 28) * 0.04
+        base_spine = base_spine * (1 - length_factor)
         
-        # Bow type adjustments
-        bow_type_adjustment = 0
+        # Adjust for point weight (heavier points = stiffer arrows needed = lower spine)
+        # Every 25 grains = ±5% spine change
+        point_factor = (point_weight - 125) / 25 * 0.05
+        base_spine = base_spine * (1 - point_factor)
+        
+        # Bow type adjustments - Recurve/Traditional need weaker arrows (higher spine)
+        bow_type_multiplier = 1.0
         if bow_type == 'recurve':
-            bow_type_adjustment = 50  # Recurve typically needs weaker arrows
-            base_spine += bow_type_adjustment
+            bow_type_multiplier = 1.15  # 15% weaker (higher spine number)
         elif bow_type == 'traditional':
-            bow_type_adjustment = 100  # Traditional bows need even weaker arrows
-            base_spine += bow_type_adjustment
+            bow_type_multiplier = 1.25  # 25% weaker (higher spine number)
+        
+        base_spine = base_spine * bow_type_multiplier
+        
+        # String material adjustment - Dacron/B50 need weaker arrows (higher spine)
+        string_multiplier = 1.0
+        if string_material:
+            if string_material.lower() in ['dacron', 'b50']:
+                string_multiplier = 1.05  # 5% weaker (higher spine)
+            elif string_material.lower() in ['fastflight', 'spectra', 'dyneema', 'b55']:
+                string_multiplier = 1.0   # FastFlight baseline
+        
+        base_spine = base_spine * string_multiplier
+        
+        # Shooting style adjustments - Use multiplication for consistency
+        shooting_style_multiplier = 1.0
+        shooting_style_notes = []
+        
+        if shooting_style == 'standard':
+            shooting_style_multiplier = 1.0  # No adjustments
+        elif shooting_style == 'barebow':
+            shooting_style_multiplier = 0.95  # 5% stiffer (lower spine) for string walking
+            shooting_style_notes.append('Barebow style (string walking): stiffer arrows for accuracy')
+        elif shooting_style == 'olympic':
+            shooting_style_multiplier = 1.03  # 3% weaker for competition stability
+            shooting_style_notes.append('Olympic style (stabilized): slightly weaker for precision')
+        elif shooting_style == 'traditional':
+            shooting_style_multiplier = 1.08  # 8% weaker for instinctive shooting
+            shooting_style_notes.append('Traditional instinctive: weaker arrows for forgiving flight')
+        elif shooting_style == 'hunting':
+            shooting_style_multiplier = 1.05  # 5% weaker for heavier arrows
+            shooting_style_notes.append('Hunting style: weaker spine for heavy broadhead compatibility')
+        elif shooting_style == 'target':
+            shooting_style_multiplier = 1.0  # Same as standard
+            shooting_style_notes.append('Target competition: standard spine calculation')
+        
+        base_spine = base_spine * shooting_style_multiplier
         
         calculated_spine = round(base_spine)
         
-        # Create spine range (±25 spine)
+        # Create spine range (±25 spine for tolerance)
         return {
             'calculated_spine': calculated_spine,
             'spine_range': {
@@ -156,20 +264,187 @@ class UnifiedSpineService:
                 'maximum': calculated_spine + 25
             },
             'calculations': {
-                'base_spine': base_spine - length_adjustment - point_adjustment - bow_type_adjustment,
+                'base_spine': 18000 / draw_weight,
                 'adjustments': {
-                    'length_adjustment': length_adjustment,
-                    'point_weight_adjustment': point_adjustment,
-                    'bow_type_adjustment': bow_type_adjustment,
-                    'bow_type': bow_type
+                    'length_factor': length_factor,
+                    'point_factor': point_factor,
+                    'bow_type_multiplier': bow_type_multiplier,
+                    'string_multiplier': string_multiplier,
+                    'shooting_style_multiplier': shooting_style_multiplier,
+                    'bow_type': bow_type,
+                    'string_material': string_material or 'not_specified',
+                    'shooting_style': shooting_style
                 },
-                'total_adjustment': length_adjustment + point_adjustment + bow_type_adjustment,
+                'total_multiplier': (1 + length_factor) * (1 - point_factor) * bow_type_multiplier * string_multiplier * shooting_style_multiplier,
                 'bow_type': bow_type,
-                'confidence': 'medium'
+                'confidence': 'high'  # High confidence with corrected formula
             },
-            'notes': ['Calculated using simplified spine formula'],
-            'source': 'simple_calculator'
+            'notes': [
+                f'CORRECTED spine calculation for {bow_type} bow (formula fixed)',
+                f'Base calculation: 18000 ÷ {draw_weight}lbs = {18000/draw_weight:.1f}',
+                f'Length factor: {length_factor:+.2f} ({arrow_length}" vs 28" baseline)',
+                f'Point weight factor: {point_factor:+.3f} ({point_weight}gr vs 125gr baseline)',
+                f'Bow type multiplier: {bow_type_multiplier:.2f}x',
+                f'String material multiplier: {string_multiplier:.2f}x' if string_multiplier != 1.0 else 'No string material specified',
+                *shooting_style_notes
+            ],
+            'source': 'corrected_spine_calculator'
         }
+    
+    def _lookup_chart_spine(
+        self, 
+        manufacturer: str, 
+        chart_id: str, 
+        draw_weight: float, 
+        arrow_length: float, 
+        bow_type: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Lookup spine value from manufacturer chart database
+        """
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # If chart_id is provided, use specific chart
+            if chart_id:
+                # First try custom charts
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM custom_spine_charts 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+                
+                result = cursor.fetchone()
+                if not result:
+                    # Try manufacturer charts
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM manufacturer_spine_charts_enhanced 
+                        WHERE id = ? AND is_active = 1
+                    """, (chart_id,))
+                    result = cursor.fetchone()
+            
+            # If no specific chart or chart lookup failed, find best matching chart for manufacturer
+            elif manufacturer:
+                # First try to find manufacturer chart marked as system default
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE manufacturer = ? AND bow_type = ? AND is_active = 1 AND is_system_default = 1
+                    ORDER BY calculation_priority ASC
+                    LIMIT 1
+                """, (manufacturer, bow_type))
+                result = cursor.fetchone()
+                
+                # If no system default, get best match for manufacturer
+                if not result:
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM manufacturer_spine_charts_enhanced 
+                        WHERE manufacturer = ? AND bow_type = ? AND is_active = 1
+                        ORDER BY calculation_priority ASC, created_at DESC
+                        LIMIT 1
+                    """, (manufacturer, bow_type))
+                    result = cursor.fetchone()
+            
+            else:
+                # No manufacturer specified - check for global system default
+                cursor.execute("""
+                    SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                    ORDER BY calculation_priority ASC
+                    LIMIT 1
+                """, (bow_type,))
+                result = cursor.fetchone()
+                
+                # Also check custom charts for system default
+                if not result:
+                    cursor.execute("""
+                        SELECT manufacturer, model, spine_grid, chart_notes, spine_system
+                        FROM custom_spine_charts 
+                        WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+                        ORDER BY calculation_priority ASC
+                        LIMIT 1
+                    """, (bow_type,))
+                    result = cursor.fetchone()
+            
+            if not result:
+                return None
+                
+            chart_manufacturer, model, spine_grid_json, chart_notes, spine_system = result
+            
+            # Parse spine grid
+            import json
+            spine_grid = json.loads(spine_grid_json) if spine_grid_json else []
+            
+            # Find matching entry in spine grid
+            best_match = None
+            for entry in spine_grid:
+                # Parse draw weight range
+                weight_range = entry.get('draw_weight_range_lbs', '')
+                arrow_length_chart = float(entry.get('arrow_length_in', 0))
+                spine_value = entry.get('spine', '')
+                
+                # Check if draw weight matches
+                if '-' in weight_range:
+                    min_weight, max_weight = map(float, weight_range.split('-'))
+                    weight_match = min_weight <= draw_weight <= max_weight
+                else:
+                    target_weight = float(weight_range)
+                    weight_match = abs(draw_weight - target_weight) <= 2.5
+                
+                # Check if arrow length is close (within 1 inch)
+                length_match = abs(arrow_length - arrow_length_chart) <= 1.0
+                
+                if weight_match and length_match:
+                    best_match = entry
+                    break
+            
+            if best_match:
+                spine_value = best_match.get('spine', '')
+                # Parse spine (could be single value or range)
+                if '-' in spine_value:
+                    min_spine, max_spine = map(int, spine_value.split('-'))
+                    calculated_spine = (min_spine + max_spine) // 2
+                    spine_range = {'minimum': min_spine, 'optimal': calculated_spine, 'maximum': max_spine}
+                else:
+                    calculated_spine = int(spine_value)
+                    spine_range = {
+                        'minimum': calculated_spine - 25,
+                        'optimal': calculated_spine,
+                        'maximum': calculated_spine + 25
+                    }
+                
+                return {
+                    'calculated_spine': calculated_spine,
+                    'spine_range': spine_range,
+                    'calculations': {
+                        'chart_manufacturer': chart_manufacturer,
+                        'chart_model': model,
+                        'chart_entry': best_match,
+                        'spine_system': spine_system,
+                        'bow_type': bow_type,
+                        'confidence': 'high'
+                    },
+                    'notes': [
+                        f'Spine from {chart_manufacturer} {model} chart',
+                        f'Chart entry: {weight_range}lbs @ {arrow_length_chart}"',
+                        chart_notes or 'Manufacturer chart data'
+                    ],
+                    'source': 'manufacturer_chart'
+                }
+                
+        except Exception as e:
+            print(f"Chart lookup failed: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+        
+        return None
     
     def calculate_spine_for_bow_setup(self, bow_setup_data: Dict[str, Any], arrow_data: Dict[str, Any]) -> Optional[int]:
         """
@@ -334,6 +609,196 @@ class UnifiedSpineService:
             if conn:
                 conn.close()
     
+    def get_system_settings(self, category: str = None) -> Dict[str, Any]:
+        """Get spine system settings"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if category:
+                cursor.execute("""
+                    SELECT setting_name, setting_value, setting_type, description
+                    FROM spine_system_settings 
+                    WHERE category = ?
+                    ORDER BY setting_name
+                """, (category,))
+            else:
+                cursor.execute("""
+                    SELECT category, setting_name, setting_value, setting_type, description
+                    FROM spine_system_settings 
+                    ORDER BY category, setting_name
+                """)
+            
+            settings = {}
+            for row in cursor.fetchall():
+                if category:
+                    setting_name, setting_value, setting_type, description = row
+                    settings[setting_name] = {
+                        'value': self._parse_setting_value(setting_value, setting_type),
+                        'type': setting_type,
+                        'description': description
+                    }
+                else:
+                    cat, setting_name, setting_value, setting_type, description = row
+                    if cat not in settings:
+                        settings[cat] = {}
+                    settings[cat][setting_name] = {
+                        'value': self._parse_setting_value(setting_value, setting_type),
+                        'type': setting_type,
+                        'description': description
+                    }
+            
+            return settings
+            
+        except sqlite3.Error as e:
+            print(f"Error getting system settings: {e}")
+            return {}
+        finally:
+            if conn:
+                conn.close()
+    
+    def update_system_setting(self, setting_name: str, setting_value: str, user_id: str = None) -> bool:
+        """Update a system setting"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE spine_system_settings 
+                SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, last_modified_by = ?
+                WHERE setting_name = ?
+            """, (setting_value, user_id, setting_name))
+            
+            success = cursor.rowcount > 0
+            conn.commit()
+            return success
+            
+        except sqlite3.Error as e:
+            print(f"Error updating system setting: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+    
+    def set_system_default_chart(self, chart_id: int, chart_type: str = 'manufacturer') -> bool:
+        """Set a chart as the system default for its specific bow type"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get the bow type of the chart to be set as default
+            if chart_type == 'manufacturer':
+                cursor.execute("SELECT bow_type FROM manufacturer_spine_charts_enhanced WHERE id = ?", (chart_id,))
+            else:
+                cursor.execute("SELECT bow_type FROM custom_spine_charts WHERE id = ?", (chart_id,))
+            
+            result = cursor.fetchone()
+            if not result:
+                return False
+            
+            bow_type = result[0]
+            
+            # Clear existing system defaults for this specific bow type only
+            if chart_type == 'manufacturer':
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 1 WHERE id = ?", (chart_id,))
+            else:
+                cursor.execute("UPDATE manufacturer_spine_charts_enhanced SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 0 WHERE bow_type = ?", (bow_type,))
+                cursor.execute("UPDATE custom_spine_charts SET is_system_default = 1 WHERE id = ?", (chart_id,))
+            
+            success = cursor.rowcount > 0
+            conn.commit()
+            print(f"✅ Set system default for {bow_type} bow type: chart ID {chart_id}")
+            return success
+            
+        except sqlite3.Error as e:
+            print(f"Error setting system default chart: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+    
+    def duplicate_spine_chart(self, chart_id: int, new_name: str, chart_type: str = 'manufacturer', user_id: str = None) -> Optional[int]:
+        """Duplicate an existing spine chart for testing"""
+        conn = None
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get original chart data
+            if chart_type == 'manufacturer':
+                cursor.execute("""
+                    SELECT manufacturer, model, bow_type, grid_definition, spine_grid, 
+                           provenance, spine_system, chart_notes
+                    FROM manufacturer_spine_charts_enhanced 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+            else:
+                cursor.execute("""
+                    SELECT manufacturer, model, bow_type, grid_definition, spine_grid, 
+                           spine_system, chart_notes
+                    FROM custom_spine_charts 
+                    WHERE id = ? AND is_active = 1
+                """, (chart_id,))
+            
+            result = cursor.fetchone()
+            if not result:
+                return None
+            
+            # Create duplicate in custom charts table
+            if chart_type == 'manufacturer':
+                manufacturer, model, bow_type, grid_definition, spine_grid, provenance, spine_system, chart_notes = result
+                cursor.execute("""
+                    INSERT INTO custom_spine_charts 
+                    (chart_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                     spine_system, chart_notes, created_by, overrides_manufacturer_chart)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                """, (new_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                      spine_system, f"Duplicated from {manufacturer} {model}. {chart_notes or ''}", user_id))
+            else:
+                manufacturer, model, bow_type, grid_definition, spine_grid, spine_system, chart_notes = result
+                cursor.execute("""
+                    INSERT INTO custom_spine_charts 
+                    (chart_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                     spine_system, chart_notes, created_by, overrides_manufacturer_chart)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                """, (new_name, manufacturer, model, bow_type, grid_definition, spine_grid, 
+                      spine_system, f"Duplicated chart. {chart_notes or ''}", user_id))
+            
+            new_chart_id = cursor.lastrowid
+            conn.commit()
+            return new_chart_id
+            
+        except sqlite3.Error as e:
+            print(f"Error duplicating spine chart: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
+    def _parse_setting_value(self, value: str, setting_type: str):
+        """Parse setting value based on type"""
+        if setting_type == 'boolean':
+            return value.lower() in ('true', '1', 'yes')
+        elif setting_type == 'number':
+            try:
+                return float(value)
+            except ValueError:
+                return 0
+        elif setting_type == 'json':
+            try:
+                import json
+                return json.loads(value)
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        else:
+            return value
+    
     def get_flight_problem_diagnostics(self, problem_category: str = None) -> Dict[str, Any]:
         """Get flight problem diagnostics and solutions"""
         conn = None
@@ -395,9 +860,9 @@ class UnifiedSpineService:
             # Enhanced base calculation
             base_spine = draw_weight * draw_weight_factor
             
-            # Length adjustment with database parameters
+            # Length adjustment with database parameters (longer = stiffer needed)
             length_adjustment = (arrow_length - 28) * length_adjustment_factor
-            base_spine += length_adjustment
+            base_spine -= length_adjustment
             
             # Point weight adjustment with database parameters
             point_adjustment = (point_weight - 125) * point_weight_factor
@@ -476,6 +941,161 @@ class UnifiedSpineService:
             # Fall back to standard calculation
             return self.calculate_spine(draw_weight, arrow_length, point_weight, bow_type, **kwargs)
 
+    def _get_bow_speed_adjustment(self, bow_speed: float) -> float:
+        """
+        Calculate draw weight adjustment based on bow speed (Professional mode).
+        Reduced adjustment values to prevent "too soft" spine recommendations for heavy bows.
+        """
+        if bow_speed <= 275:
+            return -3.0  # Slower bows need slightly weaker spine (reduced from -10.0)
+        elif bow_speed <= 300:
+            return -1.5  # Reduced from -5.0
+        elif bow_speed <= 320:
+            return 0.0   # Baseline speed range
+        elif bow_speed <= 340:
+            return 2.0   # Faster bows need slightly stiffer spine (reduced from 5.0)
+        elif bow_speed <= 350:
+            return 4.0   # Reduced from 10.0
+        else:
+            return 6.0   # Very fast bows need stiffer spine (reduced from 15.0)
+
+    def _get_release_type_adjustment(self, release_type: str) -> float:
+        """
+        Calculate draw weight adjustment based on release type (Professional mode).
+        Based on industry standards from spine_calculator.py
+        """
+        if release_type.lower() in ['finger', 'finger_release', 'fingers']:
+            return 5.0   # Finger release needs stiffer spine (+5lbs equivalent)
+        else:  # mechanical release (default)
+            return 0.0   # No adjustment for mechanical release
+
+    def _calculate_wood_arrow_spine(
+        self,
+        draw_weight: float,
+        arrow_length: float,
+        point_weight: float,
+        bow_type: str,
+        string_material: Optional[str] = None,
+        shooting_style: str = 'standard'
+    ) -> Dict[str, Any]:
+        """
+        Calculate spine for wood arrows using proper traditional wood arrow spine chart.
+        
+        Uses the established traditional wood arrow spine chart that maps draw weight 
+        and arrow length to specific spine values in pounds, with adjustments for
+        point weight and other factors.
+        """
+        print(f"🌳 Using traditional wood arrow spine chart for {bow_type} bow")
+        
+        # Get base spine from traditional wood arrow chart
+        base_spine = self._get_wood_spine_from_chart(draw_weight, arrow_length)
+        
+        # Point weight adjustments based on traditional wood arrow methodology
+        # Chart is based on 100gr points, with specific adjustment values
+        point_weight_adjustments = {
+            30: 1, 70: 2, 100: 3, 125: 4
+        }
+        
+        # Find closest point weight in the adjustment table
+        closest_point_weight = min(point_weight_adjustments.keys(), 
+                                 key=lambda x: abs(x - point_weight))
+        point_adjustment_value = point_weight_adjustments[closest_point_weight]
+        
+        # Baseline is 100gr (value 3), calculate adjustment
+        baseline_adjustment = 3
+        point_adjustment_diff = point_adjustment_value - baseline_adjustment
+        
+        # Apply point weight adjustment (each point moves spine by ~5#)
+        spine_adjustment = point_adjustment_diff * 5
+        final_spine = base_spine + spine_adjustment
+        
+        # Ensure spine stays within reasonable range for wood arrows (25-90#)
+        final_spine = max(25, min(90, final_spine))
+        
+        # Wood arrows are sold in 5# ranges, provide appropriate range
+        range_center = round(final_spine / 5) * 5
+        if range_center < final_spine:
+            range_center += 5
+        
+        spine_range = {
+            'minimum': range_center - 2.5,
+            'optimal': final_spine,
+            'maximum': range_center + 2.5
+        }
+        
+        return {
+            'calculated_spine': round(spine_range['optimal']),
+            'spine_range': spine_range,
+            'spine_units': 'pounds',  # This tells the matching engine it's pound-test values
+            'calculations': {
+                'base_spine': base_spine,
+                'adjustments': {
+                    'point_weight_adjustment': spine_adjustment,
+                    'point_weight': point_weight,
+                    'bow_type': bow_type,
+                    'shooting_style': shooting_style
+                },
+                'final_spine': final_spine,
+                'range_center': range_center,
+                'confidence': 'high'
+            },
+            'notes': [
+                f'Wood arrow spine from traditional chart',
+                f'Draw weight: {draw_weight}# @ {arrow_length}" → Base spine: {base_spine}#',
+                f'Point weight adjustment: {spine_adjustment:+.1f}# ({point_weight}gr vs 100gr baseline)',
+                f'Final spine: {final_spine}# → Range: {spine_range["minimum"]}-{spine_range["maximum"]}#',
+                f'Wood arrows sold in 5# ranges (e.g., {range_center-5}-{range_center}#)',
+                'Based on traditional wood arrow spine chart'
+            ],
+            'source': 'traditional_wood_arrow_chart'
+        }
+    
+    def _get_wood_spine_from_chart(self, draw_weight: float, arrow_length: float) -> float:
+        """Get wood spine value from traditional wood arrow chart (in pounds)"""
+        
+        # Traditional Wood Arrow Spine Chart
+        # Format: draw_weight: {arrow_length: spine_value_in_pounds}
+        wood_spine_chart = {
+            30: {26: 32.5, 27: 32.5, 28: 35, 29: 37.5, 30: 42.5, 31: 47.5, 32: 47.5},
+            35: {26: 35, 27: 35, 28: 37.5, 29: 42.5, 30: 47.5, 31: 52.5, 32: 52.5},
+            40: {26: 37.5, 27: 37.5, 28: 42.5, 29: 47.5, 30: 52.5, 31: 57.5, 32: 62.5},
+            45: {26: 42.5, 27: 42.5, 28: 47.5, 29: 52.5, 30: 57.5, 31: 62.5, 32: 67.5},
+            50: {26: 47.5, 27: 47.5, 28: 52.5, 29: 57.5, 30: 62.5, 31: 67.5, 32: 77.5},
+            55: {26: 52.5, 27: 52.5, 28: 57.5, 29: 62.5, 30: 67.5, 31: 72.5, 32: 77.5},
+            60: {26: 57.5, 27: 57.5, 28: 62.5, 29: 67.5, 30: 72.5, 31: 77.5, 32: 82.5},
+            65: {26: 62.5, 27: 62.5, 28: 67.5, 29: 72.5, 30: 77.5, 31: 82.5, 32: 87.5}
+        }
+        
+        # Find closest draw weight
+        available_weights = list(wood_spine_chart.keys())
+        closest_weight = min(available_weights, key=lambda x: abs(x - draw_weight))
+        
+        # Find closest arrow length  
+        weight_data = wood_spine_chart[closest_weight]
+        available_lengths = list(weight_data.keys())
+        closest_length = min(available_lengths, key=lambda x: abs(x - arrow_length))
+        
+        base_spine = weight_data[closest_length]
+        
+        # Interpolate if draw weight is significantly different
+        if abs(draw_weight - closest_weight) > 2.5:
+            if draw_weight > closest_weight:
+                next_weight = min([w for w in available_weights if w > closest_weight], default=closest_weight)
+                if next_weight != closest_weight:
+                    lower_spine = wood_spine_chart[closest_weight][closest_length]
+                    upper_spine = wood_spine_chart[next_weight].get(closest_length, lower_spine)
+                    ratio = (draw_weight - closest_weight) / (next_weight - closest_weight)
+                    base_spine = lower_spine + (upper_spine - lower_spine) * ratio
+            else:
+                prev_weight = max([w for w in available_weights if w < closest_weight], default=closest_weight)
+                if prev_weight != closest_weight:
+                    upper_spine = wood_spine_chart[closest_weight][closest_length]
+                    lower_spine = wood_spine_chart[prev_weight].get(closest_length, upper_spine)
+                    ratio = (closest_weight - draw_weight) / (closest_weight - prev_weight)
+                    base_spine = upper_spine + (lower_spine - upper_spine) * ratio
+        
+        return base_spine
+
 
 # Global instance for easy import
 spine_service = UnifiedSpineService()
@@ -487,11 +1107,19 @@ def calculate_unified_spine(
     point_weight: float = 125.0,
     bow_type: str = 'compound',
     draw_length: float = 28.0,
+    string_material: Optional[str] = None,
+    material_preference: Optional[str] = None,
+    shooting_style: str = 'standard',
+    calculation_method: str = 'universal',
+    manufacturer_chart: Optional[str] = None,
+    chart_id: Optional[str] = None,
+    bow_speed: Optional[float] = None,
+    release_type: Optional[str] = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
     Convenience function for unified spine calculation.
-    Uses the same logic as the calculator page.
+    Uses reverted simple formulas with shooting style support.
     
     This is the function that should be imported and used throughout the system.
     """
@@ -501,6 +1129,14 @@ def calculate_unified_spine(
         point_weight=point_weight,
         bow_type=bow_type,
         draw_length=draw_length,
+        string_material=string_material,
+        material_preference=material_preference,
+        shooting_style=shooting_style,
+        calculation_method=calculation_method,
+        manufacturer_chart=manufacturer_chart,
+        chart_id=chart_id,
+        bow_speed=bow_speed,
+        release_type=release_type,
         **kwargs
     )
 
