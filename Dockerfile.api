@@ -19,7 +19,13 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy application code
 COPY arrow_scraper/ ./arrow_scraper/
 COPY data/ ./data/
+
+# Copy validation module explicitly
+COPY arrow_data_validator.py ./
 COPY arrow_data_validator.py ./arrow_data_validator.py
+
+# Debug: List files to verify copy worked
+RUN ls -la /app/ && echo "=== Checking for arrow_data_validator.py ===" && ls -la arrow_data_validator.py || echo "arrow_data_validator.py NOT FOUND"
 
 # Create logs directory
 RUN mkdir -p logs
