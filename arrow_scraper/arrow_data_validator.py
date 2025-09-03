@@ -12,7 +12,7 @@ import time
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from arrow_scraper.unified_database import UnifiedDatabase
+from unified_database import UnifiedDatabase
 from datetime import datetime
 
 @dataclass
