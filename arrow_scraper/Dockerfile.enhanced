@@ -50,9 +50,14 @@ RUN echo "🔧 Setting up directory structure..." && \
     chmod 755 /app/logs /app/user_data /app/data /app/arrow_data /app/backups && \
     echo "✅ Directory setup completed"
 
+# Verify arrow_data_validator.py was copied
+RUN echo "🔍 Checking arrow_data_validator.py..." && \
+    ls -la /app/arrow_data_validator.py && \
+    echo "✅ arrow_data_validator.py found" || { echo "❌ arrow_data_validator.py missing"; exit 1; }
+
 # Verify build integrity (imports only - no database files expected at build time)
 RUN echo "🔍 Final build verification..." && \
-    python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && \
+    python3 -c "import sys; import os; sys.path.append('/app'); exec('try:\\n    from user_database import UserDatabase\\n    from arrow_database import ArrowDatabase\\n    from arrow_data_validator import ArrowDataValidator\\n    import flask, sqlite3, requests, jwt\\n    print(\"✅ All imports successful including validation module\")\\nexcept ImportError as e:\\n    print(f\"❌ Import failed: {e}\")\\n    exit(1)')" && \
     echo "✅ Build verification completed"
 
 # Switch to non-root user
