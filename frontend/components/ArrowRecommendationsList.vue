@@ -321,116 +321,10 @@ const availableManufacturers = computed(() => {
 })
 
 const filteredRecommendations = computed(() => {
+  // Since filtering is now done at the API level, we just return the recommendations
+  // Keep only client-side sorting for instant feedback
   let filtered = [...recommendations.value]
-  console.log('Starting with', filtered.length, 'recommendations')
-  
-  // Apply search filter
-  if (filters.value.search) {
-    const searchTerm = filters.value.search.toLowerCase()
-    const beforeCount = filtered.length
-    filtered = filtered.filter(rec => 
-      rec.arrow.manufacturer?.toLowerCase().includes(searchTerm) ||
-      rec.arrow.model_name?.toLowerCase().includes(searchTerm) ||
-      rec.arrow.material?.toLowerCase().includes(searchTerm)
-    )
-    console.log(`Search filter "${filters.value.search}": ${beforeCount} -> ${filtered.length}`)
-  }
-  
-  // Apply manufacturer filter
-  if (filters.value.manufacturer) {
-    const beforeCount = filtered.length
-    filtered = filtered.filter(rec => {
-      if (!rec.arrow || !rec.arrow.manufacturer) {
-        console.log('Arrow missing manufacturer data', rec)
-        return false
-      }
-      
-      const arrowMfr = String(rec.arrow.manufacturer).trim()
-      const filterMfr = String(filters.value.manufacturer).trim()
-      const matches = arrowMfr === filterMfr
-      
-      if (!matches) {
-        console.log(`Manufacturer mismatch: arrow="${arrowMfr}" vs filter="${filterMfr}"`)
-      }
-      
-      return matches
-    })
-    console.log(`Manufacturer filter: "${filters.value.manufacturer}" (${beforeCount} -> ${filtered.length} arrows)`)
-    
-    if (filtered.length === 0) {
-      console.log('No arrows after manufacturer filtering! Checking all available manufacturers in current data:')
-      const availableMfrs = new Set()
-      recommendations.value.forEach(rec => {
-        if (rec.arrow && rec.arrow.manufacturer) {
-          availableMfrs.add(String(rec.arrow.manufacturer).trim())
-        }
-      })
-      console.log('Available manufacturers in current recommendations:', Array.from(availableMfrs))
-    }
-  }
-  
-  // Apply match quality filter
-  if (filters.value.match_quality) {
-    const minMatch = parseInt(filters.value.match_quality)
-    filtered = filtered.filter(rec => rec.match_percentage >= minMatch)
-  }
-  
-  // Apply weight filters
-  if (filters.value.weight_min) {
-    const beforeCount = filtered.length
-    filtered = filtered.filter(rec => {
-      const weight = getNumericWeight(rec.arrow)
-      const result = weight && weight >= parseFloat(filters.value.weight_min)
-      if (!result && weight) {
-        console.log(`Arrow ${rec.arrow.manufacturer} ${rec.arrow.model_name} weight ${weight} < min ${filters.value.weight_min}`)
-      }
-      return result
-    })
-    console.log(`Weight min filter ${filters.value.weight_min}: ${beforeCount} -> ${filtered.length}`)
-  }
-  
-  if (filters.value.weight_max) {
-    const beforeCount = filtered.length
-    filtered = filtered.filter(rec => {
-      const weight = getNumericWeight(rec.arrow)
-      const result = weight && weight <= parseFloat(filters.value.weight_max)
-      if (!result && weight) {
-        console.log(`Arrow ${rec.arrow.manufacturer} ${rec.arrow.model_name} weight ${weight} > max ${filters.value.weight_max}`)
-      }
-      return result
-    })
-    console.log(`Weight max filter ${filters.value.weight_max}: ${beforeCount} -> ${filtered.length}`)
-  }
-  
-  // Apply diameter range filter
-  if (filters.value.diameter_range) {
-    const beforeCount = filtered.length
-    const [min, max] = filters.value.diameter_range.split('-').map(parseFloat)
-    filtered = filtered.filter(rec => {
-      const diameter = getNumericDiameter(rec.arrow)
-      const result = diameter && diameter >= min && diameter <= max
-      if (!result && diameter) {
-        console.log(`Arrow ${rec.arrow.manufacturer} ${rec.arrow.model_name} diameter ${diameter} not in range ${min}-${max}`)
-      }
-      return result
-    })
-    console.log(`Diameter range filter ${filters.value.diameter_range}: ${beforeCount} -> ${filtered.length}`)
-  }
-  
-  // Apply diameter filters (for custom ranges)
-  if (filters.value.diameter_min) {
-    filtered = filtered.filter(rec => {
-      const diameter = getNumericDiameter(rec.arrow)
-      return diameter && diameter >= parseFloat(filters.value.diameter_min)
-    })
-  }
-  
-  if (filters.value.diameter_max) {
-    filtered = filtered.filter(rec => {
-      const diameter = getNumericDiameter(rec.arrow)
-      return diameter && diameter <= parseFloat(filters.value.diameter_max)
-    })
-  }
+  console.log('API-filtered recommendations:', filtered.length, 'arrows returned')
   
   // Apply sorting
   filtered.sort((a, b) => {
@@ -1020,10 +914,48 @@ const loadRecommendations = async () => {
         min_match_percentage: 60  // Include all matches down to 60%
       }
       
-      // Add manufacturer filter if selected
+      // Add search and filter parameters to API request
+      if (filters.value.search) {
+        console.log(`Adding search query to API request: "${filters.value.search}"`)
+        requestData.search_query = filters.value.search
+      }
+      
       if (filters.value.manufacturer) {
         console.log(`Adding manufacturer filter to API request: "${filters.value.manufacturer}"`)
-        requestData.preferred_manufacturers = [filters.value.manufacturer]
+        requestData.manufacturer_filter = filters.value.manufacturer
+        requestData.preferred_manufacturers = [filters.value.manufacturer] // Keep for backward compatibility
+      }
+      
+      if (filters.value.match_quality) {
+        console.log(`Adding match quality filter to API request: ${filters.value.match_quality}%+`)
+        requestData.match_quality_min = parseInt(filters.value.match_quality)
+      }
+      
+      if (filters.value.diameter_range) {
+        console.log(`Adding diameter range filter to API request: "${filters.value.diameter_range}"`)
+        const [min, max] = filters.value.diameter_range.split('-').map(parseFloat)
+        if (min && max) {
+          requestData.diameter_range = [min, max]
+        }
+      }
+      
+      if (filters.value.weight_min || filters.value.weight_max) {
+        const weightMin = filters.value.weight_min ? parseFloat(filters.value.weight_min) : null
+        const weightMax = filters.value.weight_max ? parseFloat(filters.value.weight_max) : null
+        if (weightMin || weightMax) {
+          requestData.weight_range = [weightMin || 0, weightMax || 100]
+          console.log(`Adding weight range filter to API request: ${weightMin || 0}-${weightMax || 100} GPI`)
+        }
+      }
+      
+      if (filters.value.material_filter) {
+        console.log(`Adding material filter to API request: "${filters.value.material_filter}"`)
+        requestData.material_filter = filters.value.material_filter
+      }
+      
+      if (filters.value.sortBy) {
+        console.log(`Adding sort preference to API request: "${filters.value.sortBy}"`)
+        requestData.sort_by = filters.value.sortBy
       }
       
       // Add wood species filter if selected

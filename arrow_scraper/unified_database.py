@@ -245,6 +245,7 @@ class UnifiedDatabase:
                      gpi_min: float = None, gpi_max: float = None,
                      diameter_min: float = None, diameter_max: float = None,
                      diameter_category: str = None, model_search: str = None,
+                     search_query: str = None,
                      limit: int = 50, include_inactive: bool = False) -> List[Dict[str, Any]]:
         """Search arrows with enhanced filtering and manufacturer active status filtering"""
         conditions = []
@@ -266,6 +267,14 @@ class UnifiedDatabase:
             conditions.append("a.material = ?")
             params.append(material)
             
+        # General search query (searches across manufacturer, model_name, material, description)
+        if search_query:
+            conditions.append("(a.manufacturer LIKE ? OR a.model_name LIKE ? OR a.material LIKE ? OR a.description LIKE ?)")
+            search_param = f"%{search_query}%"
+            params.extend([search_param, search_param, search_param, search_param])
+            print(f"🔍 Database search query: '{search_query}' across manufacturer, model, material, description")
+        
+        # Specific model search (for backward compatibility)
         if model_search:
             conditions.append("(a.model_name LIKE ? OR a.description LIKE ?)")
             params.extend([f"%{model_search}%", f"%{model_search}%"])
@@ -305,13 +314,20 @@ class UnifiedDatabase:
             
             if has_manufacturers_table:
                 # Use manufacturer active status filtering when table exists
+                # First get unique arrows, then aggregate spine data
                 query = f'''
-                    SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, m.is_active as manufacturer_active
+                    SELECT DISTINCT a.*, m.is_active as manufacturer_active,
+                           GROUP_CONCAT(ss.spine) as spines,
+                           GROUP_CONCAT(ss.outer_diameter) as diameters,
+                           GROUP_CONCAT(ss.gpi_weight) as gpi_weights,
+                           MIN(ss.spine) as min_spine,
+                           MAX(ss.spine) as max_spine
                     FROM arrows a
                     JOIN manufacturers m ON a.manufacturer = m.name
                     LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
                     WHERE {where_clause}
-                    ORDER BY a.manufacturer, a.model_name, ss.spine
+                    GROUP BY a.id
+                    ORDER BY a.manufacturer, a.model_name
                     LIMIT ?
                 '''
             else:
@@ -331,11 +347,17 @@ class UnifiedDatabase:
                 fallback_where_clause = " AND ".join(fallback_conditions) if fallback_conditions else "1=1"
                 
                 query = f'''
-                    SELECT DISTINCT a.*, ss.spine, ss.outer_diameter, ss.gpi_weight, 1 as manufacturer_active
+                    SELECT DISTINCT a.*, 1 as manufacturer_active,
+                           GROUP_CONCAT(ss.spine) as spines,
+                           GROUP_CONCAT(ss.outer_diameter) as diameters,
+                           GROUP_CONCAT(ss.gpi_weight) as gpi_weights,
+                           MIN(ss.spine) as min_spine,
+                           MAX(ss.spine) as max_spine
                     FROM arrows a
                     LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
                     WHERE {fallback_where_clause}
-                    ORDER BY a.manufacturer, a.model_name, ss.spine
+                    GROUP BY a.id
+                    ORDER BY a.manufacturer, a.model_name
                     LIMIT ?
                 '''
                 params = fallback_params

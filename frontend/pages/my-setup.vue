@@ -181,96 +181,191 @@
               <div
                 v-for="(setup, index) in bowSetups"
                 :key="setup.id"
-                class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-lg focus:shadow-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200 overflow-hidden cursor-pointer bow-setup-card"
+                tabindex="0"
+                role="button"
+                :aria-label="`${setup.name} bow setup - Click to view details`"
                 @click="handleBowSetupClick(setup, index)"
+                @keydown="handleKeyboardNavigation($event, setup.id, 'card-select')"
               >
-                    <!-- Card Header -->
-                    <div class="mb-4">
-                      <!-- Setup Name and Type -->
-                      <div class="mb-3">
-                        <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                          {{ setup.name }}
-                        </h4>
-                        <div class="flex items-center">
-                          <span class="text-sm font-medium text-gray-500 dark:text-gray-400 inline-flex items-center">
-                            <i class="fas fa-bow-arrow mr-1.5 text-blue-500"></i>
-                            {{ formatBowType(setup.bow_type) }}
-                          </span>
-                        </div>
-                      </div>
-                      
-                    </div>
-                  
-                  <!-- Main Bow Information - Improved Layout -->
-                  <div class="space-y-4">
-                    <!-- Key Specifications Grid -->
-                    <div class="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg">
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="text-center">
-                          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ setup.draw_weight }}</div>
-                          <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Draw Weight (lbs)</div>
-                        </div>
-                        <div v-if="setup.draw_length" class="text-center">
-                          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ setup.draw_length }}"</div>
-                          <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Draw Length</div>
-                        </div>
-                      </div>
+                <div class="p-4">
+                  <!-- Card Header: Setup Name + Setup Type Badge -->
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1 min-w-0">
+                      <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
+                        {{ setup.name }}
+                      </h4>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ getBowDisplayName(setup) }}
+                      </p>
                     </div>
                     
-                    <!-- Bow Model Information -->
-                    <div v-if="setup.bow_type === 'compound' && setup.compound_brand" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="font-semibold text-gray-900 dark:text-gray-100">{{ setup.compound_brand }} {{ setup.compound_model }}</div>
-                          <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Compound Bow</div>
-                        </div>
-                        <div v-if="setup.ibo_speed" class="text-right">
-                          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ setup.ibo_speed }}</div>
-                          <div class="text-xs text-gray-600 dark:text-gray-400">fps</div>
-                        </div>
+                    <!-- Bow Type Badge -->
+                    <div class="flex-shrink-0 ml-3">
+                      <div class="flex items-center justify-center w-12 h-12 rounded-lg transition-colors"
+                           :class="getBowTypeColor(setup.bow_type)">
+                        <i :class="getBowTypeIcon(setup.bow_type)" class="text-lg text-current"></i>
                       </div>
                     </div>
-                    <div v-else-if="setup.riser_brand" class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div class="font-semibold text-gray-900 dark:text-gray-100">{{ setup.riser_brand }} {{ setup.riser_model }}</div>
-                      <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Recurve Bow</div>
+                  </div>
+
+                  <!-- Essential Specifications Grid - Mobile-First Responsive -->
+                  <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                    <!-- Draw Weight -->
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2.5 sm:p-3 spec-card transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/40">
+                      <div class="flex items-center mb-1">
+                        <i class="fas fa-dumbbell text-blue-600 dark:text-blue-400 text-xs sm:text-sm mr-1.5 sm:mr-2"></i>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Weight</span>
+                      </div>
+                      <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {{ setup.draw_weight }}lbs
+                      </div>
                     </div>
-                    
-                    <!-- Status Summary -->
-                    <div class="flex items-center justify-between py-2">
-                      <!-- Usage Tags -->
-                      <div class="flex flex-wrap gap-1.5">
-                        <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
-                              class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
-                          {{ formatBowUsage(usage) }}
+
+                    <!-- Draw Length -->
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded-lg p-2.5 sm:p-3 spec-card transition-colors hover:bg-green-100 dark:hover:bg-green-900/40">
+                      <div class="flex items-center mb-1">
+                        <i class="fas fa-arrows-alt-h text-green-600 dark:text-green-400 text-xs sm:text-sm mr-1.5 sm:mr-2"></i>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Length</span>
+                      </div>
+                      <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {{ setup.draw_length || '?' }}"
+                      </div>
+                    </div>
+
+                    <!-- Speed (for compounds) / Usage Count -->
+                    <div v-if="setup.bow_type === 'compound' && setup.ibo_speed" class="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-2.5 sm:p-3 spec-card transition-colors hover:bg-orange-100 dark:hover:bg-orange-900/40">
+                      <div class="flex items-center mb-1">
+                        <i class="fas fa-tachometer-alt text-orange-600 dark:text-orange-400 text-xs sm:text-sm mr-1.5 sm:mr-2"></i>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">IBO Speed</span>
+                      </div>
+                      <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {{ setup.ibo_speed }}fps
+                      </div>
+                    </div>
+                    <div v-else class="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-2.5 sm:p-3 spec-card transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/40">
+                      <div class="flex items-center mb-1">
+                        <i class="fas fa-tags text-purple-600 dark:text-purple-400 text-xs sm:text-sm mr-1.5 sm:mr-2"></i>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Usage</span>
+                      </div>
+                      <div class="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                        {{ getBowUsageArray(setup.bow_usage).length > 0 ? formatBowUsage(getBowUsageArray(setup.bow_usage)[0]) : 'General' }}
+                      </div>
+                    </div>
+
+                    <!-- Equipment Count -->
+                    <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-2.5 sm:p-3 spec-card transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/40 lg:col-span-1 col-span-2 sm:col-span-2">
+                      <div class="flex items-center mb-1">
+                        <i class="fas fa-cogs text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm mr-1.5 sm:mr-2"></i>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Items</span>
+                      </div>
+                      <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {{ getEquipmentCount(setup) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Status Summary -->
+                  <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center">
+                        <i class="fas fa-bullseye text-green-600 dark:text-green-400 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {{ getSetupStatusText(setup) }}
                         </span>
                       </div>
-                      
-                      <!-- Equipment Count Badges and Expand Button -->
-                      <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                          <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                            <i class="fas fa-location-arrow text-xs text-green-600 dark:text-green-400"></i>
-                            <span class="text-xs font-medium text-green-800 dark:text-green-300">{{ setup.arrows.length }} arrow{{ setup.arrows.length === 1 ? '' : 's' }}</span>
-                          </div>
-                          <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
-                            <i class="fas fa-cogs text-xs text-purple-600 dark:text-purple-400"></i>
-                            <span class="text-xs font-medium text-purple-800 dark:text-purple-300">{{ setup.equipment.length }} item{{ setup.equipment.length === 1 ? '' : 's' }}</span>
-                          </div>
+                      <div class="flex items-center gap-2">
+                        <div v-if="setup.arrows && setup.arrows.length > 0" class="flex items-center text-xs text-green-600 dark:text-green-400">
+                          <i class="fas fa-location-arrow mr-1"></i>
+                          {{ setup.arrows.length }}
                         </div>
-                        
-                        <!-- Expand/Collapse Toggle -->
-                        <button
-                          @click.stop="toggleCardExpansion(setup.id)"
-                          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          :title="expandedCards[setup.id] ? 'Show less' : 'Show more'"
-                        >
-                          <i 
-                            class="fas text-gray-500 dark:text-gray-400 transition-transform duration-200"
-                            :class="expandedCards[setup.id] ? 'fa-chevron-up' : 'fa-chevron-down'"
-                          ></i>
-                        </button>
+                        <div v-if="setup.equipment && setup.equipment.length > 0" class="flex items-center text-xs text-purple-600 dark:text-purple-400">
+                          <i class="fas fa-cog mr-1"></i>
+                          {{ setup.equipment.length }}
+                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  <!-- Progressive Disclosure Toggle - Mobile-Optimized -->
+                  <div class="mb-4">
+                    <button 
+                      @click.stop="toggleSetupDetails(setup.id)"
+                      class="flex items-center justify-between w-full p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 touch-target min-h-[48px] active:scale-98"
+                      :aria-expanded="showSetupDetails[setup.id]"
+                      :aria-controls="`setup-details-${setup.id}`"
+                      :aria-label="showSetupDetails[setup.id] ? 'Hide setup details' : 'Show setup details'"
+                    >
+                      <div class="flex items-center flex-1">
+                        <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2 sm:mr-3 text-sm sm:text-base"></i>
+                        <span class="text-sm sm:text-base font-semibold text-blue-800 dark:text-blue-200">
+                          Setup Details
+                        </span>
+                      </div>
+                      <i class="fas transition-transform duration-200 text-blue-600 dark:text-blue-400" 
+                         :class="showSetupDetails[setup.id] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    
+                    <div v-if="showSetupDetails[setup.id]" 
+                         :id="`setup-details-${setup.id}`"
+                         class="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div class="grid grid-cols-1 gap-4">
+                        <!-- Bow Details -->
+                        <div v-if="setup.compound_brand || setup.riser_brand">
+                          <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                            <i class="fas fa-bow-arrow text-blue-600 dark:text-blue-400 mr-2"></i>
+                            Bow Information
+                          </h5>
+                          <div class="text-sm">
+                            <div v-if="setup.compound_brand" class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                              <span class="font-medium">{{ setup.compound_brand }} {{ setup.compound_model }}</span>
+                            </div>
+                            <div v-else-if="setup.riser_brand" class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                              <span class="font-medium">{{ setup.riser_brand }} {{ setup.riser_model }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Usage Tags -->
+                        <div v-if="getBowUsageArray(setup.bow_usage).length > 0">
+                          <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                            <i class="fas fa-tags text-purple-600 dark:text-purple-400 mr-2"></i>
+                            Usage
+                          </h5>
+                          <div class="flex flex-wrap gap-1.5">
+                            <span v-for="usage in getBowUsageArray(setup.bow_usage)" :key="usage"
+                                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                              {{ formatBowUsage(usage) }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Mobile-Optimized Action Buttons -->
+                        <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                            <button
+                              @click.stop="navigateToCalculatorWithSetup(setup.id)"
+                              @keydown="handleKeyboardNavigation($event, setup.id, 'navigate-calculator')"
+                              class="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-800 focus:ring-offset-2 active:bg-blue-800 transition-all duration-200 text-sm sm:text-base font-medium touch-target min-h-[48px] active:scale-98"
+                              :aria-label="`Find arrows for ${setup.name}`"
+                            >
+                              <i class="fas fa-calculator mr-2 text-sm sm:text-base"></i>
+                              Find Arrows
+                            </button>
+                            <button
+                              @click.stop="navigateToBowDetail(setup.id)"
+                              @keydown="handleKeyboardNavigation($event, setup.id, 'navigate-edit')"
+                              class="flex-1 flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-600 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 focus:ring-offset-2 active:bg-gray-100 dark:active:bg-gray-600 transition-all duration-200 text-sm sm:text-base font-medium touch-target min-h-[48px] active:scale-98"
+                              :aria-label="`Edit ${setup.name} setup`"
+                            >
+                              <i class="fas fa-edit mr-2 text-sm sm:text-base"></i>
+                              Edit Setup
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                     
                     <!-- Phase 3: Expanded Information Panel -->
                     <div 
@@ -1006,6 +1101,99 @@ const getCategoryIcon = (categoryName) => {
   return iconMap[categoryName] || 'fas fa-cog';
 };
 
+// Missing helper functions for bow setup card restructure
+const getBowDisplayName = (setup) => {
+  if (setup.compound_brand && setup.compound_model) {
+    return `${setup.compound_brand} ${setup.compound_model}`;
+  }
+  if (setup.riser_brand && setup.riser_model) {
+    return `${setup.riser_brand} ${setup.riser_model}`;
+  }
+  if (setup.compound_brand) {
+    return setup.compound_brand;
+  }
+  if (setup.riser_brand) {
+    return setup.riser_brand;
+  }
+  return 'Custom Bow';
+};
+
+const getBowTypeColor = (bowType) => {
+  const colorMap = {
+    'compound': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+    'recurve': 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+    'traditional': 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    'barebow': 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+  };
+  return colorMap[bowType] || 'bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400';
+};
+
+const getBowTypeIcon = (bowType) => {
+  const iconMap = {
+    'compound': 'fas fa-bow-arrow',
+    'recurve': 'fas fa-archery-target',
+    'traditional': 'fas fa-tree',
+    'barebow': 'fas fa-bullseye'
+  };
+  return iconMap[bowType] || 'fas fa-bow-arrow';
+};
+
+const getEquipmentCount = (setup) => {
+  let count = 0;
+  if (setup.equipment && Array.isArray(setup.equipment)) {
+    count += setup.equipment.length;
+  }
+  // Add other equipment counts if available
+  if (setup.arrows && Array.isArray(setup.arrows)) {
+    count += setup.arrows.length;
+  }
+  return count;
+};
+
+const getSetupStatusText = (setup) => {
+  const arrowCount = setup.arrows ? setup.arrows.length : 0;
+  const equipmentCount = setup.equipment ? setup.equipment.length : 0;
+  
+  if (arrowCount === 0 && equipmentCount === 0) {
+    return 'Setup incomplete - add arrows and equipment';
+  }
+  if (arrowCount === 0) {
+    return 'No arrows configured';
+  }
+  if (equipmentCount === 0) {
+    return 'No equipment configured';
+  }
+  return `Complete setup with ${arrowCount} arrow${arrowCount !== 1 ? 's' : ''} and ${equipmentCount} equipment item${equipmentCount !== 1 ? 's' : ''}`;
+};
+
+// Progressive disclosure state and function
+const showSetupDetails = ref({});
+
+const toggleSetupDetails = (setupId) => {
+  showSetupDetails.value[setupId] = !showSetupDetails.value[setupId];
+};
+
+// Enhanced keyboard navigation for accessibility
+const handleKeyboardNavigation = (event, setupId, action) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    switch (action) {
+      case 'toggle-details':
+        toggleSetupDetails(setupId);
+        break;
+      case 'navigate-calculator':
+        navigateToCalculatorWithSetup(setupId);
+        break;
+      case 'navigate-edit':
+        navigateToBowDetail(setupId);
+        break;
+      case 'card-select':
+        handleBowSetupClick(bowSetups.value.find(s => s.id === setupId));
+        break;
+    }
+  }
+};
+
 
 // Phase 3: Inline editing methods
 const startEditSetupName = (setupId, currentName) => {
@@ -1392,6 +1580,21 @@ definePageMeta({
   @apply mb-6 md:mb-4; /* Extra margin on mobile */
 }
 
+/* Mobile-first enhancements and touch interactions */
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+.spec-card {
+  transition: all 0.15s ease;
+  will-change: background-color;
+}
+
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
+
 /* Ensure content doesn't get hidden behind mobile navigation */
 @media (max-width: 768px) {
   .mobile-safe-content {
@@ -1400,6 +1603,81 @@ definePageMeta({
   
   .mobile-safe-button {
     margin-bottom: 2rem !important; /* Extra spacing for buttons on mobile */
+  }
+  
+  /* Mobile-specific touch optimizations */
+  .spec-card {
+    padding: 10px !important;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  /* Improved touch targets for mobile */
+  .bow-setup-card {
+    margin-bottom: 16px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .bow-setup-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Visual polish and accessibility enhancements */
+.bow-setup-card:focus-within {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: rgb(59, 130, 246);
+}
+
+.spec-card:hover {
+  will-change: transform;
+  transform: translateY(-1px);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bow-setup-card {
+    border-width: 2px;
+  }
+  
+  .spec-card {
+    border: 1px solid;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .transition-colors,
+  .transition-transform,
+  .active\:scale-98:active,
+  .bow-setup-card:active,
+  .spec-card:hover {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Performance optimizations */
+.bow-setup-card {
+  contain: layout style paint;
+  will-change: box-shadow;
+}
+
+/* Focus visible for keyboard navigation */
+@supports selector(:focus-visible) {
+  .bow-setup-card:focus:not(:focus-visible) {
+    box-shadow: none;
+    outline: none;
+  }
+  
+  .bow-setup-card:focus-visible {
+    outline: 2px solid rgb(59, 130, 246);
+    outline-offset: 2px;
   }
 }
 </style>
