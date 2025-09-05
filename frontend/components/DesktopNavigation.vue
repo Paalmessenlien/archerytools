@@ -36,14 +36,6 @@
       <span>Database</span>
     </NuxtLink>
     
-    <NuxtLink
-      to="/tuning"
-      class="nav-item"
-      :class="getNavClass($route.path === '/tuning')"
-    >
-      <i class="fas fa-bullseye text-sm mr-2"></i>
-      <span>Tuning</span>
-    </NuxtLink>
     
     <NuxtLink
       to="/journal"
