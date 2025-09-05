@@ -1719,10 +1719,27 @@ def get_arrow_recommendations():
             if material_pref:
                 material_pref = material_pref.capitalize()  # "wood" -> "Wood", "Wood" -> "Wood"
             
+            # Extract search and filter parameters from request
+            search_filters = {
+                'search_query': data.get('search_query', '').strip(),
+                'manufacturer_filter': data.get('manufacturer_filter', '').strip(),
+                'match_quality_min': data.get('match_quality_min'),
+                'diameter_range': data.get('diameter_range'),
+                'weight_range': data.get('weight_range'),
+                'material_filter': data.get('material_filter', '').strip(),
+                'sort_by': data.get('sort_by', 'compatibility')
+            }
+            
+            # Clean up empty string filters
+            search_filters = {k: v for k, v in search_filters.items() if v != ''}
+            
+            print(f"🔍 API search filters: {search_filters}")
+            
             session = ts.create_tuning_session(
                 archer_profile, 
                 tuning_goals=[primary_goal],
-                material_preference=material_pref
+                material_preference=material_pref,
+                search_filters=search_filters
             )
         except Exception as e:
             return jsonify({'error': f'Failed to create tuning session: {str(e)}'}), 500
@@ -1950,6 +1967,7 @@ def google_auth():
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
     return jsonify({'token': jwt_token, 'needs_profile_completion': needs_profile_completion})
+
 
 @app.route('/api/user', methods=['GET'])
 @token_required
@@ -3818,13 +3836,13 @@ def check_arrow_compatibility():
             # Search specifically for wood arrow manufacturers
             wood_arrows_1 = db.search_arrows(
                 manufacturer="Traditional Wood",
-                arrow_type=bow_config.get('arrow_type'),
+                arrow_type=arrow_filters.get('arrow_type'),  # Use arrow_type from filters
                 model_search=arrow_filters.get('search'),
                 limit=25
             )
             wood_arrows_2 = db.search_arrows(
                 manufacturer="Traditional Wood Arrows", 
-                arrow_type=bow_config.get('arrow_type'),
+                arrow_type=arrow_filters.get('arrow_type'),  # Use arrow_type from filters
                 model_search=arrow_filters.get('search'),
                 limit=25
             )
@@ -3833,49 +3851,40 @@ def check_arrow_compatibility():
             # Regular search for other materials
             compatible_arrows = db.search_arrows(
                 manufacturer=arrow_filters.get('manufacturer'),
-                arrow_type=bow_config.get('arrow_type'),
+                arrow_type=arrow_filters.get('arrow_type'),  # Use arrow_type from filters, not bow_config
                 model_search=arrow_filters.get('search'),
-                limit=50
+                limit=1000  # Much higher limit to include all arrows
             )
         
-        # Filter based on bow configuration compatibility
+        # Minimal filtering - only apply material filter if explicitly requested
         filtered_arrows = []
         for arrow in compatible_arrows:
             # Basic compatibility check
             is_compatible = True
             
-            # Material compatibility
+            # Only filter by material if explicitly requested in bow_config
             if bow_config.get('arrow_material'):
                 arrow_material = arrow.get('material') or ''
                 arrow_material = arrow_material.lower()
                 selected_material = bow_config['arrow_material'].lower()
                 
-                if selected_material == 'wood':
-                    # Wood arrows contain "wood" in their material name
-                    if 'wood' not in arrow_material:
-                        is_compatible = False
-                elif selected_material == 'carbon':
-                    # Carbon arrows typically have 'carbon' in material or no specific wood/aluminum mention
-                    if 'wood' in arrow_material or 'aluminum' in arrow_material:
-                        is_compatible = False
-                elif selected_material == 'aluminum':
-                    # Aluminum arrows contain 'aluminum' in material
-                    if 'aluminum' not in arrow_material:
-                        is_compatible = False
-                elif selected_material == 'carbon-aluminum':
-                    # Carbon-aluminum hybrid arrows
-                    if not ('carbon' in arrow_material and 'aluminum' in arrow_material):
-                        is_compatible = False
-                else:
-                    # For other materials, check if the material name matches
-                    if selected_material not in arrow_material:
-                        is_compatible = False
+                # Only exclude if there's a clear material mismatch
+                if selected_material == 'wood' and 'wood' not in arrow_material:
+                    is_compatible = False
+                elif selected_material == 'aluminum' and 'aluminum' not in arrow_material:
+                    is_compatible = False
+                # For carbon, accept any non-wood, non-aluminum arrow (more permissive)
+                elif selected_material == 'carbon' and ('wood' in arrow_material):
+                    is_compatible = False
             
             if is_compatible:
                 filtered_arrows.append(arrow)
         
+        # Sort by arrow type to give variety, then by manufacturer
+        filtered_arrows.sort(key=lambda x: (x.get('arrow_type', 'zz'), x.get('manufacturer', ''), x.get('model_name', '')))
+        
         return jsonify({
-            'compatible_arrows': filtered_arrows[:20],  # Limit results
+            'compatible_arrows': filtered_arrows[:200],  # Show many more results to ensure variety
             'total_compatible': len(filtered_arrows),
             'bow_config': bow_config
         })
@@ -11993,6 +12002,84 @@ def mark_not_duplicate(current_user):
         
     except Exception as e:
         print(f"Error marking not duplicate: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/bulk-fix-visibility', methods=['POST'])
+@token_required
+@admin_required
+def bulk_fix_arrow_visibility(current_user):
+    """
+    Bulk fix for all arrows with search visibility issues
+    Fixes missing description and arrow_type fields that prevent arrows from appearing in search
+    """
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+        
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Count arrows needing fixes
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM arrows 
+                WHERE description IS NULL 
+                   OR description = '' 
+                   OR arrow_type IS NULL 
+                   OR arrow_type = ''
+            """)
+            
+            issues_count = cursor.fetchone()[0]
+            
+            if issues_count == 0:
+                return jsonify({
+                    'success': True, 
+                    'message': 'No invisible arrows found - all arrows have proper search visibility',
+                    'fixed_count': 0
+                })
+            
+            # Bulk fix for missing descriptions
+            cursor.execute("""
+                UPDATE arrows 
+                SET description = COALESCE(
+                    NULLIF(description, ''), 
+                    manufacturer || ' ' || model_name || ' - High quality arrow'
+                )
+                WHERE description IS NULL OR description = ''
+            """)
+            
+            description_fixes = cursor.rowcount
+            
+            # Bulk fix for missing arrow_type  
+            cursor.execute("""
+                UPDATE arrows 
+                SET arrow_type = CASE
+                    WHEN model_name LIKE '%target%' OR model_name LIKE '%Target%' THEN 'target'
+                    WHEN model_name LIKE '%hunt%' OR model_name LIKE '%Hunt%' THEN 'hunting'
+                    WHEN model_name LIKE '%3D%' OR model_name LIKE '%field%' THEN 'field'
+                    WHEN model_name LIKE '%trad%' OR model_name LIKE '%traditional%' THEN 'traditional'
+                    ELSE 'target'
+                END
+                WHERE arrow_type IS NULL OR arrow_type = ''
+            """)
+            
+            type_fixes = cursor.rowcount
+            
+            conn.commit()
+            
+            total_fixes = description_fixes + type_fixes
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully fixed search visibility for {total_fixes} field updates',
+                'fixed_count': total_fixes,
+                'description_fixes': description_fixes,
+                'type_fixes': type_fixes
+            })
+        
+    except Exception as e:
+        logger.error(f"Error in bulk fix arrow visibility: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Database Health Management API Endpoints

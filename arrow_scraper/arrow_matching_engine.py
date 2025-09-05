@@ -10,7 +10,7 @@ from enum import Enum
 import math
 
 # Import our custom modules
-from arrow_database import ArrowDatabase
+from unified_database import UnifiedDatabase
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
 from spine_service import spine_service
 
@@ -67,11 +67,20 @@ class MatchRequest:
     max_results: int = 50  # Allow more results for progressive loading
     min_spine_options: int = 3  # Minimum spine options available
     
+    # Search and filtering
+    search_query: str = None                  # Text search across manufacturer/model/material
+    manufacturer_filter: str = None           # Specific manufacturer filter
+    match_quality_min: float = None           # Minimum match percentage (0-100)
+    diameter_range: Tuple[float, float] = None  # Diameter range filter (min, max)
+    weight_range: Tuple[float, float] = None    # Weight range filter (min, max) GPI
+    material_filter: str = None               # Material filter
+    sort_by: str = 'compatibility'            # Sort order
+    
 class ArrowMatchingEngine:
     """Main engine for finding optimal arrow matches"""
     
-    def __init__(self, database_path: str = "arrow_database.db"):
-        self.db = ArrowDatabase(database_path)
+    def __init__(self, database_path: str = None):
+        self.db = UnifiedDatabase(database_path)
         self.spine_calculator = SpineCalculator()
         
         # Scoring weights for different criteria
@@ -143,7 +152,7 @@ class ArrowMatchingEngine:
         search_params = {
             'spine_min': spine_min,
             'spine_max': spine_max,
-            'arrow_type': None if request.material_preference and request.material_preference.lower() == 'wood' else request.arrow_type_preference,  # Skip arrow_type filter for wood arrows
+            'arrow_type': None,  # Always None to display all arrow types (indoor, hunting, target, 3d, etc.)
             'diameter_min': request.target_diameter_range[0] if request.target_diameter_range else None,
             'diameter_max': request.target_diameter_range[1] if request.target_diameter_range else None,
             'gpi_min': request.target_weight_range[0] if request.target_weight_range else None,
@@ -151,12 +160,35 @@ class ArrowMatchingEngine:
             'limit': request.max_results * 10  # Get many more candidates for better diversity
         }
         
-        # Only add manufacturer filter if it's not None
-        if manufacturer_filter is not None:
+        # Apply search query filter
+        if request.search_query:
+            search_params['search_query'] = request.search_query
+            print(f"   Adding search query filter: '{request.search_query}'")
+        
+        # Apply manufacturer filter (prioritize specific manufacturer_filter over preferred_manufacturers)
+        if request.manufacturer_filter:
+            search_params['manufacturer'] = request.manufacturer_filter
+            print(f"   Adding manufacturer filter: '{request.manufacturer_filter}'")
+        elif manufacturer_filter is not None:
             search_params['manufacturer'] = manufacturer_filter
         
-        # Add material preference filter if specified
-        if request.material_preference:
+        # Apply diameter range filter (prioritize search filter over target range)
+        if request.diameter_range:
+            search_params['diameter_min'] = request.diameter_range[0]
+            search_params['diameter_max'] = request.diameter_range[1]
+            print(f"   Adding diameter range filter: {request.diameter_range[0]}-{request.diameter_range[1]}")
+        
+        # Apply weight range filter (prioritize search filter over target range)
+        if request.weight_range:
+            search_params['gpi_min'] = request.weight_range[0]
+            search_params['gpi_max'] = request.weight_range[1]
+            print(f"   Adding weight range filter: {request.weight_range[0]}-{request.weight_range[1]} GPI")
+        
+        # Apply material filter (prioritize material_filter over material_preference)
+        if request.material_filter:
+            search_params['material'] = self._map_material_preference(request.material_filter)
+            print(f"   Adding material filter: '{request.material_filter}'")
+        elif request.material_preference:
             # Map frontend material values to database format
             search_params['material'] = self._map_material_preference(request.material_preference)
         
@@ -223,7 +255,7 @@ class ArrowMatchingEngine:
         
         # First pass: strict spine options requirement
         for arrow_data in search_results:
-            arrow_details = self.db.get_arrow_details(arrow_data['id'])
+            arrow_details = self._get_arrow_details_with_spine_specs(arrow_data['id'])
             # Relax spine options requirement for wood arrows (they typically have fewer options)
             min_spine_req = 2 if request.material_preference and request.material_preference.lower() == 'wood' else request.min_spine_options
             
@@ -236,7 +268,7 @@ class ArrowMatchingEngine:
         if not arrow_matches:
             print(f"   No arrows found with {request.min_spine_options}+ spine options, trying with relaxed requirements...")
             for arrow_data in search_results:
-                arrow_details = self.db.get_arrow_details(arrow_data['id'])
+                arrow_details = self._get_arrow_details_with_spine_specs(arrow_data['id'])
                 # Accept any arrow with at least 1 spine specification
                 if arrow_details and len(arrow_details['spine_specifications']) >= 1:
                     match = self._create_arrow_match(arrow_details, optimal_spine, spine_range, request)
@@ -257,7 +289,7 @@ class ArrowMatchingEngine:
             print(f"   Expanded search returned {len(expanded_results)} candidates")
             
             for arrow_data in expanded_results:
-                arrow_details = self.db.get_arrow_details(arrow_data['id'])
+                arrow_details = self._get_arrow_details_with_spine_specs(arrow_data['id'])
                 if arrow_details and len(arrow_details['spine_specifications']) >= 1:
                     match = self._create_arrow_match(arrow_details, optimal_spine, spine_range, request)
                     if match:
@@ -666,6 +698,43 @@ class ArrowMatchingEngine:
         # Map the first preference to database name
         first_pref = preferred_manufacturers[0]
         return manufacturer_mapping.get(first_pref, first_pref)
+    
+    def _get_arrow_details_with_spine_specs(self, arrow_id: int) -> Optional[Dict[str, Any]]:
+        """Get arrow details from UnifiedDatabase and convert to ArrowDatabase format"""
+        arrow_data = self.db.get_arrow_by_id(arrow_id, include_inactive=True)
+        if not arrow_data:
+            return None
+        
+        # Convert concatenated spine data to structured format
+        spine_specifications = []
+        if arrow_data.get('spines') and arrow_data.get('gpi_weights') and arrow_data.get('diameters'):
+            spines = str(arrow_data['spines']).split(',') if arrow_data['spines'] else []
+            gpi_weights = str(arrow_data['gpi_weights']).split(',') if arrow_data['gpi_weights'] else []
+            diameters = str(arrow_data['diameters']).split(',') if arrow_data['diameters'] else []
+            
+            # Create spine specification objects
+            for i, spine in enumerate(spines):
+                if i < len(gpi_weights) and i < len(diameters):
+                    try:
+                        spine_specifications.append({
+                            'spine': float(spine.strip()) if spine.strip().replace('.', '').isdigit() else spine.strip(),
+                            'gpi_weight': float(gpi_weights[i].strip()) if gpi_weights[i].strip() else 0.0,
+                            'outer_diameter': float(diameters[i].strip()) if diameters[i].strip() else 0.0,
+                            'inner_diameter': 0.0  # Not available in current schema
+                        })
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Return in ArrowDatabase format
+        return {
+            'id': arrow_data['id'],
+            'manufacturer': arrow_data['manufacturer'],
+            'model_name': arrow_data['model_name'],
+            'material': arrow_data.get('material'),
+            'arrow_type': arrow_data.get('arrow_type'),
+            'description': arrow_data.get('description'),
+            'spine_specifications': spine_specifications
+        }
     
     def generate_recommendation_report(self, matches: List[ArrowMatch], request: MatchRequest) -> str:
         """Generate a detailed recommendation report"""

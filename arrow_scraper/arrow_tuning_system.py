@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 # Import all system components
-from arrow_database import ArrowDatabase
+from unified_database import UnifiedDatabase
 from spine_calculator import SpineCalculator, BowConfiguration, BowType
 from arrow_matching_engine import ArrowMatchingEngine, MatchRequest, ArrowMatch
 from tuning_calculator import TuningCalculator, ArrowComponents, TuningGoal, ArrowType, TuningResult
@@ -52,7 +52,7 @@ class ArrowTuningSystem:
         print("🚀 Initializing Arrow Tuning System")
         
         # Initialize all subsystems
-        self.database = ArrowDatabase(database_path)
+        self.database = UnifiedDatabase(database_path)
         self.spine_calculator = SpineCalculator()
         self.matching_engine = ArrowMatchingEngine(database_path)
         self.tuning_calculator = TuningCalculator()
@@ -62,7 +62,8 @@ class ArrowTuningSystem:
     def create_tuning_session(self, archer_profile: ArcherProfile,
                             tuning_goals: List[TuningGoal] = None,
                             custom_requirements: Dict[str, Any] = None,
-                            material_preference: str = None) -> TuningSession:
+                            material_preference: str = None,
+                            search_filters: Dict[str, Any] = None) -> TuningSession:
         """
         Create a complete tuning session for an archer
         
@@ -87,7 +88,7 @@ class ArrowTuningSystem:
         print(f"   Material Preference: {material_preference}")
         
         # Step 1: Create match request from archer profile
-        match_request = self._create_match_request(archer_profile, custom_requirements, material_preference)
+        match_request = self._create_match_request(archer_profile, custom_requirements, material_preference, search_filters)
         
         # Step 2: Find matching arrows
         print("\n🔍 Finding matching arrows...")
@@ -350,15 +351,13 @@ Report ID: {session.session_id}
     
     def _create_match_request(self, archer_profile: ArcherProfile, 
                             custom_requirements: Optional[Dict[str, Any]],
-                            material_preference: Optional[str] = None) -> MatchRequest:
+                            material_preference: Optional[str] = None,
+                            search_filters: Optional[Dict[str, Any]] = None) -> MatchRequest:
         """Create match request from archer profile"""
         
-        # Determine arrow type preference
-        arrow_type = None
-        if "hunting" in archer_profile.shooting_style.lower():
-            arrow_type = "hunting"
-        elif "target" in archer_profile.shooting_style.lower():
-            arrow_type = "target"
+        # Remove arrow type filtering to display all arrow types by default
+        # This allows indoor, hunting, target, 3d, and other arrow types to all appear
+        arrow_type = None  # Always set to None for broader compatibility
         
         request = MatchRequest(
             bow_config=archer_profile.bow_config,
@@ -366,7 +365,7 @@ Report ID: {session.session_id}
             point_weight=archer_profile.point_weight_preference,
             preferred_manufacturers=archer_profile.preferred_manufacturers,
             target_foc_range=archer_profile.target_foc_range,
-            arrow_type_preference=arrow_type,
+            arrow_type_preference=arrow_type,  # Always None for no filtering
             material_preference=material_preference,
             wood_species_preference=archer_profile.wood_species,
             max_results=50  # Allow more results for progressive loading
@@ -378,6 +377,24 @@ Report ID: {session.session_id}
                 request.target_diameter_range = custom_requirements['diameter_range']
             if 'weight_range' in custom_requirements:
                 request.target_weight_range = custom_requirements['weight_range']
+        
+        # Apply search filters if provided
+        if search_filters:
+            print(f"🔍 Applying search filters: {search_filters}")
+            if 'search_query' in search_filters:
+                request.search_query = search_filters['search_query']
+            if 'manufacturer_filter' in search_filters:
+                request.manufacturer_filter = search_filters['manufacturer_filter']
+            if 'match_quality_min' in search_filters:
+                request.match_quality_min = search_filters['match_quality_min']
+            if 'diameter_range' in search_filters:
+                request.diameter_range = search_filters['diameter_range']
+            if 'weight_range' in search_filters:
+                request.weight_range = search_filters['weight_range']
+            if 'material_filter' in search_filters:
+                request.material_filter = search_filters['material_filter']
+            if 'sort_by' in search_filters:
+                request.sort_by = search_filters['sort_by']
         
         return request
     
