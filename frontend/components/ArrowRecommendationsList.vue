@@ -69,133 +69,186 @@
       </md-elevated-card>
 
       <!-- Recommendations List -->
-      <div v-else class="space-y-4">
+      <div v-else class="space-y-3">
         <md-elevated-card 
           v-for="recommendation in paginatedRecommendations" 
           :key="recommendation.arrow.id"
-          class="group hover:shadow-lg transition-all duration-200"
+          class="group hover:shadow-lg transition-all duration-200 overflow-hidden"
         >
-          <div class="p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+          <div class="p-4">
+            <!-- Card Header: Manufacturer/Model + Match Score -->
+            <div class="flex items-start justify-between mb-3">
               <div class="flex-1 min-w-0">
-                <!-- Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-4">
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">
-                    {{ recommendation.arrow.manufacturer }}
-                  </h3>
-                  <span class="hidden sm:inline text-gray-400">•</span>
-                  <span class="text-base font-medium text-gray-700 dark:text-gray-300">
-                    {{ recommendation.arrow.model_name }}
-                  </span>
-                </div>
-                
-                <!-- Arrow Specifications as Chips -->
-                <md-chip-set class="mb-4 flex-wrap">
-                  <md-assist-chip :label="`Spine: ${getSpineDisplay(recommendation.arrow)}`">
-                    <i class="fas fa-ruler-horizontal fa-icon" slot="icon" style="color: #6366f1;"></i>
-                  </md-assist-chip>
-                  <md-assist-chip :label="getWoodSpeciesDisplay(recommendation.arrow) || recommendation.arrow.material || 'Material N/A'">
-                    <i class="fas fa-layer-group fa-icon" slot="icon" style="color: #059669;"></i>
-                  </md-assist-chip>
-                  <md-assist-chip :label="`⌀ ${getDiameterDisplay(recommendation.arrow)}`">
-                    <i class="fas fa-dot-circle fa-icon" slot="icon" style="color: #dc2626;"></i>
-                  </md-assist-chip>
-                  <md-assist-chip :label="getWeightDisplay(recommendation.arrow)">
-                    <i class="fas fa-weight-hanging fa-icon" slot="icon" style="color: #7c2d12;"></i>
-                  </md-assist-chip>
-                  <!-- Total Arrow Weight -->
-                  <md-assist-chip 
-                    :label="`Total: ${calculateTotalArrowWeight(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29)} gn`" 
-                    :title="getWeightCalculationDebug(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29)"
-                    class="bg-blue-100 dark:bg-blue-900">
-                    <i class="fas fa-balance-scale fa-icon" slot="icon" style="color: #3b82f6;"></i>
-                  </md-assist-chip>
-                </md-chip-set>
-                
-                <!-- Match Details -->
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  {{ recommendation.reasons?.join(', ') || 'Compatible with your setup' }}
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors truncate">
+                  {{ recommendation.arrow.manufacturer }}
+                </h3>
+                <p class="text-base font-medium text-gray-600 dark:text-gray-400 truncate mt-1">
+                  {{ recommendation.arrow.model_name }}
                 </p>
-                
-                <!-- Performance Metrics -->
-                <div v-if="recommendation.performance?.performance_summary" class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-3">
-                  <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                      <i class="fas fa-tachometer-alt mr-1"></i>
-                      Performance Analysis
-                    </h4>
-                    <span :class="getPerformanceScoreClass(recommendation.performance.performance_summary)" class="text-xs font-medium">
-                      {{ getPerformanceScore(recommendation.performance.performance_summary) }}/100
-                    </span>
-                  </div>
-                  
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                    <div class="text-center">
-                      <div class="text-blue-600 dark:text-blue-400 font-medium">
-                        {{ recommendation.performance.performance_summary.estimated_speed_fps }} fps
-                      </div>
-                      <div class="text-gray-500 dark:text-gray-400">Speed</div>
-                    </div>
-                    <div class="text-center">
-                      <div class="text-green-600 dark:text-green-400 font-medium">
-                        {{ recommendation.performance.performance_summary.kinetic_energy_40yd }} ft·lbs
-                      </div>
-                      <div class="text-gray-500 dark:text-gray-400">KE @40yd</div>
-                    </div>
-                    <div class="text-center">
-                      <div class="text-purple-600 dark:text-purple-400 font-medium">
-                        {{ recommendation.performance.performance_summary.foc_percentage?.toFixed(1) || 0 }}%
-                      </div>
-                      <div class="text-gray-500 dark:text-gray-400">FOC</div>
-                    </div>
-                    <div class="text-center">
-                      <div :class="getPenetrationClass(recommendation.performance.performance_summary.penetration_category)" class="font-medium capitalize">
-                        {{ recommendation.performance.performance_summary.penetration_category }}
-                      </div>
-                      <div class="text-gray-500 dark:text-gray-400">Penetration</div>
-                    </div>
-                  </div>
-                </div>
               </div>
               
-              <!-- Compatibility & Price -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between mt-4 sm:mt-0 sm:ml-6">
-                <!-- Actions -->
-                <div class="flex flex-col sm:flex-row gap-2 order-2 sm:order-1 mt-3 sm:mt-0">
-                  <!-- Add to Setup Button (when bow setup is selected) -->
-                  <md-filled-button 
-                    v-if="props.selectedBowSetup"
-                    size="small"
-                    @click.stop="addToSetup(recommendation)"
-                    class="bg-green-600 text-white hover:bg-green-700"
-                  >
-                    <i class="fas fa-plus" style="margin-right: 6px;"></i>
-                    Add to {{ props.selectedBowSetup.name }}
-                  </md-filled-button>
-                  
-                  <md-filled-button size="small" @click="viewArrowDetails(recommendation.arrow.id, recommendation)">
-                    <i class="fas fa-eye" style="margin-right: 6px;"></i>
-                    View Details
-                  </md-filled-button>
-                  <!-- Compare button removed per requirements -->
-                </div>
-                
-                <!-- Match Score -->
-                <div class="text-center sm:text-right flex-shrink-0 order-1 sm:order-2">
-                  <!-- Match Score with Progress -->
-                  <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Match Score</div>
-                    <div class="text-2xl font-bold text-primary mb-1">
-                      {{ recommendation.match_percentage || 0 }}%
+              <!-- Match Score Badge -->
+              <div class="flex-shrink-0 ml-3 sm:ml-4">
+                <div class="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 transition-colors match-score-badge"
+                     :class="getMatchScoreColor(recommendation.match_percentage)"
+                     :aria-label="`Match score: ${recommendation.match_percentage || 0} percent`"
+                     role="img">
+                  <div class="text-center">
+                    <div class="text-base sm:text-lg font-bold text-current">
+                      {{ recommendation.match_percentage || 0 }}
                     </div>
-                    <md-linear-progress 
-                      :value="(recommendation.match_percentage || 0) / 100"
-                      class="w-20 mx-auto sm:mx-0"
-                    ></md-linear-progress>
+                    <div class="text-xs font-medium text-current -mt-1">
+                      %
+                    </div>
                   </div>
-                  <!-- Price removed per requirements -->
                 </div>
               </div>
+            </div>
+
+            <!-- Essential Specifications Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+              <!-- Spine -->
+              <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 spec-card" role="group" aria-labelledby="spine-label">
+                <div class="flex items-center mb-1">
+                  <i class="fas fa-ruler-horizontal text-blue-600 dark:text-blue-400 text-sm mr-2" aria-hidden="true"></i>
+                  <span id="spine-label" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Spine</span>
+                </div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {{ getSpineDisplay(recommendation.arrow) }}
+                </div>
+              </div>
+
+              <!-- Material -->
+              <div class="bg-emerald-50 dark:bg-emerald-900/30 rounded-lg p-3">
+                <div class="flex items-center mb-1">
+                  <i class="fas fa-layer-group text-emerald-600 dark:text-emerald-400 text-sm mr-2"></i>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Material</span>
+                </div>
+                <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {{ getWoodSpeciesDisplay(recommendation.arrow) || recommendation.arrow.material || 'N/A' }}
+                </div>
+              </div>
+
+              <!-- GPI (Grains Per Inch) -->
+              <div class="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-3">
+                <div class="flex items-center mb-1">
+                  <i class="fas fa-weight-hanging text-purple-600 dark:text-purple-400 text-sm mr-2"></i>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">GPI</span>
+                </div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {{ getWeightDisplay(recommendation.arrow) }}
+                </div>
+              </div>
+
+              <!-- Diameter -->
+              <div class="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-3">
+                <div class="flex items-center mb-1">
+                  <i class="fas fa-dot-circle text-orange-600 dark:text-orange-400 text-sm mr-2"></i>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Diameter</span>
+                </div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {{ getDiameterDisplay(recommendation.arrow) }}
+                </div>
+              </div>
+
+              <!-- Total Weight -->
+              <div class="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-3 relative group/weight">
+                <div class="flex items-center mb-1">
+                  <i class="fas fa-balance-scale text-purple-600 dark:text-purple-400 text-sm mr-2"></i>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</span>
+                  <button class="ml-1 text-gray-400 hover:text-gray-600 text-xs" :title="getWeightCalculationDebug(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29)">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                </div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {{ calculateTotalArrowWeight(recommendation.arrow, cleanNumericValue(bowConfig?.arrow_length) || 29) }}gn
+                </div>
+              </div>
+            </div>
+
+            <!-- Compatibility Reason -->
+            <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div class="flex items-start">
+                <i class="fas fa-check-circle text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0"></i>
+                <p class="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                  {{ getSimplifiedCompatibilityReason(recommendation) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Performance Metrics (Collapsible) -->
+            <div v-if="recommendation.performance?.performance_summary" class="mb-4">
+              <button 
+                @click="togglePerformanceDetails(recommendation.arrow.id)"
+                :aria-expanded="showPerformanceDetails[recommendation.arrow.id]"
+                :aria-controls="`performance-details-${recommendation.arrow.id}`"
+                class="flex items-center justify-between w-full p-3 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/30 dark:hover:to-blue-900/30 transition-colors touch-target"
+              >
+                <div class="flex items-center">
+                  <i class="fas fa-tachometer-alt text-indigo-600 dark:text-indigo-400 mr-2"></i>
+                  <span class="text-sm font-semibold text-indigo-800 dark:text-indigo-200">
+                    Performance Analysis
+                  </span>
+                  <span :class="getPerformanceScoreClass(recommendation.performance.performance_summary)" class="ml-2 text-xs font-bold px-2 py-1 bg-white dark:bg-gray-800 rounded-full">
+                    {{ getPerformanceScore(recommendation.performance.performance_summary) }}/100
+                  </span>
+                </div>
+                <i class="fas transition-transform duration-200" 
+                   :class="showPerformanceDetails[recommendation.arrow.id] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              </button>
+              
+              <div v-if="showPerformanceDetails[recommendation.arrow.id]" 
+                   :id="`performance-details-${recommendation.arrow.id}`"
+                   class="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {{ recommendation.performance.performance_summary.estimated_speed_fps }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">fps</div>
+                  </div>
+                  <div>
+                    <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                      {{ recommendation.performance.performance_summary.kinetic_energy_40yd }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">KE @40yd</div>
+                  </div>
+                  <div>
+                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      {{ recommendation.performance.performance_summary.foc_percentage?.toFixed(1) || 0 }}%
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">FOC</div>
+                  </div>
+                  <div>
+                    <div :class="getPenetrationClass(recommendation.performance.performance_summary.penetration_category)" class="text-lg font-bold capitalize">
+                      {{ recommendation.performance.performance_summary.penetration_category }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Penetration</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <!-- Primary Action -->
+              <md-filled-button 
+                v-if="props.selectedBowSetup"
+                @click.stop="addToSetup(recommendation)"
+                class="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 min-h-[48px] touch-target"
+              >
+                <i class="fas fa-plus mr-2"></i>
+                <span class="truncate">Add to {{ props.selectedBowSetup.name }}</span>
+              </md-filled-button>
+              
+              <!-- Secondary Action -->
+              <md-outlined-button 
+                @click="viewArrowDetails(recommendation.arrow.id, recommendation)"
+                class="flex-1 sm:flex-none py-3 px-6 min-h-[48px] touch-target"
+              >
+                <i class="fas fa-eye mr-2"></i>
+                View Details
+              </md-outlined-button>
             </div>
           </div>
         </md-elevated-card>
@@ -283,6 +336,9 @@ const currentPage = ref(1)
 const perPage = 20
 const displayLimit = ref(20) // Start by showing 20 items
 const loadingMore = ref(false)
+
+// UI State
+const showPerformanceDetails = ref({})
 
 // Manufacturers from API
 const manufacturers = ref([])
@@ -1123,26 +1179,36 @@ watch(recommendations, () => {
   })
 }, { deep: true })
 
-// Watch for manufacturer filter changes
-watch(() => filters.value.manufacturer, async (newManufacturer, oldManufacturer) => {
-  console.log(`Manufacturer filter changed: "${oldManufacturer}" -> "${newManufacturer}"`)
+// Watch for all filter changes with debounce
+let filterChangeTimeout = null
+watch(filters, async (newFilters, oldFilters) => {
+  console.log('Filter change detected:', newFilters)
   
-  if (newManufacturer !== oldManufacturer) {
-    // Always reload recommendations when manufacturer filter changes
-    // This ensures we get proper tuning scores from the API
-    console.log(`Manufacturer filter changed, reloading recommendations with tuning API...`)
-    await loadRecommendations()
+  // Clear existing timeout
+  if (filterChangeTimeout) {
+    clearTimeout(filterChangeTimeout)
   }
   
-  // Reset to first page when filter changes
+  // Reset to first page immediately
   currentPage.value = 1
-  displayLimit.value = 20 // Reset display limit
-})
-
-// Watch for other filter changes
-watch(filters, () => {
-  currentPage.value = 1
-  displayLimit.value = 20 // Reset display limit when any filter changes
+  displayLimit.value = 20
+  
+  // Debounce the API call for search field (only if 3+ characters or empty)
+  const isSearchChange = newFilters.search !== oldFilters?.search
+  const shouldDebounceSearch = isSearchChange && newFilters.search.length > 0 && newFilters.search.length < 3
+  
+  if (shouldDebounceSearch) {
+    console.log(`Search filter "${newFilters.search}" is less than 3 characters, waiting...`)
+    return // Don't trigger API call for short searches
+  }
+  
+  // Debounce other changes to prevent rapid API calls during typing
+  const debounceDelay = isSearchChange ? 300 : 100 // Longer delay for search, shorter for dropdowns
+  
+  filterChangeTimeout = setTimeout(async () => {
+    console.log('Applying filter changes to API...')
+    await loadRecommendations()
+  }, debounceDelay)
 }, { deep: true })
 
 // Initial load
@@ -1188,4 +1254,156 @@ const getPenetrationClass = (category) => {
     default: return 'text-gray-500 dark:text-gray-400'
   }
 }
+
+// UI Helper Methods
+const getMatchScoreColor = (matchPercentage) => {
+  const score = matchPercentage || 0
+  if (score >= 90) {
+    return 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+  } else if (score >= 80) {
+    return 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+  } else if (score >= 70) {
+    return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+  } else if (score >= 60) {
+    return 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+  } else {
+    return 'border-gray-400 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+  }
+}
+
+const getSimplifiedCompatibilityReason = (recommendation) => {
+  const reasons = recommendation.reasons || []
+  if (reasons.length === 0) {
+    const score = recommendation.match_percentage || 0
+    if (score >= 95) return "Perfect match for your bow setup"
+    if (score >= 85) return "Excellent compatibility with your configuration"
+    if (score >= 75) return "Good match with minor adjustments needed"
+    if (score >= 65) return "Compatible but may require tuning"
+    return "Compatible with your setup"
+  }
+  
+  // Simplify the technical reasons
+  const simplifiedReason = reasons[0]
+    .replace(/spine calculation/i, "spine")
+    .replace(/weight distribution/i, "weight balance")
+    .replace(/diameter compatibility/i, "diameter")
+    .replace(/material characteristics/i, "material properties")
+  
+  return simplifiedReason
+}
+
+const togglePerformanceDetails = (arrowId) => {
+  showPerformanceDetails.value[arrowId] = !showPerformanceDetails.value[arrowId]
+}
 </script>
+
+<style scoped>
+/* Touch-friendly targets */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Improved mobile text hierarchy */
+@media (max-width: 640px) {
+  .text-lg {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .text-base {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Performance metrics animation */
+.performance-details-enter-active,
+.performance-details-leave-active {
+  transition: all 0.3s ease;
+}
+
+.performance-details-enter-from,
+.performance-details-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Match score badge hover effect */
+.match-score-badge {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.match-score-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Specification cards hover effect */
+.spec-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.spec-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure consistent card heights */
+.recommendation-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.recommendation-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.recommendation-actions {
+  margin-top: auto;
+}
+
+/* Performance optimizations */
+.spec-card,
+.match-score-badge,
+.recommendation-card {
+  will-change: transform;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .spec-card,
+  .match-score-badge,
+  .recommendation-card,
+  .performance-details-enter-active,
+  .performance-details-leave-active {
+    transition: none;
+  }
+  
+  .match-score-badge:hover,
+  .spec-card:hover {
+    transform: none;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+button:focus-visible,
+.spec-card:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .spec-card {
+    border: 1px solid currentColor;
+  }
+  
+  .match-score-badge {
+    border-width: 3px;
+  }
+}
+</style>
