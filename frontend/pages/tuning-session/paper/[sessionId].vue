@@ -945,6 +945,9 @@ const completeSession = async () => {
 
     await api.post(`/tuning-guides/sessions/${route.params.sessionId}/complete`, sessionSummary)
     
+    // Create journal entry with proper formatting
+    await createJournalEntryForSession()
+    
     showNotification('Session completed and saved to journal!', 'success')
     
     // Navigate back to arrow setup
@@ -1032,6 +1035,309 @@ const getConsistencyRating = () => {
   
   // More consistent = fewer unique patterns
   return Math.max(0, 100 - (uniquePatterns.size - 1) * 25)
+}
+
+// Journal entry creation for paper tuning
+const createJournalEntryForSession = async () => {
+  try {
+    const arrowName = sessionData.value?.arrow ? 
+      `${sessionData.value.arrow.manufacturer} ${sessionData.value.arrow.model_name}` : 
+      `Arrow ${sessionData.value?.arrow_id || 'Unknown'}`
+    
+    const bowSetupName = sessionData.value?.bow_setup?.name || 'Unknown Setup'
+    
+    // Format session duration
+    const sessionDuration = formatSessionDuration()
+    
+    // Create journal entry content
+    const journalContent = createPaperTuningJournalContent(arrowName, bowSetupName, sessionDuration)
+    
+    // Enhanced session data for detail viewer with complete bow setup and arrow data
+    const enhancedSessionData = {
+      tuning_type: 'paper',
+      session_quality: calculateSessionQuality(),
+      test_results: completedTests.value.map(test => ({
+        test_number: test.test_number,
+        timestamp: test.timestamp,
+        tear_direction: test.test_data.tear_direction,
+        tear_magnitude: test.test_data.tear_magnitude_inches,
+        tear_position: test.test_data.tear_position,
+        notes: test.notes || '',
+        confidence_score: calculateTestConfidence(test),
+        summary: test.summary || ''
+      })),
+      most_common_tear: getMostCommonTear(),
+      average_tear_size: averageTearSize.value,
+      consistency_rating: getConsistencyRating(),
+      progress_trend: getProgressTrend(),
+      // Complete arrow technical data (not linked)
+      arrow_technical_data: {
+        manufacturer: sessionData.value?.arrow?.manufacturer,
+        model_name: sessionData.value?.arrow?.model_name,
+        material: sessionData.value?.arrow?.material,
+        spine: sessionData.value?.arrow?.spine,
+        diameter_inches: sessionData.value?.arrow?.diameter_inches,
+        length_inches: sessionData.value?.arrow_length || sessionData.value?.arrow?.length_inches,
+        weight_grains: sessionData.value?.arrow?.weight_grains,
+        gpi: sessionData.value?.arrow?.gpi,
+        point_weight_grains: sessionData.value?.point_weight,
+        total_weight_grains: sessionData.value?.arrow?.weight_grains ? 
+          (sessionData.value.arrow.weight_grains + (sessionData.value.point_weight || 0)) : null,
+        nock_type: sessionData.value?.arrow?.nock_type,
+        fletching_type: sessionData.value?.arrow?.fletching_type,
+        shaft_construction: sessionData.value?.arrow?.shaft_construction,
+        tolerances: sessionData.value?.arrow?.tolerances
+      },
+      // Complete bow setup data (not linked)
+      bow_setup_data: {
+        name: sessionData.value?.bow_setup?.name,
+        bow_type: sessionData.value?.bow_setup?.bow_type,
+        draw_length_inches: sessionData.value?.bow_setup?.draw_length,
+        draw_weight_pounds: sessionData.value?.bow_setup?.draw_weight,
+        brace_height_inches: sessionData.value?.bow_setup?.brace_height,
+        cam_type: sessionData.value?.bow_setup?.cam_type,
+        bow_manufacturer: sessionData.value?.bow_setup?.bow_manufacturer,
+        bow_model: sessionData.value?.bow_setup?.bow_model,
+        riser_material: sessionData.value?.bow_setup?.riser_material,
+        limb_material: sessionData.value?.bow_setup?.limb_material,
+        string_type: sessionData.value?.bow_setup?.string_type,
+        string_length: sessionData.value?.bow_setup?.string_length,
+        cable_guard: sessionData.value?.bow_setup?.cable_guard,
+        rest_type: sessionData.value?.bow_setup?.rest_type,
+        rest_manufacturer: sessionData.value?.bow_setup?.rest_manufacturer,
+        rest_model: sessionData.value?.bow_setup?.rest_model,
+        sight_type: sessionData.value?.bow_setup?.sight_type,
+        sight_manufacturer: sessionData.value?.bow_setup?.sight_manufacturer,
+        sight_model: sessionData.value?.bow_setup?.sight_model,
+        stabilizer_config: sessionData.value?.bow_setup?.stabilizer_config,
+        release_aid_type: sessionData.value?.bow_setup?.release_aid_type,
+        peep_sight_diameter: sessionData.value?.bow_setup?.peep_sight_diameter,
+        d_loop_material: sessionData.value?.bow_setup?.d_loop_material,
+        kisser_button: sessionData.value?.bow_setup?.kisser_button,
+        notes: sessionData.value?.bow_setup?.notes
+      },
+      session_details: {
+        session_duration: sessionDuration,
+        started_at: sessionData.value?.started_at,
+        completed_at: new Date().toISOString(),
+        total_tests_conducted: completedTests.value.length,
+        environmental_conditions: environmentalConditions.value
+      }
+    }
+
+    const journalEntry = {
+      title: `Paper Tuning Session - ${arrowName}`,
+      content: journalContent,
+      entry_type: 'paper_tuning_session',
+      bow_setup_id: sessionData.value?.bow_setup_id,
+      session_data: enhancedSessionData,
+      tags: ['paper-tuning', 'tuning-session']
+    }
+
+    await api.post('/journal', journalEntry)
+  } catch (error) {
+    console.error('Failed to create journal entry:', error)
+    // Don't throw error - journal creation failure shouldn't stop session completion
+  }
+}
+
+const createPaperTuningJournalContent = (arrowName, bowSetupName, sessionDuration) => {
+  const testResults = completedTests.value.map(test => {
+    const tearPos = tearPositions.find(pos => pos.id === test.test_data.tear_position)
+    const tearName = tearPos?.displayName || 'Unknown position'
+    const tearMagnitude = test.test_data.tear_magnitude_inches
+    const magnitudeText = tearMagnitude === 0 ? 'Clean hole' : `${tearMagnitude}"`
+    
+    return `Test ${test.test_number}: ${tearName} - ${magnitudeText}`
+  }).join('\n')
+
+  const sessionStats = {
+    totalTests: completedTests.value.length,
+    excellentCount: excellentTests.value,
+    goodCount: goodTests.value,
+    needsWorkCount: needsWorkTests.value,
+    averageTear: averageTearSize.value ? averageTearSize.value.toFixed(2) : 'N/A'
+  }
+
+  const arrowTechData = sessionData.value?.arrow
+  const bowSetupData = sessionData.value?.bow_setup
+  
+  return `# Paper Tuning Session - ${arrowName}
+
+## Session Details
+- **Arrow**: ${arrowName}
+- **Bow Setup**: ${bowSetupName}
+- **Session Duration**: ${sessionDuration}
+- **Date**: ${new Date().toLocaleDateString()}
+
+## Arrow Technical Specifications
+- **Manufacturer**: ${arrowTechData?.manufacturer || 'Not specified'}
+- **Model**: ${arrowTechData?.model_name || 'Not specified'}
+- **Material**: ${arrowTechData?.material || 'Not specified'}
+- **Spine**: ${arrowTechData?.spine || 'Not specified'}
+- **Diameter**: ${arrowTechData?.diameter_inches || 'Not specified'}"
+- **Length**: ${sessionData.value?.arrow_length || arrowTechData?.length_inches || 'Not specified'}"
+- **Weight (grains)**: ${arrowTechData?.weight_grains || 'Not specified'}
+- **GPI**: ${arrowTechData?.gpi || 'Not specified'}
+- **Point Weight**: ${sessionData.value?.point_weight || 'Not specified'} grains
+- **Total Weight**: ${arrowTechData?.weight_grains && sessionData.value?.point_weight ? 
+    (arrowTechData.weight_grains + sessionData.value.point_weight) : 'Not calculated'} grains
+- **Shaft Construction**: ${arrowTechData?.shaft_construction || 'Not specified'}
+- **Tolerances**: ${arrowTechData?.tolerances || 'Not specified'}
+- **Nock Type**: ${arrowTechData?.nock_type || 'Not specified'}
+- **Fletching**: ${arrowTechData?.fletching_type || 'Not specified'}
+
+## Bow Setup Configuration
+- **Bow Type**: ${bowSetupData?.bow_type || 'Not specified'}
+- **Manufacturer**: ${bowSetupData?.bow_manufacturer || 'Not specified'}
+- **Model**: ${bowSetupData?.bow_model || 'Not specified'}
+- **Draw Weight**: ${bowSetupData?.draw_weight || 'Not specified'} lbs
+- **Draw Length**: ${bowSetupData?.draw_length || 'Not specified'}"
+- **Brace Height**: ${bowSetupData?.brace_height || 'Not specified'}"
+- **Cam Type**: ${bowSetupData?.cam_type || 'Not specified'}
+- **Riser Material**: ${bowSetupData?.riser_material || 'Not specified'}
+- **Limb Material**: ${bowSetupData?.limb_material || 'Not specified'}
+- **Rest Type**: ${bowSetupData?.rest_type || 'Not specified'}
+- **Rest**: ${bowSetupData?.rest_manufacturer} ${bowSetupData?.rest_model || ''} 
+- **Sight**: ${bowSetupData?.sight_manufacturer} ${bowSetupData?.sight_model || ''}
+- **String Type**: ${bowSetupData?.string_type || 'Not specified'}
+- **Release Aid**: ${bowSetupData?.release_aid_type || 'Not specified'}
+- **Peep Sight**: ${bowSetupData?.peep_sight_diameter || 'Not specified'}
+- **D-Loop**: ${bowSetupData?.d_loop_material || 'Not specified'}
+
+## Test Results Summary
+- **Total Tests**: ${sessionStats.totalTests}
+- **Excellent (≤0.25")**: ${sessionStats.excellentCount}
+- **Good (0.25"-0.75")**: ${sessionStats.goodCount}
+- **Needs Work (>0.75")**: ${sessionStats.needsWorkCount}
+- **Average Tear Size**: ${sessionStats.averageTear}"
+
+## Individual Test Results
+${testResults}
+
+## Analysis
+- **Most Common Tear**: ${getMostCommonTear()}
+- **Progress Trend**: ${getProgressTrend()}
+- **Consistency Rating**: ${getConsistencyRating()}%
+
+## Recommendations
+${generatePaperTuningRecommendations()}
+
+## Notes
+Session completed successfully with comprehensive tear pattern analysis. All equipment specifications recorded for future reference and comparison.`
+}
+
+const formatSessionDuration = () => {
+  if (!sessionData.value?.started_at) return 'Unknown duration'
+  
+  const start = new Date(sessionData.value.started_at)
+  const end = new Date()
+  const durationMinutes = Math.floor((end - start) / 60000)
+  
+  if (durationMinutes < 60) {
+    return `${durationMinutes} minutes`
+  } else {
+    const hours = Math.floor(durationMinutes / 60)
+    const remainingMinutes = durationMinutes % 60
+    return `${hours}h ${remainingMinutes}m`
+  }
+}
+
+const calculateSessionQuality = () => {
+  if (completedTests.value.length === 0) return 0
+  
+  let qualityScore = 0
+  completedTests.value.forEach(test => {
+    const tearSize = test.test_data.tear_magnitude_inches
+    if (tearSize <= 0.25) qualityScore += 100
+    else if (tearSize <= 0.5) qualityScore += 85
+    else if (tearSize <= 0.75) qualityScore += 70
+    else if (tearSize <= 1.0) qualityScore += 55
+    else qualityScore += 40
+  })
+  
+  return Math.round(qualityScore / completedTests.value.length)
+}
+
+const calculateTestConfidence = (test) => {
+  const tearSize = test.test_data.tear_magnitude_inches
+  const hasNotes = test.notes && test.notes.length > 0
+  
+  let confidence = 90 // Base confidence
+  
+  // Reduce confidence for larger tears (less precise)
+  if (tearSize > 1.0) confidence -= 20
+  else if (tearSize > 0.75) confidence -= 10
+  else if (tearSize > 0.5) confidence -= 5
+  
+  // Increase confidence if there are detailed notes
+  if (hasNotes) confidence += 5
+  
+  return Math.max(50, Math.min(100, confidence))
+}
+
+const getMostCommonTear = () => {
+  if (completedTests.value.length === 0) return 'No tests recorded'
+  
+  const tearCounts = {}
+  completedTests.value.forEach(test => {
+    const tearPos = tearPositions.find(pos => pos.id === test.test_data.tear_position)
+    const tearName = tearPos?.displayName || 'Unknown'
+    tearCounts[tearName] = (tearCounts[tearName] || 0) + 1
+  })
+  
+  const mostCommon = Object.entries(tearCounts).reduce((max, [tear, count]) => 
+    count > max.count ? { tear, count } : max, { tear: 'None', count: 0 })
+  
+  return `${mostCommon.tear} (${mostCommon.count} times)`
+}
+
+const generatePaperTuningRecommendations = () => {
+  if (completedTests.value.length === 0) return 'No recommendations available.'
+  
+  const recommendations = []
+  const mostRecentTest = completedTests.value[completedTests.value.length - 1]
+  const tearDirection = mostRecentTest.test_data.tear_direction
+  const tearSize = mostRecentTest.test_data.tear_magnitude_inches
+  
+  // Basic tuning recommendations based on tear direction
+  switch (tearDirection) {
+    case 'right':
+      recommendations.push('• Move arrow rest slightly left or reduce draw weight')
+      break
+    case 'left':
+      recommendations.push('• Move arrow rest slightly right or increase draw weight')
+      break
+    case 'high':
+      recommendations.push('• Lower nocking point or reduce arrow spine')
+      break
+    case 'low':
+      recommendations.push('• Raise nocking point or increase arrow spine')
+      break
+    case 'clean':
+      recommendations.push('• Excellent! Your bow is well tuned')
+      break
+    default:
+      if (tearDirection.includes('high') && tearDirection.includes('right')) {
+        recommendations.push('• Move rest left and lower nocking point')
+      } else if (tearDirection.includes('high') && tearDirection.includes('left')) {
+        recommendations.push('• Move rest right and lower nocking point')
+      } else if (tearDirection.includes('low') && tearDirection.includes('right')) {
+        recommendations.push('• Move rest left and raise nocking point')
+      } else if (tearDirection.includes('low') && tearDirection.includes('left')) {
+        recommendations.push('• Move rest right and raise nocking point')
+      }
+  }
+  
+  // Additional recommendations based on tear size
+  if (tearSize > 1.0) {
+    recommendations.push('• Consider checking arrow spine compatibility')
+    recommendations.push('• Verify consistent anchor point and release')
+  } else if (tearSize <= 0.25) {
+    recommendations.push('• Minimal adjustments needed - fine tuning complete')
+  }
+  
+  return recommendations.length > 0 ? recommendations.join('\n') : 'Continue testing for more specific recommendations.'
 }
 
 // Utility methods
