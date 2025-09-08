@@ -1,20 +1,20 @@
 <template>
   <!-- Mobile-First Detail Viewer with Bottom Sheet Pattern -->
-  <div v-if="show" class="journal-detail-viewer">
-    <!-- Backdrop -->
+  <div v-if="show" class="journal-detail-viewer" :class="{ 'full-page-mode': isFullPage }">
+    <!-- Backdrop (only for modal mode) -->
     <div 
+      v-if="!isFullPage"
       class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
       :class="{ 'opacity-100': show, 'opacity-0': !show }"
       @click="closeViewer"
     ></div>
 
-    <!-- Bottom Sheet Container -->
+    <!-- Bottom Sheet Container (modal) or Full Page Container -->
     <div 
-      class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-xl shadow-2xl z-50 max-h-[90vh] transform transition-transform duration-300"
-      :class="{ 'translate-y-0': show, 'translate-y-full': !show }"
+      :class="isFullPage ? 'full-page-container' : 'modal-container'"
     >
-      <!-- Handle Bar for Mobile -->
-      <div class="flex justify-center p-2">
+      <!-- Handle Bar for Mobile (only in modal mode) -->
+      <div v-if="!isFullPage" class="flex justify-center p-2">
         <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
       </div>
 
@@ -71,7 +71,44 @@
       <div class="overflow-y-auto flex-1 p-4 space-y-6">
         
         <!-- Tuning Session Results (Enhanced for Tuning Entries) -->
-        <div v-if="isTuningSession && (sessionData || entry?.session_data)" class="tuning-session-results">
+        <div v-if="isTuningSession" class="tuning-session-results">
+          
+          <!-- Missing Session Data Notice -->
+          <div v-if="!sessionData && !entry?.session_data" class="missing-session-data">
+            <div class="missing-data-card p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 mb-6">
+              <div class="flex items-start gap-3">
+                <md-icon class="text-amber-600 dark:text-amber-400 mt-1">warning</md-icon>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-amber-900 dark:text-amber-100 mb-2">Missing Session Data</h4>
+                  <p class="text-amber-800 dark:text-amber-200 text-sm mb-3">
+                    This entry is marked as a tuning session, but detailed session data is not available. 
+                    This may be an older entry created before the enhanced session tracking was implemented.
+                  </p>
+                  <div class="flex gap-2">
+                    <md-outlined-button 
+                      @click="editEntry" 
+                      size="small"
+                      class="text-amber-700 dark:text-amber-300"
+                    >
+                      <md-icon slot="icon">edit</md-icon>
+                      Edit Entry
+                    </md-outlined-button>
+                    <md-outlined-button 
+                      @click="startNewSession" 
+                      size="small"
+                      class="text-blue-600 dark:text-blue-400"
+                    >
+                      <md-icon slot="icon">add_circle</md-icon>
+                      Start New Session
+                    </md-outlined-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Enhanced Session Data Display (when available) -->
+          <div v-else-if="sessionData || entry?.session_data" class="enhanced-session-data">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             <md-icon class="mr-2">tune</md-icon>
             {{ getTuningTypeLabel((sessionData || entry?.session_data)?.tuning_type) }} Session Details
@@ -86,11 +123,11 @@
                 <div class="text-sm space-y-1">
                   <div><strong>Arrow:</strong> {{ (sessionData || entry?.session_data)?.arrow_info?.manufacturer }} {{ (sessionData || entry?.session_data)?.arrow_info?.model_name }}</div>
                   <div><strong>Material:</strong> {{ (sessionData || entry?.session_data)?.arrow_info?.material || 'Not specified' }}</div>
-                  <div v-if="(sessionData || entry?.session_data)?.session_details?.arrow_length">
-                    <strong>Length:</strong> {{ (sessionData || entry?.session_data)?.session_details?.arrow_length }}"
+                  <div v-if="(sessionData || entry?.session_data)?.arrow_length || (sessionData || entry?.session_data)?.session_details?.arrow_length">
+                    <strong>Length:</strong> {{ (sessionData || entry?.session_data)?.arrow_length || (sessionData || entry?.session_data)?.session_details?.arrow_length }}"
                   </div>
-                  <div v-if="(sessionData || entry?.session_data)?.session_details?.point_weight">
-                    <strong>Point Weight:</strong> {{ (sessionData || entry?.session_data)?.session_details?.point_weight }} grains
+                  <div v-if="(sessionData || entry?.session_data)?.point_weight || (sessionData || entry?.session_data)?.session_details?.point_weight">
+                    <strong>Point Weight:</strong> {{ (sessionData || entry?.session_data)?.point_weight || (sessionData || entry?.session_data)?.session_details?.point_weight }} grains
                   </div>
                 </div>
               </div>
@@ -99,10 +136,10 @@
               <div class="space-y-2">
                 <h4 class="font-semibold text-blue-900 dark:text-blue-100 text-sm">Session Info</h4>
                 <div class="text-sm space-y-1">
-                  <div><strong>Bow Setup:</strong> {{ (sessionData || entry?.session_data)?.bow_info?.name || entry?.bow_setup_name || 'Unknown' }}</div>
-                  <div><strong>Bow Type:</strong> {{ (sessionData || entry?.session_data)?.bow_info?.bow_type || 'Not specified' }}</div>
-                  <div v-if="(sessionData || entry?.session_data)?.session_details?.session_duration">
-                    <strong>Duration:</strong> {{ (sessionData || entry?.session_data)?.session_details?.session_duration }}
+                  <div><strong>Bow Setup:</strong> {{ entry?.setup_name || (sessionData || entry?.session_data)?.bow_info?.name || entry?.bow_setup_name || 'Unknown' }}</div>
+                  <div><strong>Bow Type:</strong> {{ entry?.bow_type || (sessionData || entry?.session_data)?.bow_info?.bow_type || 'Not specified' }}</div>
+                  <div v-if="(sessionData || entry?.session_data)?.duration || (sessionData || entry?.session_data)?.session_details?.session_duration">
+                    <strong>Duration:</strong> {{ (sessionData || entry?.session_data)?.duration || (sessionData || entry?.session_data)?.session_details?.session_duration }}
                   </div>
                   <div><strong>Date:</strong> {{ formatDate(entry.created_at) }}</div>
                 </div>
@@ -131,20 +168,20 @@
           </div>
 
           <!-- Bareshaft Specific Results -->
-          <div v-if="entry.session_data.tuning_type === 'bareshaft'" class="bareshaft-results">
+          <div v-if="(sessionData || entry?.session_data)?.tuning_type === 'bareshaft'" class="bareshaft-results">
             <!-- Summary Stats -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div class="stat-card">
                 <div class="stat-label">Tests Completed</div>
-                <div class="stat-value">{{ entry.session_data.test_results?.length || 0 }}</div>
+                <div class="stat-value">{{ (sessionData || entry?.session_data)?.test_results?.length || 0 }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Most Common Pattern</div>
-                <div class="stat-value text-sm">{{ entry.session_data.most_common_pattern || 'Unknown' }}</div>
+                <div class="stat-value text-sm">{{ (sessionData || entry?.session_data)?.most_common_pattern || 'Unknown' }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Average Confidence</div>
-                <div class="stat-value">{{ getAverageConfidence(entry.session_data.test_results) }}%</div>
+                <div class="stat-value">{{ getAverageConfidence((sessionData || entry?.session_data)?.test_results) }}%</div>
               </div>
             </div>
 
@@ -203,20 +240,20 @@
           </div>
 
           <!-- Paper Tuning Specific Results -->
-          <div v-else-if="entry.session_data.tuning_type === 'paper'" class="paper-results">
+          <div v-else-if="(sessionData || entry?.session_data)?.tuning_type === 'paper'" class="paper-results">
             <!-- Summary Stats -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div class="stat-card">
                 <div class="stat-label">Total Tests</div>
-                <div class="stat-value">{{ entry.session_data.test_results?.length || 0 }}</div>
+                <div class="stat-value">{{ (sessionData || entry?.session_data)?.test_results?.length || 0 }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Most Common Tear</div>
-                <div class="stat-value text-sm">{{ entry.session_data.most_common_tear || 'Unknown' }}</div>
+                <div class="stat-value text-sm">{{ (sessionData || entry?.session_data)?.most_common_tear || 'Unknown' }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">Average Tear Size</div>
-                <div class="stat-value">{{ formatTearSize(entry.session_data.average_tear_size) }}</div>
+                <div class="stat-value">{{ formatTearSize((sessionData || entry?.session_data)?.average_tear_size) }}</div>
               </div>
             </div>
 
@@ -393,12 +430,116 @@
               </div>
             </div>
           </div>
-        </div>
+          </div> <!-- Close enhanced-session-data -->
+        </div> <!-- Close tuning-session-results -->
 
-        <!-- Regular Journal Content -->
-        <div class="journal-content">
-          <div class="prose dark:prose-invert max-w-none">
-            <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-300 leading-relaxed">{{ entry?.content }}</pre>
+        <!-- Enhanced Journal Content with Tabs -->
+        <div class="journal-content-enhanced">
+          <div class="content-tabs-container">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+              <button
+                v-for="tab in contentTabs"
+                :key="tab.id"
+                @click="activeContentTab = tab.id"
+                :class="[
+                  'px-4 py-2 text-sm font-medium transition-colors',
+                  'border-b-2 border-transparent',
+                  activeContentTab === tab.id
+                    ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ]"
+              >
+                <md-icon class="text-sm mr-2">{{ tab.icon }}</md-icon>
+                {{ tab.label }}
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+              <!-- Overview Tab -->
+              <div v-show="activeContentTab === 'overview'" class="content-card">
+                <div class="prose dark:prose-invert max-w-none">
+                  <div class="formatted-content">
+                    {{ getContentSummary(entry?.content) }}
+                  </div>
+                  <md-outlined-button 
+                    v-if="isContentLong(entry?.content)"
+                    @click="showFullContent = !showFullContent" 
+                    class="mt-4"
+                  >
+                    <md-icon slot="icon">{{ showFullContent ? 'expand_less' : 'expand_more' }}</md-icon>
+                    {{ showFullContent ? 'Show Less' : 'Show More' }}
+                  </md-outlined-button>
+                </div>
+              </div>
+
+              <!-- Technical Tab -->
+              <div v-show="activeContentTab === 'technical'" class="content-card">
+                <div class="technical-specs-grid">
+                  <div v-if="parsedTechnicalData.arrow" class="spec-section">
+                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                      <md-icon class="mr-2">arrow_forward</md-icon>
+                      Arrow Specifications
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div v-for="(value, key) in parsedTechnicalData.arrow" :key="key" class="spec-item">
+                        <span class="spec-label">{{ formatSpecLabel(key) }}:</span>
+                        <span class="spec-value">{{ value }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-if="parsedTechnicalData.bow" class="spec-section">
+                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                      <md-icon class="mr-2">sports</md-icon>
+                      Bow Configuration
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div v-for="(value, key) in parsedTechnicalData.bow" :key="key" class="spec-item">
+                        <span class="spec-label">{{ formatSpecLabel(key) }}:</span>
+                        <span class="spec-value">{{ value }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Analysis Tab -->
+              <div v-show="activeContentTab === 'analysis'" class="content-card">
+                <div class="analysis-content">
+                  <div v-if="parsedAnalysisData.recommendations" class="analysis-section">
+                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                      <md-icon class="mr-2">psychology</md-icon>
+                      Analysis & Recommendations
+                    </h4>
+                    <div class="recommendations-list">
+                      <div v-for="(rec, index) in parsedAnalysisData.recommendations" :key="index" class="recommendation-item">
+                        <md-icon class="recommendation-icon">{{ rec.type === 'success' ? 'check_circle' : 'info' }}</md-icon>
+                        <span>{{ rec.text }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-if="parsedAnalysisData.trends" class="analysis-section">
+                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                      <md-icon class="mr-2">trending_up</md-icon>
+                      Progress Trends
+                    </h4>
+                    <div class="trends-content">
+                      {{ parsedAnalysisData.trends }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Full Notes Tab -->
+              <div v-show="activeContentTab === 'notes'" class="content-card">
+                <div class="prose dark:prose-invert max-w-none">
+                  <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-300 leading-relaxed text-sm">{{ entry?.content }}</pre>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -523,7 +664,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineProps, defineEmits, watch, ref } from 'vue'
 
 const props = defineProps({
   show: {
@@ -533,18 +674,50 @@ const props = defineProps({
   entry: {
     type: Object,
     default: null
+  },
+  fullPage: {
+    type: Boolean,
+    default: false
   }
 })
+
+// Debug the entry data structure
+watch(() => props.entry, (newEntry) => {
+  if (newEntry) {
+    console.log('JournalEntryDetailViewer: Entry data received:', {
+      id: newEntry.id,
+      title: newEntry.title,
+      entry_type: newEntry.entry_type,
+      session_metadata: newEntry.session_metadata,
+      session_data: newEntry.session_data,
+      session_type: newEntry.session_type,
+      fullEntry: newEntry
+    })
+  }
+}, { immediate: true })
 
 const emit = defineEmits(['close', 'edit', 'delete', 'favorite', 'view-session', 'start-similar'])
 
 // Computed properties
+const isFullPage = computed(() => {
+  // Detect full-page mode by prop or by checking if we're in a full-page context
+  return props.fullPage || (typeof window !== 'undefined' && window.location.pathname.includes('/journal/'))
+})
 const isTuningSession = computed(() => {
-  return props.entry?.entry_type?.includes('tuning') || 
+  const result = props.entry?.entry_type?.includes('tuning') || 
          props.entry?.session_data?.tuning_type ||
          props.entry?.session_type === 'paper' ||
          props.entry?.session_type === 'bareshaft' ||
          props.entry?.session_type === 'walkback'
+  
+  console.log('JournalEntryDetailViewer: isTuningSession computed:', {
+    result,
+    entry_type: props.entry?.entry_type,
+    session_data_tuning_type: props.entry?.session_data?.tuning_type,
+    session_type: props.entry?.session_type
+  })
+  
+  return result
 })
 
 // Parse session data from different sources
@@ -552,12 +725,22 @@ const sessionData = computed(() => {
   // Parse session_metadata if it exists
   if (props.entry?.session_metadata) {
     try {
-      return typeof props.entry.session_metadata === 'string' 
+      const parsed = typeof props.entry.session_metadata === 'string' 
         ? JSON.parse(props.entry.session_metadata)
         : props.entry.session_metadata
+      
+      // Debug log to help identify data structure issues
+      console.log('Parsed session data:', parsed)
+      return parsed
     } catch (e) {
       console.warn('Failed to parse session metadata:', e)
     }
+  }
+  
+  // Fallback to legacy session_data
+  if (props.entry?.session_data) {
+    console.log('Using legacy session_data:', props.entry.session_data)
+    return props.entry.session_data
   }
   
   return null
@@ -847,11 +1030,133 @@ const startSimilarSession = () => {
     closeViewer()
   }
 }
+
+const startNewSession = () => {
+  // Navigate to tuning session selection or start a new session
+  // For now, we'll navigate to the calculator page where users can start tuning
+  if (typeof window !== 'undefined') {
+    window.location.href = '/calculator'
+  }
+}
+
+// Tabbed content interface - Priority 1 improvement
+const activeContentTab = ref('overview')
+const showFullContent = ref(false)
+
+// Tab definitions
+const contentTabs = computed(() => [
+  { id: 'overview', label: 'Overview', icon: 'visibility' },
+  { id: 'technical', label: 'Technical', icon: 'engineering' },
+  { id: 'analysis', label: 'Analysis', icon: 'psychology' },
+  { id: 'notes', label: 'Full Notes', icon: 'notes' }
+])
+
+// Content processing functions
+const isContentLong = (content) => {
+  return content && content.length > 500
+}
+
+const getContentSummary = (content) => {
+  if (!content) return 'No content available'
+  if (showFullContent.value || content.length <= 500) return content
+  return content.substring(0, 500) + '...'
+}
+
+// Technical data parsing
+const parsedTechnicalData = computed(() => {
+  const content = props.entry?.content || ''
+  
+  // Extract arrow specifications from content
+  const arrowSpecs = {}
+  const bowSpecs = {}
+  
+  // Parse common patterns from content
+  const lines = content.split('\n')
+  let currentSection = ''
+  
+  lines.forEach(line => {
+    line = line.trim()
+    if (line.includes('Arrow Technical Specifications') || line.includes('## Arrow Specifications')) {
+      currentSection = 'arrow'
+    } else if (line.includes('Bow Setup Configuration') || line.includes('## Bow Configuration')) {
+      currentSection = 'bow'
+    } else if (line.startsWith('- **')) {
+      const match = line.match(/- \*\*([^*]+)\*\*:\s*(.+)/)
+      if (match && currentSection) {
+        const key = match[1].toLowerCase().replace(/\s+/g, '_')
+        const value = match[2]
+        if (currentSection === 'arrow') {
+          arrowSpecs[key] = value
+        } else if (currentSection === 'bow') {
+          bowSpecs[key] = value
+        }
+      }
+    }
+  })
+  
+  return {
+    arrow: Object.keys(arrowSpecs).length > 0 ? arrowSpecs : null,
+    bow: Object.keys(bowSpecs).length > 0 ? bowSpecs : null
+  }
+})
+
+// Analysis data parsing
+const parsedAnalysisData = computed(() => {
+  const content = props.entry?.content || ''
+  
+  // Extract recommendations
+  const recommendations = []
+  const lines = content.split('\n')
+  
+  lines.forEach(line => {
+    line = line.trim()
+    if (line.startsWith('• ') || line.startsWith('- ')) {
+      const text = line.substring(2)
+      const type = text.toLowerCase().includes('excellent') || text.toLowerCase().includes('good') ? 'success' : 'info'
+      recommendations.push({ text, type })
+    }
+  })
+  
+  // Extract trends
+  let trends = ''
+  const trendMatch = content.match(/Progress Trend[^:]*:\s*([^\n]+)/i)
+  if (trendMatch) {
+    trends = trendMatch[1]
+  }
+  
+  return {
+    recommendations: recommendations.length > 0 ? recommendations : null,
+    trends: trends || null
+  }
+})
+
+// Format specification labels
+const formatSpecLabel = (key) => {
+  return key.replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase())
+    .replace(/Gpi/g, 'GPI')
+    .replace(/Id/g, 'ID')
+}
 </script>
 
 <style scoped>
 .journal-detail-viewer {
   /* Ensure proper z-index stacking */
+}
+
+/* Modal Container Styles */
+.modal-container {
+  @apply fixed inset-x-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-xl shadow-2xl z-50 max-h-[90vh] transform transition-transform duration-300;
+}
+
+/* Full Page Container Styles */
+.full-page-container {
+  @apply bg-white dark:bg-gray-900 w-full min-h-screen;
+}
+
+/* Full Page Mode Adjustments */
+.full-page-mode .full-page-container {
+  @apply rounded-none shadow-none;
 }
 
 .stat-card {
@@ -880,5 +1185,54 @@ const startSimilarSession = () => {
 /* Smooth animations */
 .journal-detail-viewer * {
   transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced Content Tabs - Priority 1 UI improvement */
+.content-tabs-container {
+  @apply bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6;
+}
+
+.tab-content .content-card {
+  @apply bg-gray-50 dark:bg-gray-900 rounded-lg p-4;
+}
+
+.technical-specs-grid .spec-section {
+  @apply mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700;
+}
+
+.technical-specs-grid .spec-item {
+  @apply flex justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0;
+}
+
+.spec-label {
+  @apply font-medium text-gray-600 dark:text-gray-400 text-sm;
+}
+
+.spec-value {
+  @apply text-gray-900 dark:text-gray-100 font-mono text-sm text-right;
+}
+
+.analysis-section {
+  @apply mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700;
+}
+
+.recommendations-list {
+  @apply space-y-2;
+}
+
+.recommendation-item {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.recommendation-icon {
+  @apply text-sm;
+}
+
+.trends-content {
+  @apply text-sm text-gray-700 dark:text-gray-300 italic;
+}
+
+.formatted-content {
+  @apply whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 leading-relaxed;
 }
 </style>

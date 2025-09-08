@@ -1,18 +1,24 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
   console.log('Auth middleware running for route:', to.path);
-  const { user, token, fetchUser } = useAuth();
+  
+  // Skip on server-side to avoid issues
+  if (process.server) {
+    return;
+  }
 
+  const { user, token, fetchUser, initializeClientAuth } = useAuth();
+
+  // Always reinitialize auth from localStorage on route changes
+  await initializeClientAuth();
+  
   console.log('Current user in middleware:', user.value);
   console.log('Current token in middleware:', !!token.value);
 
-  if (!user.value) {
-    console.log('No user found, attempting to fetch...');
-    await fetchUser(); // Attempt to fetch user if not already loaded
-    console.log('After fetchUser, user:', user.value);
-    if (!user.value) {
-      console.log('Still no user, redirecting to home');
-      return navigateTo('/'); // Redirect to home for login if not authenticated
-    }
+  // Check authentication state
+  if (!token.value || !user.value) {
+    console.log('Missing token or user - redirecting to login');
+    return navigateTo('/login');
   }
+
   console.log('Auth middleware passed, allowing access to:', to.path);
 });

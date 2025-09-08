@@ -1128,12 +1128,15 @@ const createJournalEntryForSession = async () => {
     const journalEntry = {
       title: `Paper Tuning Session - ${arrowName}`,
       content: journalContent,
-      entry_type: 'paper_tuning_session',
+      entry_type: 'tuning_session', // Use generic tuning_session for modal detection
       bow_setup_id: sessionData.value?.bow_setup_id,
       linked_arrow: sessionData.value?.arrow_id || null, // Link to arrow for proper filtering
-      session_type: 'paper_tuning', // For session type filtering
+      session_type: 'paper', // Specific session type for filtering
       session_quality_score: enhancedSessionData.session_quality || 0, // For quality-based filtering
-      session_data: enhancedSessionData,
+      session_metadata: { // Use session_metadata instead of session_data
+        tuning_type: 'paper', // Essential for modal display
+        ...enhancedSessionData
+      },
       tags: ['paper-tuning', 'tuning-session']
     }
 

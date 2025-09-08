@@ -1,30 +1,7 @@
 <template>
   <div 
-    :class="['journal-entry-card', `card-${viewMode}`, { 'mobile-mode': isMobile, 'swiping': isSwipeActive }]" 
-    @click="handleCardClick"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
-    :style="{ transform: swipeTransform }"
+    :class="['journal-entry-card', `card-${viewMode}`, { 'mobile-mode': isMobile }]"
   >
-    <!-- Mobile Swipe Actions Background -->
-    <div v-if="isMobile" class="swipe-actions-left" :class="{ 'visible': swipeDirection === 'left' }">
-      <div class="swipe-action favorite-action" :class="{ 'active': entry.is_favorite }">
-        <md-icon>{{ entry.is_favorite ? 'star' : 'star_border' }}</md-icon>
-        <span>{{ entry.is_favorite ? 'Unfavorite' : 'Favorite' }}</span>
-      </div>
-    </div>
-    
-    <div v-if="isMobile" class="swipe-actions-right" :class="{ 'visible': swipeDirection === 'right' }">
-      <div class="swipe-action edit-action">
-        <md-icon>edit</md-icon>
-        <span>Edit</span>
-      </div>
-      <div class="swipe-action delete-action">
-        <md-icon>delete</md-icon>
-        <span>Delete</span>
-      </div>
-    </div>
     <div class="entry-header">
       <div class="entry-meta">
         <div class="entry-type-badge" :class="`type-${entry.entry_type}`">
@@ -36,17 +13,42 @@
       
       <div class="entry-actions">
         <md-icon-button 
+          @click.stop="handleViewEntry" 
+          aria-label="View full entry"
+          role="button"
+          tabindex="0"
+          class="view-btn"
+          data-testid="view-entry-button"
+        >
+          <md-icon>visibility</md-icon>
+        </md-icon-button>
+        <md-icon-button 
           @click.stop="toggleFavorite" 
           :aria-label="entry.is_favorite ? 'Remove from favorites' : 'Add to favorites'"
+          role="button"
+          tabindex="0"
           class="favorite-btn"
           :class="{ 'is-favorite': entry.is_favorite }"
+          data-testid="favorite-button"
         >
           <md-icon>{{ entry.is_favorite ? 'star' : 'star_border' }}</md-icon>
         </md-icon-button>
-        <md-icon-button @click.stop="$emit('edit', entry)" aria-label="Edit entry">
+        <md-icon-button 
+          @click.stop="$emit('edit', entry)" 
+          aria-label="Edit entry"
+          role="button"
+          tabindex="0"
+          data-testid="edit-button"
+        >
           <md-icon>edit</md-icon>
         </md-icon-button>
-        <md-icon-button @click.stop="$emit('delete', entry)" aria-label="Delete entry">
+        <md-icon-button 
+          @click.stop="$emit('delete', entry)" 
+          aria-label="Delete entry"
+          role="button"
+          tabindex="0"
+          data-testid="delete-button"
+        >
           <md-icon>delete</md-icon>
         </md-icon-button>
       </div>
@@ -160,19 +162,10 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['view', 'edit', 'delete', 'view-change', 'show-all-changes', 'toggle-favorite'])
+const emit = defineEmits(['edit', 'delete', 'view-change', 'show-all-changes', 'toggle-favorite'])
 
-// Mobile detection and swipe state
+// Mobile detection
 const isMobile = ref(false)
-const isSwipeActive = ref(false)
-const swipeDirection = ref(null)
-const swipeTransform = ref('')
-const touchStartX = ref(0)
-const touchStartY = ref(0)
-const touchCurrentX = ref(0)
-const touchCurrentY = ref(0)
-const swipeThreshold = 80
-const swipeVelocityThreshold = 0.3
 
 // Image display configuration
 const maxDisplayImages = computed(() => props.viewMode === 'grid' ? 2 : 4)
@@ -279,103 +272,18 @@ const toggleFavorite = () => {
   emit('toggle-favorite', props.entry)
 }
 
-// Mobile swipe functionality
-const handleCardClick = (event) => {
-  if (!isSwipeActive.value) {
-    emit('view', props.entry)
+// Navigation functionality
+const handleViewEntry = async (event) => {
+  console.log('JournalEntryCard: handleViewEntry clicked for entry:', props.entry?.id)
+  try {
+    // Navigate to dedicated journal entry page
+    await navigateTo(`/journal/${props.entry.id}`)
+    console.log('JournalEntryCard: navigation completed successfully')
+  } catch (error) {
+    console.error('JournalEntryCard: navigation failed:', error)
   }
 }
 
-const handleTouchStart = (event) => {
-  if (!isMobile.value) return
-  
-  const touch = event.touches[0]
-  touchStartX.value = touch.clientX
-  touchStartY.value = touch.clientY
-  touchCurrentX.value = touch.clientX
-  touchCurrentY.value = touch.clientY
-  isSwipeActive.value = false
-  swipeDirection.value = null
-}
-
-const handleTouchMove = (event) => {
-  if (!isMobile.value) return
-  
-  event.preventDefault()
-  const touch = event.touches[0]
-  touchCurrentX.value = touch.clientX
-  touchCurrentY.value = touch.clientY
-  
-  const deltaX = touchCurrentX.value - touchStartX.value
-  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
-  
-  // Only proceed if horizontal movement is dominant
-  if (Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 20) {
-    isSwipeActive.value = true
-    
-    if (deltaX > 0) {
-      swipeDirection.value = 'left' // Swiping right reveals left actions
-      const progress = Math.min(deltaX / swipeThreshold, 1)
-      swipeTransform.value = `translateX(${deltaX * 0.5}px)`
-    } else {
-      swipeDirection.value = 'right' // Swiping left reveals right actions  
-      const progress = Math.min(Math.abs(deltaX) / swipeThreshold, 1)
-      swipeTransform.value = `translateX(${deltaX * 0.5}px)`
-    }
-  }
-}
-
-const handleTouchEnd = (event) => {
-  if (!isMobile.value) return
-  
-  const deltaX = touchCurrentX.value - touchStartX.value
-  const deltaY = Math.abs(touchCurrentY.value - touchStartY.value)
-  const swipeDistance = Math.abs(deltaX)
-  
-  // Check if it's a valid swipe (horizontal and sufficient distance)
-  if (swipeDistance > swipeThreshold && Math.abs(deltaX) > deltaY) {
-    // Execute swipe action
-    if (deltaX > 0) {
-      // Swiped right - favorite action
-      handleSwipeAction('favorite')
-    } else {
-      // Swiped left - show edit/delete options or execute primary action
-      if (swipeDistance > swipeThreshold * 1.5) {
-        handleSwipeAction('edit')
-      }
-    }
-    
-    // Haptic feedback if supported
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50)
-    }
-  }
-  
-  // Reset swipe state
-  resetSwipeState()
-}
-
-const handleSwipeAction = (action) => {
-  switch (action) {
-    case 'favorite':
-      toggleFavorite()
-      break
-    case 'edit':
-      emit('edit', props.entry)
-      break
-    case 'delete':
-      emit('delete', props.entry)
-      break
-  }
-}
-
-const resetSwipeState = () => {
-  setTimeout(() => {
-    swipeTransform.value = ''
-    isSwipeActive.value = false
-    swipeDirection.value = null
-  }, 200)
-}
 
 // Mobile responsiveness detection
 const checkMobile = () => {
@@ -545,6 +453,24 @@ onUnmounted(() => {
   transition: opacity 0.2s ease;
 }
 
+.entry-actions md-icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  position: relative;
+  cursor: pointer;
+}
+
+.entry-actions md-icon-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .journal-entry-card:hover .entry-actions {
   opacity: 1;
 }
@@ -571,6 +497,25 @@ onUnmounted(() => {
 }
 
 .favorite-btn.is-favorite:hover md-icon {
+  color: var(--md-sys-color-secondary);
+}
+
+.view-btn {
+  transition: all 0.3s ease;
+  color: var(--md-sys-color-primary);
+}
+
+.view-btn:hover {
+  transform: scale(1.05);
+  color: var(--md-sys-color-secondary);
+}
+
+.view-btn md-icon {
+  color: var(--md-sys-color-primary);
+  transition: all 0.3s ease;
+}
+
+.view-btn:hover md-icon {
   color: var(--md-sys-color-secondary);
 }
 
@@ -863,66 +808,6 @@ onUnmounted(() => {
 .journal-entry-card.mobile-mode {
   touch-action: pan-y;
   user-select: none;
-}
-
-.journal-entry-card.swiping {
-  transition: none;
-}
-
-.swipe-actions-left,
-.swipe-actions-right {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 1;
-}
-
-.swipe-actions-left {
-  left: 0;
-  background: linear-gradient(90deg, var(--md-sys-color-primary-container), transparent);
-  padding-left: 1rem;
-  padding-right: 2rem;
-}
-
-.swipe-actions-right {
-  right: 0;
-  background: linear-gradient(-90deg, var(--md-sys-color-error-container), var(--md-sys-color-secondary-container));
-  padding-right: 1rem;
-  padding-left: 2rem;
-  gap: 1rem;
-}
-
-.swipe-actions-left.visible,
-.swipe-actions-right.visible {
-  opacity: 1;
-}
-
-.swipe-action {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 3rem;
-  min-height: 3rem;
-  border-radius: 1rem;
-  padding: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.swipe-action md-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.swipe-action span {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1;
 }
 
 .favorite-action {

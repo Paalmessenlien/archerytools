@@ -28,6 +28,12 @@ export interface JournalEntryCreate {
   bow_setup_id?: number
   tags?: string[]
   is_private?: boolean
+  // Session-specific fields for tuning sessions
+  session_metadata?: any  // JSON object with session details
+  session_data?: any      // Alternative field name for session metadata
+  session_type?: string   // Type of session (bareshaft, paper, walkback, etc.)
+  session_quality_score?: number  // Quality score 0-100
+  linked_arrow?: number   // Arrow ID for linking
 }
 
 export interface JournalEntryUpdate {

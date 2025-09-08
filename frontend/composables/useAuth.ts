@@ -2,11 +2,10 @@
 import { ref, computed } from 'vue';
 
 // Global state - shared across all useAuth() calls
-// Initialize as null to avoid hydration mismatches, load from localStorage on client only
 const token = ref(null);
 const user = ref(null);
 const isInitialized = ref(false);
-const isLoggedIn = ref(false);
+const isLoggedIn = computed(() => !!(token.value && user.value));
 let googleAuthClient = null; // Singleton for the Google Auth client
 
 export const useAuth = () => {
@@ -41,22 +40,43 @@ export const useAuth = () => {
     }
   };
 
-  // Initialize token from localStorage only on client, avoid SSR hydration issues
-  const initializeClientAuth = () => {
-    if (process.client && !isInitialized.value) {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken && isTokenValid(storedToken)) {
-        token.value = storedToken;
-        isLoggedIn.value = true;
-        // Fetch user data on initialization if token exists
-        fetchUser();
-      } else if (storedToken) {
-        // Token exists but is invalid, clear it
-        console.warn('🔑 Stored token is invalid, clearing...');
-        localStorage.removeItem('token');
-      }
-      isInitialized.value = true;
+  // Initialize token from localStorage on client
+  const initializeClientAuth = async () => {
+    if (!process.client) {
+      console.log('🔄 Skipping auth init - server-side');
+      return;
     }
+
+    console.log('🔄 Initializing client auth...');
+    const storedToken = localStorage.getItem('token');
+    console.log('🔑 Stored token exists:', !!storedToken);
+    
+    if (storedToken && isTokenValid(storedToken)) {
+      console.log('✅ Token is valid, setting auth state');
+      token.value = storedToken;
+      
+      // Fetch user data if we don't have it or if it's stale
+      if (!user.value || user.value.email !== 'messenlien@gmail.com') {
+        console.log('🔄 Fetching user data...');
+        await fetchUser();
+        console.log('✅ User fetch completed, user:', user.value?.email || 'NO_USER');
+      } else {
+        console.log('✅ User already exists:', user.value?.email);
+      }
+    } else if (storedToken) {
+      // Token exists but is invalid, clear everything
+      console.warn('🔑 Stored token is invalid, clearing...');
+      localStorage.removeItem('token');
+      token.value = null;
+      user.value = null;
+    } else {
+      console.log('🔑 No stored token found');
+      token.value = null;
+      user.value = null;
+    }
+    
+    isInitialized.value = true;
+    console.log('🔄 Client auth initialization complete - Token:', !!token.value, 'User:', !!user.value);
   };
 
   const initializeGoogleAuth = () => {
