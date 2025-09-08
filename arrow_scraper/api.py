@@ -14367,54 +14367,69 @@ def get_journal_entry(current_user, entry_id):
         else:
             entry['tags'] = []
         
-        # Get attachments
-        cursor.execute('''
-            SELECT * FROM journal_attachments 
-            WHERE journal_entry_id = ? 
-            ORDER BY is_primary DESC, created_at ASC
-        ''', (entry_id,))
-        attachments = [dict(row) for row in cursor.fetchall()]
-        entry['attachments'] = attachments
-        
-        # Convert image attachments to the format expected by frontend
+        # Get attachments - with graceful fallback
+        entry['attachments'] = []
         entry['images'] = []
-        for attachment in attachments:
-            if attachment['file_type'] == 'image' and attachment['cdn_url']:
-                entry['images'].append({
-                    'url': attachment['cdn_url'],
-                    'alt': attachment['description'] or attachment['original_filename'],
-                    'uploadedAt': attachment['created_at']
-                })
+        try:
+            cursor.execute('''
+                SELECT * FROM journal_attachments 
+                WHERE journal_entry_id = ? 
+                ORDER BY is_primary DESC, created_at ASC
+            ''', (entry_id,))
+            attachments = [dict(row) for row in cursor.fetchall()]
+            entry['attachments'] = attachments
+            
+            # Convert image attachments to the format expected by frontend
+            for attachment in attachments:
+                if attachment['file_type'] == 'image' and attachment['cdn_url']:
+                    entry['images'].append({
+                        'url': attachment['cdn_url'],
+                        'alt': attachment['description'] or attachment['original_filename'],
+                        'uploadedAt': attachment['created_at']
+                    })
+        except Exception as e:
+            print(f"Warning: journal_attachments table not available: {e}")
         
-        # Get equipment links (new schema from migration 043)
-        cursor.execute('''
-            SELECT * FROM equipment_journal_links 
-            WHERE journal_entry_id = ?
-            ORDER BY created_at ASC
-        ''', (entry_id,))
-        entry['equipment_links'] = [dict(row) for row in cursor.fetchall()]
+        # Get equipment links (new schema from migration 043) - with graceful fallback
+        entry['equipment_links'] = []
+        try:
+            cursor.execute('''
+                SELECT * FROM equipment_journal_links 
+                WHERE journal_entry_id = ?
+                ORDER BY created_at ASC
+            ''', (entry_id,))
+            entry['equipment_links'] = [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Warning: equipment_journal_links table not available: {e}")
         
-        # Legacy equipment references (fallback for old entries)
-        cursor.execute('''
-            SELECT 
-                jer.*,
-                be.manufacturer_name, be.model_name, be.category_name,
-                a.manufacturer as arrow_manufacturer, a.model_name as arrow_model
-            FROM journal_equipment_references jer
-            LEFT JOIN bow_equipment be ON jer.bow_equipment_id = be.id
-            LEFT JOIN arrows a ON jer.arrow_id = a.id
-            WHERE jer.journal_entry_id = ?
-        ''', (entry_id,))
-        legacy_refs = [dict(row) for row in cursor.fetchall()]
-        entry['equipment_references'] = legacy_refs
+        # Legacy equipment references (fallback for old entries) - with graceful fallback
+        entry['equipment_references'] = []
+        try:
+            cursor.execute('''
+                SELECT 
+                    jer.*,
+                    be.manufacturer_name, be.model_name, be.category_name,
+                    a.manufacturer as arrow_manufacturer, a.model_name as arrow_model
+                FROM journal_equipment_references jer
+                LEFT JOIN bow_equipment be ON jer.bow_equipment_id = be.id
+                LEFT JOIN arrows a ON jer.arrow_id = a.id
+                WHERE jer.journal_entry_id = ?
+            ''', (entry_id,))
+            entry['equipment_references'] = [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Warning: journal_equipment_references table not available: {e}")
         
-        # Get change log links
-        cursor.execute('''
-            SELECT * FROM journal_change_links 
-            WHERE journal_entry_id = ?
-            ORDER BY created_at ASC
-        ''', (entry_id,))
-        entry['change_log_links'] = [dict(row) for row in cursor.fetchall()]
+        # Get change log links - with graceful fallback
+        entry['change_log_links'] = []
+        try:
+            cursor.execute('''
+                SELECT * FROM journal_change_links 
+                WHERE journal_entry_id = ?
+                ORDER BY created_at ASC
+            ''', (entry_id,))
+            entry['change_log_links'] = [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Warning: journal_change_links table not available: {e}")
         
         conn.close()
         
