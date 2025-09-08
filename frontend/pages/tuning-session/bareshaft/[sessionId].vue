@@ -1253,7 +1253,7 @@ const loadSessionData = async () => {
     error.value = null
     
     const sessionId = route.params.sessionId
-    const response = await api.get(`/tuning-guides/sessions/${sessionId}`)
+    const response = await api.get(`/tuning-guides/${sessionId}`)
     
     sessionData.value = response
     completedTests.value = response.tests || []
@@ -1708,6 +1708,7 @@ const completeSession = async () => {
     const completionData = {
       completion_notes: completionNotes.value.trim() || null,
       total_tests: completedTests.value.length,
+      skip_journal_creation: true, // Skip old journal creation, use new method instead
       session_data: {
         tuning_type: 'bareshaft',
         test_results: completedTests.value.map(test => ({
@@ -1814,15 +1815,19 @@ const createJournalEntryForSession = async (completionData) => {
     const entryData = {
       title,
       content,
-      entry_type: 'bareshaft_tuning_session',
+      entry_type: 'tuning_session', // Use generic tuning_session for modal detection
       bow_setup_id: sessionData.value?.bow_setup_id || null,
       linked_arrow: sessionData.value?.arrow_id || null, // Link to arrow for proper filtering
       tags: ['tuning', 'bareshaft', 'session', sessionData.value?.arrow?.material?.toLowerCase() || 'arrow'].filter(Boolean),
       is_private: false,
-      session_type: 'bareshaft_tuning', // For session type filtering
+      session_type: 'bareshaft', // Specific session type for filtering
       session_quality_score: qualityScore, // For quality-based filtering
-      session_data: {
-        ...completionData.session_data,
+      session_metadata: { // Use session_metadata instead of session_data
+        tuning_type: 'bareshaft', // Essential for modal display
+        session_quality: qualityScore,
+        test_results: completionData.session_data?.test_results || [],
+        final_recommendations: completionData.session_data?.final_recommendations || [],
+        most_common_pattern: completionData.session_data?.most_common_pattern,
         // Add additional context for the detail viewer
         arrow_info: sessionData.value?.arrow || {},
         bow_info: sessionData.value?.bow_setup || {},
@@ -1832,7 +1837,8 @@ const createJournalEntryForSession = async (completionData) => {
           started_at: sessionData.value?.started_at,
           completed_at: new Date().toISOString(),
           session_duration: sessionDuration
-        }
+        },
+        session_id: sessionId
       }
     }
     

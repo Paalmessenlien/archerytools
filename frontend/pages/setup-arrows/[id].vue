@@ -969,7 +969,7 @@ const loadJournalEntries = async () => {
     journalLoading.value = true
     
     const response = await journalApi.getEntries({
-      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      linked_arrow: setupArrowData.value.setup_arrow.arrow_id,
       page: 1,
       limit: 50
     })

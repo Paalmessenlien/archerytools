@@ -49,6 +49,15 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Journal and Tuning System Documentation](JOURNAL_AND_TUNING_SYSTEM.md) ✨ NEW
+Comprehensive documentation of the integrated journal and tuning system:
+- **System Architecture**: Journal integration with tuning sessions and bow/arrow setups
+- **Database Schema**: Complete schema for journal_entries and guide_sessions tables
+- **Interactive Tuning**: Paper, bareshaft, and walkback tuning session management
+- **API Integration**: Dual API architecture and journal creation patterns
+- **Frontend Components**: BaseJournalView, entry viewers, and integration examples
+- **Development Guide**: Adding new tuning types, testing patterns, and troubleshooting
+
 #### [Enhanced Validation System](ENHANCED_VALIDATION_SYSTEM.md) ✨ NEW
 Advanced data quality monitoring with intelligent auto-fix capabilities:
 - **Auto-Fix SQL Generation**: Automatic solutions for search visibility, manufacturer status, and data completion issues

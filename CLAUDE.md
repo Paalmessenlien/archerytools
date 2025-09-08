@@ -17,6 +17,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Architecture, workflows, and troubleshooting
 - **[Database Migrations Documentation](docs/DATABASE_MIGRATIONS.md)** - Complete migration system guide with examples
 - **[Spine Data System Documentation](docs/SPINE_DATA_SYSTEM.md)** - Advanced spine calculation system and admin interface
+- **[Journal and Tuning System Documentation](docs/JOURNAL_AND_TUNING_SYSTEM.md)** - Complete journal and interactive tuning system guide
 - **[Archery Calculations Guide](docs/ARCHERY_CALCULATIONS_GUIDE.md)** - Professional physics calculations and optimization algorithms
 
 **🚀 For new developers**: Start with [Development Guide](docs/DEVELOPMENT_GUIDE.md) for environment setup and architecture overview.

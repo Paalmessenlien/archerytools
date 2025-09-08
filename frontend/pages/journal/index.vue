@@ -55,7 +55,6 @@
       :loading="journalApi.isLoading.value"
       :has-more-entries="hasMoreEntriesFromPagination"
       :initial-filters="mobileFriendlyFilters"
-      @entry:view="viewEntry"
       @entry:edit="editEntry"
       @entry:delete="deleteEntry"
       @entry:create="handleCreateEntry"
@@ -118,18 +117,6 @@
     </div>
   </div>
 
-  <!-- View Entry Dialog - Outside main containers for proper positioning -->
-  <ClientOnly>
-    <JournalEntryDetailViewer
-      v-if="showViewDialog"
-      :show="showViewDialog"
-      :entry="viewingEntry"
-      @close="showViewDialog = false"
-      @edit="editFromViewer"
-      @delete="deleteFromViewer"
-      @favorite="handleToggleFavorite"
-    />
-  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -153,7 +140,7 @@ definePageMeta({
 })
 
 // Composables
-const { isLoggedIn: isAuthenticated, user } = useAuth()
+const { isLoggedIn: isAuthenticated, user, token } = useAuth()
 const api = useApi()
 const journalApi = useJournalApi()
 const notifications = useGlobalNotifications()
@@ -360,10 +347,8 @@ const sortedEntries = computed(() => {
 const activeTab = ref('journal')
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
-const showViewDialog = ref(false)
 const showDraftRestoreDialog = ref(false)
 const editingEntry = ref(null)
-const viewingEntry = ref(null)
 const foundDraft = ref(null)
 
 // Computed properties
@@ -612,23 +597,6 @@ const handleJournalFromChangeLog = (journalData) => {
   showCreateDialog.value = true
 }
 
-const viewEntry = (entry: JournalEntry) => {
-  viewingEntry.value = entry
-  showViewDialog.value = true
-}
-
-const editFromViewer = () => {
-  editingEntry.value = { ...viewingEntry.value }
-  showViewDialog.value = false
-  showEditDialog.value = true
-}
-
-const deleteFromViewer = async () => {
-  if (viewingEntry.value) {
-    await deleteEntry(viewingEntry.value)
-    showViewDialog.value = false
-  }
-}
 
 const deleteEntry = async (entry: JournalEntry) => {
   // Use notification system for confirmation
@@ -956,12 +924,12 @@ const showSavePresetDialog = ref(false)
 // Load filter presets from API
 const loadFilterPresets = async () => {
   try {
-    const response = await $fetch('/api/journal/filter-presets', {
-      headers: { Authorization: `Bearer ${token.value}` }
-    })
+    const response = await api.get('/journal/filter-presets')
     filterPresets.value = response.data || []
   } catch (error) {
-    console.error('Failed to load filter presets:', error)
+    console.warn('Filter presets not available:', error.message)
+    // Filter presets are optional - journal works without them
+    filterPresets.value = []
   }
 }
 
@@ -996,14 +964,10 @@ const saveFilterPreset = async (presetName) => {
       sortDirection: filterState.sortDirection
     }
     
-    await $fetch('/api/journal/filter-presets', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token.value}` },
-      body: {
-        name: presetName,
-        filter_configuration: JSON.stringify(filterConfig),
-        icon: 'fas fa-filter' // Default icon
-      }
+    await api.post('/journal/filter-presets', {
+      name: presetName,
+      filter_configuration: JSON.stringify(filterConfig),
+      icon: 'fas fa-filter' // Default icon
     })
     
     await loadFilterPresets()
@@ -1031,9 +995,11 @@ onMounted(async () => {
   if (isAuthenticated.value) {
     await Promise.all([
       loadBowSetups(),
-      loadEntryTypes(),
-      loadFilterPresets()
+      loadEntryTypes()
+      // loadFilterPresets() - optional feature, load separately
     ])
+    // Load filter presets separately - disabled due to API issues
+    // loadFilterPresets()
     await loadEntries()
   }
   

@@ -822,6 +822,7 @@ const completeSession = async () => {
     const completionData = {
       completion_notes: completionNotes.value.trim() || null,
       total_tests: completedTests.value.length,
+      skip_journal_creation: true, // Skip old journal creation, use new method instead
       session_data: {
         tuning_type: 'walkback',
         test_results: completedTests.value.map(test => ({
@@ -949,15 +950,19 @@ const createJournalEntryForSession = async (completionData) => {
     const entryData = {
       title,
       content,
-      entry_type: 'walkback_tuning_session',
+      entry_type: 'tuning_session', // Use generic tuning_session for modal detection
       bow_setup_id: sessionData.value?.bow_setup_id || null,
       linked_arrow: sessionData.value?.arrow_id || null, // Link to arrow for proper filtering
       tags: ['tuning', 'walkback', 'session', sessionData.value?.arrow?.material?.toLowerCase() || 'arrow'].filter(Boolean),
       is_private: false,
-      session_type: 'walkback_tuning', // For session type filtering
+      session_type: 'walkback', // Specific session type for filtering
       session_quality_score: qualityScore, // For quality-based filtering
-      session_data: {
-        ...completionData.session_data,
+      session_metadata: { // Use session_metadata instead of session_data
+        tuning_type: 'walkback', // Essential for modal display
+        session_quality: qualityScore,
+        test_results: completionData.session_data?.test_results || [],
+        drift_analysis: completionData.session_data?.drift_analysis || {},
+        final_recommendations: completionData.session_data?.final_recommendations || [],
         // Add additional context for the detail viewer
         arrow_info: sessionData.value?.arrow || {},
         bow_info: sessionData.value?.bow_setup || {},
@@ -967,7 +972,8 @@ const createJournalEntryForSession = async (completionData) => {
           started_at: sessionData.value?.started_at,
           completed_at: new Date().toISOString(),
           session_duration: sessionDuration
-        }
+        },
+        session_id: sessionId
       }
     }
     
@@ -1082,8 +1088,8 @@ const loadSessionData = async () => {
   try {
     loading.value = true
     const sessionId = route.params.sessionId
-    const response = await api.get(`/tuning-guides/sessions/${sessionId}`)
-    sessionData.value = response.session
+    const response = await api.get(`/tuning-guides/${sessionId}`)
+    sessionData.value = response
     
     if (response.tests && response.tests.length > 0) {
       completedTests.value = response.tests

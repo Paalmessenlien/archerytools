@@ -1981,9 +1981,9 @@ def complete_tuning_session(current_user, session_id):
             WHERE id = ?
         ''', (data.get('completion_notes', ''), session_id))
         
-        # Create journal entry if requested
+        # Create journal entry if requested (skip if handled externally)
         journal_entry_id = None
-        if data.get('save_to_journal', True):
+        if data.get('save_to_journal', True) and not data.get('skip_journal_creation', False):
             # Prepare journal entry data
             arrow_name = f"{session[12]} {session[13]}" if session[12] and session[13] else f"Arrow {session[7]}"
             bow_name = session[14] if session[14] else f"Bow Setup {session[2]}"
@@ -14215,11 +14215,19 @@ def create_journal_entry(current_user):
         elif data.get('session_metadata'):
             session_metadata = json.dumps(data['session_metadata']) if isinstance(data['session_metadata'], dict) else data['session_metadata']
         
+        # Extract arrow_id from linked_arrow if provided
+        arrow_id = None
+        if data.get('linked_arrow'):
+            if isinstance(data['linked_arrow'], int):
+                arrow_id = data['linked_arrow']
+            elif isinstance(data['linked_arrow'], list) and len(data['linked_arrow']) > 0:
+                arrow_id = data['linked_arrow'][0]  # Use first arrow if multiple
+
         cursor.execute('''
             INSERT INTO journal_entries 
             (user_id, bow_setup_id, title, content, entry_type, tags, is_private, 
-             session_metadata, session_type, session_quality_score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             session_metadata, session_type, session_quality_score, arrow_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             current_user['id'],
             data.get('bow_setup_id'),
@@ -14230,7 +14238,8 @@ def create_journal_entry(current_user):
             data.get('is_private', False),
             session_metadata,
             data.get('session_type', 'general'),
-            data.get('session_quality_score')
+            data.get('session_quality_score'),
+            arrow_id
         ))
         
         entry_id = cursor.lastrowid
