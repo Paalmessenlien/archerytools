@@ -178,7 +178,10 @@ watchEffect(() => {
 
   if (props.sessionStatus === 'active') {
     updateDuration()
-    durationInterval = setInterval(updateDuration, 1000)
+    // Only run setInterval on client-side to avoid SSR issues
+    if (process.client) {
+      durationInterval = setInterval(updateDuration, 1000)
+    }
   } else {
     updateDuration()
   }
