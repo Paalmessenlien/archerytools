@@ -1,6 +1,12 @@
 <template>
   <div 
     :class="['journal-entry-card', `card-${viewMode}`, { 'mobile-mode': isMobile }]"
+    @click="handleCardClick"
+    role="button"
+    tabindex="0"
+    :aria-label="`View journal entry: ${entry.title}`"
+    @keydown.enter="handleCardClick"
+    @keydown.space.prevent="handleCardClick"
   >
     <div class="entry-header">
       <div class="entry-meta">
@@ -284,6 +290,22 @@ const handleViewEntry = async (event) => {
   }
 }
 
+// Card click handler for mobile navigation and accessibility
+const handleCardClick = async (event) => {
+  // Prevent navigation if clicking on action buttons or interactive elements
+  const isActionButton = event.target.closest('md-icon-button, .entry-actions, .gallery-image, .linked-change-chip, .more-images-indicator, .more-changes-chip')
+  
+  if (isActionButton) {
+    console.log('JournalEntryCard: Click ignored - action button or interactive element clicked')
+    return
+  }
+
+  console.log('JournalEntryCard: Card clicked for entry:', props.entry?.id, 'isMobile:', isMobile.value)
+  
+  // Always allow card click navigation (works for both mobile and desktop)
+  await handleViewEntry(event)
+}
+
 
 // Mobile responsiveness detection
 const checkMobile = () => {
@@ -313,6 +335,12 @@ onUnmounted(() => {
   grid-template-columns: 1fr auto;
   gap: 1rem;
   align-items: start;
+  /* Enhanced touch feedback */
+  -webkit-tap-highlight-color: rgba(var(--md-sys-color-primary-rgb), 0.1);
+  touch-action: manipulation;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
 }
 
 /* Grid view specific styling */
@@ -921,6 +949,36 @@ onUnmounted(() => {
   .journal-entry-card:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
+    background: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-primary);
+  }
+  
+  /* Mobile ripple effect simulation */
+  .journal-entry-card:active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(var(--md-sys-color-primary-rgb), 0.1) 0%, transparent 70%);
+    border-radius: inherit;
+    animation: mobile-ripple 0.3s ease-out;
+    pointer-events: none;
+  }
+  
+  @keyframes mobile-ripple {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.2);
+    }
   }
   
   .swipe-action:active {
