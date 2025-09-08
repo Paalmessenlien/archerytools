@@ -309,6 +309,18 @@
         </button>
       </div>
     </div>
+
+    <!-- Journal Entry Detail Viewer -->
+    <JournalEntryDetailViewer
+      v-if="viewingEntry && showViewDialog"
+      :entry="viewingEntry"
+      @close="handleViewerClose"
+      @edit="handleViewerEdit"
+      @delete="handleViewerDelete"
+      @favorite="handleViewerFavorite"
+      @view-session="handleViewSession"
+      @start-similar="handleStartSimilar"
+    />
   </div>
 </template>
 
@@ -325,6 +337,7 @@ import BaseJournalView from '~/components/journal/BaseJournalView.vue'
 import BowSetupSettings from '~/components/BowSetupSettings.vue'
 import AddBowSetupModal from '~/components/AddBowSetupModal.vue'
 import EditArrowModal from '~/components/EditArrowModal.vue'
+import JournalEntryDetailViewer from '~/components/journal/JournalEntryDetailViewer.vue'
 import CustomButton from '~/components/CustomButton.vue'
 
 // Meta information
@@ -356,6 +369,10 @@ const journalEntryTypes = ref([
   { value: 'maintenance', label: 'Maintenance', icon: 'fas fa-wrench' },
   { value: 'general', label: 'General Note', icon: 'fas fa-sticky-note' }
 ])
+
+// Journal entry viewer state
+const viewingEntry = ref(null)
+const showViewDialog = ref(false)
 
 // Accordion state - overview expanded by default for primary workflow
 const expandedSections = ref({
@@ -640,8 +657,8 @@ const getNotificationIcon = (type) => {
 
 // Journal event handlers
 const handleJournalEntryView = (entry) => {
-  console.log('Viewing journal entry:', entry)
-  // Navigate to entry detail or open modal
+  viewingEntry.value = entry
+  showViewDialog.value = true
 }
 
 const handleJournalEntryEdit = (entry) => {
@@ -694,6 +711,40 @@ const handleJournalEntryFavorite = async (entry) => {
 const handleJournalFiltersUpdate = (filters) => {
   console.log('Journal filters updated:', filters)
   // Handle filter changes if needed
+}
+
+// Journal viewer event handlers
+const handleViewerClose = () => {
+  showViewDialog.value = false
+  viewingEntry.value = null
+}
+
+const handleViewerEdit = (entry) => {
+  showViewDialog.value = false
+  handleJournalEntryEdit(entry)
+}
+
+const handleViewerDelete = async (entry) => {
+  showViewDialog.value = false
+  await handleJournalEntryDelete(entry)
+}
+
+const handleViewerFavorite = async (entry) => {
+  await handleJournalEntryFavorite(entry)
+  // Update the viewing entry to reflect the new favorite status
+  if (viewingEntry.value && viewingEntry.value.id === entry.id) {
+    viewingEntry.value = { ...entry }
+  }
+}
+
+const handleViewSession = (sessionData) => {
+  console.log('View session:', sessionData)
+  // Navigate to the appropriate tuning session page
+}
+
+const handleStartSimilar = (sessionData) => {
+  console.log('Start similar session:', sessionData)
+  // Navigate to create a similar tuning session
 }
 
 const handleJournalLoadMore = async () => {

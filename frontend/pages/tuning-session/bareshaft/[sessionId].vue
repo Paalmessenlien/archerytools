@@ -958,12 +958,63 @@
       </div>
     </div>
   </div>
+
+  <!-- Session Completion Success Modal -->
+  <div v-if="showCompletionSuccessModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-check-circle text-3xl text-green-500"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Bareshaft Session Complete!
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400">
+          Your tuning session has been saved and added to your journal.
+        </p>
+      </div>
+
+      <!-- Session Summary -->
+      <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div class="flex items-center justify-between text-sm mb-2">
+          <span class="text-gray-600 dark:text-gray-400">Tests Completed:</span>
+          <span class="font-medium">{{ completedTests.length }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm mb-2">
+          <span class="text-gray-600 dark:text-gray-400">Session Quality:</span>
+          <span class="font-medium" :class="getQualityScoreClasses(sessionQualityScore)">
+            {{ Math.round(sessionQualityScore) }}%
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-600 dark:text-gray-400">Most Common Pattern:</span>
+          <span class="font-medium" v-html="mostCommonPattern.icon + ' ' + mostCommonPattern.name"></span>
+        </div>
+      </div>
+      
+      <!-- Navigation Options -->
+      <div class="space-y-3">
+        <button @click="navigateToArrow" 
+                class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Return to Arrow Setup
+        </button>
+        
+        <button @click="navigateToJournal" 
+                class="w-full px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-colors flex items-center justify-center">
+          <i class="fas fa-book mr-2"></i>
+          View in Journal
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
+import { useJournalApi } from '~/composables/useJournalApi'
 import TuningSessionHeader from '~/components/TuningSessionHeader.vue'
 
 // Set page title and meta
@@ -983,6 +1034,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const { createEntry } = useJournalApi()
 
 // Reactive data
 const sessionData = ref(null)
@@ -1651,17 +1703,33 @@ const completeSession = async () => {
     completingSession.value = true
     
     const sessionId = route.params.sessionId
-    await api.post(`/tuning-guides/sessions/${sessionId}/complete`, {
-      completion_notes: completionNotes.value.trim() || null,
-      total_tests: completedTests.value.length
-    })
     
-    // Navigate back to arrow setup
-    if (sessionData.value?.setup_arrow_id) {
-      router.push(`/setup-arrows/${sessionData.value.setup_arrow_id}`)
-    } else {
-      router.push('/my-setup')
+    // Prepare session completion data with enhanced tuning data
+    const completionData = {
+      completion_notes: completionNotes.value.trim() || null,
+      total_tests: completedTests.value.length,
+      session_data: {
+        tuning_type: 'bareshaft',
+        test_results: completedTests.value.map(test => ({
+          pattern: test.test_data?.impact_pattern,
+          pattern_name: test.test_data?.impact_pattern_name,
+          confidence_score: test.confidence_score,
+          notes: test.notes,
+          timestamp: test.timestamp
+        })),
+        final_recommendations: currentRecommendations.value?.basic || [],
+        session_quality: sessionQualityScore.value,
+        most_common_pattern: mostCommonPattern.value?.name || 'Unknown'
+      }
     }
+    
+    const response = await api.post(`/tuning-guides/sessions/${sessionId}/complete`, completionData)
+    
+    // Auto-create journal entry for this tuning session
+    await createJournalEntryForSession(completionData)
+    
+    // Show completion notification with return options
+    showCompletionSuccessModal.value = true
     
   } catch (error) {
     console.error('Error completing session:', error)
@@ -1670,6 +1738,191 @@ const completeSession = async () => {
     completingSession.value = false
   }
 }
+
+// Auto-create journal entry for completed tuning session
+const createJournalEntryForSession = async (completionData) => {
+  try {
+    const sessionId = route.params.sessionId
+    const sessionType = 'Bareshaft Tuning'
+    
+    // Generate meaningful title based on session results
+    const testsCount = completionData.total_tests || 0
+    const qualityScore = Math.round(completionData.session_data?.session_quality || 0)
+    const mostCommonPattern = completionData.session_data?.most_common_pattern || 'Unknown'
+    
+    // Get arrow name for better title
+    const arrowName = sessionData.value?.arrow ? 
+      `${sessionData.value.arrow.manufacturer} ${sessionData.value.arrow.model_name}` : 
+      `Arrow ${sessionData.value?.arrow_id || 'Unknown'}`
+    
+    const title = `${sessionType} Session - ${arrowName}`
+    
+    // Format dates properly
+    const sessionDate = new Date().toLocaleDateString()
+    const sessionTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const sessionDuration = sessionData.value?.started_at ? 
+      formatSessionDuration(sessionData.value.started_at, new Date().toISOString()) : 
+      'Unknown'
+    
+    // Create structured content with better formatting
+    let content = `# ${sessionType} Session - ${arrowName}\n\n`
+    
+    content += `## Session Details\n`
+    content += `- **Arrow**: ${arrowName}\n`
+    content += `- **Bow Setup**: ${sessionData.value?.bow_setup?.name || 'Unknown'}\n`
+    content += `- **Arrow Length**: ${sessionData.value?.arrow_length || 'Not specified'} inches\n`
+    content += `- **Point Weight**: ${sessionData.value?.point_weight || 'Not specified'} grains\n`
+    content += `- **Date**: ${sessionDate}\n`
+    content += `- **Time**: ${sessionTime}\n`
+    content += `- **Session Duration**: ${sessionDuration}\n`
+    content += `- **Session Quality**: ${qualityScore}%\n\n`
+    
+    // Add test results in detailed format
+    if (completionData.session_data?.test_results?.length > 0) {
+      content += `## Test Results\n`
+      content += `**${testsCount} tests completed with most common pattern: ${mostCommonPattern}**\n\n`
+      
+      completionData.session_data.test_results.forEach((test, index) => {
+        content += `### Test ${index + 1}\n`
+        content += `- **Impact Pattern**: ${test.pattern_name}\n`
+        content += `- **Confidence Score**: ${Math.round(test.confidence_score)}%\n`
+        if (test.notes) {
+          content += `- **Notes**: ${test.notes}\n`
+        }
+        content += `- **Time**: ${new Date(test.timestamp).toLocaleTimeString()}\n\n`
+      })
+    }
+    
+    // Add recommendations if available
+    if (completionData.session_data?.final_recommendations?.length > 0) {
+      content += `## Tuning Recommendations\n`
+      completionData.session_data.final_recommendations.forEach((rec, index) => {
+        content += `${index + 1}. **${rec.title}**\n`
+        content += `   ${rec.instruction}\n\n`
+      })
+    }
+    
+    // Add session notes
+    if (completionData.completion_notes) {
+      content += `## Session Notes\n${completionData.completion_notes}\n\n`
+    }
+    
+    content += `---\n`
+    content += `*Session completed successfully with ${qualityScore}% quality score*`
+    
+    // Prepare journal entry data
+    const entryData = {
+      title,
+      content,
+      entry_type: 'bareshaft_tuning_session',
+      bow_setup_id: sessionData.value?.bow_setup_id || null,
+      linked_arrow: sessionData.value?.arrow_id || null, // Link to arrow for proper filtering
+      tags: ['tuning', 'bareshaft', 'session', sessionData.value?.arrow?.material?.toLowerCase() || 'arrow'].filter(Boolean),
+      is_private: false,
+      session_type: 'bareshaft_tuning', // For session type filtering
+      session_quality_score: qualityScore, // For quality-based filtering
+      session_data: {
+        ...completionData.session_data,
+        // Add additional context for the detail viewer
+        arrow_info: sessionData.value?.arrow || {},
+        bow_info: sessionData.value?.bow_setup || {},
+        session_details: {
+          arrow_length: sessionData.value?.arrow_length,
+          point_weight: sessionData.value?.point_weight,
+          started_at: sessionData.value?.started_at,
+          completed_at: new Date().toISOString(),
+          session_duration: sessionDuration
+        }
+      }
+    }
+    
+    // Create the journal entry
+    const result = await createEntry(entryData)
+    
+    if (result.success) {
+      console.log('Journal entry created successfully for tuning session:', result.data.id)
+    } else {
+      console.error('Failed to create journal entry:', result.error)
+    }
+    
+  } catch (error) {
+    console.error('Error creating journal entry for session:', error)
+    // Don't throw error to avoid disrupting the session completion flow
+  }
+}
+
+// Helper function to format session duration
+const formatSessionDuration = (startTime, endTime) => {
+  try {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const durationMs = end - start
+    const minutes = Math.floor(durationMs / (1000 * 60))
+    const hours = Math.floor(minutes / 60)
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`
+    } else {
+      return `${minutes}m`
+    }
+  } catch (error) {
+    return 'Unknown'
+  }
+}
+
+// Add navigation handlers
+const navigateToArrow = async () => {
+  try {
+    // First check if we already have setup_arrow_id in session data
+    if (sessionData.value?.setup_arrow_id) {
+      router.push(`/setup-arrows/${sessionData.value.setup_arrow_id}`)
+      return
+    }
+    
+    // If not, we need to find it using bow_setup_id and arrow_id
+    if (sessionData.value?.bow_setup_id && sessionData.value?.arrow_id) {
+      const setupArrowId = await findSetupArrowId(sessionData.value.bow_setup_id, sessionData.value.arrow_id)
+      if (setupArrowId) {
+        router.push(`/setup-arrows/${setupArrowId}`)
+        return
+      }
+    }
+    
+    // Fallback to general setup page
+    router.push('/my-setup')
+  } catch (error) {
+    console.error('Error navigating to arrow setup:', error)
+    router.push('/my-setup')
+  }
+}
+
+// Helper function to find setup_arrow_id from bow_setup_id and arrow_id
+const findSetupArrowId = async (bowSetupId, arrowId) => {
+  try {
+    const response = await api.get('/my-setups')
+    const bowSetups = response.setups || []
+    
+    // Find the bow setup
+    const bowSetup = bowSetups.find(setup => setup.id === bowSetupId)
+    if (!bowSetup || !bowSetup.arrows) {
+      return null
+    }
+    
+    // Find the arrow in this bow setup
+    const setupArrow = bowSetup.arrows.find(arrow => arrow.arrow_id === arrowId)
+    return setupArrow ? setupArrow.id : null
+    
+  } catch (error) {
+    console.error('Error finding setup arrow ID:', error)
+    return null
+  }
+}
+
+const navigateToJournal = () => {
+  router.push('/journal')
+}
+
+const showCompletionSuccessModal = ref(false)
 
 const handlePause = () => {
   console.log('Pause/Resume session')

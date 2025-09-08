@@ -91,18 +91,6 @@
       />
     </ClientOnly>
 
-    <!-- View Entry Dialog -->
-    <ClientOnly>
-      <JournalEntryViewer
-        v-if="showViewDialog"
-        :show="showViewDialog"
-        :entry="viewingEntry"
-        @close="showViewDialog = false"
-        @edit="editFromViewer"
-        @delete="deleteFromViewer"
-      />
-    </ClientOnly>
-
     <!-- Draft Restore Dialog -->
     <div v-if="showDraftRestoreDialog" class="modal-overlay" @click="discardDraft">
       <div class="draft-restore-modal" @click.stop>
@@ -129,6 +117,19 @@
     </div>
     </div>
   </div>
+
+  <!-- View Entry Dialog - Outside main containers for proper positioning -->
+  <ClientOnly>
+    <JournalEntryDetailViewer
+      v-if="showViewDialog"
+      :show="showViewDialog"
+      :entry="viewingEntry"
+      @close="showViewDialog = false"
+      @edit="editFromViewer"
+      @delete="deleteFromViewer"
+      @favorite="handleToggleFavorite"
+    />
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -139,6 +140,7 @@ import { useJournalApi } from '@/composables/useJournalApi'
 import type { JournalEntry, JournalEntryCreate } from '@/composables/useJournalApi'
 import JournalChangeLog from '~/components/JournalChangeLog.vue'
 import BaseJournalView from '~/components/journal/BaseJournalView.vue'
+import JournalEntryDetailViewer from '~/components/journal/JournalEntryDetailViewer.vue'
 import { useGlobalNotifications } from '@/composables/useNotificationSystem'
 // Removed complex filtering composable - using direct filtering instead
 import { usePagination, createPaginationFromResponse } from '@/composables/usePagination'
@@ -611,8 +613,8 @@ const handleJournalFromChangeLog = (journalData) => {
 }
 
 const viewEntry = (entry: JournalEntry) => {
-  // Navigate to full-page journal entry viewer
-  navigateTo(`/journal/${entry.id}`)
+  viewingEntry.value = entry
+  showViewDialog.value = true
 }
 
 const editFromViewer = () => {

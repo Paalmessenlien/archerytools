@@ -295,6 +295,33 @@ Intelligent manufacturer detection and linking system:
 - **Analytics Dashboard**: Comprehensive insights into journaling patterns
 - **Custom Categories**: Personal organization with colors and icons
 
+#### [September 2025 Journal System Overhaul](SEPTEMBER_2025_JOURNAL_SYSTEM_OVERHAUL.md) 🔄 **NEW**
+**September 2025** - Comprehensive journal system integration fixes and enhancements:
+- **Critical Issue Resolution**: Fixed poor display formatting and non-functional modal clicks across all journal locations
+- **Interactive Guides Integration**: Living session history where tuning sessions create rich educational journal entries
+- **Unified User Experience**: Consistent behavior across main journal, bow setups, and arrow setups
+- **Enhanced Session Display**: Professional visualization of bareshaft, paper, and walkback tuning data
+- **Quality Assessment System**: Comprehensive session scoring with visual indicators and progress tracking
+- **Technical Architecture**: Event unification, database integration, and performance optimization
+
+#### [Journal Integration Fixes](JOURNAL_INTEGRATION_FIXES.md) 🛠️ **NEW**
+**September 2025** - Detailed technical implementation of journal system fixes:
+- **Session Data Display**: Enhanced parsing of session_metadata for proper visualization
+- **Event Handling**: Unified event system fixing modal click functionality
+- **Database Schema**: Integration with session metadata, quality scoring, and equipment linking
+- **Component Architecture**: Enhanced JournalEntryDetailViewer with rich session visualization
+- **Migration Support**: Backward compatibility ensuring seamless upgrade path
+- **Performance Optimization**: Computed properties, efficient rendering, and error handling
+
+#### [Interactive Tuning Guides Integration](INTERACTIVE_TUNING_GUIDES_INTEGRATION.md) 🎯 **NEW**
+**September 2025** - Comprehensive documentation of interactive tuning guides system:
+- **Guide Architecture**: Bareshaft, paper, and walkback tuning guide implementations
+- **Session Data Flow**: Progressive data collection, quality assessment, and journal integration
+- **Rich Visualization**: Enhanced display of test results, confidence scoring, and recommendations
+- **Learning System**: Quality algorithms, pattern recognition, and progressive skill development
+- **Professional Workflow**: Seamless integration with bow/arrow setups and equipment tracking
+- **Future Enhancement**: AI integration, social features, and advanced analytics roadmap
+
 ---
 
 ## Quick Reference

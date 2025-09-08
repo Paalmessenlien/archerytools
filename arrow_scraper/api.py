@@ -14039,6 +14039,7 @@ def get_journal_entries(current_user):
         entry_type = request.args.get('entry_type')
         search_query = request.args.get('search')
         tags = request.args.get('tags')  # Comma-separated tags
+        has_session_data = request.args.get('has_session_data', type=bool)
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
         
@@ -14073,9 +14074,14 @@ def get_journal_entries(current_user):
             ''')
             params.append(linked_arrow)
         
+        
         if entry_type:
             where_conditions.append('je.entry_type = ?')
             params.append(entry_type)
+        
+        if has_session_data:
+            where_conditions.append('je.session_metadata IS NOT NULL')
+            where_conditions.append('je.session_metadata != ""')
         
         # Full-text search if query provided
         if search_query:
@@ -14123,6 +14129,14 @@ def get_journal_entries(current_user):
                     entry['tags'] = []
             else:
                 entry['tags'] = []
+            
+            # Parse session metadata JSON
+            if entry.get('session_metadata'):
+                try:
+                    if isinstance(entry['session_metadata'], str):
+                        entry['session_metadata'] = json.loads(entry['session_metadata'])
+                except:
+                    entry['session_metadata'] = None
             
             # Get images for this entry
             cursor.execute('''
@@ -14194,10 +14208,18 @@ def create_journal_entry(current_user):
         # Create journal entry
         tags_json = json.dumps(data.get('tags', [])) if data.get('tags') else None
         
+        # Handle session metadata - accept both session_data (from frontend) and session_metadata
+        session_metadata = None
+        if data.get('session_data'):
+            session_metadata = json.dumps(data['session_data']) if isinstance(data['session_data'], dict) else data['session_data']
+        elif data.get('session_metadata'):
+            session_metadata = json.dumps(data['session_metadata']) if isinstance(data['session_metadata'], dict) else data['session_metadata']
+        
         cursor.execute('''
             INSERT INTO journal_entries 
-            (user_id, bow_setup_id, title, content, entry_type, tags, is_private)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (user_id, bow_setup_id, title, content, entry_type, tags, is_private, 
+             session_metadata, session_type, session_quality_score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             current_user['id'],
             data.get('bow_setup_id'),
@@ -14205,7 +14227,10 @@ def create_journal_entry(current_user):
             data['content'],
             data.get('entry_type', 'general'),
             tags_json,
-            data.get('is_private', False)
+            data.get('is_private', False),
+            session_metadata,
+            data.get('session_type', 'general'),
+            data.get('session_quality_score')
         ))
         
         entry_id = cursor.lastrowid
