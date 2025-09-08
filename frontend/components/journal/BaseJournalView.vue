@@ -163,7 +163,6 @@
           :entry="entry"
           :view-mode="isMobile ? 'mobile' : 'list'"
           :context="context"
-          @view="viewEntry"
           @edit="editEntry"
           @delete="deleteEntry"
           @toggle-favorite="toggleFavorite"
@@ -263,7 +262,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'entry:view',
   'entry:edit',
   'entry:delete',
   'entry:create',
@@ -333,10 +331,6 @@ const handleQuickEntrySave = (entry) => {
 const handleAutoSave = (draft) => {
   // Auto-save draft functionality
   console.log('Auto-saving draft:', draft)
-}
-
-const viewEntry = (entry) => {
-  emit('entry:view', entry)
 }
 
 const editEntry = (entry) => {

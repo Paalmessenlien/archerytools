@@ -10,11 +10,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const { token, fetchUser, initializeClientAuth } = useAuth();
 
   // Initialize client auth first
-  initializeClientAuth();
-
-  if (token.value) {
-    await fetchUser();
-  }
+  await initializeClientAuth();
 
   // Define public routes that don't require authentication
   const publicRoutes = [
@@ -27,8 +23,20 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Check if the current route is public
   const isPublicRoute = publicRoutes.includes(to.path);
 
-  // If not a public route and user is not authenticated, redirect to login
-  if (!isPublicRoute && !token.value) {
-    return navigateTo('/login');
+  // For public routes, just initialize auth but don't redirect
+  if (isPublicRoute) {
+    if (token.value) {
+      await fetchUser();
+    }
+    return;
+  }
+
+  // For protected routes, try to fetch user if we have a token
+  if (token.value) {
+    await fetchUser();
+  } else {
+    // Only redirect to login if we're sure there's no valid auth
+    // Let the specific route middleware (like auth-check) handle this
+    console.log('Global middleware: No token found for protected route, letting route middleware handle it');
   }
 });

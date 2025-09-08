@@ -15,8 +15,7 @@ export default defineNuxtConfig({
   
   // CSS Configuration
   css: [
-    '~/assets/css/main.css',
-    '~/assets/kit-d6250ee9a9-web/css/all.min.css'
+    '~/assets/css/main.css'
   ],
   
   // Runtime Config for API
@@ -65,7 +64,9 @@ export default defineNuxtConfig({
       ],
       script: [
         // Chart.js from CDN to avoid build issues
-        { src: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js', defer: true }
+        { src: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js', defer: true },
+        // FontAwesome Kit
+        { src: 'https://kit.fontawesome.com/d6250ee9a9.js', crossorigin: 'anonymous' }
       ],
       // Theme class will be set by useDarkMode composable
     }
