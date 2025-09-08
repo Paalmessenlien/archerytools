@@ -889,12 +889,12 @@ const addToSetup = async (recommendation) => {
     const result = await addArrowToSetup(props.selectedBowSetup.id, arrowData)
     console.log('API call successful:', result)
 
-    // Emit event to parent component
-    console.log('Emitting arrow-added-to-setup event')
+    // Emit event to parent component with the API response
+    console.log('Emitting arrow-added-to-setup event with API result:', result)
     emit('arrow-added-to-setup', {
       arrow: recommendation.arrow,
       setup: props.selectedBowSetup,
-      arrowData
+      arrowData: result  // Pass the API response which contains the setup_arrows ID
     })
 
   } catch (error) {

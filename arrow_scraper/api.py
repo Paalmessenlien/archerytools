@@ -100,7 +100,7 @@ def get_current_user_optional():
         if not token:
             return None
         
-        data = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=["HS256"])
+        data = jwt.decode(token, os.environ.get("SECRET_KEY", "arrow-tuning-secret-key-change-in-production"), algorithms=["HS256"])
         db = UnifiedDatabase()
         current_user = db.get_user_by_id(data["user_id"])
         return current_user
@@ -1939,6 +1939,443 @@ def create_enhanced_tuning_session(current_user):
         
     except Exception as e:
         print(f"Error creating enhanced tuning session: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/tuning-guides/sessions/<int:session_id>/complete', methods=['POST'])
+@token_required
+def complete_tuning_session(current_user, session_id):
+    """Complete a tuning session and optionally save results to journal"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get session details
+        cursor.execute('''
+            SELECT gs.*, a.manufacturer, a.model_name, bs.name as bow_name
+            FROM guide_sessions gs
+            LEFT JOIN arrows a ON gs.arrow_id = a.id
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.id = ? AND gs.user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Session not found or access denied'}), 404
+        
+        # Update session status
+        cursor.execute('''
+            UPDATE guide_sessions 
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP,
+                completion_notes = ?
+            WHERE id = ?
+        ''', (data.get('completion_notes', ''), session_id))
+        
+        # Create journal entry if requested (skip if handled externally)
+        journal_entry_id = None
+        if data.get('save_to_journal', True) and not data.get('skip_journal_creation', False):
+            # Prepare journal entry data
+            arrow_name = f"{session[12]} {session[13]}" if session[12] and session[13] else f"Arrow {session[7]}"
+            bow_name = session[14] if session[14] else f"Bow Setup {session[2]}"
+            
+            title = f"{session[3].replace('_', ' ').title()} Session - {arrow_name}"
+            content = f"""# {title}
+
+## Session Details
+- **Arrow**: {arrow_name}
+- **Bow Setup**: {bow_name}  
+- **Arrow Length**: {session[8]}"
+- **Point Weight**: {session[9]} grains
+- **Session Duration**: {session[6]} to {datetime.now().strftime('%Y-%m-%d %H:%M')}
+
+## Test Results
+{data.get('test_summary', 'Test results recorded during session.')}
+
+## Conclusions
+{data.get('conclusion', 'Session completed successfully.')}
+
+## Notes
+{data.get('completion_notes', session[11] if session[11] else 'No additional notes.')}
+"""
+            
+            # Insert journal entry
+            cursor.execute('''
+                INSERT INTO journal_entries (
+                    user_id, entry_type, title, content, 
+                    bow_setup_id, arrow_id, is_favorite, created_at
+                ) VALUES (?, 'tuning_session', ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+            ''', (current_user['id'], title, content, session[2], session[7]))
+            
+            journal_entry_id = cursor.lastrowid
+        
+        conn.commit()
+        
+        response_data = {
+            'success': True,
+            'session_id': session_id,
+            'status': 'completed',
+            'journal_entry_id': journal_entry_id,
+            'message': 'Session completed successfully'
+        }
+        
+        if journal_entry_id:
+            response_data['journal_saved'] = True
+            response_data['message'] += ' and saved to journal'
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        print(f"Error completing tuning session: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/tuning-guides/sessions/<int:session_id>', methods=['GET'])
+@token_required  
+def get_tuning_guide_session(current_user, session_id):
+    """Get tuning session details"""
+    try:
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get session with related data
+        cursor.execute('''
+            SELECT gs.*, a.manufacturer, a.model_name, a.material,
+                   bs.name as bow_name, bs.bow_type
+            FROM guide_sessions gs
+            LEFT JOIN arrows a ON gs.arrow_id = a.id  
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.id = ? AND gs.user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Session not found or access denied'}), 404
+        
+        # Convert to dict
+        session_data = {
+            'session_id': session[0],
+            'user_id': session[1],
+            'bow_setup_id': session[2],
+            'guide_name': session[3],
+            'guide_type': session[4],
+            'status': session[5],
+            'started_at': session[6],
+            'arrow_id': session[7],
+            'arrow_length': session[8],
+            'point_weight': session[9],
+            'notes': session[11],
+            'completed_at': session[12] if len(session) > 12 else None,
+            'completion_notes': session[13] if len(session) > 13 else None,
+            'arrow': {
+                'manufacturer': session[14] if len(session) > 14 else None,
+                'model_name': session[15] if len(session) > 15 else None,
+                'material': session[16] if len(session) > 16 else None
+            },
+            'bow_setup': {
+                'name': session[17] if len(session) > 17 else None,
+                'bow_type': session[18] if len(session) > 18 else None
+            }
+        }
+        
+        return jsonify(session_data), 200
+        
+    except Exception as e:
+        print(f"Error getting tuning session: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/tuning-guides/<int:session_id>', methods=['GET'])
+@token_required  
+def get_session_data(current_user, session_id):
+    """Get tuning session data for the frontend page - simplified endpoint"""
+    try:
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get session with complete related data for enhanced journal entries
+        cursor.execute('''
+            SELECT gs.*, 
+                   a.manufacturer, a.model_name, a.material,
+                   ss.spine, ss.outer_diameter, ss.gpi_weight, ss.inner_diameter, 
+                   ss.diameter_category, ss.wall_thickness, ss.nock_size,
+                   ss.straightness_tolerance, ss.weight_tolerance,
+                   bs.name, bs.bow_type, bs.draw_weight, bs.draw_length,
+                   bs.bow_make, bs.bow_model, bs.brace_height, bs.riser_brand, bs.riser_model,
+                   bs.limb_brand, bs.limb_model, bs.compound_brand, bs.compound_model,
+                   bs.ibo_speed, bs.measured_speed_fps, bs.description
+            FROM guide_sessions gs
+            LEFT JOIN arrows a ON gs.arrow_id = a.id  
+            LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+            LEFT JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+            WHERE gs.id = ? AND gs.user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Session not found or access denied'}), 404
+        
+        # Convert to dict with frontend-friendly structure with complete data
+        # Column mapping based on the SQL query:
+        # gs.* (guide_sessions columns 0-19), then arrow data (20-22), spine specs (23-31), bow setup (32+)
+        session_data = {
+            'session_id': session[0],  # gs.id
+            'guide_type': session[4],   # gs.guide_type
+            'status': session[5],       # gs.status 
+            'started_at': session[8],   # gs.started_at
+            'arrow_id': session[15],    # gs.arrow_id
+            'arrow_length': session[16], # gs.arrow_length 
+            'point_weight': session[17], # gs.point_weight
+            'bow_setup_id': session[2], # gs.bow_setup_id
+            'notes': session[10] if session[10] else '', # gs.notes
+            'arrow': {
+                'id': session[15],  # gs.arrow_id
+                'manufacturer': session[20] if len(session) > 20 and session[20] else 'Unknown',  # a.manufacturer
+                'model_name': session[21] if len(session) > 21 and session[21] else 'Unknown',    # a.model_name
+                'material': session[22] if len(session) > 22 and session[22] else 'Unknown',      # a.material
+                'spine': session[23] if len(session) > 23 and session[23] else None,              # ss.spine
+                'outer_diameter': session[24] if len(session) > 24 and session[24] else None,     # ss.outer_diameter
+                'gpi_weight': session[25] if len(session) > 25 and session[25] else None,         # ss.gpi_weight
+                'inner_diameter': session[26] if len(session) > 26 and session[26] else None,     # ss.inner_diameter
+                'diameter_category': session[27] if len(session) > 27 and session[27] else None,  # ss.diameter_category
+                'wall_thickness': session[28] if len(session) > 28 and session[28] else None,     # ss.wall_thickness
+                'nock_size': session[29] if len(session) > 29 and session[29] else None,          # ss.nock_size
+                'straightness_tolerance': session[30] if len(session) > 30 and session[30] else None, # ss.straightness_tolerance
+                'weight_tolerance': session[31] if len(session) > 31 and session[31] else None    # ss.weight_tolerance
+            },
+            'bow_setup': {
+                'id': session[2],  # gs.bow_setup_id
+                'name': session[32] if len(session) > 32 and session[32] else 'Unknown Setup',           # bs.name
+                'bow_type': session[33] if len(session) > 33 and session[33] else 'compound',            # bs.bow_type
+                'draw_weight': session[34] if len(session) > 34 and session[34] else 0,                  # bs.draw_weight
+                'draw_length': session[35] if len(session) > 35 and session[35] else 0,                  # bs.draw_length
+                'bow_make': session[36] if len(session) > 36 and session[36] else None,                  # bs.bow_make
+                'bow_model': session[37] if len(session) > 37 and session[37] else None,                 # bs.bow_model
+                'brace_height': session[38] if len(session) > 38 and session[38] else None,              # bs.brace_height
+                'riser_brand': session[39] if len(session) > 39 and session[39] else None,               # bs.riser_brand
+                'riser_model': session[40] if len(session) > 40 and session[40] else None,               # bs.riser_model
+                'limb_brand': session[41] if len(session) > 41 and session[41] else None,                # bs.limb_brand
+                'limb_model': session[42] if len(session) > 42 and session[42] else None,                # bs.limb_model
+                'compound_brand': session[43] if len(session) > 43 and session[43] else None,            # bs.compound_brand
+                'compound_model': session[44] if len(session) > 44 and session[44] else None,            # bs.compound_model
+                'ibo_speed': session[45] if len(session) > 45 and session[45] else None,                 # bs.ibo_speed
+                'measured_speed_fps': session[46] if len(session) > 46 and session[46] else None,        # bs.measured_speed_fps
+                'description': session[47] if len(session) > 47 and session[47] else None               # bs.description
+            }
+        }
+        
+        return jsonify(session_data), 200
+        
+    except Exception as e:
+        print(f"Error getting session data: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/tuning-guides/sessions/<int:session_id>/test', methods=['POST'])
+@token_required
+def record_tuning_test(current_user, session_id):
+    """Record a test result for a tuning session"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Get database connection
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Verify session exists and belongs to user
+        cursor.execute('''
+            SELECT id, status FROM guide_sessions 
+            WHERE id = ? AND user_id = ?
+        ''', (session_id, current_user['id']))
+        
+        session = cursor.fetchone()
+        if not session:
+            return jsonify({'error': 'Session not found or access denied'}), 404
+        
+        if session[1] != 'active':
+            return jsonify({'error': 'Session is not active'}), 400
+        
+        # Record test data properly formatted for different tuning types
+        if data.get('test_type') == 'paper_tuning':
+            test_summary = f"Test {data.get('test_number', 'N/A')}: "
+            test_summary += f"Tear at {data.get('tear_position', 'unknown')} "
+            test_summary += f"({data.get('tear_direction', 'unknown')} direction), "
+            test_summary += f"magnitude: {data.get('tear_magnitude', 'unknown')}"
+            
+            if data.get('environmental_conditions'):
+                env = data.get('environmental_conditions')
+                if env.get('wind') or env.get('lighting'):
+                    test_summary += f", conditions: wind={env.get('wind', 'unknown')} lighting={env.get('lighting', 'unknown')}"
+            
+            if data.get('notes'):
+                test_summary += f", notes: {data.get('notes')}"
+        elif data.get('test_type') == 'bareshaft_tuning':
+            test_data = data.get('test_data', {})
+            test_summary = f"Test {data.get('test_number', 'N/A')}: "
+            test_summary += f"Distance: {test_data.get('shooting_distance_m', 'unknown')}m, "
+            test_summary += f"Offset: {test_data.get('offset_distance_cm', 'unknown')}cm {test_data.get('bareshaft_offset', 'unknown')}, "
+            test_summary += f"Consistency: {test_data.get('group_consistency', 'unknown')}"
+            
+            if data.get('notes'):
+                test_summary += f", notes: {data.get('notes')}"
+        else:
+            test_summary = f"Test {data.get('test_number', 'N/A')}: {data.get('result', 'No result')}"
+        
+        # Generate intelligent recommendations using TuningRuleEngine
+        recommendations = []
+        tuning_analysis = {}
+        
+        if data.get('test_type') == 'paper_tuning' and data.get('tear_direction'):
+            direction = data.get('tear_direction')
+            if direction == 'clean':
+                recommendations.append("Perfect! This arrow is well-tuned.")
+            elif direction in ['high', 'low']:
+                recommendations.append("Vertical tear detected. Check nocking point height or arrow spine.")
+            elif direction in ['left', 'right']:
+                recommendations.append("Horizontal tear detected. Adjust rest position or arrow spine.")
+            else:
+                recommendations.append("Multi-directional tear. May need combined adjustments.")
+        elif data.get('test_type') == 'bareshaft_tuning':
+            # Use TuningRuleEngine for bareshaft analysis
+            try:
+                # Get bow setup information for this session
+                cursor.execute('''
+                    SELECT bs.bow_type, bs.handedness 
+                    FROM guide_sessions gs
+                    JOIN bow_setups bs ON gs.bow_setup_id = bs.id
+                    WHERE gs.id = ?
+                ''', (session_id,))
+                bow_info = cursor.fetchone()
+                
+                if bow_info:
+                    bow_type = bow_info[0] if bow_info[0] else 'compound'
+                    handedness = bow_info[1] if bow_info[1] else 'RH'
+                    
+                    # Create rule engine and analyze test
+                    rule_engine = create_tuning_rule_engine(bow_type, handedness)
+                    test_data_for_analysis = data.get('test_data', {})
+                    tuning_analysis = rule_engine.analyze_test_result('bareshaft_tuning', test_data_for_analysis)
+                    
+                    # Extract recommendations from analysis
+                    if tuning_analysis.get('recommendations'):
+                        for rec in tuning_analysis['recommendations']:
+                            rec_text = f"{rec.get('component', 'Setup')}: {rec.get('action', 'adjust')} {rec.get('magnitude', '')}"
+                            if rec.get('reason'):
+                                rec_text += f" - {rec.get('reason')}"
+                            recommendations.append(rec_text)
+                    
+                    if not recommendations:
+                        recommendations.append("Analysis complete. Check detailed results for specific adjustments.")
+                else:
+                    recommendations.append("Could not retrieve bow setup information for detailed analysis.")
+            except Exception as e:
+                print(f"Error in bareshaft tuning analysis: {e}")
+                recommendations.append("Basic analysis: Review offset distance and direction for tuning adjustments.")
+        
+        # Store test data in session_data and summary in notes
+        try:
+            # Get current session_data to append new test
+            cursor.execute('SELECT session_data FROM guide_sessions WHERE id = ?', (session_id,))
+            current_session_data = cursor.fetchone()[0]
+            
+            # Parse existing session data
+            session_data = {}
+            if current_session_data:
+                try:
+                    session_data = json.loads(current_session_data)
+                except json.JSONDecodeError:
+                    session_data = {}
+            
+            # Initialize tests array if it doesn't exist
+            if 'tests' not in session_data:
+                session_data['tests'] = []
+            
+            # Add new test data
+            test_record = {
+                'test_number': data.get('test_number'),
+                'test_type': data.get('test_type'),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'test_data': data.get('test_data', {}),
+                'notes': data.get('notes', ''),
+                'summary': test_summary
+            }
+            
+            # Include tuning analysis if available
+            if tuning_analysis:
+                test_record['analysis'] = tuning_analysis
+            
+            session_data['tests'].append(test_record)
+            
+            # Update both session_data and notes
+            cursor.execute('''
+                UPDATE guide_sessions 
+                SET notes = COALESCE(notes, '') || ? || char(10),
+                    current_step = current_step + 1,
+                    session_data = ?
+                WHERE id = ?
+            ''', (test_summary, json.dumps(session_data), session_id))
+            
+        except Exception as e:
+            print(f"Error storing session data: {e}")
+            # Fall back to just updating notes
+            cursor.execute('''
+                UPDATE guide_sessions 
+                SET notes = COALESCE(notes, '') || ? || char(10),
+                    current_step = current_step + 1
+                WHERE id = ?
+            ''', (test_summary, session_id))
+        
+        conn.commit()
+        
+        response_data = {
+            'success': True,
+            'message': 'Test recorded successfully',
+            'test_number': data.get('test_number'),
+            'id': session_id,  # Return session ID as test ID for frontend
+            'recommendations': recommendations
+        }
+        
+        # Include detailed tuning analysis for bareshaft tests
+        if tuning_analysis:
+            response_data['analysis'] = {
+                'confidence_score': tuning_analysis.get('confidence_score', 0),
+                'detailed_recommendations': tuning_analysis.get('recommendations', []),
+                'analysis_summary': tuning_analysis.get('analysis_summary', ''),
+                'tuning_status': tuning_analysis.get('tuning_status', 'unknown')
+            }
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        print(f"Error recording tuning test: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
         if 'conn' in locals():
@@ -13602,6 +14039,7 @@ def get_journal_entries(current_user):
         entry_type = request.args.get('entry_type')
         search_query = request.args.get('search')
         tags = request.args.get('tags')  # Comma-separated tags
+        has_session_data = request.args.get('has_session_data', type=bool)
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
         
@@ -13636,9 +14074,14 @@ def get_journal_entries(current_user):
             ''')
             params.append(linked_arrow)
         
+        
         if entry_type:
             where_conditions.append('je.entry_type = ?')
             params.append(entry_type)
+        
+        if has_session_data:
+            where_conditions.append('je.session_metadata IS NOT NULL')
+            where_conditions.append('je.session_metadata != ""')
         
         # Full-text search if query provided
         if search_query:
@@ -13686,6 +14129,14 @@ def get_journal_entries(current_user):
                     entry['tags'] = []
             else:
                 entry['tags'] = []
+            
+            # Parse session metadata JSON
+            if entry.get('session_metadata'):
+                try:
+                    if isinstance(entry['session_metadata'], str):
+                        entry['session_metadata'] = json.loads(entry['session_metadata'])
+                except:
+                    entry['session_metadata'] = None
             
             # Get images for this entry
             cursor.execute('''
@@ -13757,10 +14208,26 @@ def create_journal_entry(current_user):
         # Create journal entry
         tags_json = json.dumps(data.get('tags', [])) if data.get('tags') else None
         
+        # Handle session metadata - accept both session_data (from frontend) and session_metadata
+        session_metadata = None
+        if data.get('session_data'):
+            session_metadata = json.dumps(data['session_data']) if isinstance(data['session_data'], dict) else data['session_data']
+        elif data.get('session_metadata'):
+            session_metadata = json.dumps(data['session_metadata']) if isinstance(data['session_metadata'], dict) else data['session_metadata']
+        
+        # Extract arrow_id from linked_arrow if provided
+        arrow_id = None
+        if data.get('linked_arrow'):
+            if isinstance(data['linked_arrow'], int):
+                arrow_id = data['linked_arrow']
+            elif isinstance(data['linked_arrow'], list) and len(data['linked_arrow']) > 0:
+                arrow_id = data['linked_arrow'][0]  # Use first arrow if multiple
+
         cursor.execute('''
             INSERT INTO journal_entries 
-            (user_id, bow_setup_id, title, content, entry_type, tags, is_private)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (user_id, bow_setup_id, title, content, entry_type, tags, is_private, 
+             session_metadata, session_type, session_quality_score, arrow_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             current_user['id'],
             data.get('bow_setup_id'),
@@ -13768,7 +14235,11 @@ def create_journal_entry(current_user):
             data['content'],
             data.get('entry_type', 'general'),
             tags_json,
-            data.get('is_private', False)
+            data.get('is_private', False),
+            session_metadata,
+            data.get('session_type', 'general'),
+            data.get('session_quality_score'),
+            arrow_id
         ))
         
         entry_id = cursor.lastrowid

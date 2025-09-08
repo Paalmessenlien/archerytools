@@ -49,6 +49,15 @@ Comprehensive spine calculation system documentation:
 - **Admin Interface**: `/admin/spine-data` management panel for parameter configuration
 - **Service Integration**: Unified spine service architecture and API endpoints
 
+#### [Journal and Tuning System Documentation](JOURNAL_AND_TUNING_SYSTEM.md) ✨ NEW
+Comprehensive documentation of the integrated journal and tuning system:
+- **System Architecture**: Journal integration with tuning sessions and bow/arrow setups
+- **Database Schema**: Complete schema for journal_entries and guide_sessions tables
+- **Interactive Tuning**: Paper, bareshaft, and walkback tuning session management
+- **API Integration**: Dual API architecture and journal creation patterns
+- **Frontend Components**: BaseJournalView, entry viewers, and integration examples
+- **Development Guide**: Adding new tuning types, testing patterns, and troubleshooting
+
 #### [Enhanced Validation System](ENHANCED_VALIDATION_SYSTEM.md) ✨ NEW
 Advanced data quality monitoring with intelligent auto-fix capabilities:
 - **Auto-Fix SQL Generation**: Automatic solutions for search visibility, manufacturer status, and data completion issues
@@ -294,6 +303,33 @@ Intelligent manufacturer detection and linking system:
 - **Export Functionality**: PDF, HTML, Markdown, and JSON export options
 - **Analytics Dashboard**: Comprehensive insights into journaling patterns
 - **Custom Categories**: Personal organization with colors and icons
+
+#### [September 2025 Journal System Overhaul](SEPTEMBER_2025_JOURNAL_SYSTEM_OVERHAUL.md) 🔄 **NEW**
+**September 2025** - Comprehensive journal system integration fixes and enhancements:
+- **Critical Issue Resolution**: Fixed poor display formatting and non-functional modal clicks across all journal locations
+- **Interactive Guides Integration**: Living session history where tuning sessions create rich educational journal entries
+- **Unified User Experience**: Consistent behavior across main journal, bow setups, and arrow setups
+- **Enhanced Session Display**: Professional visualization of bareshaft, paper, and walkback tuning data
+- **Quality Assessment System**: Comprehensive session scoring with visual indicators and progress tracking
+- **Technical Architecture**: Event unification, database integration, and performance optimization
+
+#### [Journal Integration Fixes](JOURNAL_INTEGRATION_FIXES.md) 🛠️ **NEW**
+**September 2025** - Detailed technical implementation of journal system fixes:
+- **Session Data Display**: Enhanced parsing of session_metadata for proper visualization
+- **Event Handling**: Unified event system fixing modal click functionality
+- **Database Schema**: Integration with session metadata, quality scoring, and equipment linking
+- **Component Architecture**: Enhanced JournalEntryDetailViewer with rich session visualization
+- **Migration Support**: Backward compatibility ensuring seamless upgrade path
+- **Performance Optimization**: Computed properties, efficient rendering, and error handling
+
+#### [Interactive Tuning Guides Integration](INTERACTIVE_TUNING_GUIDES_INTEGRATION.md) 🎯 **NEW**
+**September 2025** - Comprehensive documentation of interactive tuning guides system:
+- **Guide Architecture**: Bareshaft, paper, and walkback tuning guide implementations
+- **Session Data Flow**: Progressive data collection, quality assessment, and journal integration
+- **Rich Visualization**: Enhanced display of test results, confidence scoring, and recommendations
+- **Learning System**: Quality algorithms, pattern recognition, and progressive skill development
+- **Professional Workflow**: Seamless integration with bow/arrow setups and equipment tracking
+- **Future Enhancement**: AI integration, social features, and advanced analytics roadmap
 
 ---
 

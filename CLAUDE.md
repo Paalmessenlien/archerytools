@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Always use context7 when I need code generation, setup or configuration steps, or 
+library/API documentation. This means you should automatically use the Context7 MCP 
+tools to resolve library id and get library docs without me having to explicitly ask.
+
 ## Project Overview
 
 This is a comprehensive Archery Tools project that scrapes arrow specifications from manufacturer websites and provides professional tuning calculations for archery equipment. The project has completed all development phases (1-9) and is **READY FOR BETA TESTING** with a production-ready full-stack archery tools platform featuring modern UI/UX.
@@ -13,6 +17,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Architecture, workflows, and troubleshooting
 - **[Database Migrations Documentation](docs/DATABASE_MIGRATIONS.md)** - Complete migration system guide with examples
 - **[Spine Data System Documentation](docs/SPINE_DATA_SYSTEM.md)** - Advanced spine calculation system and admin interface
+- **[Journal and Tuning System Documentation](docs/JOURNAL_AND_TUNING_SYSTEM.md)** - Complete journal and interactive tuning system guide
 - **[Archery Calculations Guide](docs/ARCHERY_CALCULATIONS_GUIDE.md)** - Professional physics calculations and optimization algorithms
 
 **🚀 For new developers**: Start with [Development Guide](docs/DEVELOPMENT_GUIDE.md) for environment setup and architecture overview.
@@ -27,6 +32,7 @@ This is a comprehensive Archery Tools project that scrapes arrow specifications 
 - **Architecture**: Modern SPA frontend with API backend (dual deployment)
 
 ## Recent Major Updates (2025):
+- ✅ **Comprehensive Bareshaft Tuning System**: Complete interactive bareshaft tuning interface with impact pattern selection, bow-type specific recommendations, progressive guidance, and enhanced progress tracking with quality metrics (September 2025)
 - ✅ **Per-Bow-Type System Defaults with Visual Indicators**: Complete implementation of material-aware spine chart defaults specific to each bow type with comprehensive visual indicators and edit-based management ([Details](docs/SPINE_CHART_SYSTEM_DEFAULTS_IMPLEMENTATION.md))
 - ✅ **Manufacturer Active Status Filtering System**: Complete filtering system to hide arrows from inactive manufacturers while preserving admin access and existing configurations ([Details](docs/MANUFACTURER_ACTIVE_STATUS_SYSTEM.md))
 - ✅ **Wood Arrow Species Import & Calculator Integration**: Comprehensive import of 6 traditional wood arrow species with 54+ spine specifications, traditional archery calculations, and full calculator integration (Migrations 047-050)

@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   // CSS Configuration
   css: [
     '~/assets/css/main.css',
-    '@fortawesome/fontawesome-free/css/all.css'
+    '~/assets/kit-d6250ee9a9-web/css/all.min.css'
   ],
   
   // Runtime Config for API

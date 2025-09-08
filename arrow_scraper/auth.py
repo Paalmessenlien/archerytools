@@ -34,7 +34,7 @@ def token_required(f):
             return jsonify({"message": "Token is missing!"}), 401
 
         try:
-            data = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=["HS256"])
+            data = jwt.decode(token, os.environ.get("SECRET_KEY", 'arrow-tuning-secret-key-change-in-production'), algorithms=["HS256"])
             db = UnifiedDatabase()
             current_user = db.get_user_by_id(data["user_id"])
             if not current_user:

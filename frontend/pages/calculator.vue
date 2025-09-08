@@ -58,13 +58,59 @@
       </div>
     </div>
 
-    <!-- Bow Selection Section -->
+    <!-- Bow Setup Configuration Section -->
     <div class="mb-6">
       <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
         <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
           <i class="fas fa-crosshairs mr-2"></i>
           Bow Configuration
         </h3>
+
+        <!-- Tab Navigation -->
+        <nav class="flex space-x-2 sm:space-x-4 lg:space-x-8 border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+          <button
+            @click="activeCalculatorTab = 'configuration'"
+            :class="[
+              'py-3 px-2 sm:px-3 lg:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap min-w-0 flex-shrink-0',
+              activeCalculatorTab === 'configuration' 
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            ]"
+          >
+            <i class="fas fa-cog mr-1 sm:mr-2"></i>
+            <span class="hidden sm:inline">Configuration</span>
+            <span class="sm:hidden">Config</span>
+          </button>
+          <button
+            @click="activeCalculatorTab = 'components'"
+            :class="[
+              'py-3 px-2 sm:px-3 lg:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap min-w-0 flex-shrink-0',
+              activeCalculatorTab === 'components' 
+                ? 'border-orange-500 text-orange-600 dark:text-orange-400' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            ]"
+          >
+            <i class="fas fa-puzzle-piece mr-1 sm:mr-2"></i>
+            <span class="hidden sm:inline">Arrow Components</span>
+            <span class="sm:hidden">Components</span>
+          </button>
+          <button
+            @click="activeCalculatorTab = 'advanced'"
+            :class="[
+              'py-3 px-2 sm:px-3 lg:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap min-w-0 flex-shrink-0',
+              activeCalculatorTab === 'advanced' 
+                ? 'border-green-500 text-green-600 dark:text-green-400' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            ]"
+          >
+            <i class="fas fa-chart-line mr-1 sm:mr-2"></i>
+            <span class="hidden sm:inline">Advanced Calculations</span>
+            <span class="sm:hidden">Advanced</span>
+          </button>
+        </nav>
+
+        <!-- Configuration Tab Content -->
+        <div v-if="activeCalculatorTab === 'configuration'" class="space-y-6">
         
         <!-- Bow Setup Selector -->
         <div class="mb-4">
@@ -305,205 +351,263 @@
           </div>
         </div>
 
-        <!-- Arrow Components Section -->
-        <div class="mt-4">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-              <i class="fas fa-puzzle-piece mr-2"></i>
-              Arrow Components
-            </h4>
-            <CustomButton
-              @click="showComponents = !showComponents"
-              variant="text"
-              size="small"
-              class="text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 touch-target"
-            >
-              <i class="fas transition-transform" :class="showComponents ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-              <span class="ml-2">{{ showComponents ? 'Hide' : 'Show' }} Details</span>
-            </CustomButton>
-          </div>
+        </div>
+        
+        <!-- Arrow Components Tab Content -->
+        <div v-if="activeCalculatorTab === 'components'" class="space-y-6">
+          <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-lg font-semibold text-orange-900 dark:text-orange-200">
+                <i class="fas fa-puzzle-piece mr-2"></i>
+                Arrow Components Configuration
+              </h4>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <!-- Insert Weight -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Insert Weight: <span class="font-semibold text-primary">{{ bowConfig.insert_weight || 0 }} gn</span>
+                </label>
+                <div class="mb-2">
+                  <md-filled-select 
+                    :value="bowConfig.insert_weight === 0 ? 'none' : 'custom'" 
+                    @change="handleInsertChange($event.target.value)"
+                    label="Insert Type"
+                    class="w-full"
+                  >
+                    <md-select-option value="none">No Insert</md-select-option>
+                    <md-select-option value="custom">Custom Weight</md-select-option>
+                  </md-filled-select>
+                </div>
+                <div v-if="bowConfig.insert_weight > 0">
+                  <input
+                    type="range"
+                    min="5"
+                    max="30"
+                    step="0.5"
+                    :value="bowConfig.insert_weight"
+                    @input="updateBowConfig({ insert_weight: parseFloat($event.target.value) })"
+                    class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                  />
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>5 gn</span>
+                    <span>30 gn</span>
+                  </div>
+                </div>
+              </div>
 
-          <div v-if="showComponents" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <!-- Insert Weight -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Insert Weight: <span class="font-semibold text-primary">{{ bowConfig.insert_weight || 0 }} gn</span>
-              </label>
-              <div class="mb-2">
+              <!-- Vane Type -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Vane Type
+                </label>
                 <md-filled-select 
-                  :value="bowConfig.insert_weight === 0 ? 'none' : 'custom'" 
-                  @change="handleInsertChange($event.target.value)"
-                  label="Insert Type"
+                  :value="bowConfig.vane_type || 'plastic'" 
+                  @change="handleVaneTypeChange($event.target.value)"
+                  label="Vane Type"
                   class="w-full"
                 >
-                  <md-select-option value="none">No Insert</md-select-option>
-                  <md-select-option value="custom">Custom Weight</md-select-option>
+                  <md-select-option value="plastic">Plastic Vanes</md-select-option>
+                  <md-select-option value="feather">Natural Feathers</md-select-option>
+                  <md-select-option value="spin">Spin Vanes</md-select-option>
                 </md-filled-select>
               </div>
-              <div v-if="bowConfig.insert_weight > 0">
+
+              <!-- Vane Length -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Vane Length: <span class="font-semibold text-primary">{{ bowConfig.vane_length || 4 }}"</span>
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="6"
+                  step="0.25"
+                  :value="bowConfig.vane_length || 4"
+                  @input="updateBowConfig({ vane_length: parseFloat($event.target.value) })"
+                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                />
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <span>1"</span>
+                  <span>6"</span>
+                </div>
+              </div>
+
+              <!-- Vane Weight Per -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Vane Weight (Each): <span class="font-semibold text-primary">{{ getVaneWeight() }} gn</span>
+                </label>
+                <div class="mb-2">
+                  <md-filled-select 
+                    :value="bowConfig.vane_weight_override ? 'custom' : 'auto'" 
+                    @change="handleVaneWeightModeChange($event.target.value)"
+                    label="Weight Mode"
+                    class="w-full"
+                  >
+                    <md-select-option value="auto">Auto Calculate</md-select-option>
+                    <md-select-option value="custom">Manual Override</md-select-option>
+                  </md-filled-select>
+                </div>
+                <div v-if="!bowConfig.vane_weight_override" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Calculated based on type and length
+                </div>
+                <div v-if="bowConfig.vane_weight_override">
+                  <input
+                    type="range"
+                    min="1"
+                    max="15"
+                    step="0.25"
+                    :value="bowConfig.vane_weight_per || 5"
+                    @input="updateBowConfig({ vane_weight_per: parseFloat($event.target.value) })"
+                    class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                  />
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>1 gn</span>
+                    <span>15 gn</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Number of Vanes -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Number of Vanes: <span class="font-semibold text-primary">{{ bowConfig.number_of_vanes || 3 }}</span>
+                </label>
+                <input
+                  type="range"
+                  min="2"
+                  max="6"
+                  step="1"
+                  :value="bowConfig.number_of_vanes || 3"
+                  @input="updateBowConfig({ number_of_vanes: parseInt($event.target.value) })"
+                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                />
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <span>2</span>
+                  <span>6</span>
+                </div>
+              </div>
+
+              <!-- Bushing Weight -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Bushing Weight: <span class="font-semibold text-primary">{{ bowConfig.bushing_weight || 0 }} gn</span>
+                </label>
+                <div class="mb-2">
+                  <md-filled-select 
+                    :value="bowConfig.bushing_weight === 0 ? 'none' : 'custom'" 
+                    @change="handleBushingChange($event.target.value)"
+                    label="Bushing Type"
+                    class="w-full"
+                  >
+                    <md-select-option value="none">No Bushing</md-select-option>
+                    <md-select-option value="custom">Custom Weight</md-select-option>
+                  </md-filled-select>
+                </div>
+                <div v-if="bowConfig.bushing_weight > 0">
+                  <input
+                    type="range"
+                    min="1"
+                    max="15"
+                    step="0.25"
+                    :value="bowConfig.bushing_weight"
+                    @input="updateBowConfig({ bushing_weight: parseFloat($event.target.value) })"
+                    class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
+                  />
+                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>1 gn</span>
+                    <span>15 gn</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nock Weight -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nock Weight: <span class="font-semibold text-primary">{{ bowConfig.nock_weight || 10 }} gn</span>
+                </label>
                 <input
                   type="range"
                   min="5"
-                  max="30"
+                  max="25"
                   step="0.5"
-                  :value="bowConfig.insert_weight"
-                  @input="updateBowConfig({ insert_weight: parseFloat($event.target.value) })"
+                  :value="bowConfig.nock_weight || 10"
+                  @input="updateBowConfig({ nock_weight: parseFloat($event.target.value) })"
                   class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
                 />
                 <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>5 gn</span>
-                  <span>30 gn</span>
+                  <span>25 gn</span>
                 </div>
-              </div>
-            </div>
-
-            <!-- Vane Type -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Vane Type
-              </label>
-              <md-filled-select 
-                :value="bowConfig.vane_type || 'plastic'" 
-                @change="handleVaneTypeChange($event.target.value)"
-                label="Vane Type"
-                class="w-full"
-              >
-                <md-select-option value="plastic">Plastic Vanes</md-select-option>
-                <md-select-option value="feather">Natural Feathers</md-select-option>
-                <md-select-option value="spin">Spin Vanes</md-select-option>
-              </md-filled-select>
-            </div>
-
-            <!-- Vane Length -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Vane Length: <span class="font-semibold text-primary">{{ bowConfig.vane_length || 4 }}"</span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="6"
-                step="0.25"
-                :value="bowConfig.vane_length || 4"
-                @input="updateBowConfig({ vane_length: parseFloat($event.target.value) })"
-                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
-              />
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>1"</span>
-                <span>6"</span>
-              </div>
-            </div>
-
-            <!-- Vane Weight Per -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Vane Weight (Each): <span class="font-semibold text-primary">{{ getVaneWeight() }} gn</span>
-              </label>
-              <div class="mb-2">
-                <md-filled-select 
-                  :value="bowConfig.vane_weight_override ? 'custom' : 'auto'" 
-                  @change="handleVaneWeightModeChange($event.target.value)"
-                  label="Weight Mode"
-                  class="w-full"
-                >
-                  <md-select-option value="auto">Auto Calculate</md-select-option>
-                  <md-select-option value="custom">Manual Override</md-select-option>
-                </md-filled-select>
-              </div>
-              <div v-if="!bowConfig.vane_weight_override" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Calculated based on type and length
-              </div>
-              <div v-if="bowConfig.vane_weight_override">
-                <input
-                  type="range"
-                  min="1"
-                  max="15"
-                  step="0.25"
-                  :value="bowConfig.vane_weight_per || 5"
-                  @input="updateBowConfig({ vane_weight_per: parseFloat($event.target.value) })"
-                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
-                />
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  <span>1 gn</span>
-                  <span>15 gn</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Number of Vanes -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Number of Vanes: <span class="font-semibold text-primary">{{ bowConfig.number_of_vanes || 3 }}</span>
-              </label>
-              <input
-                type="range"
-                min="2"
-                max="6"
-                step="1"
-                :value="bowConfig.number_of_vanes || 3"
-                @input="updateBowConfig({ number_of_vanes: parseInt($event.target.value) })"
-                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
-              />
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>2</span>
-                <span>6</span>
-              </div>
-            </div>
-
-            <!-- Bushing Weight -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Bushing Weight: <span class="font-semibold text-primary">{{ bowConfig.bushing_weight || 0 }} gn</span>
-              </label>
-              <div class="mb-2">
-                <md-filled-select 
-                  :value="bowConfig.bushing_weight === 0 ? 'none' : 'custom'" 
-                  @change="handleBushingChange($event.target.value)"
-                  label="Bushing Type"
-                  class="w-full"
-                >
-                  <md-select-option value="none">No Bushing</md-select-option>
-                  <md-select-option value="custom">Custom Weight</md-select-option>
-                </md-filled-select>
-              </div>
-              <div v-if="bowConfig.bushing_weight > 0">
-                <input
-                  type="range"
-                  min="1"
-                  max="15"
-                  step="0.25"
-                  :value="bowConfig.bushing_weight"
-                  @input="updateBowConfig({ bushing_weight: parseFloat($event.target.value) })"
-                  class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
-                />
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  <span>1 gn</span>
-                  <span>15 gn</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Nock Weight -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nock Weight: <span class="font-semibold text-primary">{{ bowConfig.nock_weight || 10 }} gn</span>
-              </label>
-              <input
-                type="range"
-                min="5"
-                max="25"
-                step="0.5"
-                :value="bowConfig.nock_weight || 10"
-                @input="updateBowConfig({ nock_weight: parseFloat($event.target.value) })"
-                class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-touch mobile-slider-safe"
-              />
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>5 gn</span>
-                <span>25 gn</span>
               </div>
             </div>
           </div>
         </div>
+        
+        <!-- Advanced Calculations Tab Content -->
+        <div v-if="activeCalculatorTab === 'advanced'" class="space-y-6">
+          <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
+                <i class="fas fa-chart-line mr-2"></i>
+                Professional Spine Calculation
+              </h4>
+            </div>
+            
+            <ManufacturerSpineChartSelector
+              :bow-type="bowConfig.bow_type"
+              :material-preference="bowConfig.arrow_material"
+              @selection-change="handleSpineChartSelection"
+            />
+            
+            <!-- Spine Chart Source Display -->
+            <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
+                  <div>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Spine Chart in Use:</p>
+                    <div v-if="spineChartSelection && spineChartSelection.manufacturer && spineChartSelection.chartId">
+                      <!-- Specific manufacturer chart selected -->
+                      <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ spineChartSelection.manufacturer }}
+                        <span v-if="spineChartSelection.chart?.model"> - {{ spineChartSelection.chart.model }}</span>
+                      </p>
+                      <div class="flex items-center mt-1">
+                        <span class="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full mr-2">
+                          Manufacturer Chart
+                        </span>
+                        <span v-if="spineChartSelection.chart?.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                          <i class="fas fa-star mr-1"></i>
+                          System Default
+                        </span>
+                      </div>
+                    </div>
+                    <div v-else>
+                      <!-- Generic/universal calculation -->
+                      <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Universal Spine Formula
+                      </p>
+                      <span class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
+                        Standard Calculation
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="spineChartSelection && spineChartSelection.calculationMethod" class="text-right">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Method:</p>
+                  <p class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {{ spineChartSelection.calculationMethod === 'universal' ? 'Universal' : 'German Industry' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
       </div>
     </div>
 
@@ -547,48 +651,6 @@
           </div>
         </div>
 
-        <!-- Spine Chart Source Display -->
-        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 mr-2"></i>
-              <div>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Spine Chart in Use:</p>
-                <div v-if="spineChartSelection && spineChartSelection.manufacturer && spineChartSelection.chartId">
-                  <!-- Specific manufacturer chart selected -->
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {{ spineChartSelection.manufacturer }}
-                    <span v-if="spineChartSelection.chart?.model"> - {{ spineChartSelection.chart.model }}</span>
-                  </p>
-                  <div class="flex items-center mt-1">
-                    <span class="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full mr-2">
-                      Manufacturer Chart
-                    </span>
-                    <span v-if="spineChartSelection.chart?.is_system_default" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
-                      <i class="fas fa-star mr-1"></i>
-                      System Default
-                    </span>
-                  </div>
-                </div>
-                <div v-else>
-                  <!-- Generic/universal calculation -->
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Universal Spine Formula
-                  </p>
-                  <span class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
-                    Standard Calculation
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div v-if="spineChartSelection && spineChartSelection.calculationMethod" class="text-right">
-              <p class="text-xs text-gray-500 dark:text-gray-400">Method:</p>
-              <p class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                {{ spineChartSelection.calculationMethod === 'universal' ? 'Universal' : 'German Industry' }}
-              </p>
-            </div>
-          </div>
-        </div>
 
         <!-- Enhanced Spine Calculation Results -->
         <div v-if="enhancedSpineResult" class="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -779,34 +841,6 @@
           </div>
         </div>
 
-        <!-- Professional Spine Calculation -->
-        <div v-if="hasMatchDistribution" class="mt-4">
-          <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
-                <i class="fas fa-chart-line mr-2"></i>
-                Professional Spine Calculation
-              </h4>
-              <CustomButton
-                @click="showProfessionalSpine = !showProfessionalSpine"
-                variant="text"
-                size="small"
-                class="text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900 touch-target"
-              >
-                <i class="fas transition-transform" :class="showProfessionalSpine ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                <span class="ml-2">{{ showProfessionalSpine ? 'Hide' : 'Show' }}</span>
-              </CustomButton>
-            </div>
-            
-            <div v-if="showProfessionalSpine">
-              <ManufacturerSpineChartSelector
-                :bow-type="bowConfig.bow_type"
-                :material-preference="bowConfig.arrow_material"
-                @selection-change="handleSpineChartSelection"
-              />
-            </div>
-          </div>
-        </div>
 
       </div>
     </md-elevated-card>
@@ -1143,6 +1177,7 @@ watch(localPointWeight, (newValue) => {
 const showComponents = ref(false)
 const showMatchSummary = ref(false) // Default hidden
 const showProfessionalSpine = ref(false) // Default hidden
+const activeCalculatorTab = ref('configuration') // Default to configuration tab
 
 // Advanced filters state
 const availableManufacturers = ref([])
@@ -1244,32 +1279,42 @@ const scrollToRecommendations = () => {
 };
 
 // Handle arrow added to bow setup
-const handleArrowAddedToSetup = (arrowData) => {
-  console.log('Arrow added to setup:', arrowData)
+const handleArrowAddedToSetup = async (eventData) => {
+  console.log('Arrow added to setup - event data:', eventData)
   
   // Show success message
-  showNotification(`Successfully added ${arrowData.arrow.manufacturer} ${arrowData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
+  showNotification(`Successfully added ${eventData.arrow.manufacturer} ${eventData.arrow.model_name} to ${selectedBowSetup.value?.name}!`)
   
-  // Check if we have arrowData from the API response and route to arrow setup details page
-  if (arrowData.arrowData && arrowData.arrowData.id) {
-    // Route directly to the arrow setup details page
-    const arrowSetupId = arrowData.arrowData.id
-    console.log('Routing to arrow setup details page:', `/setup-arrows/${arrowSetupId}`)
+  try {
+    // The API response should be in eventData.arrowData
+    // We need the ID from the API response to route to setup-arrows page
+    const apiResponse = eventData.arrowData
     
-    // Use replace instead of push to replace the calculator in history
-    // This provides a smoother back navigation experience
-    router.replace(`/setup-arrows/${arrowSetupId}`)
-  } else {
-    // Fallback: Check for returnUrl query parameter for backward compatibility
-    const route = useRoute()
-    if (route.query.returnUrl) {
-      console.log('Routing to return URL:', route.query.returnUrl)
-      router.push(route.query.returnUrl)
+    if (apiResponse && apiResponse.id) {
+      // Route directly to the arrow setup details page using the setup_arrows record ID
+      const arrowSetupId = apiResponse.id
+      console.log('Routing to arrow setup details page:', `/setup-arrows/${arrowSetupId}`)
+      
+      // Use navigateTo for better error handling and Nuxt 3 compatibility
+      await navigateTo(`/setup-arrows/${arrowSetupId}`)
     } else {
-      // Stay on calculator page - all data is preserved via Pinia store
-      // User can continue browsing and adding more arrows
-      console.log('Staying on calculator page - no routing specified')
+      console.warn('No arrow setup ID found in API response:', apiResponse)
+      
+      // Fallback: Check for returnUrl query parameter for backward compatibility
+      const route = useRoute()
+      if (route.query.returnUrl) {
+        console.log('Routing to return URL:', route.query.returnUrl)
+        await navigateTo(route.query.returnUrl)
+      } else {
+        // Stay on calculator page - all data is preserved via Pinia store
+        // User can continue browsing and adding more arrows
+        console.log('Staying on calculator page - no routing specified')
+      }
     }
+  } catch (error) {
+    console.error('Error navigating after adding arrow:', error)
+    // Show error message but don't block the UI
+    showNotification('Arrow was added successfully, but failed to navigate to details page.', 'error')
   }
 }
 

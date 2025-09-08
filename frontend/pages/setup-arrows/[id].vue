@@ -289,11 +289,10 @@
 
           <!-- Section Content -->
           <div v-if="expandedSections.tuning" class="p-3 sm:p-6 space-y-4 sm:space-y-6">
-            <!-- Guide Selection -->
-            <div v-if="!activeTuningSession" class="space-y-4">
+            <div class="space-y-4">
               <p class="text-gray-600 dark:text-gray-300 text-sm">
                 Start an interactive tuning session to test this specific arrow setup. 
-                All test results are permanently stored and can be reviewed in your tuning history.
+                Each session opens in a dedicated interface where you can track progress and save results to your journal.
               </p>
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -349,33 +348,6 @@
                 </div>
               </div>
             </div>
-            
-            <!-- Active Session Interface -->
-            <div v-if="activeTuningSession" class="space-y-4">
-              <!-- Paper Tuning Interface -->
-              <PaperTuningInterface 
-                v-if="activeTuningSession.guide_type === 'paper_tuning'"
-                :session-data="activeTuningSession"
-                @test-recorded="onTuningTestRecorded"
-                @cancel="exitTuningSession"
-              />
-              
-              <!-- Bareshaft Tuning Interface -->
-              <BareshaftTuningInterface 
-                v-if="activeTuningSession.guide_type === 'bareshaft_tuning'"
-                :session-data="activeTuningSession"
-                @test-recorded="onTuningTestRecorded"
-                @cancel="exitTuningSession"
-              />
-              
-              <!-- Walkback Tuning Interface -->
-              <WalkbackTuningInterface 
-                v-if="activeTuningSession.guide_type === 'walkback_tuning'"
-                :session-data="activeTuningSession"
-                @test-recorded="onTuningTestRecorded"
-                @cancel="exitTuningSession"
-              />
-            </div>
           </div>
         </div>
 
@@ -416,7 +388,7 @@
               :loading="journalLoading"
               :has-more-entries="journalHasMoreEntries"
               :pull-to-refresh="true"
-              :initial-filters="{ arrow_id: setupArrowData?.setup_arrow?.arrow_id }"
+              :initial-filters="{ linked_arrow: setupArrowData?.setup_arrow?.arrow_id }"
               @entry:view="handleJournalEntryView"
               @entry:edit="handleJournalEntryEdit"
               @entry:delete="handleJournalEntryDelete"
@@ -427,6 +399,72 @@
               @refresh="handleJournalRefresh"
               class="mobile-journal-container"
             />
+          </div>
+        </div>
+
+        <!-- Tuning Session History Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('sessionHistory')"
+            class="w-full p-3 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[60px]"
+            :class="{ 'bg-teal-50 dark:bg-teal-900/20': expandedSections.sessionHistory }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-900/30 flex-shrink-0">
+                <i class="fas fa-history text-teal-600 dark:text-teal-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  Tuning Session History
+                  <span v-if="tuningSessions.length > 0" class="inline-flex items-center px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-full text-xs font-medium">
+                    {{ tuningSessions.length }}
+                  </span>
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Review and continue from previous tuning sessions</p>
+              </div>
+            </div>
+            <i 
+              :class="expandedSections.sessionHistory ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" 
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.sessionHistory" class="p-3 sm:p-6">
+            <div v-if="loadingTuningSessions" class="space-y-3">
+              <!-- Loading skeletons -->
+              <div class="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
+              <div class="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
+            </div>
+            
+            <div v-else-if="tuningSessions.length === 0" class="text-center py-8">
+              <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                <i class="fas fa-history text-gray-400 text-2xl"></i>
+              </div>
+              <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Tuning Sessions Yet</h4>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">
+                Start your first tuning session to see results and recommendations here.
+              </p>
+              <button
+                @click="navigateToTuningSection"
+                class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <i class="fas fa-crosshairs mr-2"></i>
+                Start Tuning Session
+              </button>
+            </div>
+            
+            <div v-else class="space-y-4">
+              <TuningSessionSummaryCard
+                v-for="session in tuningSessions"
+                :key="session.session_id || session.id"
+                :session-data="session"
+                @view-session="handleViewTuningSession"
+                @start-similar="handleStartSimilarSession"
+                @view-journal="handleViewSessionJournal"
+              />
+            </div>
           </div>
         </div>
 
@@ -521,11 +559,23 @@
       :type="notification.type"
       @close="hideNotification"
     />
+
+    <!-- Journal Entry Detail Viewer -->
+    <JournalEntryDetailViewer
+      v-if="viewingEntry && showViewDialog"
+      :entry="viewingEntry"
+      @close="handleViewerClose"
+      @edit="handleViewerEdit"
+      @delete="handleViewerDelete"
+      @favorite="handleViewerFavorite"
+      @view-session="handleViewSession"
+      @start-similar="handleStartSimilar"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter, useHead, onBeforeRouteLeave } from '#imports'
 import { useApi } from '~/composables/useApi'
 import { useJournalApi } from '~/composables/useJournalApi'
@@ -539,10 +589,9 @@ import BowSetupContext from '~/components/BowSetupContext.vue'
 import ChronographDataEntry from '~/components/ChronographDataEntry.vue'
 import ConfirmationModal from '~/components/ConfirmationModal.vue'
 import NotificationToast from '~/components/NotificationToast.vue'
-import PaperTuningInterface from '~/components/PaperTuningInterface.vue'
-import BareshaftTuningInterface from '~/components/BareshaftTuningInterface.vue'
-import WalkbackTuningInterface from '~/components/WalkbackTuningInterface.vue'
 import BaseJournalView from '~/components/journal/BaseJournalView.vue'
+import TuningSessionSummaryCard from '~/components/journal/TuningSessionSummaryCard.vue'
+import JournalEntryDetailViewer from '~/components/journal/JournalEntryDetailViewer.vue'
 
 // Meta information
 definePageMeta({
@@ -578,6 +627,14 @@ const journalEntryTypes = ref([
   { value: 'maintenance', label: 'Maintenance', icon: 'fas fa-wrench' },
   { value: 'general', label: 'General Note', icon: 'fas fa-sticky-note' }
 ])
+
+// Journal entry viewer state
+const viewingEntry = ref(null)
+const showViewDialog = ref(false)
+
+// Tuning session history state
+const tuningSessions = ref([])
+const loadingTuningSessions = ref(false)
 // Accordion state - config expanded by default for primary workflow
 const expandedSections = ref({
   config: true,        // Configuration always starts expanded 
@@ -585,11 +642,10 @@ const expandedSections = ref({
   info: false,        // Info collapsed by default  
   tuning: false,      // Tuning guides collapsed by default
   actions: false,     // Actions collapsed by default
-  journal: false      // Journal collapsed by default
+  journal: false,     // Journal collapsed by default
+  sessionHistory: false // Session history collapsed by default
 })
 
-// Tuning session state
-const activeTuningSession = ref(null)
 
 // Modal state
 const showConfirmModal = ref(false)
@@ -626,8 +682,9 @@ const loadSetupArrowDetails = async () => {
     const response = await api.get(`/setup-arrows/${setupArrowId.value}/details`)
     setupArrowData.value = response
     
-    // Load journal entries
+    // Load journal entries and tuning sessions
     await loadJournalEntries()
+    await loadTuningSessions()
     
     // Update page title
     const arrowName = getArrowDisplayName()
@@ -912,7 +969,7 @@ const loadJournalEntries = async () => {
     journalLoading.value = true
     
     const response = await journalApi.getEntries({
-      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      linked_arrow: setupArrowData.value.setup_arrow.arrow_id,
       page: 1,
       limit: 50
     })
@@ -963,8 +1020,8 @@ const journalStats = computed(() => {
 
 // Journal event handlers
 const handleJournalEntryView = (entry) => {
-  console.log('Viewing journal entry:', entry)
-  // Navigate to entry detail or open modal
+  viewingEntry.value = entry
+  showViewDialog.value = true
 }
 
 const handleJournalEntryEdit = (entry) => {
@@ -987,7 +1044,7 @@ const handleJournalEntryCreate = async (entryData) => {
   try {
     const submitData = {
       ...entryData,
-      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      linked_arrow: setupArrowData.value.setup_arrow.arrow_id,
       bow_setup_id: setupArrowData.value.bow_setup.id
     }
     
@@ -1020,6 +1077,40 @@ const handleJournalFiltersUpdate = (filters) => {
   // Handle filter changes if needed
 }
 
+// Journal viewer event handlers
+const handleViewerClose = () => {
+  showViewDialog.value = false
+  viewingEntry.value = null
+}
+
+const handleViewerEdit = (entry) => {
+  showViewDialog.value = false
+  handleJournalEntryEdit(entry)
+}
+
+const handleViewerDelete = async (entry) => {
+  showViewDialog.value = false
+  await handleJournalEntryDelete(entry)
+}
+
+const handleViewerFavorite = async (entry) => {
+  await handleJournalEntryFavorite(entry)
+  // Update the viewing entry to reflect the new favorite status
+  if (viewingEntry.value && viewingEntry.value.id === entry.id) {
+    viewingEntry.value = { ...entry }
+  }
+}
+
+const handleViewSession = (sessionData) => {
+  console.log('View session:', sessionData)
+  // Navigate to the appropriate tuning session page
+}
+
+const handleStartSimilar = (sessionData) => {
+  console.log('Start similar session:', sessionData)
+  // Navigate to create a similar tuning session
+}
+
 const handleJournalLoadMore = async () => {
   try {
     // Implement pagination loading here if needed
@@ -1033,6 +1124,129 @@ const handleJournalLoadMore = async () => {
 const handleJournalRefresh = async () => {
   await loadJournalEntries()
   showNotification('Journal refreshed', 'success')
+}
+
+// Tuning session methods
+const loadTuningSessions = async () => {
+  if (!setupArrowData.value?.setup_arrow?.arrow_id) return
+  
+  try {
+    loadingTuningSessions.value = true
+    
+    // Load journal entries that contain session metadata for this arrow
+    const response = await journalApi.getEntries({
+      linked_arrow: setupArrowData.value.setup_arrow.arrow_id,
+      has_session_data: true,
+      page: 1,
+      limit: 20
+    })
+    
+    if (response.success) {
+      // Transform journal entries with session data into tuning session objects
+      tuningSessions.value = (response.data || [])
+        .filter(entry => entry.session_metadata)
+        .map(entry => {
+          // Parse session data from session_metadata column
+          let sessionData = null
+          if (entry.session_metadata) {
+            try {
+              sessionData = typeof entry.session_metadata === 'string' 
+                ? JSON.parse(entry.session_metadata) 
+                : entry.session_metadata
+            } catch (e) {
+              console.warn('Failed to parse session metadata:', e)
+              return null
+            }
+          }
+          
+          return {
+            ...sessionData,
+            journal_entry_id: entry.id,
+            created_at: entry.created_at,
+            session_type: entry.session_type || sessionData?.session_type || 'general',
+            session_quality_score: entry.session_quality_score || sessionData?.quality_score
+          }
+        })
+        .filter(Boolean) // Remove any null entries
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Most recent first
+    } else {
+      tuningSessions.value = []
+    }
+    
+  } catch (error) {
+    console.error('Error loading tuning sessions:', error)
+    tuningSessions.value = []
+  } finally {
+    loadingTuningSessions.value = false
+  }
+}
+
+const handleViewTuningSession = async (sessionData) => {
+  try {
+    if (sessionData.session_id && sessionData.session_type) {
+      // Navigate back to the original session if it exists
+      const sessionPath = `/tuning-session/${sessionData.session_type.replace('_tuning', '')}/${sessionData.session_id}`
+      await router.push(sessionPath)
+    } else {
+      // Fallback to viewing journal entry
+      console.warn('No session ID found, showing journal entry instead')
+      showNotification('Opening session details...', 'info')
+      // Could open a modal or navigate to journal entry detail
+    }
+  } catch (error) {
+    console.error('Error viewing tuning session:', error)
+    showNotification('Failed to open session', 'error')
+  }
+}
+
+const handleStartSimilarSession = async (sessionData) => {
+  try {
+    showNotification('Starting similar tuning session...', 'info')
+    
+    // Create a new session with similar parameters
+    const newSessionData = {
+      guide_type: sessionData.session_type || 'paper_tuning',
+      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
+      arrow_length: setupArrowData.value.setup_arrow.arrow_length,
+      point_weight: setupArrowData.value.setup_arrow.point_weight,
+      bow_setup_id: setupArrowData.value.bow_setup.id,
+      settings: {
+        record_environment: true,
+        auto_calculate: true,
+        based_on_session: sessionData.session_id || sessionData.journal_entry_id
+      }
+    }
+    
+    const session = await api.post('/tuning-guides/sessions', newSessionData)
+    
+    // Navigate to the new session
+    const sessionPath = `/tuning-session/${newSessionData.guide_type.replace('_tuning', '')}/${session.session_id}`
+    await router.push(sessionPath)
+    
+  } catch (error) {
+    console.error('Error starting similar session:', error)
+    showNotification('Failed to start similar session', 'error')
+  }
+}
+
+const handleViewSessionJournal = (sessionData) => {
+  if (sessionData.journal_entry_id) {
+    // Expand journal section and filter to this entry
+    expandedSections.value.journal = true
+    // Could add logic to highlight or filter to specific entry
+    showNotification('Opening related journal entry...', 'info')
+  }
+}
+
+const navigateToTuningSection = () => {
+  expandedSections.value.tuning = true
+  // Smooth scroll to tuning section after expansion
+  nextTick(() => {
+    const tuningSection = document.querySelector('.accordion-section:nth-child(4)') // Adjust selector as needed
+    if (tuningSection) {
+      tuningSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  })
 }
 
 // Tuning session methods
@@ -1060,42 +1274,21 @@ const startTuningGuide = async (guideType) => {
     
     const session = await api.post('/tuning-guides/sessions', sessionData)
     
-    // Create local session object with API response data
-    activeTuningSession.value = {
-      session_id: session.session_id,
-      guide_type: guideType,
-      arrow_id: setupArrowData.value.setup_arrow.arrow_id,
-      arrow: setupArrowData.value.arrow,
-      arrow_length: setupArrowData.value.setup_arrow.arrow_length,
-      point_weight: setupArrowData.value.setup_arrow.point_weight,
-      bow_setup: setupArrowData.value.bow_setup,
-      settings: sessionData.settings,
-      // Include session metadata from API
-      ...session
-    }
+    // Navigate to dedicated tuning session page
+    const sessionPath = `/tuning-session/${guideType.replace('_tuning', '')}/${session.session_id}`
     
-    // Expand the tuning section if not already expanded
-    if (!expandedSections.value.tuning) {
-      expandedSections.value.tuning = true
-    }
+    console.log(`Navigating to tuning session: ${sessionPath}`)
+    showNotification(`${guideType.replace('_', ' ')} session created - redirecting...`, 'success')
     
-    console.log('Started tuning session for setup arrow:', activeTuningSession.value)
-    showNotification(`${guideType.replace('_', ' ')} session started`, 'success')
+    // Navigate to the session page
+    await router.push(sessionPath)
+    
   } catch (error) {
     console.error('Error starting tuning guide:', error)
     showNotification('Failed to start tuning session', 'error')
   }
 }
 
-const onTuningTestRecorded = (testResult) => {
-  console.log('Tuning test recorded for setup arrow:', testResult)
-  showNotification('Test result recorded successfully', 'success')
-  // Test results are automatically saved by the individual interface components
-}
-
-const exitTuningSession = () => {
-  activeTuningSession.value = null
-}
 
 // Enhanced accordion interaction with smooth animations
 // All interaction is now handled by the toggleSection method above
