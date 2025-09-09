@@ -217,7 +217,7 @@
                 <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                      <img class="h-10 w-10 rounded-full" :src="user.picture || '/default-avatar.svg'" :alt="user.name">
+                      <img class="h-10 w-10 rounded-full" :src="user.picture || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiNlNWU3ZWIiLz48ZyBmaWxsPSIjOWNhM2FmIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIxMiIvPjxwYXRoIGQ9Ik01MCA1NWMtMTIgMC0yMiA4LTI1IDE4aDUwYy0zLTEwLTEzLTE4LTI1LTE4eiIvPjwvZz48L3N2Zz4='" :alt="user.name">
                       <div class="ml-4">
                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name || 'Unnamed User' }}</div>
                         <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ user.id }}</div>

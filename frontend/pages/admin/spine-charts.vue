@@ -239,7 +239,7 @@ interface SpineChart {
 
 // Meta
 definePageMeta({
-  middleware: 'auth'
+  middleware: ['auth-check', 'admin']
 })
 
 // SEO
