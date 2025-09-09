@@ -1,0 +1,84 @@
+/* DataTables CSS imports - only core styles available */
+@import 'datatables.net-dt/css/dataTables.dataTables.css';
+
+/* Custom DataTables styling for dark mode */
+.dark table.dataTable thead th {
+  background-color: rgb(55 65 81);
+  color: rgb(209 213 219);
+  border-bottom: 1px solid rgb(75 85 99);
+}
+
+.dark table.dataTable tbody td {
+  color: rgb(209 213 219);
+  border-bottom: 1px solid rgb(75 85 99);
+}
+
+.dark table.dataTable tbody tr:hover {
+  background-color: rgb(55 65 81) !important;
+}
+
+.dark .dataTables_wrapper .dataTables_filter input,
+.dark .dataTables_wrapper .dataTables_length select {
+  background-color: rgb(55 65 81);
+  color: rgb(209 213 219);
+  border: 1px solid rgb(75 85 99);
+}
+
+.dark .dataTables_wrapper .dataTables_info {
+  color: rgb(156 163 175);
+}
+
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button {
+  background-color: rgb(55 65 81);
+  color: rgb(209 213 219);
+  border: 1px solid rgb(75 85 99);
+}
+
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: rgb(75 85 99);
+}
+
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background-color: rgb(147 51 234);
+  border-color: rgb(147 51 234);
+  color: white;
+}
+
+/* Button styling for DataTables */
+.dt-buttons .btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dt-buttons .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_length {
+    text-align: left;
+    margin-bottom: 1rem;
+  }
+  
+  .dt-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .dt-buttons .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    margin: 0;
+  }
+}

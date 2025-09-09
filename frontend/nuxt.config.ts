@@ -15,7 +15,8 @@ export default defineNuxtConfig({
   
   // CSS Configuration
   css: [
-    '~/assets/css/main.css'
+    '~/assets/css/main.css',
+    '~/assets/css/datatables.css'
   ],
   
   // Runtime Config for API

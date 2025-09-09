@@ -569,111 +569,18 @@
                   Manufacturer chart data is read-only. Create a custom chart to modify spine grid entries.
                 </div>
 
-                <!-- Grid Table -->
-                <div class="overflow-x-auto">
-                  <table class="min-w-full text-sm">
-                    <thead class="bg-gray-100 dark:bg-gray-600">
-                      <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Draw Weight (lbs)</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Arrow Length (in)</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Recommended Spine</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Arrow Size</th>
-                        <th v-if="editingChart.chart_type === 'custom'" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-                      <tr v-if="!editingChart.spine_grid || editingChart.spine_grid.length === 0">
-                        <td colspan="5" class="px-3 py-4 text-center text-gray-500 dark:text-gray-400 italic">
-                          No spine grid entries. Click "Add Entry" to create spine recommendations.
-                        </td>
-                      </tr>
-                      <tr 
-                        v-for="(entry, index) in editingChart.spine_grid" 
-                        :key="index"
-                        class="hover:bg-gray-50 dark:hover:bg-gray-600"
-                      >
-                        <td class="px-3 py-2">
-                          <input
-                            v-model="entry.draw_weight_range_lbs"
-                            :readonly="editingChart.chart_type === 'manufacturer'"
-                            type="text"
-                            placeholder="40-50"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                            :class="{ 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed': editingChart.chart_type === 'manufacturer' }"
-                          />
-                        </td>
-                        <td class="px-3 py-2">
-                          <input
-                            v-model="entry.arrow_length_in"
-                            :readonly="editingChart.chart_type === 'manufacturer'"
-                            type="number"
-                            step="0.25"
-                            placeholder="28"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                            :class="{ 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed': editingChart.chart_type === 'manufacturer' }"
-                          />
-                        </td>
-                        <td class="px-3 py-2">
-                          <input
-                            v-model="entry.spine"
-                            :readonly="editingChart.chart_type === 'manufacturer'"
-                            type="text"
-                            placeholder="400 or 350-400"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                            :class="{ 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed': editingChart.chart_type === 'manufacturer' }"
-                          />
-                        </td>
-                        <td class="px-3 py-2">
-                          <input
-                            v-model="entry.arrow_size"
-                            :readonly="editingChart.chart_type === 'manufacturer'"
-                            type="text"
-                            placeholder="2314 (optional)"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                            :class="{ 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed': editingChart.chart_type === 'manufacturer' }"
-                          />
-                        </td>
-                        <td v-if="editingChart.chart_type === 'custom'" class="px-3 py-2">
-                          <CustomButton
-                            @click="removeSpineEntry(index)"
-                            variant="text"
-                            size="small"
-                            class="text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900"
-                          >
-                            <i class="fas fa-trash text-xs"></i>
-                          </CustomButton>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Grid Actions -->
-                <div v-if="editingChart.chart_type === 'custom' && editingChart.spine_grid && editingChart.spine_grid.length > 0" class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ editingChart.spine_grid.length }} {{ editingChart.spine_grid.length === 1 ? 'entry' : 'entries' }}
-                  </div>
-                  <div class="flex space-x-2">
-                    <CustomButton
-                      @click="sortSpineGrid"
-                      variant="text"
-                      size="small"
-                      class="text-purple-600 hover:bg-purple-100 dark:text-purple-400"
-                    >
-                      <i class="fas fa-sort-amount-up mr-1"></i>
-                      Sort by Draw Weight
-                    </CustomButton>
-                    <CustomButton
-                      @click="clearSpineGrid"
-                      variant="text"
-                      size="small"
-                      class="text-red-600 hover:bg-red-100 dark:text-red-400"
-                    >
-                      <i class="fas fa-trash-alt mr-1"></i>
-                      Clear All
-                    </CustomButton>
-                  </div>
-                </div>
+                <!-- DataTables Component -->
+                <SpineChartDataTable
+                  ref="spineDataTable"
+                  :data="editingChart.spine_grid || []"
+                  :readonly="editingChart.chart_type === 'manufacturer'"
+                  :loading="false"
+                  :error="''"
+                  @data-change="handleGridDataChange"
+                  @row-add="handleRowAdd"
+                  @row-edit="handleRowEdit"
+                  @row-delete="handleRowDelete"
+                />
               </div>
             </div>
 
@@ -734,6 +641,15 @@
       </div>
     </div>
 
+    <!-- Spine Entry Edit Modal -->
+    <SpineEntryEditModal
+      :show="showSpineEntryModal"
+      :entry="editingSpineEntry"
+      :is-edit="isEditingSpineEntry"
+      @save="saveSpineEntry"
+      @cancel="cancelSpineEntry"
+    />
+
     <!-- Confirmation Modals -->
     <ConfirmDeleteModal
       v-if="confirmAction.show"
@@ -779,6 +695,12 @@ const showGridEditor = ref(false)
 const savingChart = ref(false)
 const selectedChart = ref<SpineChart | null>(null)
 const editingChart = ref<SpineChart | null>(null)
+
+// Spine entry editing modal state
+const showSpineEntryModal = ref(false)
+const editingSpineEntry = ref<any | null>(null)
+const editingSpineEntryIndex = ref(-1)
+const isEditingSpineEntry = ref(false)
 
 // Confirmation modal state
 const confirmAction = ref({
@@ -973,6 +895,83 @@ const clearSpineGrid = () => {
       editingChart.value!.spine_grid = []
     }
   }
+}
+
+// DataTables handler methods
+const handleGridDataChange = (data: any[]) => {
+  if (editingChart.value) {
+    editingChart.value.spine_grid = data
+  }
+}
+
+const handleRowAdd = (entry: any) => {
+  showSpineEntryModal.value = true
+  editingSpineEntry.value = null
+  isEditingSpineEntry.value = false
+}
+
+const handleRowEdit = (index: number, entry: any) => {
+  editingSpineEntry.value = { ...entry }
+  editingSpineEntryIndex.value = index
+  isEditingSpineEntry.value = true
+  showSpineEntryModal.value = true
+}
+
+const handleRowDelete = (index: number) => {
+  if (!editingChart.value || !editingChart.value.spine_grid) return
+  
+  confirmAction.value = {
+    show: true,
+    title: 'Delete Spine Entry',
+    message: 'Are you sure you want to delete this spine grid entry?',
+    itemName: `Entry ${index + 1}`,
+    confirmText: 'Delete',
+    loading: false,
+    error: '',
+    action: () => {
+      if (editingChart.value?.spine_grid) {
+        editingChart.value.spine_grid.splice(index, 1)
+      }
+    }
+  }
+}
+
+// Spine entry modal handlers
+const saveSpineEntry = (entry: any) => {
+  if (!editingChart.value) return
+  
+  if (!editingChart.value.spine_grid) {
+    editingChart.value.spine_grid = []
+  }
+  
+  if (isEditingSpineEntry.value && editingSpineEntryIndex.value >= 0) {
+    // Update existing entry
+    editingChart.value.spine_grid[editingSpineEntryIndex.value] = entry
+  } else {
+    // Add new entry
+    editingChart.value.spine_grid.push(entry)
+  }
+  
+  // Close modal and reset state
+  showSpineEntryModal.value = false
+  editingSpineEntry.value = null
+  editingSpineEntryIndex.value = -1
+  isEditingSpineEntry.value = false
+  
+  // Refresh DataTables component if available
+  nextTick(() => {
+    const spineDataTable = document.querySelector('#spineDataTable')
+    if (spineDataTable && (spineDataTable as any).refreshTable) {
+      (spineDataTable as any).refreshTable()
+    }
+  })
+}
+
+const cancelSpineEntry = () => {
+  showSpineEntryModal.value = false
+  editingSpineEntry.value = null
+  editingSpineEntryIndex.value = -1
+  isEditingSpineEntry.value = false
 }
 
 const createOverride = async (chart: SpineChart) => {
