@@ -682,8 +682,14 @@ interface SpineChart {
   created_at: string
 }
 
-// API
-const api = useApi()
+// API - initialized lazily to avoid Pinia issues
+let api: ReturnType<typeof useApi>
+const getApi = () => {
+  if (!api) {
+    api = useApi()
+  }
+  return api
+}
 
 // Reactive state
 const loading = ref(false)
@@ -782,7 +788,7 @@ const loadSpineCharts = async () => {
   error.value = ''
 
   try {
-    const response = await api.get('/admin/spine-charts')
+    const response = await getApi().get('/admin/spine-charts')
     manufacturerCharts.value = response.manufacturer_charts || []
     customCharts.value = response.custom_charts || []
   } catch (err) {
@@ -979,7 +985,7 @@ const createOverride = async (chart: SpineChart) => {
   
   try {
     loading.value = true
-    const response = await api.post(`/admin/spine-charts/manufacturer/${chart.id}/override`)
+    const response = await getApi().post(`/admin/spine-charts/manufacturer/${chart.id}/override`)
     
     // Reload charts to show new custom override
     await loadSpineCharts()
@@ -1001,7 +1007,7 @@ const saveChart = async () => {
   try {
     // Handle both custom chart updates and system default changes
     if (editingChart.value.chart_type === 'custom') {
-      await api.put(`/admin/spine-charts/custom/${editingChart.value.id}`, {
+      await getApi().put(`/admin/spine-charts/custom/${editingChart.value.id}`, {
         manufacturer: editingChart.value.manufacturer,
         model: editingChart.value.model,
         bow_type: editingChart.value.bow_type,
@@ -1015,7 +1021,7 @@ const saveChart = async () => {
     
     // Handle system default setting (works for both manufacturer and custom charts)
     if (editingChart.value.is_system_default) {
-      await api.post(`/admin/spine-charts/${editingChart.value.chart_type}/${editingChart.value.id}/set-default`)
+      await getApi().post(`/admin/spine-charts/${editingChart.value.chart_type}/${editingChart.value.id}/set-default`)
     }
     
     // Reload charts to reflect changes
@@ -1044,7 +1050,7 @@ const deleteChart = (chart: SpineChart) => {
         confirmAction.value.error = ''
         
         if (chart.chart_type === 'custom') {
-          await api.delete(`/admin/spine-charts/custom/${chart.id}`)
+          await getApi().delete(`/admin/spine-charts/custom/${chart.id}`)
           await loadSpineCharts()
           confirmAction.value.show = false
         }
@@ -1077,7 +1083,7 @@ const duplicateChart = async (chart: SpineChart) => {
   if (!newName) return
   
   try {
-    const response = await api.post(`/admin/spine-charts/${chart.chart_type}/${chart.id}/duplicate`, {
+    const response = await getApi().post(`/admin/spine-charts/${chart.chart_type}/${chart.id}/duplicate`, {
       name: newName
     })
     

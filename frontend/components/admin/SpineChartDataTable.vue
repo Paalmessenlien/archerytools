@@ -201,11 +201,17 @@ const getDataTablesConfig = () => {
 
 // Initialize DataTables
 const initializeDataTable = async () => {
-  if (!tableRef.value) return
+  if (!tableRef.value || !process.client) return
 
   try {
     // Get DataTable from the plugin
     const { $DataTable } = useNuxtApp()
+    
+    // Check if DataTable is available (it won't be during SSR)
+    if (!$DataTable) {
+      console.warn('DataTable not available, skipping initialization')
+      return
+    }
     
     // Initialize DataTables instance with core functionality only
     dataTable = new $DataTable(tableRef.value, getDataTablesConfig())
