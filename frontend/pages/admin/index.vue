@@ -101,18 +101,13 @@
           <i class="fas fa-chart-bar mr-2"></i>
           Statistics
         </button>
-        <button
-          @click="activeTab = 'spine-charts'"
-          :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
-            activeTab === 'spine-charts' 
-              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-          ]"
+        <NuxtLink
+          to="/admin/spine-charts"
+          class="py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 flex items-center"
         >
           <i class="fas fa-chart-line mr-2"></i>
-          Spine Calculator Data
-        </button>
+          Spine Chart Editor
+        </NuxtLink>
         <button
           @click="activeTab = 'backups'"
           :class="[
@@ -222,7 +217,7 @@
                 <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                      <img class="h-10 w-10 rounded-full" :src="user.picture || '/default-avatar.png'" :alt="user.name">
+                      <img class="h-10 w-10 rounded-full" :src="user.picture || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiNlNWU3ZWIiLz48ZyBmaWxsPSIjOWNhM2FmIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIxMiIvPjxwYXRoIGQ9Ik01MCA1NWMtMTIgMC0yMiA4LTI1IDE4aDUwYy0zLTEwLTEzLTE4LTI1LTE4eiIvPjwvZz48L3N2Zz4='" :alt="user.name">
                       <div class="ml-4">
                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name || 'Unnamed User' }}</div>
                         <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ user.id }}</div>
@@ -2028,10 +2023,6 @@
         </md-elevated-card>
       </div>
 
-      <!-- Spine Charts Tab -->
-      <div v-if="activeTab === 'spine-charts'">
-        <SpineChartLibrary />
-      </div>
 
       <!-- Backups Tab -->
       <div v-if="activeTab === 'backups'">
@@ -2740,7 +2731,6 @@
 
 <script setup lang="ts">
 import { useAuth } from '~/composables/useAuth'
-import SpineChartLibrary from '~/components/admin/SpineChartLibrary.vue'
 
 // Authentication check
 const { user, token, isAdmin, checkAdminStatus, getAllUsers, setUserAdminStatus, updateUserStatus, deleteUser } = useAuth()

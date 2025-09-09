@@ -6,7 +6,14 @@
       "WebSearch",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright__browser_click"
+      "mcp__playwright__browser_click",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_snapshot",
+      "WebFetch(domain:datatables.net)",
+      "WebFetch(domain:editor.datatables.net)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
