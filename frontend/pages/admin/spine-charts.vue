@@ -239,7 +239,6 @@ interface SpineChart {
 
 // Meta
 definePageMeta({
-  layout: 'admin',
   middleware: 'auth'
 })
 
