@@ -89,7 +89,7 @@
                 <div v-if="!selectedFile">
                   <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-3"></i>
                   <p class="text-gray-600 dark:text-gray-400 mb-2">
-                    Drop your file here or <button @click="$refs.fileInput.click()" class="text-blue-600 dark:text-blue-400 hover:underline">browse</button>
+                    Drop your file here or <button @click="fileInput?.click()" class="text-blue-600 dark:text-blue-400 hover:underline">browse</button>
                   </p>
                   <p class="text-sm text-gray-500 dark:text-gray-500">
                     Supports CSV, Excel (.xlsx, .xls), and JSON files
@@ -145,13 +145,13 @@
             <div class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
               <p><strong>CSV Format:</strong></p>
               <code class="block bg-blue-100 dark:bg-blue-800 p-2 rounded text-xs">
-                Draw Weight (lbs),Arrow Length (in),Recommended Spine,Arrow Size<br>
-                "40-50",28,"400","2314"<br>
-                "45",30,"350-400","2413"
+                Draw Weight (lbs),Arrow Length (in),Recommended Spine,Arrow Size,Speed (fps)<br>
+                "40-50",28,"400","2314",250<br>
+                "45",30,"350-400","2413",280
               </code>
               <p class="mt-3"><strong>JSON Format:</strong></p>
               <code class="block bg-blue-100 dark:bg-blue-800 p-2 rounded text-xs">
-                [{"draw_weight_range_lbs":"40-50","arrow_length_in":28,"spine":"400","arrow_size":"2314"}]
+                [{"draw_weight_range_lbs":"40-50","arrow_length_in":28,"spine":"400","arrow_size":"2314","speed":250}]
               </code>
             </div>
           </div>
@@ -180,6 +180,18 @@
                 Validate data before import (recommended)
               </label>
             </div>
+            <div class="flex items-center">
+              <input
+                id="skip-duplicates"
+                v-model="skipDuplicates"
+                type="checkbox"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                @change="() => { if (newEntries.length > 0 || duplicateEntries.length > 0) processDataWithDuplicateCheck(newEntries.concat(duplicateEntries)) }"
+              >
+              <label for="skip-duplicates" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Skip duplicate entries (only import new data)
+              </label>
+            </div>
           </div>
 
           <!-- Preview -->
@@ -195,6 +207,7 @@
                     <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Length</th>
                     <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Spine</th>
                     <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Size</th>
+                    <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Speed</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -203,14 +216,55 @@
                     <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.arrow_length_in }}"</td>
                     <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.spine }}</td>
                     <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.arrow_size || '—' }}</td>
+                    <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.speed ? `${row.speed} fps` : '—' }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p class="text-xs text-gray-600 dark:text-gray-400">
-              Found {{ previewData.length }} valid entries
-              <span v-if="invalidRows.length > 0" class="text-red-600 dark:text-red-400">
-                ({{ invalidRows.length }} invalid rows will be skipped)
+            <div class="flex justify-between items-center text-xs">
+              <div class="text-gray-600 dark:text-gray-400">
+                <span v-if="skipDuplicates">
+                  {{ newEntries.length }} new entries will be imported
+                </span>
+                <span v-else>
+                  {{ previewData.length }} entries will be imported
+                </span>
+                <span v-if="invalidRows.length > 0" class="text-red-600 dark:text-red-400">
+                  ({{ invalidRows.length }} invalid rows will be skipped)
+                </span>
+              </div>
+              <div v-if="duplicateEntries.length > 0" class="text-amber-600 dark:text-amber-400">
+                {{ duplicateEntries.length }} duplicates found
+              </div>
+            </div>
+          </div>
+
+          <!-- Duplicate Information -->
+          <div v-if="duplicateEntries.length > 0" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <h4 class="flex items-center text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              Duplicate Entries Detected
+            </h4>
+            <p class="text-sm text-amber-700 dark:text-amber-300 mb-3">
+              Found {{ duplicateEntries.length }} entries that already exist in your spine chart:
+            </p>
+            
+            <!-- Show first few duplicates -->
+            <div class="bg-amber-100 dark:bg-amber-800 rounded p-2 text-xs font-mono max-h-32 overflow-y-auto">
+              <div v-for="(duplicate, index) in duplicateEntries.slice(0, 5)" :key="index" class="text-amber-800 dark:text-amber-200">
+                {{ duplicate.draw_weight_range_lbs }} lbs, {{ duplicate.arrow_length_in }}", {{ duplicate.spine }}{{ duplicate.arrow_size ? ', ' + duplicate.arrow_size : '' }}
+              </div>
+              <div v-if="duplicateEntries.length > 5" class="text-amber-700 dark:text-amber-300 mt-1">
+                ... and {{ duplicateEntries.length - 5 }} more
+              </div>
+            </div>
+            
+            <p class="text-sm text-amber-700 dark:text-amber-300 mt-2">
+              <span v-if="skipDuplicates">
+                ✓ These duplicates will be skipped during import.
+              </span>
+              <span v-else>
+                ⚠ These duplicates will be imported if you proceed.
               </span>
             </p>
           </div>
@@ -262,12 +316,14 @@ interface SpineGridEntry {
   arrow_length_in: number
   spine: string
   arrow_size?: string
+  speed?: number
 }
 
 interface Props {
   show: boolean
   bowType?: string
   manufacturer?: string
+  existingData?: SpineGridEntry[]  // Current chart data for duplicate checking
 }
 
 interface Emits {
@@ -277,10 +333,14 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   bowType: '',
-  manufacturer: ''
+  manufacturer: '',
+  existingData: () => []
 })
 
 const emit = defineEmits<Emits>()
+
+// Template refs
+const fileInput = ref<HTMLInputElement>()
 
 // State
 const importMethod = ref<'file' | 'paste'>('file')
@@ -292,6 +352,9 @@ const validationErrors = ref<string[]>([])
 const processing = ref(false)
 const replaceExistingData = ref(false)
 const validateData = ref(true)
+const duplicateEntries = ref<SpineGridEntry[]>([])
+const newEntries = ref<SpineGridEntry[]>([])
+const skipDuplicates = ref(true)
 
 // Computed
 const canImport = computed(() => {
@@ -323,6 +386,8 @@ const clearFile = () => {
   previewData.value = []
   invalidRows.value = []
   validationErrors.value = []
+  duplicateEntries.value = []
+  newEntries.value = []
 }
 
 const processFile = async (file: File) => {
@@ -366,7 +431,8 @@ const processCsvData = (csvText: string) => {
           draw_weight_range_lbs: values[0] || '',
           arrow_length_in: parseFloat(values[1]) || 0,
           spine: values[2] || '',
-          arrow_size: values[3] || ''
+          arrow_size: values[3] || '',
+          speed: values[4] ? parseFloat(values[4]) : undefined
         }
 
         if (validateData.value) {
@@ -385,7 +451,8 @@ const processCsvData = (csvText: string) => {
       }
     })
 
-    previewData.value = data
+    // Process data with duplicate checking
+    processDataWithDuplicateCheck(data)
     invalidRows.value = invalid
     validationErrors.value = errors
   } catch (error) {
@@ -412,7 +479,8 @@ const processJsonData = (jsonText: string) => {
           draw_weight_range_lbs: item.draw_weight_range_lbs || '',
           arrow_length_in: parseFloat(item.arrow_length_in) || 0,
           spine: item.spine || '',
-          arrow_size: item.arrow_size || ''
+          arrow_size: item.arrow_size || '',
+          speed: item.speed ? parseFloat(item.speed) : undefined
         }
 
         if (validateData.value) {
@@ -431,7 +499,8 @@ const processJsonData = (jsonText: string) => {
       }
     })
 
-    previewData.value = data
+    // Process data with duplicate checking
+    processDataWithDuplicateCheck(data)
     invalidRows.value = invalid
     validationErrors.value = errors
   } catch (error) {
@@ -467,12 +536,49 @@ const validateEntry = (entry: SpineGridEntry, rowNumber: number): string[] => {
   return errors
 }
 
+// Check if an entry is a duplicate
+const isDuplicateEntry = (entry: SpineGridEntry, existingData: SpineGridEntry[]): boolean => {
+  return existingData.some(existing => 
+    existing.draw_weight_range_lbs.toString().trim() === entry.draw_weight_range_lbs.toString().trim() &&
+    existing.arrow_length_in === entry.arrow_length_in &&
+    existing.spine.trim() === entry.spine.trim() &&
+    (existing.arrow_size || '').trim() === (entry.arrow_size || '').trim() &&
+    (existing.speed || 0) === (entry.speed || 0)
+  )
+}
+
+// Process data and separate duplicates from new entries
+const processDataWithDuplicateCheck = (validatedData: SpineGridEntry[]) => {
+  const duplicates: SpineGridEntry[] = []
+  const newItems: SpineGridEntry[] = []
+
+  validatedData.forEach(entry => {
+    if (isDuplicateEntry(entry, props.existingData)) {
+      duplicates.push(entry)
+    } else {
+      newItems.push(entry)
+    }
+  })
+
+  duplicateEntries.value = duplicates
+  newEntries.value = newItems
+  
+  // Set preview data based on skip duplicates setting
+  if (skipDuplicates.value) {
+    previewData.value = newItems
+  } else {
+    previewData.value = validatedData
+  }
+}
+
 // Process paste data
 watch(() => pasteData.value, (newData) => {
   if (!newData.trim()) {
     previewData.value = []
     invalidRows.value = []
     validationErrors.value = []
+    duplicateEntries.value = []
+    newEntries.value = []
     return
   }
 
@@ -509,6 +615,9 @@ const cancel = () => {
   processing.value = false
   replaceExistingData.value = false
   validateData.value = true
+  duplicateEntries.value = []
+  newEntries.value = []
+  skipDuplicates.value = true
   
   emit('cancel')
 }
