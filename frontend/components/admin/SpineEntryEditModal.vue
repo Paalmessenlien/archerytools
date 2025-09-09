@@ -285,6 +285,6 @@ input:focus {
 
 /* Error state styling */
 input.border-red-500:focus {
-  @apply ring-red-500 ring-opacity-50 border-red-500;
+  @apply ring-red-500 ring-opacity-50;
 }
 </style>

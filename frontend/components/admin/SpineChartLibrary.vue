@@ -666,6 +666,10 @@
 </template>
 
 <script setup lang="ts">
+// Component imports
+import SpineEntryEditModal from './SpineEntryEditModal.vue'
+import SpineChartDataTable from './SpineChartDataTable.vue'
+
 interface SpineChart {
   id: number
   chart_type: string
