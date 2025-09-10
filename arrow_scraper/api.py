@@ -10972,87 +10972,120 @@ def convert_spine_values():
         print(f"Error converting spine values: {e}")
         return jsonify({'error': 'Failed to convert spine values'}), 500
 
-@app.route('/api/admin/spine-charts', methods=['GET'])
+def _get_all_spine_charts_data():
+    """Internal function to get all spine charts data"""
+    db = get_database()
+    if not db:
+        raise Exception('Database not available')
+        
+    print(f"Database path being used: {getattr(db, 'db_path', 'Unknown')}")
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    
+    # Check if tables exist
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%spine%'")
+    tables = cursor.fetchall()
+    print(f"Spine-related tables found: {[table[0] for table in tables]}")
+    
+    # Get manufacturer charts
+    cursor.execute("""
+        SELECT 'manufacturer' as chart_type, id, manufacturer, model, bow_type, 
+               spine_system, chart_notes, provenance, is_active, created_at,
+               grid_definition, spine_grid, is_system_default, calculation_priority
+        FROM manufacturer_spine_charts_enhanced
+        ORDER BY is_system_default DESC, calculation_priority ASC, manufacturer, model, bow_type
+    """)
+    
+    manufacturer_charts = []
+    for row in cursor.fetchall():
+        manufacturer = row[2] or ''
+        model = row[3] or ''
+        # If manufacturer or model contains "Copy", it's a user-copied chart, not built-in
+        is_builtin = not ('Copy' in manufacturer or 'Custom Chart' in model)
+        
+        manufacturer_charts.append({
+            'chart_type': row[0],
+            'id': row[1],
+            'manufacturer': manufacturer,
+            'model': model,
+            'bow_type': row[4],
+            'spine_system': row[5],
+            'chart_notes': row[6],
+            'provenance': row[7],
+            'is_active': bool(row[8]),
+            'created_at': row[9],
+            'grid_definition': json.loads(row[10]) if row[10] else {},
+            'spine_grid': json.loads(row[11]) if row[11] else [],
+            'is_system_default': bool(row[12]) if len(row) > 12 else False,
+            'is_default': bool(row[12]) if len(row) > 12 else False,  # Map to is_default for frontend
+            'calculation_priority': row[13] if len(row) > 13 else 100,
+            'is_builtin': is_builtin
+        })
+    
+    # Get custom charts
+    cursor.execute("""
+        SELECT 'custom' as chart_type, id, manufacturer, model, bow_type, 
+               spine_system, chart_notes, created_by, is_active, created_at,
+               grid_definition, spine_grid, is_system_default, calculation_priority
+        FROM custom_spine_charts
+        ORDER BY is_system_default DESC, calculation_priority ASC, chart_name
+    """)
+    
+    custom_charts = []
+    for row in cursor.fetchall():
+        custom_charts.append({
+            'chart_type': row[0],
+            'id': row[1],
+            'manufacturer': row[2],
+            'model': row[3],
+            'bow_type': row[4],
+            'spine_system': row[5],
+            'chart_notes': row[6],
+            'created_by': row[7],
+            'is_active': bool(row[8]),
+            'created_at': row[9],
+            'grid_definition': json.loads(row[10]) if row[10] else {},
+            'spine_grid': json.loads(row[11]) if row[11] else [],
+            'is_system_default': bool(row[12]) if len(row) > 12 else False,
+            'is_default': bool(row[12]) if len(row) > 12 else False,  # Map to is_default for frontend
+            'calculation_priority': row[13] if len(row) > 13 else 100,
+            'is_builtin': False  # Custom charts are not built-in
+        })
+    
+    conn.close()
+    return {
+        'manufacturer_charts': manufacturer_charts,
+        'custom_charts': custom_charts,
+        'total_charts': len(manufacturer_charts) + len(custom_charts)
+    }
+
+@app.route('/api/admin/spine-charts/list', methods=['GET'])
+@token_required
+@admin_required
+def get_all_spine_charts_list(current_user):
+    """Get all spine charts (manufacturer + custom) for admin - list alias"""
+    try:
+        data = _get_all_spine_charts_data()
+        # Frontend expects the charts in a "charts" key, combined
+        combined_charts = data['manufacturer_charts'] + data['custom_charts']
+        return jsonify({
+            'charts': combined_charts,
+            'total_charts': data['total_charts']
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error getting all spine charts: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Failed to get spine charts: {str(e)}'}), 500
+
+@app.route('/api/admin/spine-charts/all', methods=['GET'])
 @token_required
 @admin_required
 def get_all_spine_charts(current_user):
     """Get all spine charts (manufacturer + custom) for admin"""
     try:
-        db = get_database()
-        if not db:
-            return jsonify({'error': 'Database not available'}), 500
-        
-        print(f"Database path being used: {getattr(db, 'db_path', 'Unknown')}")
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        
-        # Check if tables exist
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%spine%'")
-        tables = cursor.fetchall()
-        print(f"Spine-related tables found: {[table[0] for table in tables]}")
-        
-        # Get manufacturer charts
-        cursor.execute("""
-            SELECT 'manufacturer' as chart_type, id, manufacturer, model, bow_type, 
-                   spine_system, chart_notes, provenance, is_active, created_at,
-                   grid_definition, spine_grid, is_system_default, calculation_priority
-            FROM manufacturer_spine_charts_enhanced
-            ORDER BY is_system_default DESC, calculation_priority ASC, manufacturer, model, bow_type
-        """)
-        
-        manufacturer_charts = []
-        for row in cursor.fetchall():
-            manufacturer_charts.append({
-                'chart_type': row[0],
-                'id': row[1],
-                'manufacturer': row[2],
-                'model': row[3],
-                'bow_type': row[4],
-                'spine_system': row[5],
-                'chart_notes': row[6],
-                'provenance': row[7],
-                'is_active': bool(row[8]),
-                'created_at': row[9],
-                'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else [],
-                'is_system_default': bool(row[12]) if len(row) > 12 else False,
-                'calculation_priority': row[13] if len(row) > 13 else 100
-            })
-        
-        # Get custom charts
-        cursor.execute("""
-            SELECT 'custom' as chart_type, id, manufacturer, model, bow_type, 
-                   spine_system, chart_notes, created_by, is_active, created_at,
-                   grid_definition, spine_grid, is_system_default, calculation_priority
-            FROM custom_spine_charts
-            ORDER BY is_system_default DESC, calculation_priority ASC, chart_name
-        """)
-        
-        custom_charts = []
-        for row in cursor.fetchall():
-            custom_charts.append({
-                'chart_type': row[0],
-                'id': row[1],
-                'manufacturer': row[2],
-                'model': row[3],
-                'bow_type': row[4],
-                'spine_system': row[5],
-                'chart_notes': row[6],
-                'created_by': row[7],
-                'is_active': bool(row[8]),
-                'created_at': row[9],
-                'grid_definition': json.loads(row[10]) if row[10] else {},
-                'spine_grid': json.loads(row[11]) if row[11] else [],
-                'is_system_default': bool(row[12]) if len(row) > 12 else False,
-                'calculation_priority': row[13] if len(row) > 13 else 100
-            })
-        
-        conn.close()
-        return jsonify({
-            'manufacturer_charts': manufacturer_charts,
-            'custom_charts': custom_charts,
-            'total_charts': len(manufacturer_charts) + len(custom_charts)
-        })
+        data = _get_all_spine_charts_data()
+        return jsonify(data)
     except Exception as e:
         import traceback
         print(f"Error getting all spine charts: {e}")
@@ -11349,6 +11382,231 @@ def duplicate_spine_chart(current_user, chart_type, chart_id):
     except Exception as e:
         print(f"Error duplicating spine chart: {e}")
         return jsonify({'error': 'Failed to duplicate chart'}), 500
+
+# Frontend-Compatible Spine Chart API Endpoints
+# These endpoints match what the frontend spine chart editor expects
+
+@app.route('/api/admin/spine-charts/manufacturers', methods=['GET'])
+@token_required
+@admin_required
+def get_spine_chart_manufacturers_by_bow_type(current_user):
+    """Get manufacturers that have spine charts for a specific bow type"""
+    try:
+        bow_type = request.args.get('bow_type', '').strip()
+        if not bow_type:
+            return jsonify({'error': 'bow_type parameter is required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get manufacturers that have spine charts for this bow type
+        cursor.execute("""
+            SELECT DISTINCT manufacturer
+            FROM manufacturer_spine_charts_enhanced
+            WHERE bow_type = ? AND is_active = 1
+            ORDER BY manufacturer
+        """, (bow_type,))
+        
+        manufacturers = [row[0] for row in cursor.fetchall()]
+        
+        # If no manufacturers found, return some defaults for testing
+        if not manufacturers:
+            manufacturers = ['Custom', 'Test Manufacturer']
+        
+        conn.close()
+        
+        return jsonify({
+            'manufacturers': manufacturers,
+            'bow_type': bow_type
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting spine chart manufacturers: {e}")
+        return jsonify({'error': 'Failed to get manufacturers'}), 500
+
+@app.route('/api/admin/spine-charts', methods=['GET', 'POST', 'DELETE'])
+@token_required
+@admin_required
+def handle_spine_charts_crud(current_user):
+    """Handle CRUD operations for spine charts based on bow_type and manufacturer"""
+    try:
+        if request.method == 'GET':
+            # Get spine chart data for specific bow type and manufacturer
+            bow_type = request.args.get('bow_type', '').strip()
+            manufacturer = request.args.get('manufacturer', '').strip()
+            
+            if not bow_type or not manufacturer:
+                return jsonify({'error': 'bow_type and manufacturer parameters are required'}), 400
+            
+            db = get_database()
+            if not db:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Try to get manufacturer chart first
+            cursor.execute("""
+                SELECT spine_grid, updated_at, chart_notes
+                FROM manufacturer_spine_charts_enhanced
+                WHERE bow_type = ? AND manufacturer = ? AND is_active = 1
+                ORDER BY calculation_priority ASC
+                LIMIT 1
+            """, (bow_type, manufacturer))
+            
+            result = cursor.fetchone()
+            
+            if result:
+                spine_data = json.loads(result[0]) if result[0] else []
+                chart = {
+                    'data': spine_data,
+                    'updated_at': result[1] or datetime.utcnow().isoformat(),
+                    'notes': result[2] or ''
+                }
+            else:
+                # Return empty chart for new combinations
+                chart = {
+                    'data': [],
+                    'updated_at': datetime.utcnow().isoformat(),
+                    'notes': f'New chart for {bow_type} - {manufacturer}'
+                }
+            
+            conn.close()
+            return jsonify({'chart': chart}), 200
+            
+        elif request.method == 'POST':
+            # Create or update spine chart
+            data = request.get_json()
+            bow_type = data.get('bow_type', '').strip()
+            manufacturer = data.get('manufacturer', '').strip()
+            chart_data = data.get('data', [])
+            
+            if not bow_type or not manufacturer:
+                return jsonify({'error': 'bow_type and manufacturer are required'}), 400
+            
+            db = get_database()
+            if not db:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Check if chart exists
+            cursor.execute("""
+                SELECT id FROM manufacturer_spine_charts_enhanced
+                WHERE bow_type = ? AND manufacturer = ?
+            """, (bow_type, manufacturer))
+            
+            existing = cursor.fetchone()
+            current_time = datetime.utcnow().isoformat()
+            
+            if existing:
+                # Update existing chart
+                cursor.execute("""
+                    UPDATE manufacturer_spine_charts_enhanced
+                    SET spine_grid = ?, updated_at = ?, chart_notes = ?
+                    WHERE bow_type = ? AND manufacturer = ?
+                """, (json.dumps(chart_data), current_time, 
+                     f'Updated via admin interface', bow_type, manufacturer))
+            else:
+                # Create new chart
+                cursor.execute("""
+                    INSERT INTO manufacturer_spine_charts_enhanced 
+                    (manufacturer, model, bow_type, spine_system, spine_grid, 
+                     chart_notes, provenance, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (manufacturer, 'Custom Chart', bow_type, 'standard', 
+                     json.dumps(chart_data), 'Created via admin interface',
+                     'admin_interface', 1, current_time, current_time))
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({'message': 'Chart saved successfully'}), 200
+            
+        elif request.method == 'DELETE':
+            # Delete spine chart
+            bow_type = request.args.get('bow_type', '').strip()
+            manufacturer = request.args.get('manufacturer', '').strip()
+            
+            if not bow_type or not manufacturer:
+                return jsonify({'error': 'bow_type and manufacturer parameters are required'}), 400
+            
+            db = get_database()
+            if not db:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            
+            # Delete the chart
+            cursor.execute("""
+                DELETE FROM manufacturer_spine_charts_enhanced
+                WHERE bow_type = ? AND manufacturer = ?
+            """, (bow_type, manufacturer))
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({'message': 'Chart deleted successfully'}), 200
+            
+    except Exception as e:
+        print(f"Error handling spine charts CRUD: {e}")
+        return jsonify({'error': f'Failed to handle spine chart operation: {str(e)}'}), 500
+
+@app.route('/api/admin/spine-charts/export', methods=['GET'])
+@token_required
+@admin_required
+def export_all_spine_charts(current_user):
+    """Export all spine charts as JSON"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get all spine charts
+        cursor.execute("""
+            SELECT manufacturer, model, bow_type, spine_system, spine_grid, 
+                   chart_notes, created_at, updated_at
+            FROM manufacturer_spine_charts_enhanced
+            WHERE is_active = 1
+            ORDER BY bow_type, manufacturer, model
+        """)
+        
+        charts = []
+        for row in cursor.fetchall():
+            chart = {
+                'manufacturer': row[0],
+                'model': row[1],
+                'bow_type': row[2],
+                'spine_system': row[3],
+                'data': json.loads(row[4]) if row[4] else [],
+                'notes': row[5],
+                'created_at': row[6],
+                'updated_at': row[7]
+            }
+            charts.append(chart)
+        
+        conn.close()
+        
+        export_data = {
+            'export_timestamp': datetime.utcnow().isoformat(),
+            'total_charts': len(charts),
+            'charts': charts
+        }
+        
+        return jsonify(export_data), 200
+        
+    except Exception as e:
+        print(f"Error exporting spine charts: {e}")
+        return jsonify({'error': 'Failed to export charts'}), 500
 
 # Database Migration Management API Endpoints
 

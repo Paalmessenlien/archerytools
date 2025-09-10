@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-09-05T05:33:06.956Z",
+  "testName": "Superdrive 23 Arrow Calculator Test",
+  "environment": {
+    "frontendUrl": "http://localhost:3000",
+    "backendUrl": "http://localhost:5000",
+    "targetArrow": {
+      "id": 2508,
+      "name": "Superdrive 23",
+      "manufacturer": "Easton Archery"
+    }
+  },
+  "tests": [
+    {
+      "name": "Environment Check",
+      "status": "passed",
+      "details": {
+        "frontend": "Available",
+        "title": "ArcheryTool - Professional Archery Tools - ArrowTune",
+        "api": "Available"
+      },
+      "errors": []
+    },
+    {
+      "name": "Manual Authentication",
+      "status": "timeout",
+      "details": {
+        "email": "messenlien@gmail.com"
+      },
+      "errors": []
+    },
+    {
+      "name": "Navigate to Calculator",
+      "status": "passed",
+      "details": {
+        "finalUrl": "http://localhost:3000/",
+        "method": "via_setup"
+      },
+      "errors": []
+    },
+    {
+      "name": "Setup 50lbs Compound Bow",
+      "status": "passed",
+      "details": {
+        "drawWeight": "50 lbs",
+        "bowType": "Compound",
+        "drawLength": "28 inches"
+      },
+      "errors": []
+    },
+    {
+      "name": "Test Compatible Arrows API",
+      "status": "failed",
+      "details": {
+        "targetArrow": {
+          "id": 2508,
+          "name": "Superdrive 23",
+          "manufacturer": "Easton Archery"
+        },
+        "searchResults": {}
+      },
+      "errors": [
+        "API request failed: Failed to fetch"
+      ]
+    },
+    {
+      "name": "Calculator UI Test",
+      "status": "passed",
+      "details": {
+        "arrowElementsFound": 5,
+        "superdriveInUI": false
+      },
+      "errors": []
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "Calculator Navigation",
+      "path": "/tmp/calculator_navigation_1757050517047.png",
+      "description": "Screenshot after attempting to navigate to calculator"
+    },
+    {
+      "name": "Calculator UI",
+      "path": "/tmp/calculator_ui_1757050517475.png",
+      "description": "Screenshot of calculator interface during testing"
+    }
+  ],
+  "summary": {
+    "totalTests": 6,
+    "passedTests": 4,
+    "failedTests": 1,
+    "successRate": 67
+  },
+  "objectiveAchieved": false
+}

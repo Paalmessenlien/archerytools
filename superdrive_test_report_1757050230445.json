@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-09-05T05:30:21.748Z",
+  "testName": "Superdrive 23 Arrow Calculator Test",
+  "environment": {
+    "frontendUrl": "http://localhost:3000",
+    "backendUrl": "http://localhost:5000",
+    "targetArrow": {
+      "id": 2508,
+      "name": "Superdrive 23",
+      "manufacturer": "Easton Archery"
+    }
+  },
+  "tests": [
+    {
+      "name": "Environment Check",
+      "status": "passed",
+      "details": {
+        "frontend": "Available",
+        "title": "ArcheryTool - Professional Archery Tools - ArrowTune",
+        "api": "Available"
+      },
+      "errors": []
+    },
+    {
+      "name": "Navigate to Calculator",
+      "status": "passed",
+      "details": {
+        "finalUrl": "http://localhost:3000/",
+        "method": "navigation"
+      },
+      "errors": []
+    },
+    {
+      "name": "Setup 50lbs Compound Bow",
+      "status": "passed",
+      "details": {
+        "drawWeight": "50 lbs",
+        "bowType": "Compound",
+        "drawLength": "28 inches"
+      },
+      "errors": []
+    },
+    {
+      "name": "Test Compatible Arrows API",
+      "status": "failed",
+      "details": {
+        "targetArrow": {
+          "id": 2508,
+          "name": "Superdrive 23",
+          "manufacturer": "Easton Archery"
+        },
+        "searchResults": {}
+      },
+      "errors": [
+        "API request failed: Failed to fetch"
+      ]
+    },
+    {
+      "name": "Calculator UI Test",
+      "status": "passed",
+      "details": {
+        "arrowElementsFound": 5,
+        "superdriveInUI": false
+      },
+      "errors": []
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "Calculator Navigation",
+      "path": "/tmp/calculator_navigation_1757050229703.png",
+      "description": "Screenshot after attempting to navigate to calculator"
+    },
+    {
+      "name": "Calculator UI",
+      "path": "/tmp/calculator_ui_1757050230142.png",
+      "description": "Screenshot of calculator interface during testing"
+    }
+  ],
+  "summary": {
+    "totalTests": 5,
+    "passedTests": 4,
+    "failedTests": 1,
+    "successRate": 80
+  },
+  "objectiveAchieved": false
+}

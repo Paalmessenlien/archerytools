@@ -85,6 +85,16 @@ Material-aware system defaults and intelligent chart selection:
 - **API Enhancements**: Material preference support with intelligent chart selection
 - **User Experience**: Complete transparency of calculation sources with professional visual design
 
+#### [Spine Chart Speed Field Enhancement](SPINE_CHART_SPEED_FIELD_ENHANCEMENT.md) ✨ NEW
+**January 2025** - Optional arrow speed field enhancement for spine chart entries:
+- **Optional Speed Field**: Added optional speed (fps) data to spine chart entries with non-breaking changes
+- **DataTable Integration**: Speed column with full DOM-based inline editing support
+- **Import/Export Support**: CSV and JSON import/export compatibility with speed field
+- **Duplicate Detection**: Enhanced duplicate checking algorithm includes speed field comparison
+- **Professional UI**: Speed displayed as "XXX fps" format with empty state handling
+- **Admin Interface**: Complete CRUD support for speed values through spine chart editor
+- **Backward Compatibility**: Existing charts function without modification or migration
+
 #### [Spine Calculation Fixes - August 2025](SPINE_CALCULATION_FIXES_AUGUST_2025.md) ⚡ CRITICAL
 Critical fixes to spine calculation accuracy:
 - **Arrow Length Direction Fix**: Corrected backwards length adjustment logic
