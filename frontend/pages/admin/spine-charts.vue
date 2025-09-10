@@ -160,13 +160,46 @@
               <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
-                    Type
+                    <button 
+                      @click="setSortBy('bow_type')"
+                      class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      <span>Type</span>
+                      <i class="fas fa-sort text-xs opacity-50" 
+                         :class="{
+                           'fa-sort-up': sortBy === 'bow_type' && sortOrder === 'asc',
+                           'fa-sort-down': sortBy === 'bow_type' && sortOrder === 'desc',
+                           'fa-sort': sortBy !== 'bow_type'
+                         }"></i>
+                    </button>
                   </th>
                   <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Chart Details
+                    <button 
+                      @click="setSortBy('manufacturer')"
+                      class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      <span>Chart Details</span>
+                      <i class="fas fa-sort text-xs opacity-50" 
+                         :class="{
+                           'fa-sort-up': sortBy === 'manufacturer' && sortOrder === 'asc',
+                           'fa-sort-down': sortBy === 'manufacturer' && sortOrder === 'desc',
+                           'fa-sort': sortBy !== 'manufacturer'
+                         }"></i>
+                    </button>
                   </th>
                   <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
-                    Status
+                    <button 
+                      @click="setSortBy('is_default')"
+                      class="flex items-center justify-center space-x-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors w-full"
+                    >
+                      <span>Status</span>
+                      <i class="fas fa-sort text-xs opacity-50" 
+                         :class="{
+                           'fa-sort-up': sortBy === 'is_default' && sortOrder === 'asc',
+                           'fa-sort-down': sortBy === 'is_default' && sortOrder === 'desc',
+                           'fa-sort': sortBy !== 'is_default'
+                         }"></i>
+                    </button>
                   </th>
                   <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                     Actions
@@ -272,6 +305,49 @@
             </table>
           </div>
           
+          <!-- Mobile sorting controls -->
+          <div class="md:hidden mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort by:</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                @click="setSortBy('bow_type')"
+                class="flex items-center space-x-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                :class="{
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': sortBy === 'bow_type',
+                  'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': sortBy !== 'bow_type'
+                }"
+              >
+                <span>Type</span>
+                <i v-if="sortBy === 'bow_type'" class="fas text-xs" 
+                   :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'"></i>
+              </button>
+              <button
+                @click="setSortBy('manufacturer')"
+                class="flex items-center space-x-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                :class="{
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': sortBy === 'manufacturer',
+                  'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': sortBy !== 'manufacturer'
+                }"
+              >
+                <span>Name</span>
+                <i v-if="sortBy === 'manufacturer'" class="fas text-xs" 
+                   :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'"></i>
+              </button>
+              <button
+                @click="setSortBy('is_default')"
+                class="flex items-center space-x-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                :class="{
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': sortBy === 'is_default',
+                  'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': sortBy !== 'is_default'
+                }"
+              >
+                <span>Status</span>
+                <i v-if="sortBy === 'is_default'" class="fas text-xs" 
+                   :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'"></i>
+              </button>
+            </div>
+          </div>
+
           <!-- Mobile card view -->
           <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
             <div v-for="chart in filteredCharts" :key="chart.id" 
@@ -331,6 +407,16 @@
                     <i class="fas fa-star mr-2"></i>
                     Set as Default
                   </CustomButton>
+                  <CustomButton
+                    v-else
+                    variant="filled"
+                    class="w-full justify-center bg-green-600 text-white hover:bg-green-700 min-h-[44px]"
+                    :aria-label="`${chart.manufacturer} ${chart.model} is the default chart`"
+                    disabled
+                  >
+                    <i class="fas fa-check mr-2"></i>
+                    Default
+                  </CustomButton>
                 </template>
                 <template v-else>
                   <div class="grid grid-cols-2 gap-2">
@@ -362,6 +448,16 @@
                   >
                     <i class="fas fa-star mr-2"></i>
                     Set as Default
+                  </CustomButton>
+                  <CustomButton
+                    v-else
+                    variant="filled"
+                    class="w-full justify-center bg-green-600 text-white hover:bg-green-700 min-h-[44px]"
+                    :aria-label="`${chart.manufacturer} ${chart.model} is the default chart`"
+                    disabled
+                  >
+                    <i class="fas fa-check mr-2"></i>
+                    Default
                   </CustomButton>
                 </template>
               </div>
@@ -643,17 +739,7 @@ const loadAllCharts = async () => {
     const response = await api.get('/admin/spine-charts/list')
     allCharts.value = response.charts || []
     
-    // Fix backend issue: Override is_builtin for charts that are clearly custom
-    allCharts.value.forEach(chart => {
-      // If chart has "Copy" in manufacturer or model is "Custom Chart", it should be custom
-      if ((chart.manufacturer && chart.manufacturer.includes('Copy')) || 
-          (chart.model && chart.model.includes('Custom Chart'))) {
-        if (chart.is_builtin) {
-          console.warn(`🔧 Fixing backend issue: Chart "${chart.manufacturer} - ${chart.model}" marked as builtin but appears to be custom`)
-          chart.is_builtin = false
-        }
-      }
-    })
+    // Charts now have correct is_builtin property from API
     
     // Debug logging for chart list
     console.log('📊 Loaded chart list:', allCharts.value)
@@ -744,53 +830,23 @@ const viewChart = async (chart: any) => {
   console.log('🔍 viewChart function called with chart:', chart)
   try {
     loading.value = true
-    const api = getApi()
-    console.log('📡 Making API request to get chart data...')
-    const response = await api.get(`/admin/spine-charts?bow_type=${chart.bow_type}&manufacturer=${chart.manufacturer}`)
     
-    // Find the specific chart in the response arrays
-    let foundChart = null
-    
-    // Check custom charts first
-    if (response.custom_charts) {
-      foundChart = response.custom_charts.find((c: any) => 
-        c.id === chart.id && 
-        c.bow_type === chart.bow_type && 
-        c.manufacturer === chart.manufacturer
-      )
+    // Use the chart data that's already loaded instead of making a new API call
+    editingChart.value = {
+      id: chart.id,
+      bow_type: chart.bow_type,
+      manufacturer: chart.manufacturer,
+      model: chart.model,
+      data: chart.spine_grid || [],  // The spine data is in spine_grid
+      updated_at: chart.created_at || new Date().toISOString(),
+      is_builtin: chart.is_builtin,
+      provenance: chart.provenance || 'Built-in chart',
+      grid_definition: chart.grid_definition || {},
+      chart_notes: chart.chart_notes || ''
     }
-    
-    // Check manufacturer charts if not found in custom charts
-    if (!foundChart && response.manufacturer_charts) {
-      foundChart = response.manufacturer_charts.find((c: any) => 
-        c.id === chart.id && 
-        c.bow_type === chart.bow_type && 
-        c.manufacturer === chart.manufacturer
-      )
-    }
-    
-    if (foundChart) {
-      editingChart.value = {
-        id: foundChart.id,
-        bow_type: foundChart.bow_type,
-        manufacturer: foundChart.manufacturer,
-        model: foundChart.model,
-        data: foundChart.spine_grid || [],  // The spine data is in spine_grid
-        updated_at: foundChart.created_at || new Date().toISOString(),
-        is_builtin: chart.is_builtin,  // Use the chart list's determination of built-in status
-        provenance: foundChart.provenance || 'Built-in chart',
-        grid_definition: foundChart.grid_definition || {},
-        chart_notes: foundChart.chart_notes || ''
-      }
-      hasUnsavedChanges.value = false
-      console.log('✅ editingChart set successfully:', editingChart.value)
-      console.log('🎯 UI should now show the editor interface')
-    } else {
-      console.warn('❌ Could not find chart with id', chart.id, 'in API response')
-      error.value = 'Chart not found in API response'
-      showNotification('Chart not found', 'error')
-    }
-    console.log('📊 Complete API response:', response)
+    hasUnsavedChanges.value = false
+    console.log('✅ editingChart set successfully:', editingChart.value)
+    console.log('🎯 UI should now show the editor interface')
   } catch (err) {
     console.error('❌ Error in viewChart:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load spine chart'
@@ -929,9 +985,7 @@ const deleteChartFromList = async (chart: any) => {
 const setChartAsDefault = async (chart: any) => {
   try {
     const api = getApi()
-    await api.put('/admin/spine-charts/set-default', {
-      chart_id: chart.id
-    })
+    await api.post(`/admin/spine-charts/${chart.chart_type || 'manufacturer'}/${chart.id}/set-default`)
     
     showNotification(`Set as default for ${chart.bow_type} bows`, 'success')
     loadAllCharts() // Refresh to show updated default status
@@ -1091,15 +1145,61 @@ const hideNotification = () => {
 // Chart filtering
 const chartFilter = ref('all')
 
+// Sorting
+const sortBy = ref('bow_type')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 const filteredCharts = computed(() => {
+  let charts = []
   switch (chartFilter.value) {
     case 'builtin':
-      return allCharts.value.filter(chart => chart.is_builtin)
+      charts = allCharts.value.filter(chart => chart.is_builtin)
+      break
     case 'custom':
-      return allCharts.value.filter(chart => !chart.is_builtin)
+      charts = allCharts.value.filter(chart => !chart.is_builtin)
+      break
     default:
-      return allCharts.value
+      charts = allCharts.value
   }
+
+  // Apply sorting
+  return charts.sort((a, b) => {
+    let aVal, bVal
+    
+    switch (sortBy.value) {
+      case 'bow_type':
+        aVal = a.bow_type
+        bVal = b.bow_type
+        break
+      case 'manufacturer':
+        aVal = a.manufacturer
+        bVal = b.manufacturer
+        break
+      case 'is_default':
+        // Sort by default status (default charts first when desc, last when asc)
+        aVal = a.is_default ? 1 : 0
+        bVal = b.is_default ? 1 : 0
+        break
+      default:
+        return 0
+    }
+
+    if (sortBy.value === 'is_default') {
+      // For boolean values, handle numeric comparison
+      if (sortOrder.value === 'asc') {
+        return aVal - bVal
+      } else {
+        return bVal - aVal
+      }
+    } else {
+      // For string values
+      if (sortOrder.value === 'asc') {
+        return aVal.localeCompare(bVal)
+      } else {
+        return bVal.localeCompare(aVal)
+      }
+    }
+  })
 })
 
 const builtInCharts = computed(() => allCharts.value.filter(chart => chart.is_builtin))
@@ -1107,6 +1207,18 @@ const customCharts = computed(() => allCharts.value.filter(chart => !chart.is_bu
 
 const filterCharts = (type: string) => {
   chartFilter.value = type
+}
+
+// Sorting functions
+const setSortBy = (field: string) => {
+  if (sortBy.value === field) {
+    // Toggle sort order if clicking the same field
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Set new field and default to ascending
+    sortBy.value = field
+    sortOrder.value = 'asc'
+  }
 }
 
 // Utilities with enhanced WCAG 2.1 AA compliant color schemes
