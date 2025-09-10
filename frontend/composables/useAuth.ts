@@ -5,7 +5,7 @@ import { ref, computed } from 'vue';
 const token = ref(null);
 const user = ref(null);
 const isInitialized = ref(false);
-const isLoggedIn = computed(() => !!(token.value && user.value));
+const isLoggedIn = ref(false);
 let googleAuthClient = null; // Singleton for the Google Auth client
 
 export const useAuth = () => {
@@ -76,6 +76,7 @@ export const useAuth = () => {
     }
     
     isInitialized.value = true;
+    isLoggedIn.value = !!(token.value && user.value);
     console.log('🔄 Client auth initialization complete - Token:', !!token.value, 'User:', !!user.value);
   };
 

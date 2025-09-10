@@ -10797,34 +10797,15 @@ def get_system_default_chart():
         print(f"🔍 Debug: Database path: {db.db_path if hasattr(db, 'db_path') else 'Unknown'}")
         print(f"🔍 Debug: Request for bow_type='{bow_type}', material='{material_preference}'")
         
-        # Enhanced query that considers material preference
-        if material_preference:
-            # Try to find material-specific system default first
-            material_conditions = {
-                'carbon': "AND (manufacturer LIKE '%Carbon%' OR model LIKE '%Carbon%' OR manufacturer = 'Generic')",
-                'wood': "AND (manufacturer LIKE '%Wood%' OR manufacturer IN ('Port Orford Cedar', 'Douglas Fir', 'Pine', 'Birch'))",
-                'aluminum': "AND (manufacturer LIKE '%Aluminum%' OR model LIKE '%Aluminum%' OR model LIKE '%XX7%')",
-                'carbon-aluminum': "AND (model LIKE '%FMJ%' OR model LIKE '%A/C%')"
-            }
-            
-            material_condition = material_conditions.get(material_preference.lower(), "")
-            
-            query = f"""
-                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
-                FROM manufacturer_spine_charts_enhanced 
-                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1 {material_condition}
-                ORDER BY calculation_priority ASC
-                LIMIT 1
-            """
-        else:
-            # Original query for system default only
-            query = """
-                SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
-                FROM manufacturer_spine_charts_enhanced 
-                WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
-                ORDER BY calculation_priority ASC
-                LIMIT 1
-            """
+        # Query for system default first, regardless of material preference
+        # System defaults should take priority over material filtering
+        query = """
+            SELECT id, manufacturer, model, bow_type, spine_system, chart_notes
+            FROM manufacturer_spine_charts_enhanced 
+            WHERE bow_type = ? AND is_active = 1 AND is_system_default = 1
+            ORDER BY calculation_priority ASC
+            LIMIT 1
+        """
         
         print(f"🔍 Debug: Executing query for bow_type '{bow_type}': {query}")
         cursor.execute(query, (bow_type,))
@@ -11574,6 +11555,122 @@ def export_all_spine_charts(current_user):
     except Exception as e:
         print(f"Error exporting spine charts: {e}")
         return jsonify({'error': 'Failed to export charts'}), 500
+
+
+@app.route('/api/admin/spine-charts/list', methods=['GET'])
+@token_required
+@admin_required
+def list_all_spine_charts(current_user):
+    """Get list of all spine charts with metadata for UI display"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get all spine charts with metadata
+        cursor.execute("""
+            SELECT manufacturer, model, bow_type, spine_system, spine_grid, 
+                   chart_notes, created_at, updated_at, is_system_default,
+                   id, provenance
+            FROM manufacturer_spine_charts_enhanced
+            WHERE is_active = 1
+            ORDER BY bow_type, manufacturer, model
+        """)
+        
+        charts = []
+        for row in cursor.fetchall():
+            manufacturer, model, bow_type, spine_system, spine_grid, chart_notes, created_at, updated_at, is_default, chart_id, provenance = row
+            
+            # Parse spine grid to count entries
+            entry_count = 0
+            if spine_grid:
+                try:
+                    import json
+                    grid_data = json.loads(spine_grid)
+                    entry_count = len(grid_data) if isinstance(grid_data, list) else 0
+                except:
+                    entry_count = 0
+            
+            charts.append({
+                'id': chart_id,
+                'bow_type': bow_type,
+                'manufacturer': manufacturer,
+                'model': model or 'Standard',
+                'spine_system': spine_system,
+                'entry_count': entry_count,
+                'is_default': bool(is_default),
+                'chart_notes': chart_notes,
+                'created_at': created_at,
+                'updated_at': updated_at,
+                'provenance': provenance,
+                'is_builtin': bool(provenance and provenance.strip())  # Charts with provenance are built-in/read-only
+            })
+        
+        return jsonify({'charts': charts}), 200
+        
+    except Exception as e:
+        print(f"Error listing spine charts: {e}")
+        return jsonify({'error': 'Failed to list charts'}), 500
+
+
+@app.route('/api/admin/spine-charts/set-default', methods=['PUT'])
+@token_required
+@admin_required
+def set_default_spine_chart(current_user):
+    """Set a spine chart as default for its bow type"""
+    try:
+        data = request.get_json()
+        chart_id = data.get('chart_id')
+        
+        if not chart_id:
+            return jsonify({'error': 'Chart ID required'}), 400
+        
+        db = get_database()
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Get chart details
+        cursor.execute("""
+            SELECT bow_type FROM manufacturer_spine_charts_enhanced
+            WHERE id = ? AND is_active = 1
+        """, (chart_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'Chart not found'}), 404
+            
+        bow_type = row[0]
+        
+        # Clear all defaults for this bow type
+        cursor.execute("""
+            UPDATE manufacturer_spine_charts_enhanced 
+            SET is_system_default = 0
+            WHERE bow_type = ? AND is_active = 1
+        """, (bow_type,))
+        
+        # Set the new default
+        cursor.execute("""
+            UPDATE manufacturer_spine_charts_enhanced 
+            SET is_system_default = 1
+            WHERE id = ? AND is_active = 1
+        """, (chart_id,))
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Chart set as default for {bow_type} bows'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error setting default spine chart: {e}")
+        return jsonify({'error': 'Failed to set default chart'}), 500
 
 # Database Migration Management API Endpoints
 

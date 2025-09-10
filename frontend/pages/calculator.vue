@@ -109,6 +109,7 @@
           </button>
         </nav>
 
+
         <!-- Configuration Tab Content -->
         <div v-if="activeCalculatorTab === 'configuration'" class="space-y-6">
         
@@ -547,7 +548,7 @@
         </div>
         
         <!-- Advanced Calculations Tab Content -->
-        <div v-if="activeCalculatorTab === 'advanced'" class="space-y-6">
+        <div v-show="activeCalculatorTab === 'advanced'" class="space-y-6">
           <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-lg font-semibold text-green-900 dark:text-green-200">
@@ -556,6 +557,7 @@
               </h4>
             </div>
             
+            <!-- Visible ManufacturerSpineChartSelector for advanced tab -->
             <ManufacturerSpineChartSelector
               :bow-type="bowConfig.bow_type"
               :material-preference="bowConfig.arrow_material"

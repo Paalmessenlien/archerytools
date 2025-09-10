@@ -240,6 +240,7 @@
                 <div class="flex items-center space-x-1">
                   <CustomButton
                     @click="viewChart(chart)"
+                    @click.native="console.log('🔍 Native click on view button')"
                     variant="text"
                     size="small"
                     class="text-blue-600 hover:bg-blue-100 dark:text-blue-400"
@@ -249,6 +250,7 @@
                   </CustomButton>
                   <CustomButton
                     @click="editChart(chart)"
+                    @click.native="console.log('✏️ Native click on edit button')"
                     variant="text"
                     size="small"
                     class="text-green-600 hover:bg-green-100 dark:text-green-400"
@@ -817,11 +819,14 @@ const clearFilters = () => {
 }
 
 const viewChart = (chart: SpineChart) => {
+  console.log('🔍 viewChart function called with:', chart)
   selectedChart.value = chart
   showViewModal.value = true
+  console.log('✅ viewChart: showViewModal set to true')
 }
 
 const editChart = (chart: SpineChart) => {
+  console.log('✏️ editChart function called with:', chart)
   // Create a deep copy for editing
   editingChart.value = JSON.parse(JSON.stringify(chart))
   // Ensure spine_grid is an array
@@ -830,6 +835,7 @@ const editChart = (chart: SpineChart) => {
   }
   showGridEditor.value = false
   showEditModal.value = true
+  console.log('✅ editChart: showEditModal set to true')
 }
 
 const closeEditModal = () => {
