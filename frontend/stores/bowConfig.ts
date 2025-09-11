@@ -23,6 +23,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
     vane_weight_per: 5,     // Grains per vane - typical plastic vane
     vane_weight_override: false, // Boolean - whether to use manual vane weight
     bushing_weight: 0,      // Grains - no bushing by default
+    insert_weight: 0,       // Grains - no insert by default
     nock_weight: 10         // Grains - typical nock weight
   })
 
@@ -79,6 +80,7 @@ export const useBowConfigStore = defineStore('bowConfig', () => {
       vane_weight_per: 5,     // Grains per vane - typical plastic vane
       vane_weight_override: false, // Boolean - whether to use manual vane weight
       bushing_weight: 0,      // Grains - no bushing by default
+      insert_weight: 0,       // Grains - no insert by default
       nock_weight: 10         // Grains - typical nock weight
     }
     recommendedSpine.value = null
