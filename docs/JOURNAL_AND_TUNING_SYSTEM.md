@@ -56,7 +56,8 @@ CREATE TABLE journal_entries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Enhanced columns (added via migrations 058/059)
+    -- Enhanced columns (added via migrations 055/058/059)
+    images TEXT,                         -- JSON array of image objects (Migration 055)
     arrow_id INTEGER,                    -- Links to arrows
     is_favorite BOOLEAN DEFAULT 0,      -- User favorites
     session_metadata TEXT,              -- JSON session data
@@ -111,11 +112,20 @@ bow_setups (1) ─────────── (n) guide_sessions
    - `tuning_session`: Results from interactive tuning
    - `shooting_notes`: Range notes and performance
    - `setup_change`: Equipment modifications
+
+2. **Image Upload System** ✨ **NEW** (Migration 055 - September 2025)
+   - **Direct JSON Storage**: Images stored as JSON arrays in `journal_entries.images` column
+   - **Session-Level Integration**: Tuning sessions (paper, bareshaft, walkback) automatically store uploaded images
+   - **CDN Integration**: Supports Cloudinary, AWS S3, BunnyCD, and other CDN services
+   - **Automatic Migration**: Existing `journal_attachments` automatically migrated to new format
+   - **Enhanced UI**: Grid display with click-to-open functionality and mobile responsive design
+
+3. **Additional Entry Types**
    - `arrow_change`: Arrow configuration updates
    - `maintenance`: Equipment maintenance logs
    - `upgrade`: Equipment upgrades
 
-2. **Advanced Features**
+4. **Advanced Features**
    - Rich text content with Markdown support
    - Tagging system for organization
    - Favorite entries

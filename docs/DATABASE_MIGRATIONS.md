@@ -1625,6 +1625,96 @@ def migrate_up(cursor):
 
 **Integration**: String material speed modifiers applied in enhanced arrow speed calculations.
 
+#### Migration 055 - Journal Image Upload System (September 2025)
+
+**Background**: Frontend image upload functionality was implemented but the database schema lacked an 'images' column in journal_entries table.
+
+**Challenge**: Add images column to existing journal_entries table while preserving all data and foreign key constraints in SQLite.
+
+**Issue**: SQLite doesn't support ALTER TABLE ADD COLUMN on tables with foreign key constraints, causing:
+```
+error in table journal_entries after add column: near 'FOREIGN': syntax error
+```
+
+**Solution**: Implemented table recreation approach:
+
+**Implementation**:
+```python
+def migrate_up(cursor):
+    """Add images column to journal_entries table for image upload functionality"""
+    conn = cursor.connection
+    
+    try:
+        print("🔧 Migration 055: Adding images column to journal_entries table...")
+        
+        # Check if column already exists (idempotent)
+        cursor.execute("PRAGMA table_info(journal_entries)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        if 'images' in columns:
+            print("✅ Images column already exists, skipping migration")
+            return True
+        
+        # 1. Create new table with images column
+        cursor.execute('''
+            CREATE TABLE journal_entries_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                bow_setup_id INTEGER,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                entry_type TEXT NOT NULL DEFAULT 'general',
+                tags TEXT,
+                is_private BOOLEAN DEFAULT 0,
+                images TEXT,  -- JSON array of image objects
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                FOREIGN KEY (bow_setup_id) REFERENCES bow_setups (id) ON DELETE CASCADE
+            )
+        ''')
+        
+        # 2. Copy all existing data
+        cursor.execute('''
+            INSERT INTO journal_entries_new 
+            (id, user_id, bow_setup_id, title, content, entry_type, tags, is_private, created_at, updated_at)
+            SELECT id, user_id, bow_setup_id, title, content, entry_type, tags, is_private, created_at, updated_at
+            FROM journal_entries
+        ''')
+        
+        # 3. Drop old table and rename new table
+        cursor.execute("DROP TABLE journal_entries")
+        cursor.execute("ALTER TABLE journal_entries_new RENAME TO journal_entries")
+        
+        conn.commit()
+        print("🎯 Migration 055: Successfully added images column to journal_entries")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Migration 055 failed: {e}")
+        conn.rollback()
+        return False
+```
+
+**Key Technical Details**:
+- **Table Recreation**: Used CREATE TABLE + INSERT + DROP + RENAME pattern to work around SQLite ALTER TABLE limitations
+- **Data Preservation**: All existing journal entries preserved during migration
+- **Idempotent Design**: Checks if column exists before applying changes
+- **Foreign Key Preservation**: Maintains all existing relationships and constraints
+- **JSON Storage**: Images stored as JSON array enabling flexible image metadata
+
+**Integration Impact**:
+- **Frontend**: Journal entry forms and viewers now display uploaded images
+- **Tuning Sessions**: Session images are properly stored and linked to journal entries
+- **CDN Support**: Works with Cloudinary, AWS S3, BunnyCD, and other CDN services
+- **Migration System**: Demonstrates proper SQLite constraint handling for future migrations
+
+**Lessons Learned**:
+- SQLite ALTER TABLE limitations require table recreation for complex constraint changes
+- Always implement idempotent checks to prevent duplicate migration applications
+- Preserve all existing data during schema changes to maintain system integrity
+- Test migrations thoroughly in development before production deployment
+
 ## 🔧 Common Migration Errors & Solutions
 
 ### 1. **500 Error: "Some migrations failed"**
@@ -1897,6 +1987,12 @@ class Migration:
 6. ✅ **Cross-Database Status Tracking** - Real-time migration status across both databases
 7. ✅ **Environment-Aware Path Resolution** - Docker and local development compatibility
 8. ✅ **Migration Target Mapping** - Automated routing of migrations to correct database
+
+### Recent Achievements (September 2025)
+
+1. ✅ **Image Upload System Integration** - Complete image storage for journal entries with CDN support
+2. ✅ **Session-Level Image Storage** - Tuning sessions now properly store and link images to journal entries
+3. ✅ **Migration 055** - Added images column to journal_entries table with table recreation approach
 
 ### Contributing Guidelines
 

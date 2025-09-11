@@ -12,7 +12,8 @@ The image upload system is built on a universal architecture that supports multi
 
 - **Equipment Images**: Up to 5 images per equipment item
 - **Bow Setup Images**: Up to 3 images per bow setup
-- **Journal Images**: Up to 10 images per journal entry
+- **Journal Images**: Up to 10 images per journal entry (comprehensive integration)
+- **Tuning Session Images**: Session-level image storage with automatic journal linking
 - **Profile Images**: Single profile picture per user
 
 ### Core Components
@@ -201,6 +202,214 @@ const handleImageUpload = (uploadResult) => {
 - Hover effects with expand icon for better UX
 - Image count indicator and mobile-friendly design
 
+### Journal Image Integration ✨ **NEW** (September 2025)
+
+#### Comprehensive Journal Entry Image System
+
+**Features:**
+- **All Journal Entry Types**: Image upload functionality across all journal entry types (general, tuning_session, shooting_notes, setup_change, etc.)
+- **Rich Image Display**: Grid layout with click-to-open modal viewer in `JournalEntryViewer.vue`
+- **Legacy Support**: Enhanced `JournalEntryDialog.vue` with complete image upload capability
+- **Database Integration**: Images stored as JSON arrays in `journal_entries.images` column (Migration 055)
+
+#### Journal Entry Form Integration (`JournalEntryForm.vue`)
+
+**Implementation:**
+```vue
+<template>
+  <div class="journal-entry-form">
+    <!-- Existing form fields -->
+    
+    <!-- Image Upload Section -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Images
+      </label>
+      <ImageUpload
+        upload-path="journal"
+        :max-files="10"
+        :existing-images="formData.images || []"
+        @upload-success="handleImageUpload"
+        @upload-error="handleImageError"
+        @image-removed="handleImageRemove"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+// Image handling methods
+const handleImageUpload = (uploadResult) => {
+  if (!formData.value.images) {
+    formData.value.images = []
+  }
+  formData.value.images.push({
+    url: uploadResult.url,
+    cdnUrl: uploadResult.cdnUrl,
+    originalName: uploadResult.originalName,
+    alt: uploadResult.alt || 'Journal entry image',
+    uploadedAt: new Date().toISOString()
+  })
+}
+</script>
+```
+
+#### Journal Entry Viewer Enhancement (`JournalEntryViewer.vue`)
+
+**Features:**
+- **Image Grid Display**: Responsive grid layout for journal entry images
+- **Click-to-Open Modal**: Full-size image viewer with navigation
+- **Mobile Responsive**: Optimized for mobile viewing experience
+- **Loading States**: Lazy loading with error handling
+
+**Implementation:**
+```vue
+<template>
+  <!-- Entry Images -->
+  <div v-if="entry?.images && entry.images.length > 0" class="entry-images-section">
+    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      <i class="fas fa-images mr-2 text-blue-600 dark:text-blue-400"></i>
+      Images ({{ entry.images.length }})
+    </h4>
+    <div class="images-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div v-for="(image, index) in entry.images" :key="index" class="image-item">
+        <img 
+          :src="image.url" 
+          :alt="image.alt || 'Journal image'" 
+          class="journal-image w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+          @click="openImageModal(image, index)" 
+          loading="lazy" 
+        />
+        <div v-if="image.alt" class="image-caption text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+          {{ image.alt }}
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+### Tuning Session Image Integration ✨ **NEW** (September 2025)
+
+#### Interactive Tuning Session Image Storage
+
+**Comprehensive Session-Level Image Management:**
+
+All three tuning session types now include session-level image storage that automatically integrates with journal entries:
+
+- **Paper Tuning**: `/pages/tuning-session/paper/[sessionId].vue`
+- **Bareshaft Tuning**: `/pages/tuning-session/bareshaft/[sessionId].vue`  
+- **Walkback Tuning**: `/pages/tuning-session/walkback/[sessionId].vue`
+
+#### TuningImageUpload Component (`TuningImageUpload.vue`)
+
+**Features:**
+- **Context-Aware**: Specific to tuning session types (paper, bareshaft, walkback)
+- **Quick Action Buttons**: Before/After shot capture buttons
+- **Test-Specific Metadata**: Images tagged with test numbers and types
+- **Session Integration**: Automatic inclusion in journal entry creation
+
+**Implementation:**
+```vue
+<template>
+  <div class="tuning-image-upload">
+    <!-- Context Header -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-3">
+        <i :class="testTypeIcon" class="text-lg text-primary-600"></i>
+        <h3 class="font-medium text-gray-900 dark:text-gray-100">
+          {{ testTypeLabel }} Images
+        </h3>
+      </div>
+      <div class="text-sm text-gray-500">
+        {{ images.length }}/{{ maxFiles }} images
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <button @click="captureImage('before')" class="quick-action-btn before">
+        <i class="fas fa-camera text-blue-500"></i>
+        <span>Before Shot</span>
+      </button>
+      <button @click="captureImage('after')" class="quick-action-btn after">
+        <i class="fas fa-camera text-green-500"></i>
+        <span>After Shot</span>
+      </button>
+    </div>
+
+    <!-- Upload Area & Gallery -->
+    <!-- ... drag & drop upload area ... -->
+    <!-- ... uploaded images gallery ... -->
+  </div>
+</template>
+```
+
+#### Session-Level Image Storage Pattern
+
+**All tuning session pages implement:**
+
+```javascript
+// Session-level image storage for journal entry
+const sessionImages = ref([])
+
+const handleImagesUploaded = (images) => {
+  if (Array.isArray(images)) {
+    sessionImages.value.push(...images.map(image => ({
+      url: image.url,
+      uploadedAt: new Date().toISOString(),
+      alt: image.alt || `${testType} tuning test ${completedTests.value.length + 1}`,
+      testNumber: completedTests.value.length + 1,
+      testType: testType, // 'paper', 'bareshaft', 'walkback'
+      imageLabel: image.imageLabel || 'Test Image'
+    })))
+  }
+}
+
+// Include images in journal entry creation
+const createJournalEntry = async () => {
+  const journalData = {
+    title: `${testTypeLabel} Tuning Session`,
+    content: generateSessionContent(),
+    entry_type: 'tuning_session',
+    session_type: testType,
+    images: sessionImages.value, // ✨ Session images included
+    // ... other fields
+  }
+  
+  await journalApi.createEntry(journalData)
+}
+```
+
+#### Database Schema Enhancement (Migration 055)
+
+**Journal Entries Table Update:**
+```sql
+ALTER TABLE journal_entries ADD COLUMN images TEXT; -- JSON array of image objects
+```
+
+**Image Storage Format:**
+```json
+[
+  {
+    "url": "https://cdn.example.com/tuning/paper-test-1.jpg",
+    "uploadedAt": "2025-09-11T10:30:00Z",
+    "alt": "Paper tuning test 1 - Before adjustment",
+    "testNumber": 1,
+    "testType": "paper",
+    "imageLabel": "Before Shot"
+  },
+  {
+    "url": "https://cdn.example.com/tuning/paper-test-1-after.jpg", 
+    "uploadedAt": "2025-09-11T10:35:00Z",
+    "alt": "Paper tuning test 1 - After adjustment",
+    "testNumber": 1,
+    "testType": "paper",
+    "imageLabel": "After Shot"
+  }
+]
+```
+
 ## CDN Configuration
 
 ### Environment Variables
@@ -268,6 +477,74 @@ const payload = {
     originalName: img.originalName,
     alt: img.alt
   }))
+};
+```
+
+### Journal Entry Image Upload ✨ **NEW**
+
+```javascript
+// In journal entry form component  
+import { useImageUpload } from '~/composables/useImageUpload';
+
+const imageUpload = useImageUpload({
+  context: 'journal',
+  maxFiles: 10,
+  maxSize: 5
+});
+
+const createJournalEntry = async () => {
+  const payload = {
+    title: 'My Shooting Session',
+    content: 'Great session today...',
+    entry_type: 'shooting_notes',
+    images: attachedImages.value.map(img => ({
+      url: img.url,
+      cdnUrl: img.cdnUrl,
+      originalName: img.originalName,
+      alt: img.alt || 'Shooting session image',
+      uploadedAt: new Date().toISOString()
+    }))
+  };
+  
+  await journalApi.createEntry(payload);
+};
+```
+
+### Tuning Session Image Integration ✨ **NEW**
+
+```javascript
+// In tuning session component (paper/bareshaft/walkback)
+const sessionImages = ref([]);
+
+const handleImagesUploaded = (images) => {
+  sessionImages.value.push(...images.map(image => ({
+    url: image.url,
+    uploadedAt: new Date().toISOString(),
+    alt: `Bareshaft tuning test ${currentTestNumber.value}`,
+    testNumber: currentTestNumber.value,
+    testType: 'bareshaft',
+    imageLabel: image.imageLabel || 'Test Image'
+  })));
+};
+
+const saveAndCreateJournal = async () => {
+  // Complete tuning session first
+  await completeSession();
+  
+  // Create journal entry with session images
+  const journalData = {
+    title: 'Bareshaft Tuning Session',
+    content: generateSessionSummary(),
+    entry_type: 'tuning_session',
+    session_type: 'bareshaft',
+    images: sessionImages.value, // ✨ Automatic image inclusion
+    session_metadata: {
+      tests: completedTests.value,
+      quality_score: sessionQuality.value
+    }
+  };
+  
+  await journalApi.createEntry(journalData);
 };
 ```
 
@@ -339,8 +616,17 @@ const payload = {
 - Database schema updates via migration 041
 - CDN URL backfilling for existing images
 
+**Recent Updates (September 2025)**
+- **Migration 055**: Added images column to journal_entries table
+- **Table Recreation Approach**: Handled SQLite foreign key constraints properly
+- **Journal Image Integration**: All journal entry types now support comprehensive image upload
+- **Tuning Session Image Storage**: Session-level images automatically linked to journal entries
+- **Data Preservation**: All existing journal entries maintained during schema update
+
 **Future Enhancements**
 - Image editing capabilities (crop, rotate, filters)
 - Batch upload functionality
 - Advanced image search and tagging
 - Integration with AI-powered image analysis
+- Cross-session image correlation for tuning progress tracking
+- Automatic before/after image comparison for tuning sessions
