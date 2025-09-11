@@ -221,7 +221,7 @@ const uploadConfig: ImageUploadConfig = {
 // Use the image upload composable
 const {
   state,
-  uploadFiles,
+  uploadImages,
   removeImage: removeImageFromState
 } = useImageUpload(uploadConfig)
 
@@ -261,7 +261,7 @@ const triggerFileSelect = () => {
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files?.length) {
-    uploadFiles(Array.from(target.files))
+    uploadImages(Array.from(target.files))
     target.value = '' // Reset input
   }
 }
@@ -271,7 +271,7 @@ const handleDrop = (event: DragEvent) => {
   dragOver.value = false
   
   if (event.dataTransfer?.files.length && !isUploading.value) {
-    uploadFiles(Array.from(event.dataTransfer.files))
+    uploadImages(Array.from(event.dataTransfer.files))
   }
 }
 

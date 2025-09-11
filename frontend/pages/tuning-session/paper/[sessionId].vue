@@ -1406,7 +1406,7 @@ const loadSession = async () => {
   loading.value = true
   
   try {
-    const response = await api.get(`/tuning-guides/${route.params.sessionId}`)
+    const response = await api.get(`/tuning-guides/sessions/${route.params.sessionId}`)
     sessionData.value = response
     
     // Load existing test results
