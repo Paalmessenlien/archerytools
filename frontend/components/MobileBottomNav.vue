@@ -84,6 +84,24 @@
             <div class="text-xs opacity-70">Browse arrow specs</div>
           </div>
         </NuxtLink>
+        
+        <NuxtLink 
+          to="/tuning" 
+          @click="closeMenu"
+          class="flex items-center px-3 py-3 text-base font-semibold transition-all duration-200 rounded-lg hover:scale-[1.01] active:scale-[0.98]"
+          :class="{ 
+            'bg-red-500 text-white shadow-lg shadow-red-500/25': $route.path === '/tuning',
+            'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700': $route.path !== '/tuning'
+          }"
+        >
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center mr-3" :class="$route.path === '/tuning' ? 'bg-white/20' : 'bg-red-100 dark:bg-red-900'">
+            <i class="fas fa-bullseye" :class="$route.path === '/tuning' ? 'text-white' : 'text-red-600 dark:text-red-400'"></i>
+          </div>
+          <div>
+            <div class="font-bold">Interactive Tuning</div>
+            <div class="text-xs opacity-70">Professional tuning</div>
+          </div>
+        </NuxtLink>
       </div>
       
       <!-- Secondary Actions (Compact) -->

@@ -122,7 +122,7 @@
                               <i class="fas fa-bullseye text-red-600 dark:text-red-400 w-5"></i>
                               <div>
                                 <div class="font-medium text-gray-900 dark:text-gray-100">Interactive Tuning</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Guided tuning sessions</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Professional tuning & equipment setup</div>
                               </div>
                             </NuxtLink>
                             

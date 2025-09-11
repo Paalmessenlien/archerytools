@@ -31,6 +31,29 @@
         <pre class="content-text">{{ entry?.content }}</pre>
       </div>
 
+      <!-- Entry Images -->
+      <div v-if="entry?.images && entry.images.length > 0" class="entry-images-section">
+        <h4>Images</h4>
+        <div class="images-grid">
+          <div 
+            v-for="(image, index) in entry.images" 
+            :key="index"
+            class="image-item"
+          >
+            <img 
+              :src="image.url" 
+              :alt="image.alt || 'Journal image'"
+              class="journal-image"
+              @click="openImageModal(image, index)"
+              loading="lazy"
+            />
+            <div class="image-caption" v-if="image.alt">
+              {{ image.alt }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="entry-tags" v-if="entry?.tags && entry.tags.length > 0">
         <strong>Tags:</strong>
         <span 
@@ -147,6 +170,11 @@ const confirmDelete = () => {
   if (confirm(`Are you sure you want to delete "${props.entry?.title}"?`)) {
     emit('delete')
   }
+}
+
+const openImageModal = (image, index) => {
+  // For now, just open image in new tab - could be enhanced with a proper modal
+  window.open(image.url, '_blank')
 }
 </script>
 
@@ -266,6 +294,54 @@ const confirmDelete = () => {
   font-weight: 500;
 }
 
+/* Image Display Styles */
+.entry-images-section {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: 1rem;
+}
+
+.entry-images-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--md-sys-color-on-surface);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.image-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.journal-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.journal-image:hover {
+  border-color: var(--md-sys-color-primary);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.image-caption {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  font-style: italic;
+}
+
 .attachments-section,
 .references-section {
   border-top: 1px solid var(--md-sys-color-outline-variant);
@@ -336,6 +412,15 @@ const confirmDelete = () => {
   .entry-tags {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .journal-image {
+    height: 120px;
   }
 }
 </style>

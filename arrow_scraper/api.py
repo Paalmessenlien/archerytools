@@ -8571,6 +8571,89 @@ def get_arrows_with_retailer_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/arrows/with-tuning-history', methods=['GET'])
+@token_required
+def get_arrows_with_tuning_history(current_user):
+    """Get arrows that have tuning history data from journal entries for the current user"""
+    try:
+        db = get_unified_database()
+        if not db:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        conn = db.get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Get query parameters
+        limit = request.args.get('limit', 50, type=int)
+        bow_setup_id = request.args.get('bow_setup_id', type=int)
+        
+        # Build query to get arrows with tuning history from journal_entries
+        query = """
+            SELECT DISTINCT
+                a.id as arrow_id,
+                a.manufacturer,
+                a.model_name,
+                ss.spine as spine_value,
+                COALESCE(
+                    JSON_EXTRACT(je.session_metadata, '$.arrow_length'),
+                    JSON_EXTRACT(je.session_metadata, '$.arrowLength'),
+                    28.0
+                ) as arrow_length,
+                COALESCE(
+                    JSON_EXTRACT(je.session_metadata, '$.point_weight'),
+                    JSON_EXTRACT(je.session_metadata, '$.pointWeight'),
+                    100
+                ) as point_weight,
+                bs.name as bow_setup_name,
+                COUNT(je.id) as total_test_sessions,
+                MAX(je.created_at) as last_test_date,
+                COUNT(DISTINCT je.session_type) as test_type_variety,
+                AVG(COALESCE(je.session_quality_score, 50.0)) as avg_quality_score
+            FROM arrows a
+            JOIN journal_entries je ON a.id = je.arrow_id
+            JOIN bow_setups bs ON je.bow_setup_id = bs.id
+            LEFT JOIN spine_specifications ss ON a.id = ss.arrow_id
+            WHERE je.user_id = ? 
+              AND je.entry_type = 'tuning_session'
+              AND je.arrow_id IS NOT NULL
+        """
+        
+        params = [current_user['id']]
+        
+        # Filter by bow setup if provided
+        if bow_setup_id:
+            query += " AND je.bow_setup_id = ?"
+            params.append(bow_setup_id)
+        
+        query += """
+            GROUP BY a.id, a.manufacturer, a.model_name, ss.spine, bs.name
+            ORDER BY last_test_date DESC, total_test_sessions DESC
+            LIMIT ?
+        """
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        
+        arrows = []
+        for row in cursor.fetchall():
+            arrow_data = dict(row)
+            # Format the last_test_date for display
+            if arrow_data['last_test_date']:
+                arrow_data['last_test_date'] = arrow_data['last_test_date'][:19]  # Remove microseconds
+            arrows.append(arrow_data)
+        
+        conn.close()
+        
+        return jsonify({
+            'arrows': arrows,
+            'total': len(arrows)
+        })
+        
+    except Exception as e:
+        print(f"Error fetching arrows with tuning history: {e}")
+        return jsonify({'error': 'Failed to fetch arrows with tuning history'}), 500
+
 @app.route('/api/debug/database', methods=['GET'])
 def debug_database():
     """Debug database access and wood arrow search"""
@@ -14585,6 +14668,15 @@ def create_journal_entry(current_user):
         print(f"Error creating journal entry: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Ensure database connection is properly cleaned up
+        try:
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
+        except:
+            pass
+            
         return jsonify({'error': 'Failed to create journal entry'}), 500
 
 @app.route('/api/journal/entries/<int:entry_id>', methods=['GET'])
