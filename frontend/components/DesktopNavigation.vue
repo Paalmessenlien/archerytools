@@ -45,6 +45,15 @@
       <i class="fas fa-book text-sm mr-2"></i>
       <span>Journal</span>
     </NuxtLink>
+    
+    <NuxtLink
+      to="/tuning"
+      class="nav-item"
+      :class="getNavClass($route.path === '/tuning')"
+    >
+      <i class="fas fa-bullseye text-sm mr-2"></i>
+      <span>Tuning</span>
+    </NuxtLink>
 
     <!-- Secondary Menu Dropdown -->
     <ClientOnly>

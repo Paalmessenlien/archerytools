@@ -8,8 +8,11 @@ import { useApi } from './useApi'
 import { useGlobalNotifications } from './useNotificationSystem'
 
 export interface ImageUploadConfig {
-  context: 'journal' | 'equipment' | 'profile' | 'setup' | 'arrow'
+  context: 'journal' | 'equipment' | 'profile' | 'setup' | 'arrow' | 'tuning'
   entityId?: number
+  sessionId?: number // For tuning sessions
+  testType?: 'paper' | 'bareshaft' | 'walkback' // For tuning context
+  imageLabel?: string // For labeling tuning images (e.g., "Before adjustment", "After adjustment")
   maxFiles?: number
   maxSize?: number // in MB
   allowedTypes?: string[]
@@ -28,6 +31,11 @@ export interface UploadedImage {
   uploadedAt: string
   status: 'uploading' | 'success' | 'error'
   error?: string
+  // Tuning-specific metadata
+  testType?: 'paper' | 'bareshaft' | 'walkback'
+  imageLabel?: string // e.g., "Before adjustment", "Impact pattern", "Target at 20 yards"
+  sessionId?: number
+  testNumber?: number
 }
 
 export interface ImageUploadState {

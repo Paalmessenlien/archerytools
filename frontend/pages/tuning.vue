@@ -2,64 +2,42 @@
   <div>
     <!-- Page Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Interactive Tuning Guides</h1>
-      <p class="text-gray-600 dark:text-gray-300">Advanced tuning interfaces with real-time testing and permanent history tracking.</p>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Interactive Tuning & Equipment Setup</h1>
+      <p class="text-gray-600 dark:text-gray-300">Professional tuning guides and equipment documentation system for optimal archery performance.</p>
     </div>
 
-    <!-- Guide Selection -->
-    <div v-if="!currentSession" class="space-y-6">
-      <!-- TuningSessionStarter replaces old guide selection -->
-      <TuningSessionStarter 
+    <!-- Enhanced Guide Menu -->
+    <div v-if="!showEquipmentCreator" class="space-y-6">
+      <TuningGuideMenu 
         @session-started="onSessionStarted"
+        @equipment-setup-requested="onEquipmentSetupRequested"
         @cancel="resetSelection"
       />
     </div>
 
-    <!-- Active Session Interface - Enhanced Components -->
-    <div v-if="currentSession" class="space-y-6">
-      <!-- Paper Tuning Interface -->
-      <PaperTuningInterface 
-        v-if="currentSession.guide_type === 'paper_tuning'"
-        :session-data="currentSession"
-        @test-recorded="onTestRecorded"
-        @cancel="exitSession"
-      />
-      
-      <!-- Bareshaft Tuning Interface -->
-      <BareshaftTuningInterface 
-        v-if="currentSession.guide_type === 'bareshaft_tuning'"
-        :session-data="currentSession"
-        @test-recorded="onTestRecorded"
-        @cancel="exitSession"
-      />
-      
-      <!-- Walkback Tuning Interface -->
-      <WalkbackTuningInterface 
-        v-if="currentSession.guide_type === 'walkback_tuning'"
-        :session-data="currentSession"
-        @test-recorded="onTestRecorded"
-        @cancel="exitSession"
-      />
-      
-      <!-- Fallback for other guide types -->
-      <div v-if="!['paper_tuning', 'bareshaft_tuning', 'walkback_tuning'].includes(currentSession.guide_type)" 
-           class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-        <div class="flex items-center mb-4">
-          <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-3"></i>
-          <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200">
-            Guide Type Not Yet Supported
-          </h3>
+    <!-- Equipment Tuning Creator Modal -->
+    <EquipmentTuningCreator
+      v-if="showEquipmentCreator"
+      :bow-setup="equipmentSetupData.bow_setup"
+      :equipment-category="equipmentSetupData.equipment_category"
+      @entry-created="onEquipmentEntryCreated"
+      @cancel="closeEquipmentCreator"
+    />
+
+    <!-- Success Notification -->
+    <div v-if="showSuccessNotification" class="fixed top-4 right-4 z-50">
+      <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 shadow-lg max-w-md">
+        <div class="flex items-center">
+          <i class="fas fa-check-circle text-green-600 dark:text-green-400 mr-3"></i>
+          <div>
+            <h4 class="text-sm font-medium text-green-800 dark:text-green-200">
+              {{ successNotification.title }}
+            </h4>
+            <p class="text-xs text-green-700 dark:text-green-300 mt-1">
+              {{ successNotification.message }}
+            </p>
+          </div>
         </div>
-        <p class="text-yellow-700 dark:text-yellow-300 mb-4">
-          The {{ currentSession.guide_type }} guide is not yet supported with the enhanced interface. 
-          This guide will be added in a future update.
-        </p>
-        <button 
-          @click="exitSession"
-          class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
-        >
-          Go Back
-        </button>
       </div>
     </div>
 
@@ -72,17 +50,15 @@
 
 <script setup>
 import { ref } from 'vue'
-import TuningSessionStarter from '~/components/TuningSessionStarter.vue'
-import PaperTuningInterface from '~/components/PaperTuningInterface.vue'
-import BareshaftTuningInterface from '~/components/BareshaftTuningInterface.vue'
-import WalkbackTuningInterface from '~/components/WalkbackTuningInterface.vue'
+import TuningGuideMenu from '~/components/TuningGuideMenu.vue'
+import EquipmentTuningCreator from '~/components/EquipmentTuningCreator.vue'
 import ArrowTuningHistoryViewer from '~/components/ArrowTuningHistoryViewer.vue'
 
 // Set page title and meta
 useHead({
-  title: 'Interactive Tuning Guides',
+  title: 'Interactive Tuning & Equipment Setup',
   meta: [
-    { name: 'description', content: 'Advanced tuning interfaces with real-time testing and permanent history tracking for archery equipment.' }
+    { name: 'description', content: 'Professional tuning guides and equipment documentation system for optimal archery performance.' }
   ]
 })
 
@@ -92,25 +68,62 @@ definePageMeta({
 })
 
 // Reactive data
-const currentSession = ref(null)
+const showEquipmentCreator = ref(false)
+const equipmentSetupData = ref({})
+const showSuccessNotification = ref(false)
+const successNotification = ref({
+  title: '',
+  message: ''
+})
 
 // Methods
 const onSessionStarted = (sessionData) => {
-  console.log('Session started:', sessionData)
-  currentSession.value = sessionData
+  console.log('Arrow tuning session started:', sessionData)
+  // Redirect to the new tuning session URLs based on guide type
+  const router = useRouter()
+  
+  if (sessionData.guide_type === 'paper_tuning') {
+    router.push(`/tuning-session/paper/${sessionData.session_id}`)
+  } else if (sessionData.guide_type === 'bareshaft_tuning') {
+    router.push(`/tuning-session/bareshaft/${sessionData.session_id}`)
+  } else if (sessionData.guide_type === 'walkback_tuning') {
+    router.push(`/tuning-session/walkback/${sessionData.session_id}`)
+  } else {
+    console.error('Unknown guide type:', sessionData.guide_type)
+  }
 }
 
-const onTestRecorded = (testResult) => {
-  console.log('Test recorded:', testResult)
-  // Test recording is handled by the individual interface components
-  // The ArrowTuningHistoryViewer will automatically refresh to show new tests
+const onEquipmentSetupRequested = (setupData) => {
+  console.log('Equipment setup requested:', setupData)
+  equipmentSetupData.value = setupData
+  showEquipmentCreator.value = true
 }
 
-const exitSession = () => {
-  currentSession.value = null
+const onEquipmentEntryCreated = (entryData) => {
+  console.log('Equipment entry created:', entryData)
+  
+  // Show success notification
+  successNotification.value = {
+    title: 'Equipment Setup Documented',
+    message: `${entryData.equipment_category.label} setup entry created successfully`
+  }
+  showSuccessNotification.value = true
+  
+  // Hide notification after 4 seconds
+  setTimeout(() => {
+    showSuccessNotification.value = false
+  }, 4000)
+  
+  // Close the equipment creator
+  closeEquipmentCreator()
+}
+
+const closeEquipmentCreator = () => {
+  showEquipmentCreator.value = false
+  equipmentSetupData.value = {}
 }
 
 const resetSelection = () => {
-  currentSession.value = null
+  closeEquipmentCreator()
 }
 </script>

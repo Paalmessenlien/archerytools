@@ -205,6 +205,19 @@
                 </div>
               </div>
 
+              <!-- Image Upload Section -->
+              <div>
+                <TuningImageUpload
+                  :session-id="parseInt(route.params.sessionId)"
+                  test-type="walkback"
+                  :image-label="`Test ${completedDistances.length + 1} - ${selectedDistance}yd Target`"
+                  :max-files="5"
+                  :show-quick-actions="true"
+                  @images-uploaded="handleImagesUploaded"
+                  @image-removed="handleImageRemoved"
+                />
+              </div>
+
               <!-- Notes -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -491,6 +504,9 @@ const groupConsistency = ref('good')
 const testNotes = ref('')
 const completionNotes = ref('')
 const targetCanvas = ref(null)
+
+// Session-level image storage for journal entry
+const sessionImages = ref([])
 
 // Computed properties for walkback analysis
 const calculatedOffset = computed(() => {
@@ -792,6 +808,35 @@ const recordDistanceTest = async () => {
   }
 }
 
+// Image upload handlers
+const handleImagesUploaded = (images) => {
+  // Store images for the current test and session
+  console.log('Images uploaded for walkback test:', images)
+  
+  // Add to session-level images for journal entry
+  if (Array.isArray(images)) {
+    sessionImages.value.push(...images.map(image => ({
+      url: image.url,
+      uploadedAt: new Date().toISOString(),
+      alt: image.alt || `Walkback tuning test at ${currentDistance.value}m`,
+      testNumber: completedTests.value.length + 1,
+      testType: 'walkback',
+      distance: currentDistance.value
+    })))
+  }
+}
+
+const handleImageRemoved = (image) => {
+  // Handle image removal
+  console.log('Image removed from walkback test:', image)
+  
+  // Remove from session images
+  const index = sessionImages.value.findIndex(img => img.url === image.url)
+  if (index !== -1) {
+    sessionImages.value.splice(index, 1)
+  }
+}
+
 const calculateConfidenceScore = () => {
   let score = 70 // Base score
   
@@ -974,7 +1019,8 @@ const createJournalEntryForSession = async (completionData) => {
           session_duration: sessionDuration
         },
         session_id: sessionId
-      }
+      },
+      images: sessionImages.value // Include all uploaded images
     }
     
     // Create the journal entry

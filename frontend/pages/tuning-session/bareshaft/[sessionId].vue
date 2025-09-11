@@ -508,7 +508,20 @@
 
           <!-- Record Test Button -->
           <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div class="space-y-4">
+            <div class="space-y-6">
+              <!-- Image Upload Section -->
+              <div>
+                <TuningImageUpload
+                  :session-id="parseInt(route.params.sessionId)"
+                  test-type="bareshaft"
+                  :image-label="`Test ${completedTests.length + 1} - ${selectedImpactPattern || 'Impact Pattern'}`"
+                  :max-files="5"
+                  :show-quick-actions="true"
+                  @images-uploaded="handleImagesUploaded"
+                  @image-removed="handleImageRemoved"
+                />
+              </div>
+
               <!-- Notes -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1063,6 +1076,9 @@ const completionNotes = ref('')
 const selectedImpactPattern = ref(null)
 const showPatternGuide = ref(false)
 
+// Session-level image storage for journal entry
+const sessionImages = ref([])
+
 // Progressive guidance state
 const currentStep = ref(1)
 const nextStep = () => {
@@ -1353,6 +1369,34 @@ const recordTest = async () => {
     alert('Failed to record test. Please try again.')
   } finally {
     recordingTest.value = false
+  }
+}
+
+// Image upload handlers
+const handleImagesUploaded = (images) => {
+  // Store images for the current test and session
+  console.log('Images uploaded for bareshaft test:', images)
+  
+  // Add to session-level images for journal entry
+  if (Array.isArray(images)) {
+    sessionImages.value.push(...images.map(image => ({
+      url: image.url,
+      uploadedAt: new Date().toISOString(),
+      alt: image.alt || `Bareshaft tuning test ${completedTests.value.length + 1}`,
+      testNumber: completedTests.value.length + 1,
+      testType: 'bareshaft'
+    })))
+  }
+}
+
+const handleImageRemoved = (image) => {
+  // Handle image removal
+  console.log('Image removed from bareshaft test:', image)
+  
+  // Remove from session images
+  const index = sessionImages.value.findIndex(img => img.url === image.url)
+  if (index !== -1) {
+    sessionImages.value.splice(index, 1)
   }
 }
 
@@ -1839,7 +1883,8 @@ const createJournalEntryForSession = async (completionData) => {
           session_duration: sessionDuration
         },
         session_id: sessionId
-      }
+      },
+      images: sessionImages.value // Include all uploaded images
     }
     
     // Create the journal entry
