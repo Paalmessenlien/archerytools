@@ -8,6 +8,18 @@
 
     <!-- Enhanced Guide Menu -->
     <div v-if="!showEquipmentCreator" class="space-y-6">
+      <!-- Header with History Button -->
+      <div class="flex items-center justify-between">
+        <div></div> <!-- Empty div for spacing -->
+        <button 
+          @click="showTuningHistory = true"
+          class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors flex items-center"
+        >
+          <i class="fas fa-history mr-2"></i>
+          View Tuning History
+        </button>
+      </div>
+      
       <TuningGuideMenu 
         @session-started="onSessionStarted"
         @equipment-setup-requested="onEquipmentSetupRequested"
@@ -41,9 +53,36 @@
       </div>
     </div>
 
-    <!-- Tuning History -->
-    <div class="mt-8">
-      <ArrowTuningHistoryViewer />
+    <!-- Tuning History Modal -->
+    <div 
+      v-if="showTuningHistory" 
+      class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
+      @click="showTuningHistory = false"
+    >
+      <div 
+        @click.stop
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-6xl max-h-[90vh] w-full overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            Tuning History
+          </h2>
+          <button 
+            @click="showTuningHistory = false"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="overflow-y-auto" style="max-height: calc(90vh - 120px);">
+          <ArrowTuningHistoryViewer @close="showTuningHistory = false" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -69,6 +108,7 @@ definePageMeta({
 
 // Reactive data
 const showEquipmentCreator = ref(false)
+const showTuningHistory = ref(false)
 const equipmentSetupData = ref({})
 const showSuccessNotification = ref(false)
 const successNotification = ref({
