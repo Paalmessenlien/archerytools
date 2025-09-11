@@ -2220,7 +2220,8 @@ def record_tuning_test(current_user, session_id):
         if not session:
             return jsonify({'error': 'Session not found or access denied'}), 404
         
-        if session[1] != 'active':
+        # Accept both 'active' and 'in_progress' status for recording tests
+        if session[1] not in ['active', 'in_progress']:
             return jsonify({'error': 'Session is not active'}), 400
         
         # Record test data properly formatted for different tuning types
@@ -14588,6 +14589,12 @@ def create_journal_entry(current_user):
         # Handle image attachments if provided
         if data.get('images'):
             for i, image in enumerate(data['images']):
+                # Skip blob URLs - only use CDN URLs
+                image_url = image.get('cdnUrl') or image.get('url', '')
+                if image_url.startswith('blob:'):
+                    print(f"⚠️  Skipping blob URL for journal entry {entry_id}: {image_url}")
+                    continue
+                
                 cursor.execute('''
                     INSERT INTO journal_attachments 
                     (journal_entry_id, filename, original_filename, file_type, 
@@ -14598,10 +14605,10 @@ def create_journal_entry(current_user):
                     f"journal_image_{entry_id}_{i}",
                     image.get('alt', f'Journal image {i+1}'),
                     'image',
-                    image['url'],  # Use CDN URL as file_path for now
+                    image_url,  # Use CDN URL as file_path
                     image.get('file_size', 0),  # Default to 0 if not provided
                     image.get('mime_type', 'image/jpeg'),  # Default mime type
-                    image['url'],
+                    image_url,
                     image.get('alt', ''),
                     i == 0  # First image is primary
                 ))
