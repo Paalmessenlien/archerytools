@@ -408,7 +408,7 @@ curl http://localhost/health         # Production mode health check
 **🎯 Consolidated Database (August 2025)**: All data in single unified database for improved performance and simplified management.
 
 #### Arrow Data Tables
-- **arrows**: Main arrow specifications (1,143+ models)
+- **arrows**: Main arrow specifications (209 models from 18 manufacturers)
 - **spine_specifications**: Detailed spine data for each arrow
 - **components**: Arrow components (nocks, inserts, points)
 - **component_categories**: Component organization
@@ -439,7 +439,7 @@ curl http://localhost/health         # Production mode health check
 ## System Features
 
 ### Core Functionality
-- **Arrow Database**: 1,143+ arrows from 13 manufacturers
+- **Arrow Database**: 209 arrows from 18 manufacturers (37 total manufacturers in system)
 - **Professional Calculations**: Industry-standard spine calculations with advanced parameter system
 - **Spine Data System**: Admin-configurable calculation parameters and material properties
 - **Intelligent Matching**: Arrow recommendations with compatibility scoring

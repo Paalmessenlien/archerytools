@@ -125,14 +125,14 @@ SSL_EMAIL=admin@yourdomain.com
 - **Modern Architecture:** Nuxt 3 SPA frontend + Flask API backend with dual deployment
 - **Material Design 3:** Professional UI with Google's latest design system and dark mode
 - **Advanced Filtering:** Sophisticated search with manufacturer, spine, diameter, and weight filters
-- **Database Statistics:** Real-time metrics showing 13 manufacturers with 197+ arrow models
+- **Database Statistics:** Real-time metrics showing 18 manufacturers with 209 arrow models (37 total manufacturers in system)
 - **Admin System:** Complete user management with automatic admin privileges for messenlien@gmail.com
 - **User Authentication:** Google OAuth integration with secure JWT tokens and profile management
 
 ### Technical Capabilities
 - **Multi-language Support:** Handles English, German, and Italian manufacturer websites
 - **Professional Calculations:** Implements industry-standard spine and tuning formulas
-- **Comprehensive Database:** Contains 400+ arrow specifications across 13 manufacturers
+- **Comprehensive Database:** Contains 209 arrows across 18 manufacturers (37 total manufacturers in system)
 - **Session Management:** Persistent tuning sessions with detailed recommendations
 - **CDN Integration:** Automatic image upload to Cloudinary, AWS S3, or other CDNs for optimized delivery
 

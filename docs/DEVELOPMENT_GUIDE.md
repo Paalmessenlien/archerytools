@@ -210,6 +210,95 @@ archerytools/
 
 ---
 
+## Database Architecture & Locations
+
+### Understanding Database File Locations
+
+The project uses SQLite databases stored in **two locations** depending on the context:
+
+#### Active Database (Used by API)
+**Location**: `arrow_scraper/databases/arrow_database.db`
+- **Size**: ~1.3 MB (larger, actively maintained)
+- **Used by**: Flask API server, all backend operations
+- **Contains**: 209 arrows from 18 manufacturers (as of October 2025)
+- **Migrations Applied**: 45 migrations via `database_migrations` table
+- **Purpose**: This is the **production database** used by the running application
+
+#### Legacy/Testing Database
+**Location**: `databases/arrow_database.db`
+- **Size**: ~987 KB (smaller, less frequently updated)
+- **Used by**: Some standalone scripts and testing
+- **Contains**: 206 arrows from 14 manufacturers (slightly outdated)
+- **Purpose**: Historical reference, some utility scripts
+
+### Why Two Locations?
+
+The dual-location setup exists due to the evolution of the project structure:
+1. **Original**: Database was in `/databases/` directory
+2. **Migration**: Backend code moved to `/arrow_scraper/` directory
+3. **Current**: Active database moved with backend to keep related files together
+4. **Legacy**: Old location kept for compatibility with some scripts
+
+### Which Database Should I Use?
+
+**For Development:**
+- **API Development**: Always use `arrow_scraper/databases/arrow_database.db`
+- **Database Queries**: Use `arrow_scraper/databases/arrow_database.db`
+- **Migration Testing**: Use `arrow_scraper/databases/arrow_database.db`
+- **Statistics Verification**: Use `arrow_scraper/databases/arrow_database.db`
+
+**When to Use Legacy Database:**
+- Only when explicitly working with legacy scripts
+- For historical comparison or reference
+
+### Verifying Active Database
+
+To confirm which database the API is using:
+
+```bash
+# Check arrow count in active database
+sqlite3 arrow_scraper/databases/arrow_database.db "SELECT COUNT(*) FROM arrows;"
+# Should return: 209
+
+# Check via API health endpoint
+curl http://localhost:5000/api/health
+# Should show: "total_arrows": 209, "total_manufacturers": 18
+```
+
+### Database Backup Locations
+
+**Development Backups:**
+- Automatically created in `arrow_scraper/databases/`
+- Naming pattern: `arrow_database_backup_YYYYMMDD_HHMMSS.db`
+
+**Production Backups:**
+- Stored in Docker volumes: `/app/databases/`
+- Managed through admin panel backup system
+- CDN upload for off-server redundancy
+
+### Avoiding Database Confusion
+
+**Best Practices:**
+1. **Always specify full path** when accessing database in code
+2. **Use environment detection** to determine correct path
+3. **Document which database** is used in new scripts
+4. **Consider consolidation** to single location in future refactoring
+
+**Example Code Pattern:**
+```python
+import os
+
+# Always use arrow_scraper database for API operations
+ARROW_SCRAPER_DB = os.path.join(
+    os.path.dirname(__file__),
+    'arrow_scraper',
+    'databases',
+    'arrow_database.db'
+)
+```
+
+---
+
 ## Development Workflows
 
 ### Feature Development Workflow

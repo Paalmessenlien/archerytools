@@ -13,7 +13,10 @@
       "mcp__playwright__browser_snapshot",
       "WebFetch(domain:datatables.net)",
       "WebFetch(domain:editor.datatables.net)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git merge-base:*)"
     ],
     "deny": []
   }
