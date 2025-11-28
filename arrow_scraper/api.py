@@ -673,56 +673,6 @@ def get_user_draw_length(user_id, default=28.0):
     draw_length, _ = get_effective_draw_length(user_id, default=default)
     return draw_length
 
-def get_arrow_db():
-    """
-    DEPRECATED: This function is no longer used due to unified database architecture.
-    Use get_database() instead for unified arrow/user database access.
-    
-    Legacy function for arrow database connection with fallback locations.
-    """
-    try:
-        # UNIFIED DATABASE PATH RESOLUTION - NEW ARCHITECTURE (August 2025)
-        db_paths = [
-            '/app/databases/arrow_database.db',                    # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
-            'databases/arrow_database.db',                         # 🔴 LOCAL subfolder (DEVELOPMENT - HIGHEST LOCAL PRIORITY)
-            '../databases/arrow_database.db',                      # 🟡 UNIFIED parent folder path 
-            '/app/arrow_data/arrow_database.db',                   # 🟡 Legacy Docker volume path
-            '/app/arrow_database.db',                              # 🟡 Legacy Docker path
-            'arrow_database.db',                                   # 🔴 Legacy current folder (LOWEST PRIORITY)
-        ]
-        
-        database_path = None
-        for db_path in db_paths:
-            if os.path.exists(db_path):
-                try:
-                    # Quick check if database has data
-                    import sqlite3
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM arrows")
-                    count = cursor.fetchone()[0]
-                    conn.close()
-                    
-                    if count > 0:
-                        database_path = db_path
-                        print(f"[get_arrow_db] Selected database: {db_path} with {count} arrows")  # Debug log
-                        break
-                except Exception as e:
-                    continue
-        
-        if not database_path:
-            return None
-        
-        # Return connection to the found database with row factory
-        import sqlite3
-        conn = sqlite3.connect(database_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-        
-    except Exception as e:
-        import traceback
-        return None
-
 def get_component_database():
     """Get component database with lazy initialization"""
     global component_database

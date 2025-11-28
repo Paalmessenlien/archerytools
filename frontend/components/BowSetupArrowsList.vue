@@ -249,7 +249,8 @@ import { useRouter } from 'vue-router'
 import PerformanceTooltip from '~/components/PerformanceTooltip.vue'
 
 // Composables
-const { notifySuccess, notifyError } = useNotifications()
+import { useGlobalNotifications } from '~/composables/useNotificationSystem'
+const { showSuccess, showError } = useGlobalNotifications()
 
 // Props
 const props = defineProps({

@@ -1,9 +1,0 @@
-# Add these lines to your production .env file to fix database path issues
-
-# Override Docker container paths to use actual database locations
-ARROW_DATABASE_PATH=/root/archerytools/databases/arrow_database.db
-USER_DATABASE_PATH=/root/archerytools/databases/user_data.db
-
-# Or use relative paths if running from project directory
-# ARROW_DATABASE_PATH=./databases/arrow_database.db
-# USER_DATABASE_PATH=./databases/user_data.db

@@ -430,7 +430,7 @@ const confirmRemoveArrow = async () => {
     await api.delete(`/setup-arrows/${arrowToDelete.value.setupArrowId}`);
     await fetchSetupArrows();
     
-    notifySuccess('Arrow removed successfully from bow setup');
+    showSuccess('Arrow removed successfully from bow setup');
     arrowToDelete.value = null;
   } catch (err) {
     console.error('Error removing arrow:', err);
@@ -500,7 +500,7 @@ const handleUpdateArrow = async (updatedArrow) => {
   } catch (err) {
     console.error('Error updating arrow configuration:', err);
     console.error('Error details:', err.response?.data || err.message);
-    notifyError('Error updating arrow: ' + (err.response?.data?.error || err.message));
+    showError('Error updating arrow: ' + (err.response?.data?.error || err.message));
   }
 };
 
@@ -511,7 +511,7 @@ const duplicateArrow = async (arrowSetup) => {
   const token = process.client ? localStorage.getItem('token') : null;
   
   if (!token) {
-    notifyError('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
+    showError('Please log in to duplicate arrows. You need to be authenticated to perform this action.');
     return;
   }
   
@@ -557,19 +557,19 @@ const duplicateArrow = async (arrowSetup) => {
     });
     
     // Show brief success notification to user
-    notifySuccess(`Arrow duplicated successfully! ${arrowSetup.arrow?.manufacturer || 'Arrow'} ${arrowSetup.arrow?.model_name || ''} has been added to your bow setup.`);
+    showSuccess(`Arrow duplicated successfully! ${arrowSetup.arrow?.manufacturer || 'Arrow'} ${arrowSetup.arrow?.model_name || ''} has been added to your bow setup.`);
   } catch (err) {
     console.error('❌ Error duplicating arrow:', err);
     
     // Handle specific error cases
     if (err.message && (err.message.includes('401') || err.message.includes('Token is missing'))) {
-      notifyError('Please log in to duplicate arrows. The duplicate function requires authentication.');
+      showError('Please log in to duplicate arrows. The duplicate function requires authentication.');
     } else if (err.message && err.message.includes('403')) {
-      notifyError('You do not have permission to duplicate arrows in this bow setup.');  
+      showError('You do not have permission to duplicate arrows in this bow setup.');  
     } else if (err.message && err.message.includes('404')) {
-      notifyError('Bow setup or arrow not found. Please refresh the page and try again.');
+      showError('Bow setup or arrow not found. Please refresh the page and try again.');
     } else {
-      notifyError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
+      showError('Error duplicating arrow: ' + (err.response?.data?.error || err.message));
     }
   }
 };
@@ -581,22 +581,23 @@ const handleEquipmentUpdated = () => {
 };
 
 // Use notification composable
-const { notifySuccess, notifyError, notifyInfo, notifyWarning } = useNotifications()
+import { useGlobalNotifications } from '~/composables/useNotificationSystem'
+const { showSuccess, showError, showInfo, showWarning } = useGlobalNotifications()
 
 const showNotification = (message, type = 'info') => {
   // Updated to use custom notifications instead of alert()
   switch (type) {
     case 'success':
-      notifySuccess(message)
+      showSuccess(message)
       break
     case 'error':
-      notifyError(message)
+      showError(message)
       break
     case 'warning':
-      notifyWarning(message)
+      showWarning(message)
       break
     default:
-      notifyInfo(message)
+      showInfo(message)
       break
   }
 };
