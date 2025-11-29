@@ -30,10 +30,9 @@
             <label for="bowType" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Type</label>
             <select id="bowType" v-model="setupData.bow_type" class="w-full form-select mobile-form-field mobile-touch-enhanced" required>
               <option value="">Select Bow Type</option>
-              <option value="compound">Compound</option>
-              <option value="recurve">Recurve</option>
-              <option value="longbow">Longbow</option>
-              <option value="traditional">Traditional</option>
+              <option v-for="bt in bowTypes" :key="bt.value" :value="bt.value">
+                {{ bt.label }}
+              </option>
             </select>
           </div>
           
@@ -250,6 +249,114 @@
                 <option value="Formula">Formula (WA Standard)</option>
               </select>
             </div>
+          </div>
+
+          <!-- Barebow Configuration (similar to recurve - uses riser and limbs) -->
+          <div v-else-if="setupData.bow_type === 'barebow'" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <!-- Barebow Riser Brand Selection -->
+              <div>
+                <ManufacturerInput
+                  v-model="setupData.riser_brand"
+                  category="recurve_risers"
+                  label="Riser Brand"
+                  placeholder="Enter barebow riser manufacturer..."
+                  :required="false"
+                  @manufacturer-selected="handleManufacturerSelected"
+                  @manufacturer-created="handleManufacturerCreated"
+                />
+
+                <!-- Barebow Riser Model Name -->
+                <input
+                  v-if="setupData.riser_brand"
+                  type="text"
+                  v-model="setupData.riser_model"
+                  class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
+                  placeholder="e.g., Gillo G1, MK Korea X10..."
+                />
+
+                <!-- Barebow Riser Length -->
+                <div v-if="setupData.riser_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Riser Length</label>
+                  <select v-model="setupData.riser_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
+                    <option value="">Select Riser Length</option>
+                    <option value="23">23"</option>
+                    <option value="25">25"</option>
+                    <option value="27">27"</option>
+                    <option value="Other">Other (custom length)</option>
+                  </select>
+
+                  <!-- Custom barebow riser length input -->
+                  <input
+                    v-if="setupData.riser_length === 'Other'"
+                    type="text"
+                    v-model="setupData.riser_length"
+                    @focus="clearOtherValue('riser_length')"
+                    class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
+                    placeholder="Enter custom riser length (e.g., 24 inches)"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Barebow Limb Brand Selection -->
+              <div>
+                <ManufacturerInput
+                  v-model="setupData.limb_brand"
+                  category="recurve_limbs"
+                  label="Limb Brand"
+                  placeholder="Enter barebow limb manufacturer..."
+                  :required="false"
+                  @manufacturer-selected="handleManufacturerSelected"
+                  @manufacturer-created="handleManufacturerCreated"
+                />
+
+                <!-- Barebow Limb Model Name -->
+                <input
+                  v-if="setupData.limb_brand"
+                  type="text"
+                  v-model="setupData.limb_model"
+                  class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
+                  placeholder="e.g., Uukha VX+, WNS Delta..."
+                />
+
+                <!-- Barebow Limb Length -->
+                <div v-if="setupData.limb_brand" class="mt-2">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Length</label>
+                  <select v-model="setupData.limb_length" class="w-full form-select mobile-form-field mobile-touch-enhanced">
+                    <option value="">Select Limb Length</option>
+                    <option value="Short">Short</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Long">Long</option>
+                    <option value="Other">Other (custom length)</option>
+                  </select>
+
+                  <!-- Custom barebow limb length input -->
+                  <input
+                    v-if="setupData.limb_length === 'Other'"
+                    type="text"
+                    v-model="setupData.limb_length"
+                    @focus="clearOtherValue('limb_length')"
+                    class="w-full mt-2 form-input mobile-form-field mobile-touch-enhanced"
+                    placeholder="Enter custom limb length (e.g., Extra Long)"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="barebowLimbFitting" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Limb Fitting</label>
+              <select id="barebowLimbFitting" v-model="setupData.limb_fitting" class="form-select mobile-form-field mobile-touch-enhanced">
+                <option value="ILF">ILF (International Limb Fitting)</option>
+                <option value="Formula">Formula (WA Standard)</option>
+              </select>
+            </div>
+
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <i class="fas fa-info-circle mr-1"></i>
+              Barebow uses recurve equipment without sights, stabilizers, or clickers
+            </p>
           </div>
 
           <!-- Traditional Bow Configuration -->
@@ -529,6 +636,27 @@ const usageOptions = ['Target', 'Field', '3D', 'Hunting'];
 // API composable
 const api = useApi();
 
+// Dynamic bow types
+const bowTypes = ref([
+  { value: 'compound', label: 'Compound', is_default: true },
+  { value: 'recurve', label: 'Recurve', is_default: true },
+  { value: 'barebow', label: 'Barebow', is_default: true },
+  { value: 'longbow', label: 'Longbow', is_default: true },
+  { value: 'traditional', label: 'Traditional', is_default: true }
+])
+
+const loadBowTypes = async () => {
+  try {
+    const response = await api.get('/bow-types')
+    if (response.bow_types && response.bow_types.length > 0) {
+      bowTypes.value = response.bow_types
+    }
+  } catch (error) {
+    console.error('Error loading bow types:', error)
+    // Keep default bow types on error
+  }
+}
+
 // Legacy manufacturer data (kept for backward compatibility but no longer actively used)
 const manufacturerData = ref({
   compound_bows: [],
@@ -686,9 +814,10 @@ const removeImage = (index) => {
   attachedImages.value.splice(index, 1);
 };
 
-// Load manufacturers on component mount
+// Load manufacturers and bow types on component mount
 onMounted(() => {
   loadManufacturers();
+  loadBowTypes();
 });
 </script>
 

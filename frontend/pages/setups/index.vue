@@ -38,7 +38,7 @@
           <div class="flex items-start justify-between mb-4">
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ setup.name }}</h3>
-              <p class="text-sm text-gray-600 capitalize dark:text-gray-300">{{ setup.bow_type }}</p>
+              <p class="text-sm text-gray-600 capitalize dark:text-gray-300">{{ getBowTypeLabel(setup.bow_type) }}</p>
             </div>
           </div>
           
@@ -62,15 +62,15 @@
             </div>
             
             <!-- Bow Brand and Model Display -->
-            <div v-if="setup.riser_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="flex justify-between">
+            <div v-if="setup.riser_brand && setupUsesRiserLimbs(setup.bow_type)" class="flex justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-300">Riser:</span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.riser_brand }} {{ setup.riser_model }}</span>
             </div>
-            <div v-if="setup.limb_brand && (setup.bow_type === 'recurve' || setup.bow_type === 'traditional')" class="flex justify-between">
+            <div v-if="setup.limb_brand && setupUsesRiserLimbs(setup.bow_type)" class="flex justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-300">Limbs:</span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.limb_brand }} {{ setup.limb_model }}</span>
             </div>
-            <div v-if="setup.compound_brand && setup.bow_type === 'compound'" class="flex justify-between">
+            <div v-if="setup.compound_brand && setupIsCompoundStyle(setup.bow_type)" class="flex justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-300">Bow:</span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ setup.compound_brand }} {{ setup.compound_model }}</span>
             </div>
@@ -125,10 +125,9 @@
           <div class="mb-4">
             <label class="block mb-1">Bow Type</label>
             <select v-model="form.bow_type" class="w-full p-2 border rounded" required>
-              <option value="compound">Compound</option>
-              <option value="recurve">Recurve</option>
-              <option value="longbow">Longbow</option>
-              <option value="traditional">Traditional</option>
+              <option v-for="bt in bowTypes" :key="bt.value" :value="bt.value">
+                {{ bt.label }}
+              </option>
             </select>
           </div>
           <div class="mb-4">
@@ -169,37 +168,37 @@
           
           
           <!-- Bow Brand and Model Information -->
-          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+          <div class="mb-4" v-if="usesRiserLimbs">
             <ManufacturerInput
               v-model="form.riser_brand"
               :category="form.bow_type === 'recurve' ? 'recurve_risers' : 'traditional_risers'"
               label="Riser Brand"
-              :placeholder="form.bow_type === 'recurve' ? 'Enter recurve riser manufacturer...' : 'Enter traditional riser manufacturer...'" 
+              placeholder="Enter riser manufacturer..."
               :required="false"
               @manufacturer-selected="handleManufacturerSelected"
               @manufacturer-created="handleManufacturerCreated"
             />
           </div>
-          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+          <div class="mb-4" v-if="usesRiserLimbs">
             <label class="block mb-1">Riser Model</label>
             <input v-model="form.riser_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., Satori, Formula Xi, etc.">
           </div>
-          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+          <div class="mb-4" v-if="usesRiserLimbs">
             <ManufacturerInput
               v-model="form.limb_brand"
               :category="form.bow_type === 'recurve' ? 'recurve_limbs' : 'traditional_limbs'"
               label="Limb Brand"
-              :placeholder="form.bow_type === 'recurve' ? 'Enter recurve limb manufacturer...' : 'Enter traditional limb manufacturer...'"
+              placeholder="Enter limb manufacturer..."
               :required="false"
               @manufacturer-selected="handleManufacturerSelected"
               @manufacturer-created="handleManufacturerCreated"
             />
           </div>
-          <div class="mb-4" v-if="form.bow_type === 'recurve' || form.bow_type === 'traditional'">
+          <div class="mb-4" v-if="usesRiserLimbs">
             <label class="block mb-1">Limb Model</label>
             <input v-model="form.limb_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., VX1000, Storm, etc.">
           </div>
-          <div class="mb-4" v-if="form.bow_type === 'compound'">
+          <div class="mb-4" v-if="isCompoundStyle">
             <ManufacturerInput
               v-model="form.compound_brand"
               category="compound_bows"
@@ -210,7 +209,7 @@
               @manufacturer-created="handleManufacturerCreated"
             />
           </div>
-          <div class="mb-4" v-if="form.bow_type === 'compound'">
+          <div class="mb-4" v-if="isCompoundStyle">
             <label class="block mb-1">Compound Bow Model</label>
             <input v-model="form.compound_model" type="text" class="w-full p-2 border rounded" placeholder="e.g., V3X 33, RX-7 Ultra, etc.">
           </div>
@@ -260,14 +259,83 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import { useApi } from '~/composables/useApi';
 import ManufacturerInput from '~/components/ManufacturerInput.vue';
 
 const { token } = useAuth();
+const api = useApi();
 const setups = ref([]);
 const showCreateForm = ref(false);
 const editingSetup = ref(null);
+
+// Dynamic bow types from API
+const bowTypes = ref([
+  { value: 'compound', label: 'Compound', is_default: true },
+  { value: 'recurve', label: 'Recurve', is_default: true },
+  { value: 'barebow', label: 'Barebow', is_default: true },
+  { value: 'longbow', label: 'Longbow', is_default: true },
+  { value: 'traditional', label: 'Traditional', is_default: true }
+]);
+
+const loadBowTypes = async () => {
+  try {
+    const response = await api.get('/bow-types');
+    if (response.bow_types && response.bow_types.length > 0) {
+      bowTypes.value = response.bow_types;
+    }
+  } catch (error) {
+    console.error('Error loading bow types:', error);
+    // Keep default bow types on error
+  }
+};
+
+// Get bow type display name by value
+const getBowTypeLabel = (bowTypeValue) => {
+  const bowType = bowTypes.value.find(bt => bt.value === bowTypeValue);
+  return bowType ? bowType.label : bowTypeValue;
+};
+
+// Check if bow type uses riser/limbs (recurve-style)
+const usesRiserLimbs = computed(() => {
+  const bowType = form.value.bow_type;
+  // Check from bow types config if available, otherwise use defaults
+  const bt = bowTypes.value.find(b => b.value === bowType);
+  if (bt && bt.config_template) {
+    return bt.config_template === 'recurve' || bt.config_template === 'barebow' || bt.config_template === 'traditional';
+  }
+  // Fallback to default behavior
+  return bowType === 'recurve' || bowType === 'traditional' || bowType === 'barebow';
+});
+
+// Check if bow type is compound-style
+const isCompoundStyle = computed(() => {
+  const bowType = form.value.bow_type;
+  const bt = bowTypes.value.find(b => b.value === bowType);
+  if (bt && bt.config_template) {
+    return bt.config_template === 'compound';
+  }
+  return bowType === 'compound';
+});
+
+// Check if a specific bow type value uses riser/limbs (for card display)
+const setupUsesRiserLimbs = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue);
+  if (bt && bt.config_template) {
+    return bt.config_template === 'recurve' || bt.config_template === 'barebow' || bt.config_template === 'traditional';
+  }
+  return bowTypeValue === 'recurve' || bowTypeValue === 'traditional' || bowTypeValue === 'barebow';
+};
+
+// Check if a specific bow type value is compound-style (for card display)
+const setupIsCompoundStyle = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue);
+  if (bt && bt.config_template) {
+    return bt.config_template === 'compound';
+  }
+  return bowTypeValue === 'compound';
+};
 
 // Notification state
 const notification = ref({
@@ -319,7 +387,10 @@ const fetchSetups = async () => {
   }
 };
 
-onMounted(fetchSetups);
+onMounted(() => {
+  fetchSetups();
+  loadBowTypes();
+});
 
 const editSetup = (setup) => {
   editingSetup.value = setup;

@@ -166,9 +166,44 @@
 
           <!-- Section Content -->
           <div v-if="expandedSections.equipment" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <BowEquipmentManager 
+            <BowEquipmentManager
               :bow-setup="setup"
               @equipment-updated="loadSetup"
+              @show-notification="showNotification"
+            />
+          </div>
+        </div>
+
+        <!-- Technical Tuning Section -->
+        <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="tuning">
+          <!-- Section Header -->
+          <button
+            @click="toggleSection('tuning')"
+            class="w-full p-4 sm:p-6 text-left flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 touch-manipulation min-h-[64px]"
+            :class="{
+              'bg-orange-50 dark:bg-orange-900/20': expandedSections.tuning,
+              'expanded': expandedSections.tuning
+            }"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 mr-4 flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                <i class="fas fa-sliders-h text-orange-600 dark:text-orange-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Technical Tuning</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Brace height, tiller, nocking point, and more</p>
+              </div>
+            </div>
+            <i
+              :class="expandedSections.tuning ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"
+              class="text-gray-400 transition-transform duration-200"
+            ></i>
+          </button>
+
+          <!-- Section Content -->
+          <div v-if="expandedSections.tuning" class="accordion-content p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <BowTuningManager
+              :bow-setup="setup"
               @show-notification="showNotification"
             />
           </div>
@@ -379,6 +414,7 @@ const expandedSections = ref({
   overview: true,       // Overview always starts expanded
   arrows: false,       // Arrows collapsed by default
   equipment: false,    // Equipment collapsed by default
+  tuning: false,       // Technical Tuning collapsed by default
   journal: false,      // Journal & History collapsed by default
   settings: false      // Settings collapsed by default
 })
