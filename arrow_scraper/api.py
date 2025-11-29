@@ -15932,7 +15932,7 @@ def get_tuning_configs(current_user, setup_id):
         # Get all tuning configs for this setup
         cursor.execute('''
             SELECT id, bow_setup_id, user_id, name, description, is_active,
-                   created_at, updated_at
+                   image_url, created_at, updated_at
             FROM bow_tuning_configs
             WHERE bow_setup_id = ?
             ORDER BY is_active DESC, updated_at DESC
@@ -15993,9 +15993,9 @@ def create_tuning_config(current_user, setup_id):
 
         # Create the config
         cursor.execute('''
-            INSERT INTO bow_tuning_configs (bow_setup_id, user_id, name, description, is_active)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (setup_id, current_user['id'], data['name'], data.get('description', ''), is_active))
+            INSERT INTO bow_tuning_configs (bow_setup_id, user_id, name, description, is_active, image_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (setup_id, current_user['id'], data['name'], data.get('description', ''), is_active, data.get('image_url')))
         config_id = cursor.lastrowid
 
         # Insert tuning values if provided
@@ -16018,7 +16018,7 @@ def create_tuning_config(current_user, setup_id):
 
         # Fetch the created config to return
         cursor.execute('''
-            SELECT id, bow_setup_id, user_id, name, description, is_active, created_at, updated_at
+            SELECT id, bow_setup_id, user_id, name, description, is_active, image_url, created_at, updated_at
             FROM bow_tuning_configs WHERE id = ?
         ''', (config_id,))
         config = dict(cursor.fetchone())
@@ -16131,15 +16131,17 @@ def update_tuning_config(current_user, config_id):
         ''', (config_id,))
         old_values = {row['parameter_name']: row['parameter_value'] for row in cursor.fetchall()}
 
-        # Update config name/description if provided
-        if 'name' in data or 'description' in data:
+        # Update config name/description/image if provided
+        if 'name' in data or 'description' in data or 'image_url' in data:
             cursor.execute('''
                 UPDATE bow_tuning_configs
                 SET name = COALESCE(?, name),
                     description = COALESCE(?, description),
+                    image_url = CASE WHEN ? = 1 THEN ? ELSE image_url END,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            ''', (data.get('name'), data.get('description'), config_id))
+            ''', (data.get('name'), data.get('description'),
+                  1 if 'image_url' in data else 0, data.get('image_url'), config_id))
 
         # Update values if provided
         values = data.get('values', {})
@@ -16197,7 +16199,7 @@ def update_tuning_config(current_user, config_id):
 
         # Fetch updated config
         cursor.execute('''
-            SELECT id, bow_setup_id, user_id, name, description, is_active, created_at, updated_at
+            SELECT id, bow_setup_id, user_id, name, description, is_active, image_url, created_at, updated_at
             FROM bow_tuning_configs WHERE id = ?
         ''', (config_id,))
         config = dict(cursor.fetchone())

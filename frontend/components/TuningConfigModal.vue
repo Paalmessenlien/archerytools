@@ -58,6 +58,71 @@
                 Set as active configuration
               </label>
             </div>
+
+            <!-- Setup Photo -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-camera mr-1 text-purple-500"></i>
+                Setup Photo
+              </label>
+
+              <!-- Current Image Preview -->
+              <div v-if="formData.image_url" class="mb-3">
+                <div class="relative inline-block">
+                  <img
+                    :src="formData.image_url"
+                    alt="Setup configuration photo"
+                    class="w-full max-w-xs h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                  />
+                  <button
+                    type="button"
+                    @click="removeImage"
+                    class="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    title="Remove photo"
+                  >
+                    <i class="fas fa-times text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Upload Area -->
+              <div
+                @click="triggerFileInput"
+                @drop.prevent="handleDrop"
+                @dragover.prevent="dragOver = true"
+                @dragleave="dragOver = false"
+                :class="[
+                  'border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
+                  dragOver ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600',
+                  isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ]"
+              >
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept="image/*"
+                  @change="handleFileSelect"
+                  class="hidden"
+                />
+                <div v-if="isUploading" class="space-y-2">
+                  <i class="fas fa-spinner fa-spin text-xl text-purple-500"></i>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                </div>
+                <div v-else class="space-y-1">
+                  <i class="fas fa-cloud-upload-alt text-2xl text-gray-400"></i>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ formData.image_url ? 'Click to change photo' : 'Click or drag to upload a photo' }}
+                  </p>
+                  <p class="text-xs text-gray-400">JPG, PNG, WebP (max 10MB)</p>
+                </div>
+              </div>
+
+              <!-- Upload Error -->
+              <div v-if="uploadError" class="mt-2 text-sm text-red-600">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                {{ uploadError }}
+              </div>
+            </div>
           </div>
 
           <!-- Tuning Parameters -->
@@ -189,6 +254,10 @@ const emit = defineEmits(['close', 'saved'])
 
 const api = useApi()
 const saving = ref(false)
+const isUploading = ref(false)
+const uploadError = ref('')
+const dragOver = ref(false)
+const fileInput = ref(null)
 
 const isEditing = computed(() => !!props.config)
 
@@ -229,7 +298,7 @@ const parametersByBowType = {
   barebow: ['brace_height', 'tiller_top', 'tiller_bottom', 'nocking_point', 'plunger_pressure', 'plunger_position', 'string_material', 'string_strands'],
   compound: ['brace_height', 'axle_to_axle', 'draw_weight_actual', 'letoff_percentage', 'cam_timing', 'cam_lean', 'nocking_point', 'peep_height', 'rest_centershot', 'rest_height', 'cable_guard_position', 'string_material'],
   traditional: ['brace_height', 'tiller_top', 'tiller_bottom', 'nocking_point', 'string_material', 'string_strands', 'arrow_pass_position'],
-  longbow: ['brace_height', 'nocking_point', 'string_material', 'string_strands', 'arrow_pass_position']
+  longbow: ['brace_height', 'nocking_point', 'string_material', 'string_strands']
 }
 
 // Group definitions
@@ -285,6 +354,7 @@ const formData = ref({
   description: '',
   is_active: false,
   user_note: '',
+  image_url: '',
   values: {}
 })
 
@@ -305,6 +375,7 @@ const initializeFormValues = () => {
     formData.value.name = props.config.name || ''
     formData.value.description = props.config.description || ''
     formData.value.is_active = props.config.is_active || false
+    formData.value.image_url = props.config.image_url || ''
 
     if (props.config.values) {
       Object.entries(props.config.values).forEach(([key, val]) => {
@@ -320,6 +391,74 @@ const initializeFormValues = () => {
   }
 
   formData.value.values = values
+}
+
+// Image upload functions
+const triggerFileInput = () => {
+  if (!isUploading.value && fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+const handleFileSelect = (event) => {
+  const file = event.target.files?.[0]
+  if (file) {
+    uploadImage(file)
+  }
+  // Reset input
+  if (event.target) {
+    event.target.value = ''
+  }
+}
+
+const handleDrop = (event) => {
+  dragOver.value = false
+  const file = event.dataTransfer?.files?.[0]
+  if (file && !isUploading.value) {
+    uploadImage(file)
+  }
+}
+
+const uploadImage = async (file) => {
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!validTypes.includes(file.type)) {
+    uploadError.value = 'Please select a valid image file (JPG, PNG, WebP, GIF)'
+    return
+  }
+
+  // Validate file size (10MB max)
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    uploadError.value = 'Image must be smaller than 10MB'
+    return
+  }
+
+  try {
+    isUploading.value = true
+    uploadError.value = ''
+
+    const formDataUpload = new FormData()
+    formDataUpload.append('file', file)
+    formDataUpload.append('context', 'tuning_config')
+
+    const response = await api.upload('/upload/image', formDataUpload)
+
+    if (response.url || response.cdnUrl) {
+      formData.value.image_url = response.url || response.cdnUrl
+    } else {
+      throw new Error('No URL returned from upload')
+    }
+  } catch (error) {
+    console.error('Error uploading image:', error)
+    uploadError.value = error.message || 'Failed to upload image. Please try again.'
+  } finally {
+    isUploading.value = false
+  }
+}
+
+const removeImage = () => {
+  formData.value.image_url = ''
 }
 
 // Close modal
@@ -350,7 +489,8 @@ const save = async () => {
       name: formData.value.name,
       description: formData.value.description,
       values: cleanValues,
-      user_note: formData.value.user_note
+      user_note: formData.value.user_note,
+      image_url: formData.value.image_url || null
     }
 
     if (!isEditing.value) {
