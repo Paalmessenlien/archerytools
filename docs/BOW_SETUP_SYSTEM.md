@@ -1,16 +1,16 @@
-# Technical Tuning System Documentation
+# Bow Setup System Documentation
 
 ## Overview
 
-The Technical Tuning System allows archers to register and track base tuning configurations for their bow setups. Users can maintain multiple tuning configurations per bow (e.g., "Indoor Setup", "Outdoor Setup"), with one marked as active. All changes are tracked in a dedicated tuning change history.
+The Bow Setup System allows archers to register and track base setup configurations for their bows. Users can maintain multiple setup configurations per bow (e.g., "Indoor Setup", "Outdoor Setup"), with one marked as active. All changes are tracked in a dedicated change history.
 
 ## Features
 
 ### Core Functionality
-- **Multiple Configurations**: Create unlimited tuning configurations per bow setup
+- **Multiple Configurations**: Create unlimited setup configurations per bow
 - **Active Configuration**: Mark one configuration as "active" for quick reference
 - **Bow-Type Specific Parameters**: Different parameters shown based on bow type (compound, recurve, traditional, longbow)
-- **Change History**: All tuning changes are logged with timestamps
+- **Change History**: All setup changes are logged with timestamps
 - **Configuration Comparison**: Side-by-side comparison of two configurations
 - **Duplicate Configurations**: Quickly create new configs based on existing ones
 
@@ -39,7 +39,7 @@ The Technical Tuning System allows archers to register and track base tuning con
 ### Tables
 
 #### bow_tuning_configs
-Main tuning configurations table.
+Main setup configurations table.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -89,7 +89,7 @@ History tracking for all tuning changes.
 ```
 GET /api/bow-setups/<bow_setup_id>/tuning-configs
 ```
-Returns all tuning configurations for a bow setup with their values.
+Returns all setup configurations for a bow setup with their values.
 
 ### Create Tuning Configuration
 ```
@@ -145,7 +145,7 @@ Content-Type: application/json
 }
 ```
 
-### Get Tuning History
+### Get Setup History
 ```
 GET /api/bow-setups/<bow_setup_id>/tuning-history
 ```
@@ -155,13 +155,13 @@ Returns all tuning change log entries for the bow setup.
 
 ### BowTuningManager.vue
 Main component that displays:
-- Tab navigation (Configurations / Tuning History)
+- Tab navigation (Configurations / Setup History)
 - List of configuration cards with expandable details
 - Add Configuration button
 - Compare Configurations button (when 2+ configs exist)
 
 ### TuningConfigModal.vue
-Modal for creating/editing tuning configurations:
+Modal for creating/editing setup configurations:
 - Configuration name and description
 - "Set as active" checkbox
 - Dynamic form fields based on bow type
@@ -179,26 +179,26 @@ Side-by-side comparison modal:
 
 ### Creating a Configuration
 1. Navigate to a bow setup page
-2. Expand the "Technical Tuning" accordion
+2. Expand the "Bow Setup" accordion
 3. Click "Add Configuration" or "Create Configuration"
 4. Fill in the name and desired parameters
 5. Optionally check "Set as active configuration"
 6. Click "Create Configuration"
 
 ### Comparing Configurations
-1. Create at least 2 tuning configurations
+1. Create at least 2 setup configurations
 2. Click "Compare Configurations" button
 3. Select two configurations from the dropdowns
 4. Review the side-by-side comparison
 
 ### Viewing History
-1. Click the "Tuning History" tab
+1. Click the "Setup History" tab
 2. View all changes with timestamps
 3. Each entry shows what was changed and when
 
 ## Migration
 
-The Technical Tuning System was added in migration 064:
+The Bow Setup System was added in migration 064:
 ```
 arrow_scraper/migrations/064_technical_tuning_system.py
 ```

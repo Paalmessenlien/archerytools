@@ -174,7 +174,7 @@
           </div>
         </div>
 
-        <!-- Technical Tuning Section -->
+        <!-- Bow Setup Section -->
         <div class="accordion-section bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" data-section="tuning">
           <!-- Section Header -->
           <button
@@ -190,7 +190,7 @@
                 <i class="fas fa-sliders-h text-orange-600 dark:text-orange-400 text-lg"></i>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Technical Tuning</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Bow Setup</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Brace height, tiller, nocking point, and more</p>
               </div>
             </div>
@@ -414,7 +414,7 @@ const expandedSections = ref({
   overview: true,       // Overview always starts expanded
   arrows: false,       // Arrows collapsed by default
   equipment: false,    // Equipment collapsed by default
-  tuning: false,       // Technical Tuning collapsed by default
+  tuning: false,       // Bow Setup collapsed by default
   journal: false,      // Journal & History collapsed by default
   settings: false      // Settings collapsed by default
 })

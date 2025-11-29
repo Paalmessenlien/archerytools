@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
         <i class="fas fa-sliders-h mr-2 text-purple-600 dark:text-purple-400"></i>
-        Technical Tuning
+        Bow Setup
       </h2>
       <CustomButton
         @click="openCreateModal"
@@ -40,7 +40,7 @@
         ]"
       >
         <i class="fas fa-history mr-2"></i>
-        Tuning History
+        Setup History
       </button>
     </div>
 
@@ -55,9 +55,9 @@
       <!-- Empty State -->
       <div v-if="configs.length === 0" class="text-center py-12">
         <i class="fas fa-sliders-h text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Tuning Configurations</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Bow Setup Configurations</h3>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
-          Create your first tuning configuration to track brace height, tiller, nocking point, and more.
+          Create your first bow setup configuration to track brace height, tiller, nocking point, and more.
         </p>
         <CustomButton
           @click="openCreateModal"

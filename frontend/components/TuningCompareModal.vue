@@ -11,7 +11,7 @@
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
               <i class="fas fa-balance-scale mr-2 text-purple-600 dark:text-purple-400"></i>
-              Compare Tuning Configurations
+              Compare Bow Setup Configurations
             </h3>
             <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
               <i class="fas fa-times text-lg"></i>
