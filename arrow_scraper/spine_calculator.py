@@ -13,6 +13,8 @@ class BowType(Enum):
     """Bow types for different spine calculations"""
     COMPOUND = "compound"
     RECURVE = "recurve"
+    BAREBOW = "barebow"
+    LONGBOW = "longbow"
     TRADITIONAL = "traditional"
 
 class ArrowLength(Enum):
@@ -79,11 +81,12 @@ class SpineCalculator:
             return self._calculate_compound_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight
             )
-        elif bow_config.bow_type == BowType.RECURVE:
+        elif bow_config.bow_type in (BowType.RECURVE, BowType.BAREBOW):
+            # Barebow uses same spine calculations as recurve (same energy transfer)
             return self._calculate_recurve_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight
             )
-        else:  # Traditional bow type
+        else:  # Traditional and Longbow bow types
             return self._calculate_traditional_spine(
                 bow_config, arrow_length, point_weight, nock_weight, fletching_weight, material_preference
             )

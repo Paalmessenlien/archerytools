@@ -136,13 +136,25 @@
           @click="activeTab = 'system'"
           :class="[
             'py-2 px-1 border-b-2 font-medium text-sm',
-            activeTab === 'system' 
-              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+            activeTab === 'system'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
           ]"
         >
           <i class="fas fa-server mr-2"></i>
           System
+        </button>
+        <button
+          @click="activeTab = 'equipment-rules'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'equipment-rules'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          <i class="fas fa-sliders-h mr-2"></i>
+          Equipment Rules
         </button>
       </nav>
     </div>
@@ -2023,6 +2035,143 @@
         </md-elevated-card>
       </div>
 
+      <!-- Equipment Rules Tab -->
+      <div v-if="activeTab === 'equipment-rules'">
+        <md-elevated-card class="light-surface light-elevation">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <i class="fas fa-sliders-h mr-2 text-indigo-600"></i>
+                  Bow Type Equipment Rules
+                </h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Configure which equipment categories are available for each bow type
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <CustomButton
+                  @click="loadEquipmentRules"
+                  variant="outlined"
+                  size="small"
+                  :disabled="isLoadingEquipmentRules"
+                  class="text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                >
+                  <i class="fas fa-refresh mr-2" :class="{ 'fa-spin': isLoadingEquipmentRules }"></i>
+                  Refresh
+                </CustomButton>
+                <CustomButton
+                  @click="resetEquipmentRules"
+                  variant="outlined"
+                  size="small"
+                  :disabled="isLoadingEquipmentRules"
+                  class="text-orange-600 border-orange-600 dark:text-orange-400 dark:border-orange-400"
+                >
+                  <i class="fas fa-undo mr-2"></i>
+                  Reset to Defaults
+                </CustomButton>
+                <CustomButton
+                  @click="showAddBowTypeModal = true"
+                  variant="filled"
+                  size="small"
+                  :disabled="isLoadingEquipmentRules"
+                  class="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <i class="fas fa-plus mr-2"></i>
+                  Add Bow Type
+                </CustomButton>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div v-if="isLoadingEquipmentRules" class="text-center py-8">
+              <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+              <p class="text-gray-600 dark:text-gray-400">Loading equipment rules...</p>
+            </div>
+
+            <!-- Equipment Rules Matrix -->
+            <div v-else-if="equipmentRules && Object.keys(equipmentRules).length > 0" class="overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="bg-gray-100 dark:bg-gray-700">
+                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                      Bow Type
+                    </th>
+                    <th
+                      v-for="category in equipmentCategories"
+                      :key="category"
+                      class="px-3 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600"
+                    >
+                      {{ category }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(rules, bowType) in equipmentRules"
+                    :key="bowType"
+                    class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600">
+                      <div class="flex items-center gap-2">
+                        <i v-if="getBowTypeInfo(bowType)?.icon" :class="getBowTypeInfo(bowType).icon" class="text-gray-500 dark:text-gray-400"></i>
+                        <span>{{ getBowTypeInfo(bowType)?.label || bowType }}</span>
+                        <span v-if="isDefaultBowType(bowType)" class="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded">default</span>
+                        <button
+                          @click="openEditBowTypeModal(bowType)"
+                          class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 ml-1"
+                          title="Edit bow type"
+                        >
+                          <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button
+                          v-if="!isDefaultBowType(bowType)"
+                          @click="confirmDeleteBowType(bowType)"
+                          class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete bow type"
+                        >
+                          <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                      </div>
+                    </td>
+                    <td
+                      v-for="category in equipmentCategories"
+                      :key="`${bowType}-${category}`"
+                      class="px-3 py-3 text-center border-b border-gray-200 dark:border-gray-600"
+                    >
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          :checked="getRuleValue(bowType, category)"
+                          @change="updateEquipmentRule(bowType, category, $event.target.checked)"
+                          class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-800 cursor-pointer"
+                        />
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Legend -->
+              <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="flex items-center text-sm text-blue-800 dark:text-blue-200">
+                  <i class="fas fa-info-circle mr-2"></i>
+                  <span>
+                    <strong>Checked</strong> = Equipment category is available for the bow type.
+                    <strong>Unchecked</strong> = Equipment will be hidden when adding new equipment, but existing equipment will show a warning.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-8">
+              <i class="fas fa-clipboard-list text-4xl text-gray-400 mb-4"></i>
+              <p class="text-gray-500 dark:text-gray-400">No equipment rules found. Click "Reset to Defaults" to create default rules.</p>
+            </div>
+          </div>
+        </md-elevated-card>
+      </div>
 
       <!-- Backups Tab -->
       <div v-if="activeTab === 'backups'">
@@ -2602,6 +2751,258 @@
     </div>
   </div>
 
+  <!-- Add Bow Type Modal -->
+  <div v-if="showAddBowTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+          Add New Bow Type
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Create a custom bow type with equipment rules.
+        </p>
+      </div>
+
+      <form @submit.prevent="createBowType" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Bow Type Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="newBowType.name"
+            type="text"
+            placeholder="e.g., horse-bow, korean-bow"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            required
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Lowercase letters, numbers, hyphens, and underscores only
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Display Name
+          </label>
+          <input
+            v-model="newBowType.displayName"
+            type="text"
+            placeholder="e.g., Horse Bow, Korean Bow"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Optional. Used for display purposes.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Copy Rules From
+          </label>
+          <select
+            v-model="newBowType.baseTemplate"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="traditional">Traditional (minimal equipment)</option>
+            <option value="longbow">Longbow (very minimal equipment)</option>
+            <option value="barebow">Barebow (no sights/stabilizers)</option>
+            <option value="recurve">Recurve (full equipment)</option>
+            <option value="compound">Compound (full equipment)</option>
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Equipment rules will be copied from this bow type
+          </p>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <CustomButton
+            type="button"
+            @click="showAddBowTypeModal = false"
+            variant="outlined"
+            class="text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            type="submit"
+            variant="filled"
+            :disabled="isCreatingBowType || !newBowType.name"
+            class="bg-green-600 text-white hover:bg-green-700"
+          >
+            <span v-if="isCreatingBowType">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Creating...
+            </span>
+            <span v-else>
+              <i class="fas fa-plus mr-2"></i>
+              Create Bow Type
+            </span>
+          </CustomButton>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Bow Type Confirmation Modal -->
+  <div v-if="showDeleteBowTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>
+          Delete Bow Type
+        </h3>
+      </div>
+
+      <div class="p-6">
+        <p class="text-gray-700 dark:text-gray-300">
+          Are you sure you want to delete the bow type "<strong class="capitalize">{{ bowTypeToDelete }}</strong>"?
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          This action cannot be undone. All equipment rules for this bow type will be removed.
+        </p>
+      </div>
+
+      <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+        <CustomButton
+          type="button"
+          @click="showDeleteBowTypeModal = false"
+          variant="outlined"
+          class="text-gray-700 dark:text-gray-200"
+        >
+          Cancel
+        </CustomButton>
+        <CustomButton
+          @click="deleteBowType"
+          variant="filled"
+          :disabled="isDeletingBowType"
+          class="bg-red-600 text-white hover:bg-red-700"
+        >
+          <span v-if="isDeletingBowType">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            Deleting...
+          </span>
+          <span v-else>
+            <i class="fas fa-trash-alt mr-2"></i>
+            Delete
+          </span>
+        </CustomButton>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Bow Type Modal -->
+  <div v-if="showEditBowTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <i class="fas fa-edit mr-2 text-blue-600"></i>
+          Edit Bow Type
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Customize the display name and description.
+        </p>
+      </div>
+
+      <form @submit.prevent="saveBowTypeEdit" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Internal Name
+          </label>
+          <input
+            :value="editBowType.name"
+            type="text"
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            The internal name cannot be changed
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Display Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="editBowType.displayName"
+            type="text"
+            placeholder="e.g., Horse Bow"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Description
+          </label>
+          <textarea
+            v-model="editBowType.description"
+            rows="2"
+            placeholder="Brief description of this bow type..."
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Icon (FontAwesome class)
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="editBowType.icon"
+              type="text"
+              placeholder="fas fa-bullseye"
+              class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <i :class="editBowType.icon || 'fas fa-bullseye'" class="text-gray-600 dark:text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Sort Order
+          </label>
+          <input
+            v-model.number="editBowType.sortOrder"
+            type="number"
+            min="1"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <CustomButton
+            type="button"
+            @click="showEditBowTypeModal = false"
+            variant="outlined"
+            class="text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            type="submit"
+            variant="filled"
+            :disabled="isUpdatingBowType || !editBowType.displayName"
+            class="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            <span v-if="isUpdatingBowType">
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Saving...
+            </span>
+            <span v-else>
+              <i class="fas fa-save mr-2"></i>
+              Save Changes
+            </span>
+          </CustomButton>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Merge Duplicates Dialog -->
   <div v-if="showMergeDuplicatesDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -2830,6 +3231,33 @@ const sortedMigrations = computed(() => {
 const systemInfo = ref(null)
 const isLoadingSystemInfo = ref(false)
 const systemInfoError = ref(null)
+
+// Equipment rules state
+const equipmentRules = ref({})
+const isLoadingEquipmentRules = ref(false)
+const equipmentCategories = ['String', 'Sight', 'Scope', 'Stabilizer', 'Arrow Rest', 'Plunger', 'Weight', 'Other']
+
+// Bow type management state
+const showAddBowTypeModal = ref(false)
+const showDeleteBowTypeModal = ref(false)
+const showEditBowTypeModal = ref(false)
+const isCreatingBowType = ref(false)
+const isDeletingBowType = ref(false)
+const isUpdatingBowType = ref(false)
+const bowTypeToDelete = ref('')
+const bowTypesList = ref([])
+const newBowType = ref({
+  name: '',
+  displayName: '',
+  baseTemplate: 'traditional'
+})
+const editBowType = ref({
+  name: '',
+  displayName: '',
+  description: '',
+  icon: '',
+  sortOrder: 100
+})
 
 const backupForm = ref({
   name: ''
@@ -3266,6 +3694,204 @@ const loadSystemInfo = async () => {
     systemInfoError.value = 'Failed to load system information: ' + error.message
   } finally {
     isLoadingSystemInfo.value = false
+  }
+}
+
+// Equipment rules functions
+const loadEquipmentRules = async () => {
+  if (!hasServerAdminAccess.value) return
+
+  try {
+    isLoadingEquipmentRules.value = true
+    const response = await api.get('/admin/bow-type-equipment-rules')
+    equipmentRules.value = response.rules || {}
+    console.log('Equipment rules loaded:', response)
+  } catch (error) {
+    console.error('Error loading equipment rules:', error)
+    showNotification('Failed to load equipment rules: ' + error.message, 'error')
+  } finally {
+    isLoadingEquipmentRules.value = false
+  }
+}
+
+const getRuleValue = (bowType, category) => {
+  const rules = equipmentRules.value[bowType]
+  if (!rules) return true // Default to allowed if no rules
+  const rule = rules[category]
+  return rule ? rule.is_allowed : true
+}
+
+const updateEquipmentRule = async (bowType, category, isAllowed) => {
+  if (!hasServerAdminAccess.value) return
+
+  try {
+    await api.put('/admin/bow-type-equipment-rules', {
+      bow_type: bowType,
+      equipment_category: category,
+      is_allowed: isAllowed
+    })
+
+    // Update local state immediately for responsiveness
+    if (equipmentRules.value[bowType]) {
+      if (equipmentRules.value[bowType][category]) {
+        equipmentRules.value[bowType][category].is_allowed = isAllowed
+      } else {
+        equipmentRules.value[bowType][category] = { is_allowed: isAllowed, is_common: false, notes: null }
+      }
+    }
+
+    showNotification(`Updated ${category} rule for ${bowType}`, 'success')
+  } catch (error) {
+    console.error('Error updating equipment rule:', error)
+    showNotification('Failed to update rule: ' + error.message, 'error')
+    // Reload to get correct state
+    await loadEquipmentRules()
+  }
+}
+
+const resetEquipmentRules = async () => {
+  if (!hasServerAdminAccess.value) return
+
+  if (!confirm('Reset all equipment rules to defaults? This will overwrite any custom changes.')) {
+    return
+  }
+
+  try {
+    isLoadingEquipmentRules.value = true
+    await api.post('/admin/bow-type-equipment-rules/reset')
+    await loadEquipmentRules()
+    showNotification('Equipment rules reset to defaults', 'success')
+  } catch (error) {
+    console.error('Error resetting equipment rules:', error)
+    showNotification('Failed to reset rules: ' + error.message, 'error')
+  } finally {
+    isLoadingEquipmentRules.value = false
+  }
+}
+
+// Bow type management
+const defaultBowTypes = ['compound', 'recurve', 'barebow', 'longbow', 'traditional']
+
+const isDefaultBowType = (bowType) => {
+  return defaultBowTypes.includes(bowType.toLowerCase())
+}
+
+const createBowType = async () => {
+  if (!hasServerAdminAccess.value || !newBowType.value.name) return
+
+  try {
+    isCreatingBowType.value = true
+
+    const response = await api.post('/admin/bow-types', {
+      bow_type: newBowType.value.name,
+      display_name: newBowType.value.displayName,
+      base_template: newBowType.value.baseTemplate
+    })
+
+    showNotification(response.message || `Bow type "${newBowType.value.name}" created successfully`, 'success')
+    showAddBowTypeModal.value = false
+
+    // Reset form
+    newBowType.value = { name: '', displayName: '', baseTemplate: 'traditional' }
+
+    // Reload equipment rules to show new bow type
+    await loadEquipmentRules()
+  } catch (error) {
+    console.error('Error creating bow type:', error)
+    showNotification('Failed to create bow type: ' + error.message, 'error')
+  } finally {
+    isCreatingBowType.value = false
+  }
+}
+
+const confirmDeleteBowType = (bowType) => {
+  bowTypeToDelete.value = bowType
+  showDeleteBowTypeModal.value = true
+}
+
+const deleteBowType = async () => {
+  if (!hasServerAdminAccess.value || !bowTypeToDelete.value) return
+
+  try {
+    isDeletingBowType.value = true
+
+    const response = await api.delete(`/admin/bow-types/${bowTypeToDelete.value}`)
+
+    showNotification(response.message || `Bow type "${bowTypeToDelete.value}" deleted successfully`, 'success')
+    showDeleteBowTypeModal.value = false
+    bowTypeToDelete.value = ''
+
+    // Reload equipment rules and bow types list
+    await loadEquipmentRules()
+    await loadBowTypesList()
+  } catch (error) {
+    console.error('Error deleting bow type:', error)
+    showNotification('Failed to delete bow type: ' + error.message, 'error')
+  } finally {
+    isDeletingBowType.value = false
+  }
+}
+
+// Load bow types list for display
+const loadBowTypesList = async () => {
+  try {
+    const response = await api.get('/bow-types')
+    bowTypesList.value = response.bow_types || []
+  } catch (error) {
+    console.error('Error loading bow types list:', error)
+  }
+}
+
+// Get bow type info by name
+const getBowTypeInfo = (bowTypeName) => {
+  return bowTypesList.value.find(bt => bt.value === bowTypeName) || null
+}
+
+// Open edit modal for a bow type
+const openEditBowTypeModal = async (bowTypeName) => {
+  try {
+    const response = await api.get(`/bow-types/${bowTypeName}`)
+    const bt = response.bow_type
+
+    editBowType.value = {
+      name: bt.value,
+      displayName: bt.label,
+      description: bt.description || '',
+      icon: bt.icon || 'fas fa-bullseye',
+      sortOrder: bt.sort_order || 100
+    }
+
+    showEditBowTypeModal.value = true
+  } catch (error) {
+    console.error('Error loading bow type:', error)
+    showNotification('Failed to load bow type: ' + error.message, 'error')
+  }
+}
+
+// Save bow type edits
+const saveBowTypeEdit = async () => {
+  if (!hasServerAdminAccess.value || !editBowType.value.name) return
+
+  try {
+    isUpdatingBowType.value = true
+
+    const response = await api.put(`/admin/bow-types/${editBowType.value.name}`, {
+      display_name: editBowType.value.displayName,
+      description: editBowType.value.description,
+      icon: editBowType.value.icon,
+      sort_order: editBowType.value.sortOrder
+    })
+
+    showNotification(response.message || 'Bow type updated successfully', 'success')
+    showEditBowTypeModal.value = false
+
+    // Reload bow types list
+    await loadBowTypesList()
+  } catch (error) {
+    console.error('Error updating bow type:', error)
+    showNotification('Failed to update bow type: ' + error.message, 'error')
+  } finally {
+    isUpdatingBowType.value = false
   }
 }
 
@@ -4207,6 +4833,14 @@ watch(activeTab, async (newTab) => {
     }
     if (!databaseHealth.value) {
       await refreshDatabaseHealth()
+    }
+  }
+  if (newTab === 'equipment-rules' && hasServerAdminAccess.value) {
+    if (Object.keys(equipmentRules.value).length === 0) {
+      await loadEquipmentRules()
+    }
+    if (bowTypesList.value.length === 0) {
+      await loadBowTypesList()
     }
   }
 })

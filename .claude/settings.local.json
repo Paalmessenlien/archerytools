@@ -13,7 +13,17 @@
       "mcp__playwright__browser_snapshot",
       "WebFetch(domain:datatables.net)",
       "WebFetch(domain:editor.datatables.net)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git merge-base:*)",
+      "Bash(lsof:*)",
+      "Bash(command -v:*)",
+      "Bash(npm --version:*)",
+      "Bash(./start-unified.sh dev start)",
+      "Bash(curl:*)",
+      "Bash(./start-unified.sh:*)",
+      "Bash(npm install)"
     ],
     "deny": []
   }

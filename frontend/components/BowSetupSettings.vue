@@ -28,10 +28,9 @@
             <label for="bowType" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bow Type *</label>
             <select id="bowType" v-model="formData.bow_type" class="w-full form-select" required>
               <option value="">Select Bow Type</option>
-              <option value="compound">Compound</option>
-              <option value="recurve">Recurve</option>
-              <option value="longbow">Longbow</option>
-              <option value="traditional">Traditional</option>
+              <option v-for="bt in bowTypes" :key="bt.value" :value="bt.value">
+                {{ bt.label }}
+              </option>
             </select>
           </div>
           
@@ -97,7 +96,7 @@
           >
 
           <!-- Compound Bow Configuration -->
-          <div v-if="formData.bow_type === 'compound'" class="space-y-4">
+          <div v-if="isCompoundStyle(formData.bow_type)" class="space-y-4">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Compound Brand Selection -->
               <div>
@@ -135,7 +134,7 @@
           </div>
 
           <!-- Recurve Bow Configuration -->
-          <div v-else-if="formData.bow_type === 'recurve'" class="space-y-4">
+          <div v-else-if="isRecurveBarebow(formData.bow_type)" class="space-y-4">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Riser Brand Selection -->
               <div>
@@ -241,7 +240,7 @@
           </div>
 
           <!-- Traditional Bow Configuration -->
-          <div v-else-if="formData.bow_type === 'traditional'" class="space-y-4">
+          <div v-else-if="isTraditionalStyle(formData.bow_type)" class="space-y-4">
             <div>
               <label for="construction" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Construction Type</label>
               <select id="construction" v-model="formData.construction" class="form-select">
@@ -340,7 +339,7 @@
           </div>
 
           <!-- Longbow Configuration -->
-          <div v-else-if="formData.bow_type === 'longbow'" class="space-y-4">
+          <div v-else-if="isLongbowStyle(formData.bow_type)" class="space-y-4">
             <div>
               <ManufacturerInput
                 v-model="formData.bow_brand"
@@ -605,6 +604,72 @@ const saving = ref(false)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
 
+// Dynamic bow types from API
+const bowTypes = ref([
+  { value: 'compound', label: 'Compound', is_default: true },
+  { value: 'recurve', label: 'Recurve', is_default: true },
+  { value: 'barebow', label: 'Barebow', is_default: true },
+  { value: 'longbow', label: 'Longbow', is_default: true },
+  { value: 'traditional', label: 'Traditional', is_default: true }
+])
+
+const loadBowTypes = async () => {
+  try {
+    const response = await api.get('/bow-types')
+    if (response.bow_types && response.bow_types.length > 0) {
+      bowTypes.value = response.bow_types
+    }
+  } catch (error) {
+    console.error('Error loading bow types:', error)
+    // Keep default bow types on error
+  }
+}
+
+// Check if bow type uses riser/limbs (recurve-style)
+const usesRiserLimbs = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue)
+  if (bt && bt.config_template) {
+    return bt.config_template === 'recurve' || bt.config_template === 'barebow' || bt.config_template === 'traditional'
+  }
+  return bowTypeValue === 'recurve' || bowTypeValue === 'traditional' || bowTypeValue === 'barebow'
+}
+
+// Check if bow type is compound-style
+const isCompoundStyle = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue)
+  if (bt && bt.config_template) {
+    return bt.config_template === 'compound'
+  }
+  return bowTypeValue === 'compound'
+}
+
+// Check if bow type is longbow-style
+const isLongbowStyle = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue)
+  if (bt && bt.config_template) {
+    return bt.config_template === 'longbow'
+  }
+  return bowTypeValue === 'longbow'
+}
+
+// Check if bow type is recurve or barebow style (uses riser+limbs but NOT traditional)
+const isRecurveBarebow = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue)
+  if (bt && bt.config_template) {
+    return bt.config_template === 'recurve' || bt.config_template === 'barebow'
+  }
+  return bowTypeValue === 'recurve' || bowTypeValue === 'barebow'
+}
+
+// Check if bow type is traditional style
+const isTraditionalStyle = (bowTypeValue) => {
+  const bt = bowTypes.value.find(b => b.value === bowTypeValue)
+  if (bt && bt.config_template) {
+    return bt.config_template === 'traditional'
+  }
+  return bowTypeValue === 'traditional'
+}
+
 // Image Upload Composable
 const imageUpload = useImageUpload({
   context: 'bow_setup',
@@ -759,29 +824,22 @@ const handleSave = async () => {
       bow_usage: JSON.stringify(formData.value.bow_usage || []),
       
       // Compound-specific fields
-      compound_brand: formData.value.bow_type === 'compound' ? formData.value.compound_brand || '' : '',
-      compound_model: formData.value.bow_type === 'compound' ? formData.value.compound_model || '' : '',
-      ibo_speed: formData.value.bow_type === 'compound' ? Number(formData.value.ibo_speed) || null : null,
-      
-      // Recurve/Traditional-specific fields
-      riser_brand: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.riser_brand || '' : '',
-      riser_model: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.riser_model || '' : '',
-      riser_length: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.riser_length || '' : '',
-      limb_brand: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional')
-        ? formData.value.limb_brand || '' : '',
-      limb_model: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.limb_model || '' : '',
-      limb_length: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.limb_length || '' : '',
-      limb_fitting: (formData.value.bow_type === 'recurve' || formData.value.bow_type === 'traditional') 
-        ? formData.value.limb_fitting || 'ILF' : '',
-      construction: formData.value.bow_type === 'traditional' ? formData.value.construction || 'one_piece' : '',
-      
+      compound_brand: isCompoundStyle(formData.value.bow_type) ? formData.value.compound_brand || '' : '',
+      compound_model: isCompoundStyle(formData.value.bow_type) ? formData.value.compound_model || '' : '',
+      ibo_speed: isCompoundStyle(formData.value.bow_type) ? Number(formData.value.ibo_speed) || null : null,
+
+      // Recurve/Traditional/Barebow-specific fields (riser and limbs)
+      riser_brand: usesRiserLimbs(formData.value.bow_type) ? formData.value.riser_brand || '' : '',
+      riser_model: usesRiserLimbs(formData.value.bow_type) ? formData.value.riser_model || '' : '',
+      riser_length: usesRiserLimbs(formData.value.bow_type) ? formData.value.riser_length || '' : '',
+      limb_brand: usesRiserLimbs(formData.value.bow_type) ? formData.value.limb_brand || '' : '',
+      limb_model: usesRiserLimbs(formData.value.bow_type) ? formData.value.limb_model || '' : '',
+      limb_length: usesRiserLimbs(formData.value.bow_type) ? formData.value.limb_length || '' : '',
+      limb_fitting: usesRiserLimbs(formData.value.bow_type) ? formData.value.limb_fitting || 'ILF' : '',
+      construction: isTraditionalStyle(formData.value.bow_type) ? formData.value.construction || 'one_piece' : '',
+
       // Longbow-specific fields
-      bow_brand: formData.value.bow_type === 'longbow' ? formData.value.bow_brand || '' : '',
+      bow_brand: isLongbowStyle(formData.value.bow_type) ? formData.value.bow_brand || '' : '',
       
       user_note: change_reason || 'Setup configuration updated'
     }
@@ -909,6 +967,7 @@ watch(() => props.setup, () => {
 // Lifecycle
 onMounted(() => {
   loadManufacturers()
+  loadBowTypes()
   initializeForm()
 })
 </script>

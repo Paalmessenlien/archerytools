@@ -340,9 +340,10 @@ const submitting = ref(false)
 const selectedCategory = ref('String')
 const formSchema = ref(null)
 const attachedImages = ref([])
+const allowedCategories = ref([])
 
-// Categories
-const categories = ref([
+// All possible categories with icons
+const allCategories = [
   { name: 'String', icon: 'fas fa-link' },
   { name: 'Sight', icon: 'fas fa-crosshairs' },
   { name: 'Scope', icon: 'fas fa-search' },
@@ -352,7 +353,19 @@ const categories = ref([
   { name: 'Weight', icon: 'fas fa-weight-hanging' },
   { name: 'Peep Sight', icon: 'fas fa-circle-notch' },
   { name: 'Other', icon: 'fas fa-cog' }
-])
+]
+
+// Filtered categories based on bow type (computed)
+const categories = computed(() => {
+  if (allowedCategories.value.length === 0) {
+    // If no rules loaded yet, show all categories
+    return allCategories
+  }
+  // Filter to only show allowed categories for this bow type
+  return allCategories.filter(cat =>
+    allowedCategories.value.includes(cat.name)
+  )
+})
 
 // Map UI categories to API categories for ManufacturerInput
 const categoryMapping = {
@@ -727,11 +740,34 @@ const initializeEditingSpecifications = async () => {
 }
 
 // Lifecycle
+// Load allowed categories for this bow type
+const loadAllowedCategories = async () => {
+  try {
+    const bowType = props.bowSetup?.bow_type
+    if (bowType) {
+      const response = await api.get(`/equipment/categories?bow_type=${bowType}`)
+      if (response.categories && Array.isArray(response.categories)) {
+        allowedCategories.value = response.categories.map(cat => cat.name)
+        // Update selected category if current one is not allowed
+        if (!allowedCategories.value.includes(selectedCategory.value) && allowedCategories.value.length > 0) {
+          selectedCategory.value = allowedCategories.value[0]
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading allowed categories:', error)
+    // On error, show all categories
+    allowedCategories.value = []
+  }
+}
+
 onMounted(async () => {
   // Initialize for editing first, then load schema
   if (props.isEditing) {
     initializeForEditing()
   }
+  // Load allowed categories based on bow type
+  await loadAllowedCategories()
   await loadFormSchema(selectedCategory.value)
 })
 </script>

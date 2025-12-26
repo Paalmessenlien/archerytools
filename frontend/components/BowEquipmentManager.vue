@@ -126,6 +126,19 @@
                         - {{ equipmentItem.installation_notes }}
                       </span>
                     </div>
+
+                    <!-- Incompatibility Warning Banner -->
+                    <div
+                      v-if="equipmentItem.is_compatible === false"
+                      class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg"
+                    >
+                      <div class="flex items-center text-yellow-800 dark:text-yellow-200">
+                        <i class="fas fa-exclamation-triangle mr-2 text-yellow-600 dark:text-yellow-400"></i>
+                        <span class="text-sm">
+                          {{ equipmentItem.compatibility_warning || `${equipmentItem.category_name} is not typically used with ${bowType} bows` }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -311,6 +324,8 @@ const deletingEquipment = ref(false)
 const deleteError = ref('')
 
 // Computed
+const bowType = computed(() => props.bowSetup?.bow_type || 'unknown')
+
 const groupedEquipment = computed(() => {
   const groups = {}
   equipment.value.forEach(item => {

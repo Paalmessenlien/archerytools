@@ -673,56 +673,6 @@ def get_user_draw_length(user_id, default=28.0):
     draw_length, _ = get_effective_draw_length(user_id, default=default)
     return draw_length
 
-def get_arrow_db():
-    """
-    DEPRECATED: This function is no longer used due to unified database architecture.
-    Use get_database() instead for unified arrow/user database access.
-    
-    Legacy function for arrow database connection with fallback locations.
-    """
-    try:
-        # UNIFIED DATABASE PATH RESOLUTION - NEW ARCHITECTURE (August 2025)
-        db_paths = [
-            '/app/databases/arrow_database.db',                    # 🔴 UNIFIED Docker path (HIGHEST PRIORITY)
-            'databases/arrow_database.db',                         # 🔴 LOCAL subfolder (DEVELOPMENT - HIGHEST LOCAL PRIORITY)
-            '../databases/arrow_database.db',                      # 🟡 UNIFIED parent folder path 
-            '/app/arrow_data/arrow_database.db',                   # 🟡 Legacy Docker volume path
-            '/app/arrow_database.db',                              # 🟡 Legacy Docker path
-            'arrow_database.db',                                   # 🔴 Legacy current folder (LOWEST PRIORITY)
-        ]
-        
-        database_path = None
-        for db_path in db_paths:
-            if os.path.exists(db_path):
-                try:
-                    # Quick check if database has data
-                    import sqlite3
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM arrows")
-                    count = cursor.fetchone()[0]
-                    conn.close()
-                    
-                    if count > 0:
-                        database_path = db_path
-                        print(f"[get_arrow_db] Selected database: {db_path} with {count} arrows")  # Debug log
-                        break
-                except Exception as e:
-                    continue
-        
-        if not database_path:
-            return None
-        
-        # Return connection to the found database with row factory
-        import sqlite3
-        conn = sqlite3.connect(database_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-        
-    except Exception as e:
-        import traceback
-        return None
-
 def get_component_database():
     """Get component database with lazy initialization"""
     global component_database
@@ -2436,11 +2386,13 @@ def get_user(current_user):
     else:
         user_dict['shooting_style'] = ['target']
     
-    # Map database column names to frontend expected names
-    if 'user_draw_length' in user_dict:
-        user_dict['draw_length'] = user_dict['user_draw_length']
-        # Keep user_draw_length for backward compatibility but prioritize draw_length for frontend
-    
+    # Map default_draw_length to draw_length for frontend compatibility
+    # This is a user preference for creating new setups, not for calculations (migration 063)
+    if 'default_draw_length' in user_dict and user_dict['default_draw_length']:
+        user_dict['draw_length'] = user_dict['default_draw_length']
+    else:
+        user_dict['draw_length'] = 28.0  # Default fallback
+
     return jsonify(user_dict)
 
 @app.route('/api/user/profile', methods=['PUT'])
@@ -2522,8 +2474,10 @@ def update_user_profile(current_user):
         update_data = {}
         if name is not None:
             update_data['name'] = name
+        # default_draw_length is a user preference for creating new bow setups (migration 063)
+        # Actual calculations use bow_setups.draw_length (per migration 045)
         if draw_length is not None:
-            update_data['user_draw_length'] = draw_length  # Map draw_length to user_draw_length column
+            update_data['default_draw_length'] = float(draw_length)
         if skill_level is not None:
             update_data['skill_level'] = skill_level
         if shooting_style is not None:
@@ -3753,21 +3707,13 @@ def calculate_individual_arrow_performance(setup_arrow_id):
                 
                 calculated_arrow_weight = (mock_arrow.gpi_weight * mock_profile.arrow_length) + mock_profile.point_weight_preference + 25
                 
-                # Get user's draw length for proper calculation
-                user_draw_length = 29  # Default fallback
-                try:
-                    if current_user:
-                        cursor.execute('SELECT user_draw_length FROM users WHERE id = ?', (current_user['id'],))
-                        user_result = cursor.fetchone()
-                        if user_result and user_result['user_draw_length']:
-                            user_draw_length = user_result['user_draw_length']
-                except:
-                    pass  # Use default
-                
+                # Get draw length from bow setup (now per-setup, not per-user - migration 045)
+                setup_draw_length = bow_config_dict.get('draw_length', setup_arrow_dict.get('draw_length', 29))
+
                 speed_request_data = {
                     'bow_ibo_speed': bow_config_dict.get('ibo_speed', setup_arrow_dict.get('ibo_speed', 0)),  # Let the function handle fallbacks
                     'bow_draw_weight': bow_config_dict.get('draw_weight', setup_arrow_dict.get('draw_weight', 50)),
-                    'bow_draw_length': bow_config_dict.get('draw_length', user_draw_length),
+                    'bow_draw_length': setup_draw_length,
                     'bow_type': bow_config_dict.get('bow_type', setup_arrow_dict.get('bow_type', 'compound')),
                     'arrow_weight_grains': calculated_arrow_weight,
                     'string_material': 'dacron',  # Default to slowest for safety
@@ -5903,13 +5849,441 @@ def get_available_equipment_categories(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== BOW TYPE EQUIPMENT RULES ADMIN ENDPOINTS =====
+
+@app.route('/api/admin/bow-type-equipment-rules', methods=['GET'])
+@token_required
+@admin_required
+def get_bow_type_equipment_rules(current_user):
+    """Get all bow type equipment filtering rules for admin management"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        cursor.execute("""
+            SELECT bow_type, equipment_category, is_allowed, is_common, notes
+            FROM bow_type_equipment_rules
+            ORDER BY bow_type, equipment_category
+        """)
+
+        rules = {}
+        for row in cursor.fetchall():
+            bow_type = row['bow_type']
+            if bow_type not in rules:
+                rules[bow_type] = {}
+            rules[bow_type][row['equipment_category']] = {
+                'is_allowed': bool(row['is_allowed']),
+                'is_common': bool(row['is_common']),
+                'notes': row['notes']
+            }
+
+        return jsonify({
+            'rules': rules,
+            'bow_types': ['compound', 'recurve', 'barebow', 'longbow', 'traditional'],
+            'equipment_categories': ['String', 'Sight', 'Scope', 'Stabilizer',
+                                     'Arrow Rest', 'Plunger', 'Weight', 'Other']
+        }), 200
+
+    except Exception as e:
+        print(f"Error getting bow type equipment rules: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/bow-type-equipment-rules', methods=['PUT'])
+@token_required
+@admin_required
+def update_bow_type_equipment_rule(current_user):
+    """Update a bow type equipment rule"""
+    try:
+        data = request.get_json()
+        bow_type = data.get('bow_type')
+        equipment_category = data.get('equipment_category')
+        is_allowed = data.get('is_allowed', True)
+        is_common = data.get('is_common', False)
+        notes = data.get('notes', '')
+
+        if not bow_type or not equipment_category:
+            return jsonify({'error': 'bow_type and equipment_category are required'}), 400
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        cursor.execute("""
+            INSERT INTO bow_type_equipment_rules
+            (bow_type, equipment_category, is_allowed, is_common, notes, created_by, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(bow_type, equipment_category)
+            DO UPDATE SET is_allowed = excluded.is_allowed,
+                          is_common = excluded.is_common,
+                          notes = excluded.notes,
+                          updated_at = CURRENT_TIMESTAMP
+        """, (bow_type, equipment_category, is_allowed, is_common, notes, current_user['id']))
+
+        db.get_connection().commit()
+
+        return jsonify({'success': True, 'message': 'Rule updated successfully'}), 200
+
+    except Exception as e:
+        print(f"Error updating bow type equipment rule: {e}")
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/bow-type-equipment-rules/reset', methods=['POST'])
+@token_required
+@admin_required
+def reset_bow_type_equipment_rules(current_user):
+    """Reset all bow type equipment rules to defaults"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        # Delete all existing rules
+        cursor.execute("DELETE FROM bow_type_equipment_rules")
+
+        # Re-insert default rules
+        default_rules = [
+            # Compound
+            ('compound', 'String', True, True), ('compound', 'Sight', True, True),
+            ('compound', 'Scope', True, True), ('compound', 'Stabilizer', True, True),
+            ('compound', 'Arrow Rest', True, True), ('compound', 'Plunger', False, False),
+            ('compound', 'Weight', True, True), ('compound', 'Other', True, False),
+            # Recurve
+            ('recurve', 'String', True, True), ('recurve', 'Sight', True, True),
+            ('recurve', 'Scope', False, False), ('recurve', 'Stabilizer', True, True),
+            ('recurve', 'Arrow Rest', True, True), ('recurve', 'Plunger', True, True),
+            ('recurve', 'Weight', True, True), ('recurve', 'Other', True, False),
+            # Barebow
+            ('barebow', 'String', True, True), ('barebow', 'Sight', False, False),
+            ('barebow', 'Scope', False, False), ('barebow', 'Stabilizer', False, False),
+            ('barebow', 'Arrow Rest', True, True), ('barebow', 'Plunger', True, True),
+            ('barebow', 'Weight', True, True), ('barebow', 'Other', True, False),
+            # Longbow
+            ('longbow', 'String', True, True), ('longbow', 'Sight', False, False),
+            ('longbow', 'Scope', False, False), ('longbow', 'Stabilizer', False, False),
+            ('longbow', 'Arrow Rest', True, False), ('longbow', 'Plunger', False, False),
+            ('longbow', 'Weight', False, False), ('longbow', 'Other', True, False),
+            # Traditional
+            ('traditional', 'String', True, True), ('traditional', 'Sight', False, False),
+            ('traditional', 'Scope', False, False), ('traditional', 'Stabilizer', False, False),
+            ('traditional', 'Arrow Rest', True, True), ('traditional', 'Plunger', True, False),
+            ('traditional', 'Weight', False, False), ('traditional', 'Other', True, False),
+        ]
+
+        for bow_type, category, is_allowed, is_common in default_rules:
+            cursor.execute("""
+                INSERT INTO bow_type_equipment_rules
+                (bow_type, equipment_category, is_allowed, is_common, created_by)
+                VALUES (?, ?, ?, ?, ?)
+            """, (bow_type, category, is_allowed, is_common, current_user['id']))
+
+        db.get_connection().commit()
+
+        return jsonify({'success': True, 'message': 'Rules reset to defaults'}), 200
+
+    except Exception as e:
+        print(f"Error resetting bow type equipment rules: {e}")
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/bow-types', methods=['POST'])
+@token_required
+@admin_required
+def create_bow_type(current_user):
+    """Create a new bow type with default equipment rules"""
+    try:
+        data = request.get_json()
+        bow_type = data.get('bow_type', '').strip().lower()
+        display_name = data.get('display_name', '').strip()
+        description = data.get('description', '').strip()
+        base_template = data.get('base_template', 'traditional')  # Which bow type to copy rules from
+
+        if not bow_type:
+            return jsonify({'error': 'Bow type name is required'}), 400
+
+        # Validate bow_type format (lowercase, alphanumeric with underscores/hyphens)
+        import re
+        if not re.match(r'^[a-z][a-z0-9_-]*$', bow_type):
+            return jsonify({'error': 'Bow type must start with a letter and contain only lowercase letters, numbers, underscores, or hyphens'}), 400
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        # Check if bow type already exists in bow_types table
+        cursor.execute("SELECT COUNT(*) as count FROM bow_types WHERE name = ?", (bow_type,))
+        if cursor.fetchone()['count'] > 0:
+            return jsonify({'error': f'Bow type "{bow_type}" already exists'}), 400
+
+        # Get max sort_order for new bow type
+        cursor.execute("SELECT MAX(sort_order) as max_sort FROM bow_types")
+        max_sort = cursor.fetchone()['max_sort'] or 0
+
+        # Insert into bow_types table
+        final_display_name = display_name or bow_type.replace('_', ' ').replace('-', ' ').title()
+        cursor.execute("""
+            INSERT INTO bow_types
+            (name, display_name, description, icon, is_default, is_active, sort_order, config_template, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (bow_type, final_display_name, description or f'Custom bow type: {final_display_name}',
+              'fas fa-bullseye', False, True, max_sort + 1, base_template, current_user['id']))
+
+        # Get template rules from base_template
+        cursor.execute("""
+            SELECT equipment_category, is_allowed, is_common
+            FROM bow_type_equipment_rules
+            WHERE bow_type = ?
+        """, (base_template,))
+        template_rules = cursor.fetchall()
+
+        # If no template found, use default minimal rules
+        if not template_rules:
+            equipment_categories = ['String', 'Sight', 'Scope', 'Stabilizer', 'Arrow Rest', 'Plunger', 'Weight', 'Other']
+            template_rules = [{'equipment_category': cat, 'is_allowed': cat in ['String', 'Other'], 'is_common': False} for cat in equipment_categories]
+
+        # Insert rules for new bow type
+        for rule in template_rules:
+            cursor.execute("""
+                INSERT INTO bow_type_equipment_rules
+                (bow_type, equipment_category, is_allowed, is_common, notes, created_by)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (bow_type, rule['equipment_category'], rule['is_allowed'], rule['is_common'],
+                  f'Created from {base_template} template', current_user['id']))
+
+        db.get_connection().commit()
+
+        return jsonify({
+            'success': True,
+            'bow_type': bow_type,
+            'display_name': final_display_name,
+            'message': f'Bow type "{bow_type}" created successfully'
+        }), 201
+
+    except Exception as e:
+        print(f"Error creating bow type: {e}")
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/bow-types/<bow_type>', methods=['DELETE'])
+@token_required
+@admin_required
+def delete_bow_type(current_user, bow_type):
+    """Delete a custom bow type (cannot delete default bow types)"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        # Check if bow type exists and is not a default
+        cursor.execute("SELECT is_default FROM bow_types WHERE name = ?", (bow_type,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': f'Bow type "{bow_type}" not found'}), 404
+
+        if row['is_default']:
+            return jsonify({'error': f'Cannot delete default bow type "{bow_type}"'}), 400
+
+        # Check if any bow setups use this bow type
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM bow_setups WHERE bow_type = ?
+        """, (bow_type,))
+        setup_count = cursor.fetchone()['count']
+        if setup_count > 0:
+            return jsonify({'error': f'Cannot delete bow type "{bow_type}" - {setup_count} bow setup(s) are using it'}), 400
+
+        # Delete from bow_types table
+        cursor.execute("DELETE FROM bow_types WHERE name = ?", (bow_type,))
+
+        # Delete the bow type equipment rules
+        cursor.execute("DELETE FROM bow_type_equipment_rules WHERE bow_type = ?", (bow_type,))
+
+        db.get_connection().commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Bow type "{bow_type}" deleted successfully'
+        }), 200
+
+    except Exception as e:
+        print(f"Error deleting bow type: {e}")
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/bow-types/<bow_type>', methods=['PUT', 'OPTIONS'])
+@token_required
+@admin_required
+def update_bow_type(current_user, bow_type):
+    """Update a bow type's display name, description, or other metadata"""
+    try:
+        data = request.get_json()
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        # Check if bow type exists
+        cursor.execute("SELECT * FROM bow_types WHERE name = ?", (bow_type,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': f'Bow type "{bow_type}" not found'}), 404
+
+        # Build update query dynamically
+        updates = []
+        params = []
+
+        if 'display_name' in data and data['display_name']:
+            updates.append("display_name = ?")
+            params.append(data['display_name'].strip())
+
+        if 'description' in data:
+            updates.append("description = ?")
+            params.append(data['description'].strip() if data['description'] else None)
+
+        if 'icon' in data:
+            updates.append("icon = ?")
+            params.append(data['icon'].strip() if data['icon'] else 'fas fa-bullseye')
+
+        if 'sort_order' in data:
+            updates.append("sort_order = ?")
+            params.append(int(data['sort_order']))
+
+        if 'is_active' in data:
+            updates.append("is_active = ?")
+            params.append(1 if data['is_active'] else 0)
+
+        if not updates:
+            return jsonify({'error': 'No valid fields to update'}), 400
+
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(bow_type)
+
+        cursor.execute(f"""
+            UPDATE bow_types SET {', '.join(updates)} WHERE name = ?
+        """, params)
+
+        db.get_connection().commit()
+
+        # Return updated bow type
+        cursor.execute("SELECT * FROM bow_types WHERE name = ?", (bow_type,))
+        updated = cursor.fetchone()
+
+        return jsonify({
+            'success': True,
+            'bow_type': {
+                'value': updated['name'],
+                'label': updated['display_name'],
+                'description': updated['description'],
+                'icon': updated['icon'],
+                'is_default': bool(updated['is_default']),
+                'is_active': bool(updated['is_active']),
+                'sort_order': updated['sort_order']
+            },
+            'message': f'Bow type "{bow_type}" updated successfully'
+        }), 200
+
+    except Exception as e:
+        print(f"Error updating bow type: {e}")
+        db.get_connection().rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/bow-types', methods=['GET'])
+def get_all_bow_types():
+    """Get all available bow types from the bow_types table"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        # Get bow types from bow_types table
+        cursor.execute("""
+            SELECT name, display_name, description, icon, is_default, is_active, sort_order, config_template
+            FROM bow_types
+            WHERE is_active = 1
+            ORDER BY sort_order, display_name
+        """)
+
+        bow_types = cursor.fetchall()
+
+        result = []
+        for row in bow_types:
+            result.append({
+                'value': row['name'],
+                'label': row['display_name'],
+                'description': row['description'],
+                'icon': row['icon'],
+                'is_default': bool(row['is_default']),
+                'config_template': row['config_template']
+            })
+
+        return jsonify({'bow_types': result}), 200
+
+    except Exception as e:
+        print(f"Error getting bow types: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/bow-types/<bow_type_name>', methods=['GET', 'OPTIONS'])
+def get_bow_type(bow_type_name):
+    """Get a single bow type by name"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        cursor = db.get_connection().cursor()
+
+        cursor.execute("""
+            SELECT name, display_name, description, icon, is_default, is_active, sort_order, config_template
+            FROM bow_types
+            WHERE name = ?
+        """, (bow_type_name,))
+
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': f'Bow type "{bow_type_name}" not found'}), 404
+
+        return jsonify({
+            'bow_type': {
+                'value': row['name'],
+                'label': row['display_name'],
+                'description': row['description'],
+                'icon': row['icon'],
+                'is_default': bool(row['is_default']),
+                'is_active': bool(row['is_active']),
+                'sort_order': row['sort_order'],
+                'config_template': row['config_template']
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error getting bow type: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # ===== EQUIPMENT MANAGEMENT API ENDPOINTS =====
 
 @app.route('/api/equipment/categories', methods=['GET'])
 def get_equipment_categories():
-    """Get all equipment categories with their schemas"""
+    """Get equipment categories, optionally filtered by bow type"""
     try:
-        return jsonify([
+        bow_type = request.args.get('bow_type')
+
+        all_categories = [
             {'name': 'String', 'icon': 'fas fa-link'},
             {'name': 'Sight', 'icon': 'fas fa-crosshairs'},
             {'name': 'Scope', 'icon': 'fas fa-search'},
@@ -5918,8 +6292,24 @@ def get_equipment_categories():
             {'name': 'Plunger', 'icon': 'fas fa-bullseye'},
             {'name': 'Weight', 'icon': 'fas fa-weight-hanging'},
             {'name': 'Other', 'icon': 'fas fa-cog'}
-        ]), 200
-        
+        ]
+
+        if bow_type:
+            db = get_database()
+            if db:
+                cursor = db.get_connection().cursor()
+                cursor.execute("""
+                    SELECT equipment_category FROM bow_type_equipment_rules
+                    WHERE bow_type = ? AND is_allowed = 1
+                """, (bow_type,))
+                allowed = {row[0] for row in cursor.fetchall()}
+
+                # If rules exist for this bow type, filter categories
+                if allowed:
+                    all_categories = [c for c in all_categories if c['name'] in allowed]
+
+        return jsonify({'categories': all_categories}), 200
+
     except Exception as e:
         print(f"Error getting equipment categories: {e}")
         return jsonify({'error': 'Failed to get equipment categories'}), 500
@@ -6356,13 +6746,24 @@ def get_bow_equipment(current_user, setup_id):
             return jsonify({"error": "Database not available"}), 500
         conn = db.get_connection()
         cursor = conn.cursor()
-        
-        # Verify the setup belongs to the current user
-        cursor.execute('SELECT user_id FROM bow_setups WHERE id = ?', (setup_id,))
+
+        # Verify the setup belongs to the current user and get bow_type
+        cursor.execute('SELECT user_id, bow_type FROM bow_setups WHERE id = ?', (setup_id,))
         setup = cursor.fetchone()
         if not setup or setup['user_id'] != current_user['id']:
             conn.close()
             return jsonify({'error': 'Setup not found or access denied'}), 404
+
+        bow_type = setup['bow_type']
+
+        # Get equipment compatibility rules for this bow type
+        cursor.execute('''
+            SELECT equipment_category, is_allowed, notes
+            FROM bow_type_equipment_rules
+            WHERE bow_type = ?
+        ''', (bow_type,))
+        rules_rows = cursor.fetchall()
+        equipment_rules = {row['equipment_category']: {'is_allowed': bool(row['is_allowed']), 'notes': row['notes']} for row in rules_rows}
         
         # Get all equipment for this bow setup
         cursor.execute('''
@@ -6444,11 +6845,25 @@ def get_bow_equipment(current_user, setup_id):
             # Clean up the response
             equipment_item['id'] = equipment_item['id']  # bow_equipment ID
             equipment_item['bow_equipment_id'] = equipment_item['id']
-            
+
+            # Add compatibility status based on bow type rules
+            category = equipment_item.get('category_name', '')
+            if category in equipment_rules:
+                rule = equipment_rules[category]
+                equipment_item['is_compatible'] = rule['is_allowed']
+                if not rule['is_allowed']:
+                    equipment_item['compatibility_warning'] = rule['notes'] or f"{category} is not typically used with {bow_type} bows"
+                else:
+                    equipment_item['compatibility_warning'] = None
+            else:
+                # If no rule exists, assume compatible
+                equipment_item['is_compatible'] = True
+                equipment_item['compatibility_warning'] = None
+
             equipment.append(equipment_item)
-        
+
         conn.close()
-        return jsonify({'equipment': equipment}), 200
+        return jsonify({'equipment': equipment, 'bow_type': bow_type}), 200
         
     except Exception as e:
         print(f"Error getting bow equipment: {e}")
@@ -13886,9 +14301,9 @@ def estimate_arrow_speed():
         bow_type_map = {
             'compound': BowType.COMPOUND,
             'recurve': BowType.RECURVE,
-            'longbow': BowType.TRADITIONAL,  # Map longbow to traditional
+            'barebow': BowType.BAREBOW,
+            'longbow': BowType.LONGBOW,
             'traditional': BowType.TRADITIONAL,
-            'barebow': BowType.RECURVE  # Map barebow to recurve
         }
         bow_type_enum = bow_type_map.get(bow_type.lower(), BowType.COMPOUND)
         
@@ -15493,6 +15908,583 @@ def create_journal_entry_from_change_log(current_user):
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to create journal entry from change log'}), 500
+
+# ===== TECHNICAL TUNING ENDPOINTS =====
+
+@app.route('/api/bow-setups/<int:setup_id>/tuning-configs', methods=['GET'])
+@token_required
+def get_tuning_configs(current_user, setup_id):
+    """Get all tuning configurations for a bow setup"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Verify user owns this setup
+        cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?',
+                      (setup_id, current_user['id']))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+
+        # Get all tuning configs for this setup
+        cursor.execute('''
+            SELECT id, bow_setup_id, user_id, name, description, is_active,
+                   image_url, created_at, updated_at
+            FROM bow_tuning_configs
+            WHERE bow_setup_id = ?
+            ORDER BY is_active DESC, updated_at DESC
+        ''', (setup_id,))
+        configs = [dict(row) for row in cursor.fetchall()]
+
+        # Get values for each config
+        for config in configs:
+            cursor.execute('''
+                SELECT id, parameter_name, parameter_value, unit, notes
+                FROM bow_tuning_values
+                WHERE tuning_config_id = ?
+            ''', (config['id'],))
+            config['values'] = {row['parameter_name']: {
+                'id': row['id'],
+                'value': row['parameter_value'],
+                'unit': row['unit'],
+                'notes': row['notes']
+            } for row in cursor.fetchall()}
+
+        conn.close()
+        return jsonify({'configs': configs})
+
+    except Exception as e:
+        print(f"Error getting tuning configs: {e}")
+        return jsonify({'error': 'Failed to get tuning configurations'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/tuning-configs', methods=['POST'])
+@token_required
+def create_tuning_config(current_user, setup_id):
+    """Create a new tuning configuration"""
+    try:
+        data = request.get_json()
+        if not data or not data.get('name'):
+            return jsonify({'error': 'Configuration name is required'}), 400
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Verify user owns this setup
+        cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?',
+                      (setup_id, current_user['id']))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+
+        is_active = data.get('is_active', False)
+
+        # If setting as active, deactivate others first
+        if is_active:
+            cursor.execute('''
+                UPDATE bow_tuning_configs SET is_active = 0
+                WHERE bow_setup_id = ?
+            ''', (setup_id,))
+
+        # Create the config
+        cursor.execute('''
+            INSERT INTO bow_tuning_configs (bow_setup_id, user_id, name, description, is_active, image_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (setup_id, current_user['id'], data['name'], data.get('description', ''), is_active, data.get('image_url')))
+        config_id = cursor.lastrowid
+
+        # Insert tuning values if provided
+        values = data.get('values', {})
+        for param_name, param_data in values.items():
+            if isinstance(param_data, dict):
+                cursor.execute('''
+                    INSERT INTO bow_tuning_values (tuning_config_id, parameter_name, parameter_value, unit, notes)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (config_id, param_name, param_data.get('value'), param_data.get('unit'), param_data.get('notes')))
+
+        # Log the change
+        cursor.execute('''
+            INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type, change_description, user_note)
+            VALUES (?, ?, ?, 'config_created', ?, ?)
+        ''', (setup_id, config_id, current_user['id'], f"Created tuning configuration: {data['name']}", data.get('user_note')))
+        change_log_id = cursor.lastrowid
+
+        conn.commit()
+
+        # Fetch the created config to return
+        cursor.execute('''
+            SELECT id, bow_setup_id, user_id, name, description, is_active, image_url, created_at, updated_at
+            FROM bow_tuning_configs WHERE id = ?
+        ''', (config_id,))
+        config = dict(cursor.fetchone())
+
+        cursor.execute('''
+            SELECT id, parameter_name, parameter_value, unit, notes
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (config_id,))
+        config['values'] = {row['parameter_name']: {
+            'id': row['id'],
+            'value': row['parameter_value'],
+            'unit': row['unit'],
+            'notes': row['notes']
+        } for row in cursor.fetchall()}
+
+        conn.close()
+
+        return jsonify({
+            'config': config,
+            'change_log_id': change_log_id,
+            'message': 'Tuning configuration created successfully'
+        }), 201
+
+    except Exception as e:
+        print(f"Error creating tuning config: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to create tuning configuration'}), 500
+
+@app.route('/api/tuning-configs/<int:config_id>', methods=['GET'])
+@token_required
+def get_tuning_config(current_user, config_id):
+    """Get a single tuning configuration with all values"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Get config with ownership verification
+        cursor.execute('''
+            SELECT tc.*, bs.user_id as setup_user_id
+            FROM bow_tuning_configs tc
+            JOIN bow_setups bs ON tc.bow_setup_id = bs.id
+            WHERE tc.id = ? AND bs.user_id = ?
+        ''', (config_id, current_user['id']))
+        config = cursor.fetchone()
+
+        if not config:
+            conn.close()
+            return jsonify({'error': 'Configuration not found or access denied'}), 404
+
+        config = dict(config)
+
+        # Get values
+        cursor.execute('''
+            SELECT id, parameter_name, parameter_value, unit, notes
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (config_id,))
+        config['values'] = {row['parameter_name']: {
+            'id': row['id'],
+            'value': row['parameter_value'],
+            'unit': row['unit'],
+            'notes': row['notes']
+        } for row in cursor.fetchall()}
+
+        conn.close()
+        return jsonify({'config': config})
+
+    except Exception as e:
+        print(f"Error getting tuning config: {e}")
+        return jsonify({'error': 'Failed to get tuning configuration'}), 500
+
+@app.route('/api/tuning-configs/<int:config_id>', methods=['PUT'])
+@token_required
+def update_tuning_config(current_user, config_id):
+    """Update a tuning configuration"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Get existing config with ownership verification
+        cursor.execute('''
+            SELECT tc.*, bs.user_id as setup_user_id
+            FROM bow_tuning_configs tc
+            JOIN bow_setups bs ON tc.bow_setup_id = bs.id
+            WHERE tc.id = ? AND bs.user_id = ?
+        ''', (config_id, current_user['id']))
+        existing = cursor.fetchone()
+
+        if not existing:
+            conn.close()
+            return jsonify({'error': 'Configuration not found or access denied'}), 404
+
+        existing = dict(existing)
+        setup_id = existing['bow_setup_id']
+
+        # Get existing values for comparison
+        cursor.execute('''
+            SELECT parameter_name, parameter_value, unit
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (config_id,))
+        old_values = {row['parameter_name']: row['parameter_value'] for row in cursor.fetchall()}
+
+        # Update config name/description/image if provided
+        if 'name' in data or 'description' in data or 'image_url' in data:
+            cursor.execute('''
+                UPDATE bow_tuning_configs
+                SET name = COALESCE(?, name),
+                    description = COALESCE(?, description),
+                    image_url = CASE WHEN ? = 1 THEN ? ELSE image_url END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (data.get('name'), data.get('description'),
+                  1 if 'image_url' in data else 0, data.get('image_url'), config_id))
+
+        # Update values if provided
+        values = data.get('values', {})
+        changes = []
+
+        for param_name, param_data in values.items():
+            if isinstance(param_data, dict):
+                old_val = old_values.get(param_name)
+                new_val = param_data.get('value')
+
+                # Upsert the value
+                cursor.execute('''
+                    INSERT INTO bow_tuning_values (tuning_config_id, parameter_name, parameter_value, unit, notes, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(tuning_config_id, parameter_name) DO UPDATE SET
+                        parameter_value = excluded.parameter_value,
+                        unit = excluded.unit,
+                        notes = excluded.notes,
+                        updated_at = CURRENT_TIMESTAMP
+                ''', (config_id, param_name, new_val, param_data.get('unit'), param_data.get('notes')))
+
+                # Track changes
+                if old_val != new_val:
+                    changes.append({
+                        'param': param_name,
+                        'old': old_val,
+                        'new': new_val
+                    })
+
+        # Log parameter changes
+        for change in changes:
+            cursor.execute('''
+                INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type,
+                    parameter_name, old_value, new_value, change_description, user_note)
+                VALUES (?, ?, ?, 'parameter_changed', ?, ?, ?, ?, ?)
+            ''', (setup_id, config_id, current_user['id'], change['param'],
+                  change['old'], change['new'],
+                  f"Changed {change['param']}: {change['old']} → {change['new']}",
+                  data.get('user_note')))
+
+        # Log config update if name/description changed
+        if 'name' in data or 'description' in data:
+            cursor.execute('''
+                INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type,
+                    change_description, user_note)
+                VALUES (?, ?, ?, 'config_updated', ?, ?)
+            ''', (setup_id, config_id, current_user['id'],
+                  f"Updated configuration: {data.get('name', existing['name'])}",
+                  data.get('user_note')))
+
+        # Update the timestamp
+        cursor.execute('UPDATE bow_tuning_configs SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', (config_id,))
+
+        conn.commit()
+
+        # Fetch updated config
+        cursor.execute('''
+            SELECT id, bow_setup_id, user_id, name, description, is_active, image_url, created_at, updated_at
+            FROM bow_tuning_configs WHERE id = ?
+        ''', (config_id,))
+        config = dict(cursor.fetchone())
+
+        cursor.execute('''
+            SELECT id, parameter_name, parameter_value, unit, notes
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (config_id,))
+        config['values'] = {row['parameter_name']: {
+            'id': row['id'],
+            'value': row['parameter_value'],
+            'unit': row['unit'],
+            'notes': row['notes']
+        } for row in cursor.fetchall()}
+
+        conn.close()
+
+        return jsonify({
+            'config': config,
+            'changes_logged': len(changes),
+            'message': 'Tuning configuration updated successfully'
+        })
+
+    except Exception as e:
+        print(f"Error updating tuning config: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to update tuning configuration'}), 500
+
+@app.route('/api/tuning-configs/<int:config_id>', methods=['DELETE'])
+@token_required
+def delete_tuning_config(current_user, config_id):
+    """Delete a tuning configuration"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Get config with ownership verification
+        cursor.execute('''
+            SELECT tc.*, bs.user_id as setup_user_id
+            FROM bow_tuning_configs tc
+            JOIN bow_setups bs ON tc.bow_setup_id = bs.id
+            WHERE tc.id = ? AND bs.user_id = ?
+        ''', (config_id, current_user['id']))
+        config = cursor.fetchone()
+
+        if not config:
+            conn.close()
+            return jsonify({'error': 'Configuration not found or access denied'}), 404
+
+        config = dict(config)
+        setup_id = config['bow_setup_id']
+        config_name = config['name']
+
+        # Log the deletion before deleting
+        cursor.execute('''
+            INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type, change_description)
+            VALUES (?, NULL, ?, 'config_deleted', ?)
+        ''', (setup_id, current_user['id'], f"Deleted tuning configuration: {config_name}"))
+
+        # Delete the config (cascade will delete values)
+        cursor.execute('DELETE FROM bow_tuning_configs WHERE id = ?', (config_id,))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': 'Tuning configuration deleted successfully'})
+
+    except Exception as e:
+        print(f"Error deleting tuning config: {e}")
+        return jsonify({'error': 'Failed to delete tuning configuration'}), 500
+
+@app.route('/api/tuning-configs/<int:config_id>/activate', methods=['POST'])
+@token_required
+def activate_tuning_config(current_user, config_id):
+    """Set a tuning configuration as active (deactivates others)"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Get config with ownership verification
+        cursor.execute('''
+            SELECT tc.*, bs.user_id as setup_user_id
+            FROM bow_tuning_configs tc
+            JOIN bow_setups bs ON tc.bow_setup_id = bs.id
+            WHERE tc.id = ? AND bs.user_id = ?
+        ''', (config_id, current_user['id']))
+        config = cursor.fetchone()
+
+        if not config:
+            conn.close()
+            return jsonify({'error': 'Configuration not found or access denied'}), 404
+
+        config = dict(config)
+        setup_id = config['bow_setup_id']
+
+        # Get previously active config name for logging
+        cursor.execute('''
+            SELECT name FROM bow_tuning_configs
+            WHERE bow_setup_id = ? AND is_active = 1
+        ''', (setup_id,))
+        prev_active = cursor.fetchone()
+        prev_name = prev_active['name'] if prev_active else None
+
+        # Deactivate all configs for this setup
+        cursor.execute('''
+            UPDATE bow_tuning_configs SET is_active = 0
+            WHERE bow_setup_id = ?
+        ''', (setup_id,))
+
+        # Activate the selected config
+        cursor.execute('''
+            UPDATE bow_tuning_configs SET is_active = 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (config_id,))
+
+        # Log the activation
+        description = f"Activated tuning configuration: {config['name']}"
+        if prev_name and prev_name != config['name']:
+            description += f" (previously: {prev_name})"
+
+        cursor.execute('''
+            INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type,
+                old_value, new_value, change_description)
+            VALUES (?, ?, ?, 'config_activated', ?, ?, ?)
+        ''', (setup_id, config_id, current_user['id'], prev_name, config['name'], description))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'message': f"Configuration '{config['name']}' is now active",
+            'config_id': config_id
+        })
+
+    except Exception as e:
+        print(f"Error activating tuning config: {e}")
+        return jsonify({'error': 'Failed to activate tuning configuration'}), 500
+
+@app.route('/api/tuning-configs/<int:config_id>/duplicate', methods=['POST'])
+@token_required
+def duplicate_tuning_config(current_user, config_id):
+    """Create a copy of a tuning configuration"""
+    try:
+        data = request.get_json() or {}
+
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Get source config with ownership verification
+        cursor.execute('''
+            SELECT tc.*, bs.user_id as setup_user_id
+            FROM bow_tuning_configs tc
+            JOIN bow_setups bs ON tc.bow_setup_id = bs.id
+            WHERE tc.id = ? AND bs.user_id = ?
+        ''', (config_id, current_user['id']))
+        source = cursor.fetchone()
+
+        if not source:
+            conn.close()
+            return jsonify({'error': 'Configuration not found or access denied'}), 404
+
+        source = dict(source)
+        setup_id = source['bow_setup_id']
+
+        # Create new config name
+        new_name = data.get('name', f"{source['name']} (Copy)")
+
+        # Create the duplicate config (never set as active by default)
+        cursor.execute('''
+            INSERT INTO bow_tuning_configs (bow_setup_id, user_id, name, description, is_active)
+            VALUES (?, ?, ?, ?, 0)
+        ''', (setup_id, current_user['id'], new_name, source['description']))
+        new_config_id = cursor.lastrowid
+
+        # Copy all values
+        cursor.execute('''
+            SELECT parameter_name, parameter_value, unit, notes
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (config_id,))
+        for row in cursor.fetchall():
+            cursor.execute('''
+                INSERT INTO bow_tuning_values (tuning_config_id, parameter_name, parameter_value, unit, notes)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (new_config_id, row['parameter_name'], row['parameter_value'], row['unit'], row['notes']))
+
+        # Log the duplication
+        cursor.execute('''
+            INSERT INTO tuning_change_log (bow_setup_id, tuning_config_id, user_id, change_type, change_description)
+            VALUES (?, ?, ?, 'config_created', ?)
+        ''', (setup_id, new_config_id, current_user['id'], f"Duplicated configuration from '{source['name']}' as '{new_name}'"))
+
+        conn.commit()
+
+        # Fetch the new config
+        cursor.execute('''
+            SELECT id, bow_setup_id, user_id, name, description, is_active, created_at, updated_at
+            FROM bow_tuning_configs WHERE id = ?
+        ''', (new_config_id,))
+        config = dict(cursor.fetchone())
+
+        cursor.execute('''
+            SELECT id, parameter_name, parameter_value, unit, notes
+            FROM bow_tuning_values WHERE tuning_config_id = ?
+        ''', (new_config_id,))
+        config['values'] = {row['parameter_name']: {
+            'id': row['id'],
+            'value': row['parameter_value'],
+            'unit': row['unit'],
+            'notes': row['notes']
+        } for row in cursor.fetchall()}
+
+        conn.close()
+
+        return jsonify({
+            'config': config,
+            'message': f"Configuration duplicated as '{new_name}'"
+        }), 201
+
+    except Exception as e:
+        print(f"Error duplicating tuning config: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to duplicate tuning configuration'}), 500
+
+@app.route('/api/bow-setups/<int:setup_id>/tuning-history', methods=['GET'])
+@token_required
+def get_bow_tuning_history(current_user, setup_id):
+    """Get technical tuning change history for a bow setup"""
+    try:
+        db = get_database()
+        if not db:
+            return jsonify({"error": "Database not available"}), 500
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Verify user owns this setup
+        cursor.execute('SELECT id FROM bow_setups WHERE id = ? AND user_id = ?',
+                      (setup_id, current_user['id']))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Setup not found or access denied'}), 404
+
+        # Get pagination params
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        # Get total count
+        cursor.execute('SELECT COUNT(*) as count FROM tuning_change_log WHERE bow_setup_id = ?', (setup_id,))
+        total = cursor.fetchone()['count']
+
+        # Get history entries
+        cursor.execute('''
+            SELECT tcl.*, tc.name as config_name
+            FROM tuning_change_log tcl
+            LEFT JOIN bow_tuning_configs tc ON tcl.tuning_config_id = tc.id
+            WHERE tcl.bow_setup_id = ?
+            ORDER BY tcl.created_at DESC
+            LIMIT ? OFFSET ?
+        ''', (setup_id, limit, offset))
+
+        history = [dict(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return jsonify({
+            'history': history,
+            'total': total,
+            'limit': limit,
+            'offset': offset
+        })
+
+    except Exception as e:
+        print(f"Error getting tuning history: {e}")
+        return jsonify({'error': 'Failed to get tuning history'}), 500
+
 
 # Run the app
 def clear_performance_cache():

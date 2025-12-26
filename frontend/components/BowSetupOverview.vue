@@ -1,5 +1,28 @@
 <template>
   <div class="bow-setup-overview space-y-6">
+    <!-- Active Setup Configuration Image (displayed above Bow Information) -->
+    <div v-if="activeConfigImage" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="relative">
+        <img
+          :src="activeConfigImage"
+          :alt="activeConfigName ? `${activeConfigName} - Setup Photo` : 'Active Setup Configuration Photo'"
+          class="w-full h-64 sm:h-80 object-cover cursor-pointer"
+          @click="openImageViewer(activeConfigImage, setup)"
+          @error="handleImageError"
+        />
+        <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-25 transition-opacity flex items-center justify-center">
+          <i class="fas fa-expand-alt text-white opacity-0 hover:opacity-100 transition-opacity text-2xl"></i>
+        </div>
+        <!-- Config Name Badge -->
+        <div v-if="activeConfigName" class="absolute bottom-4 left-4 bg-black bg-opacity-60 px-3 py-1.5 rounded-lg">
+          <span class="text-white text-sm font-medium">
+            <i class="fas fa-star text-yellow-400 mr-1"></i>
+            {{ activeConfigName }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Basic Information Card -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -260,7 +283,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useApi } from '~/composables/useApi'
 import CustomButton from './CustomButton.vue'
 
 const props = defineProps({
@@ -275,6 +299,36 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['switch-tab'])
+
+const api = useApi()
+
+// Active tuning config state
+const activeConfig = ref(null)
+const activeConfigImage = computed(() => activeConfig.value?.image_url || null)
+const activeConfigName = computed(() => activeConfig.value?.name || null)
+
+// Fetch active tuning config
+const loadActiveConfig = async () => {
+  if (!props.setup?.id) return
+
+  try {
+    const response = await api.get(`/bow-setups/${props.setup.id}/tuning-configs`)
+    const configs = response.configs || []
+    // Find the active config
+    activeConfig.value = configs.find(c => c.is_active) || null
+  } catch (error) {
+    console.error('Error loading active tuning config:', error)
+  }
+}
+
+// Load on mount and when setup changes
+onMounted(() => {
+  loadActiveConfig()
+})
+
+watch(() => props.setup?.id, () => {
+  loadActiveConfig()
+})
 
 // Computed properties
 const showBowDetails = computed(() => {

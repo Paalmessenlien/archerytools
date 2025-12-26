@@ -27,6 +27,10 @@ from unified_database import UnifiedDatabase
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Skip auth for CORS preflight requests
+        if request.method == 'OPTIONS':
+            return '', 204
+
         token = None
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
