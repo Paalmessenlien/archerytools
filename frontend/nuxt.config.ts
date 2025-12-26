@@ -22,7 +22,9 @@ export default defineNuxtConfig({
   // Runtime Config for API
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:5000/api',
+      // In production, use relative path to leverage nginx proxy
+      // In development, use localhost
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api'),
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID
     }
   },

@@ -15,7 +15,7 @@ COPY package*.json ./
 
 # Install dependencies with verification
 RUN echo "📦 Installing dependencies..." && \
-    npm ci && \
+    npm install && \
     echo "✅ Dependencies installed" && \
     npm list --depth=0
 
